@@ -1,0 +1,22 @@
+spring:
+  application:
+    name: nine-forum-project
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: root
+    password: karafuru
+    url: jdbc:mysql://localhost:6033/nine_forum
+  data:
+    redis:
+      port: 6379
+  security:
+    jwt:
+      secret-key: kenkouniyokunai
+      expire: 7
+  minio:
+    endpoint: http://localhost:9000
+    access-key: admin
+    secret-key: qwert123
+    bucket: nineforum
+server:
+  port: 9966

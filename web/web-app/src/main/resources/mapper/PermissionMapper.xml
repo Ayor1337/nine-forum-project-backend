@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ayor.mapper.PermissionMapper">
+
+    <select id="getUserPermissionVO" resultType="com.ayor.entity.app.vo.UserPermissionVO">
+        SELECT
+            account_id,
+            role_name,
+            role_nick,
+            db_role.topic_id as 'topic_id',
+            GROUP_CONCAT(db_permission.permission) as 'permissions'
+        FROM
+            db_account
+                JOIN db_role ON db_account.role_id = db_role.role_id
+                LEFT JOIN db_permission ON db_account.role_id = db_permission.role_id
+        WHERE db_account.username = #{username}
+        GROUP BY account_id, role_name, db_role.topic_id
+    </select>
+
+</mapper>
