@@ -1,0 +1,57 @@
+name: Nine-forum-project
+services:
+  mysql:
+    container_name: nine-mysql
+#    build:
+#      context: ./image/mysql
+#      dockerfile: Dockerfile
+    image: mysql:latest
+    ports:
+      - "6033:3306"
+    volumes:
+      - /docker_volumes/nine_forum/mysql:/var/lib/mysql
+    env_file:
+      - ./environment/mysql.env
+    healthcheck:
+      test: [ "CMD", "mysqladmin" ,"ping", "-h", "localhost" ]
+      interval: 5s
+      timeout: 10s
+      retries: 10
+    restart: unless-stopped
+    networks:
+      - forum-project
+  redis:
+    container_name: nine-redis
+    image: redis:latest
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+    volumes:
+      - /docker_volumes/nine_forum/redis:/data
+    networks:
+      - forum-project
+  minio:
+    container_name: nine-minio
+    image: minio/minio:latest
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - /docker_volumes/nine_forum/minio/data:/data
+      - /docker_volumes/nine_forum/minio/config:/root/.minio
+    environment:
+      MINIO_ROOT_USER: admin
+      MINIO_ROOT_PASSWORD: qwert123
+    command: server /data --console-address ":9001"
+    restart: unless-stopped
+    networks:
+      - forum-project
+  rabbitmq:
+    container_name: nine-rabbitmq
+    image: rabbitmq:management
+    restart: unless-stopped
+    networks:
+      - forum-project
+
+networks:
+  forum-project:
