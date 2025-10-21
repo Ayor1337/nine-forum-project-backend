@@ -7,17 +7,19 @@ import com.ayor.mapper.AccountStatMapper;
 import com.ayor.service.AccountStatService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import jakarta.annotation.Resource;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@Transactional
+@RequiredArgsConstructor
 public class AccountStatServiceImpl extends ServiceImpl<AccountStatMapper, AccountStat> implements AccountStatService {
 
-    @Resource
-    private AccountStatMapper accountStatMapper;
+    private final AccountStatMapper accountStatMapper;
 
-    @Resource
-    private AccountMapper accountMapper;
+    private final AccountMapper accountMapper;
 
 
     @Override

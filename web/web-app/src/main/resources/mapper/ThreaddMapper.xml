@@ -4,4 +4,11 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.ayor.mapper.ThreaddMapper">
 
+
+    <select id="getThreadsByIds" resultType="com.ayor.entity.pojo.Threadd">
+        select * from db_thread where thread_id in
+        <foreach item="item" index="index" collection="list" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </select>
 </mapper>

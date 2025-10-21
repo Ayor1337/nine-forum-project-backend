@@ -11,6 +11,7 @@ import com.ayor.mapper.TopicMapper;
 import com.ayor.service.ThemeService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import jakarta.annotation.Resource;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,13 +21,12 @@ import java.util.List;
 
 @Service
 @Transactional
+@RequiredArgsConstructor
 public class ThemeServiceImpl extends ServiceImpl<ThemeMapper, Theme> implements ThemeService {
 
-    @Resource
-    private ThemeMapper themeMapper;
+    private final ThemeMapper themeMapper;
 
-    @Resource
-    private TopicMapper topicMapper;
+    private final TopicMapper topicMapper;
 
     @Override
     public List<ThemeVO> getThemeList() {

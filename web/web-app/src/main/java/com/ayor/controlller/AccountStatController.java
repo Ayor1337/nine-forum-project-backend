@@ -5,18 +5,20 @@ import com.ayor.result.Result;
 import com.ayor.service.AccountStatService;
 import com.ayor.util.SecurityUtils;
 import jakarta.annotation.Resource;
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+@RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/stat")
 public class AccountStatController {
 
-    @Resource
-    private AccountStatService accountStatService;
+    private final AccountStatService accountStatService;
 
-    @Resource
-    private SecurityUtils security;
+
+    private final SecurityUtils security;
+
 
     @RequestMapping("/info")
     public Result<AccountStatVO> getAccountStatInfo() {

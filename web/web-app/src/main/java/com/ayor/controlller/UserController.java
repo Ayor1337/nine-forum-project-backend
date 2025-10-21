@@ -7,17 +7,17 @@ import com.ayor.service.AccountService;
 import com.ayor.util.SecurityUtils;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+@RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/user")
 public class UserController {
 
-    @Resource
-    private AccountService accountService;
+    private final AccountService accountService;
 
-    @Resource
-    private SecurityUtils security;
+    private final SecurityUtils security;
 
 
     @GetMapping("/info")
@@ -26,8 +26,8 @@ public class UserController {
         return Result.dataMessageHandler(() -> accountService.getUserInfo(username), "获取用户信息失败,用户可能不存在");
     }
 
-    @GetMapping("/info/by_user_id/{user_id}")
-    public Result<UserInfoVO> getUserInfoByUserId(@PathVariable("user_id") String userId) {
+    @GetMapping("/info/by_user_id")
+    public Result<UserInfoVO> getUserInfoByUserId(@RequestParam("user_id") String userId) {
         return Result.dataMessageHandler(() -> accountService.getUserInfoById(Integer.parseInt(userId)), "获取用户信息失败,用户可能不存在");
     }
 

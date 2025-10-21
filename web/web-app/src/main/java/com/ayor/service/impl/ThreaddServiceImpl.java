@@ -4,6 +4,7 @@ import com.ayor.entity.app.dto.TagUpdateDTO;
 import com.ayor.entity.app.dto.ThreadDTO;
 import com.ayor.entity.app.vo.AnnouncementVO;
 import com.ayor.entity.app.vo.TagVO;
+import com.ayor.entity.app.vo.ThreadPageVO;
 import com.ayor.entity.app.vo.ThreadVO;
 import com.ayor.entity.pojo.Account;
 import com.ayor.entity.pojo.Tag;
@@ -11,8 +12,9 @@ import com.ayor.entity.pojo.Threadd;
 import com.ayor.mapper.*;
 import com.ayor.service.ThreaddService;
 import com.ayor.util.QuillUtils;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import jakarta.annotation.Resource;
+import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
@@ -27,25 +29,21 @@ import java.util.concurrent.locks.ReentrantLock;
 
 @Service
 @Transactional
+@RequiredArgsConstructor
 public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> implements ThreaddService {
 
     // TODO 防止 topic_id虚假然后删除了其他的thread (topic_id 与 threadId 不符)
 
 
-    @Resource
-    private AccountMapper accountMapper;
+    private final AccountMapper accountMapper;
 
-    @Resource
-    private TopicMapper topicMapper;
+    private final TopicMapper topicMapper;
 
-    @Resource
-    private PostMapper postMapper;
+    private final PostMapper postMapper;
 
-    @Resource
-    private QuillUtils quillUtils;
+    private final QuillUtils quillUtils;
 
-    @Resource
-    private TagMapper tagMapper;
+    private final TagMapper tagMapper;
 
     @Override
     public List<ThreadVO> getThreadVOsByTopicId(Integer topicId) {
@@ -93,13 +91,17 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
     }
 
     @Override
-    public List<ThreadVO> getThreadsByUserId(Integer userId) {
-        List<Threadd> threads = this.lambdaQuery().eq(Threadd::getAccountId, userId).list();
-        if (threads == null) {
-            return null;
-        }
-        return getThreadVOS(threads);
+    public ThreadPageVO getThreadPagesByUserId(Integer userId, Integer currentPage, Integer pageSize) {
+        Page<Threadd> page = new Page<>(currentPage, pageSize);
+        Page<Threadd> threads = this.lambdaQuery()
+                .eq(Threadd::getAccountId, userId)
+                .eq(Threadd::getIsDeleted, false)
+                .page(page);
+        List<ThreadVO> threadVOS = getThreadVOS(threads.getRecords());
+        Integer totalPages = (int) threads.getTotal();
+        return new ThreadPageVO(totalPages, threadVOS);
     }
+
 
     @NotNull
     private List<ThreadVO> getThreadVOS(List<Threadd> threads) {
@@ -259,8 +261,8 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
     @Override
     public void updateThreadStat() {
         this.baseMapper.updateThreadPostCount();
+        this.baseMapper.updateLikeCount();
     }
-
 
     @Override
     public String updateViewCount(Integer threadId) {
