@@ -124,7 +124,7 @@ public class SecurityConfiguration {
         resp.setContentType("application/json");
         resp.setCharacterEncoding("utf-8");
         resp.setStatus(200);
-        resp.getWriter().write(Result.fail(401, "请登录后再操作").toJSONString());
+        resp.getWriter().write(Result.fail(401, e.getMessage()).toJSONString());
     }
 
 }

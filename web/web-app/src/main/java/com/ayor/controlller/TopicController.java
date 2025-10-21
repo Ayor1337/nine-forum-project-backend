@@ -5,20 +5,21 @@ import com.ayor.entity.app.vo.TopicVO;
 import com.ayor.result.Result;
 import com.ayor.service.TopicService;
 import jakarta.annotation.Resource;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/topic")
 public class TopicController {
 
-    @Resource
-    private TopicService topicService;
+    private final TopicService topicService;
 
-    @GetMapping("/info/list_by_theme_id/{theme_id}")
-    public Result<List<TopicVO>> getTopicList(@PathVariable("theme_id") String themeId) {
+    @GetMapping("/info/list_by_theme_id")
+    public Result<List<TopicVO>> getTopicList(@RequestParam(name = "theme_id") String themeId) {
         Integer themeIdInt = Integer.parseInt(themeId);
         return Result.dataMessageHandler(() -> topicService.getTopicListByThemeId(themeIdInt), "获取主题下的帖子列表失败");
     }
@@ -36,8 +37,8 @@ public class TopicController {
     }
 
     @PreAuthorize("hasAnyRole('ROLE_OWNER')")
-    @DeleteMapping("/delete/{topic_id}")
-    public Result<Void> deleteTopic(@PathVariable("topic_id") String topicId) {
+    @DeleteMapping("/delete")
+    public Result<Void> deleteTopic(@RequestParam(name = "topic_id") String topicId) {
         Integer topicIdInt = Integer.parseInt(topicId);
         return Result.messageHandler(() -> topicService.deleteTopic(topicIdInt));
     }

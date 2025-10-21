@@ -4,48 +4,49 @@ import com.ayor.entity.app.dto.Konekuto;
 import com.ayor.entity.app.dto.TagUpdateDTO;
 import com.ayor.entity.app.dto.ThreadDTO;
 import com.ayor.entity.app.vo.AnnouncementVO;
+import com.ayor.entity.app.vo.ThreadPageVO;
 import com.ayor.entity.app.vo.ThreadVO;
 import com.ayor.result.Result;
 import com.ayor.service.ThreaddService;
 import com.ayor.util.SecurityUtils;
-import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
-import org.springframework.scheduling.annotation.Scheduled;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/thread")
 public class ThreadController {
 
+    private final ThreaddService threaddService;
 
-    @Resource
-    private ThreaddService threaddService;
-
-    @Resource
-    private SecurityUtils security;
+    private final SecurityUtils security;
 
 
-    @GetMapping("/info/topic/{topic_id}")
-    public Result<List<ThreadVO>> getThreadsByTopicId(@PathVariable("topic_id") String topicId) throws InterruptedException {
-        return Result.dataMessageHandler(() -> threaddService.getThreadVOsByTopicId(Integer.parseInt(topicId)), "获取失败");
+    @GetMapping("/info/topic")
+    public Result<List<ThreadVO>> getThreadsByTopicId(@RequestParam(name = "topic_id") Integer topicId) throws InterruptedException {
+        return Result.dataMessageHandler(() -> threaddService.getThreadVOsByTopicId(topicId), "获取失败");
     }
 
 
-    @GetMapping("/info/user/{user_id}")
-    public Result<List<ThreadVO>> getThreadsByUserId(@PathVariable("user_id") String userId) {
-        return Result.dataMessageHandler(() -> threaddService.getThreadsByUserId(Integer.parseInt(userId)), "获取失败");
+    @GetMapping("/info/user")
+    public Result<ThreadPageVO> getThreadsByUserId(@RequestParam(name = "user_id") Integer userId,
+                                                   @RequestParam(name = "page") Integer page,
+                                                   @RequestParam(name = "page_size") Integer size) {
+        return Result.dataMessageHandler(() -> threaddService.getThreadPagesByUserId(userId, page, size), "获取失败");
     }
 
-    @GetMapping("/info/{thread_id}")
-    public Result<ThreadVO> getThreadTitleById(@PathVariable("thread_id") String threadId) {
-        return Result.dataMessageHandler(() -> threaddService.getThreadById(Integer.parseInt(threadId)), "获取失败");
+    // 注意调度
+    @GetMapping("/info")
+    public Result<ThreadVO> getThreadById(@RequestParam(name = "thread_id") Integer threadId) {
+        return Result.dataMessageHandler(() -> threaddService.getThreadById(threadId), "获取失败");
     }
 
-    @GetMapping("/info/announcement/{topic_id}")
-    public Result<List<AnnouncementVO>> getAnnouncementByTopicId(@PathVariable("topic_id") String topicId) {
+    @GetMapping("/info/announcement")
+    public Result<List<AnnouncementVO>> getAnnouncementByTopicId(@RequestParam(name = "topic_id") String topicId) {
         return Result.dataMessageHandler(() -> threaddService.getAnnouncementThreads(Integer.parseInt(topicId)), "获取失败");
     }
 
@@ -55,8 +56,8 @@ public class ThreadController {
         return Result.messageHandler(() -> threaddService.insertThread(threadDTO, username));
     }
 
-    @DeleteMapping("/remove_thread/{thread_id}")
-    public Result<Void> removeThreadById(@PathVariable("thread_id") Integer threadId) {
+    @DeleteMapping("/remove_thread")
+    public Result<Void> removeThreadById(@RequestParam(name = "thread_id") Integer threadId) {
         String username = security.getSecurityUsername();
         return Result.messageHandler(() -> threaddService.removeThreadById(threadId, username));
     }
@@ -102,8 +103,8 @@ public class ThreadController {
     }
 
     // You see but you do not observe
-    @PostMapping("/view/{thread_id}")
-    public Result<Void> viewThread(@PathVariable("thread_id") String threadId) {
-        return Result.messageHandler(() -> threaddService.updateViewCount(Integer.parseInt(threadId)));
+    @PostMapping("/view")
+    public Result<Void> viewThread(@RequestParam(name = "thread_id") Integer threadId) {
+        return Result.messageHandler(() -> threaddService.updateViewCount(threadId));
     }
 }

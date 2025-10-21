@@ -4,12 +4,16 @@ import com.ayor.entity.Base64Upload;
 import com.ayor.entity.app.dto.TopicDTO;
 import com.ayor.entity.app.vo.TopicVO;
 import com.ayor.entity.pojo.Topic;
+import com.ayor.entity.pojo.TopicStat;
 import com.ayor.mapper.ThreaddMapper;
 import com.ayor.mapper.TopicMapper;
+import com.ayor.mapper.TopicStatMapper;
 import com.ayor.minio.MinioService;
 import com.ayor.service.TopicService;
+import com.ayor.service.TopicStatService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import jakarta.annotation.Resource;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,16 +24,16 @@ import java.util.List;
 
 @Service
 @Transactional
+@RequiredArgsConstructor
 public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements TopicService {
 
-    @Resource
-    private TopicMapper topicMapper;
+    private final TopicMapper topicMapper;
 
-    @Resource
-    private ThreaddMapper threaddMapper;
+    private final ThreaddMapper threaddMapper;
 
-    @Resource
-    private MinioService minioService;
+    private final MinioService minioService;
+
+    private final TopicStatMapper topicStatMapper;
 
     @Override
     public String getTopicNameById(Integer topicId) {
@@ -47,7 +51,12 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
         topics.forEach(topic -> {
             if (!topic.getIsDeleted()) {
                 TopicVO topicVO = new TopicVO();
+                TopicStat topicStat = topicStatMapper.selectByTopicId(topic.getTopicId());
                 BeanUtils.copyProperties(topic, topicVO);
+                if (topicStat != null) {
+                    topicVO.setThreadCount(topicStat.getThreadCount());
+                    topicVO.setViewCount(topicStat.getViewCount());
+                }
                 topicVOList.add(topicVO);
             }
         });

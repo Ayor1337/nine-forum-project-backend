@@ -12,6 +12,7 @@ import com.ayor.service.AccountService;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import jakarta.annotation.Resource;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -21,19 +22,16 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Transactional
+@RequiredArgsConstructor
 public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> implements AccountService  {
 
-    @Resource
-    private AccountMapper accountMapper;
+    private final AccountMapper accountMapper;
 
-    @Resource
-    private PermissionMapper permissionMapper;
+    private final PermissionMapper permissionMapper;
 
-    @Resource
-    private RoleMapper roleMapper;
+    private final RoleMapper roleMapper;
 
-    @Resource
-    private MinioService minioService;
+    private final MinioService minioService;
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {

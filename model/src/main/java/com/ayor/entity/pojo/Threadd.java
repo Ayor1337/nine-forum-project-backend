@@ -33,6 +33,8 @@ public class Threadd {
 
     private Integer likeCount;
 
+    private Integer collectCount;
+
     private Integer topicId;
 
     private Integer tagId;

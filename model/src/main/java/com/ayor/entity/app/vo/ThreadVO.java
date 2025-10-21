@@ -29,6 +29,8 @@ public class ThreadVO {
 
     private Integer likeCount;
 
+    private Integer collectCount;
+
     private String tagName;
 
     private Integer accountId;

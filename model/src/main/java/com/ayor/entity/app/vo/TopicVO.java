@@ -15,6 +15,10 @@ public class TopicVO {
 
     private String coverUrl;
 
+    private Integer threadCount;
+
+    private Integer viewCount;
+
     private String description;
 
     private String createTime;

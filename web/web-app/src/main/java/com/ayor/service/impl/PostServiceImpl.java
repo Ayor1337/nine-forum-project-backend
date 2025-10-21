@@ -10,6 +10,7 @@ import com.ayor.service.PostService;
 import com.ayor.util.QuillUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import jakarta.annotation.Resource;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,16 +21,14 @@ import java.util.List;
 
 @Service
 @Transactional
+@RequiredArgsConstructor
 public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements PostService {
 
-    @Resource
-    private PostMapper postMapper;
+    private final PostMapper postMapper;
 
-    @Resource
-    private AccountMapper accountMapper;
+    private final AccountMapper accountMapper;
 
-    @Resource
-    private QuillUtils quillUtils;
+    private final QuillUtils quillUtils;
 
 
     @Override
