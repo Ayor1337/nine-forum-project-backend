@@ -4,7 +4,7 @@ spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     username: root
-    password: karafuru
+    password: ${MYSQL_PASSWORD}
     url: jdbc:mysql://localhost:6033/nine_forum
   data:
     redis:

@@ -26,6 +26,11 @@ public class UserController {
         return Result.dataMessageHandler(() -> accountService.getUserInfo(username), "获取用户信息失败,用户可能不存在");
     }
 
+    @GetMapping("/info/by_username")
+    public Result<UserInfoVO> getUserInfoByUsername(@RequestParam("username") String username) {
+        return Result.dataMessageHandler(() -> accountService.getUserInfo(username), "获取用户信息失败,用户可能不存在");
+    }
+
     @GetMapping("/info/by_user_id")
     public Result<UserInfoVO> getUserInfoByUserId(@RequestParam("user_id") String userId) {
         return Result.dataMessageHandler(() -> accountService.getUserInfoById(Integer.parseInt(userId)), "获取用户信息失败,用户可能不存在");

@@ -73,7 +73,7 @@ public class LikeServiceImpl extends ServiceImpl<LikeMapper, Like> implements Li
         List<Like> likes = likePage.getRecords();
         List<Integer> threadIds = new ArrayList<>();
         likes.forEach(like -> threadIds.add(like.getThreadId()));
-        List<Threadd> threads = threaddMapper.getThreadsByIds(threadIds);
+        List<Threadd> threads = threaddMapper.selectByIds(threadIds);
         List<ThreadVO> threadVOS = new ArrayList<>();
         for (Threadd thread : threads) {
             ThreadVO threadVO = new ThreadVO();

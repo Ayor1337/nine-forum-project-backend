@@ -12,6 +12,7 @@ import com.ayor.entity.pojo.Threadd;
 import com.ayor.mapper.*;
 import com.ayor.service.ThreaddService;
 import com.ayor.util.QuillUtils;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
@@ -223,10 +224,8 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
         threadd.setContent(quillUtils.QuillDeltaConvertBase64ToURL(threadDTO.getContent(), "threads/" + threadd.getTopicId() + "/"));
         threadd.setAccountId(userId);
         threadd.setCreateTime(new Date());
-        if (this.save(threadd)) {
-            return null;
-        }
-        return "添加失败";
+
+        return this.save(threadd) ? null : "添加失败";
     }
 
     @Override

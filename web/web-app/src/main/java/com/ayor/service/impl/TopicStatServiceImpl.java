@@ -11,8 +11,8 @@ public class TopicStatServiceImpl extends ServiceImpl<TopicStatMapper, TopicStat
 
     @Override
     public void updateTopicStat() {
-        baseMapper.updateThreadCount();
-        baseMapper.updateViewCount();
+        this.baseMapper.updateThreadCount();
+        this.baseMapper.updateViewCount();
     }
 
 
