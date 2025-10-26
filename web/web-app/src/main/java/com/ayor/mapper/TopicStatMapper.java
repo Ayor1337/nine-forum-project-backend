@@ -2,6 +2,7 @@ package com.ayor.mapper;
 
 import com.ayor.entity.pojo.TopicStat;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
 
@@ -19,6 +20,9 @@ public interface TopicStatMapper extends BaseMapper<TopicStat> {
 
     @Select("SELECT * FROM db_topic_stat WHERE topic_id = #{topicId}")
     TopicStat selectByTopicId(Integer topicId);
+
+    @Insert("INSERT INTO db_topic_stat (topic_id) VALUES (#{topicId})")
+    int initializeNewTopicStat(Integer topicId);
 
 
 }

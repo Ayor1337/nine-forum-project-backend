@@ -10,9 +10,7 @@ import com.ayor.mapper.TopicMapper;
 import com.ayor.mapper.TopicStatMapper;
 import com.ayor.minio.MinioService;
 import com.ayor.service.TopicService;
-import com.ayor.service.TopicStatService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import jakarta.annotation.Resource;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
@@ -81,8 +79,9 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
         }
         BeanUtils.copyProperties(topicDTO, topic);
         topic.setCreateTime(new Date());
+        this.save(topic);
 
-        return this.save(topic) ? null : "添加失败, 未知异常";
+        return topicStatMapper.initializeNewTopicStat(topic.getTopicId()) > 0 ? null : "添加失败, 未知异常";
     }
 
     @Override
@@ -111,9 +110,8 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
         if (topic == null) {
             return "主题不存在";
         }
-        topic.setIsDeleted(true);
         threaddMapper.deleteThreadByTopicId(topicId);
-        return this.updateById(topic) ? null : "删除失败, 未知异常";
+        return this.baseMapper.deleteById(topic) > 0 ? null : "删除失败, 未知异常";
     }
 
 }
