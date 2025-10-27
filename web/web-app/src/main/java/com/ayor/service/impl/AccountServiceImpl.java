@@ -1,5 +1,6 @@
 package com.ayor.service.impl;
 
+import com.ayor.aspect.OperationLog;
 import com.ayor.entity.Base64Upload;
 import com.ayor.entity.app.vo.UserInfoVO;
 import com.ayor.entity.app.vo.UserPermissionVO;
@@ -76,6 +77,7 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
     }
 
     @Override
+    @OperationLog(value = "更新用户头像", logResult = true)
     public String updateUserAvatar(String username, Base64Upload dto) {
         Account account = this.baseMapper.getAccountByUsername(username);
         if (account == null) {
@@ -92,6 +94,7 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
     }
 
     @Override
+    @OperationLog(value = "更新用户横幅", logResult = true)
     public String updateUserBanner(String username, Base64Upload dto) {
         Account account = this.baseMapper.getAccountByUsername(username);
         if (account == null) {

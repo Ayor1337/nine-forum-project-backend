@@ -1,5 +1,6 @@
 package com.ayor.service.impl;
 
+import com.ayor.aspect.OperationLog;
 import com.ayor.entity.app.vo.ThreadPageVO;
 import com.ayor.entity.app.vo.ThreadVO;
 import com.ayor.entity.pojo.Account;
@@ -29,6 +30,7 @@ public class CollectServiceImpl extends ServiceImpl<CollectMapper, Collect> impl
     private final ThreaddMapper threaddMapper;
 
     @Override
+    @OperationLog(value = "收藏帖子", logResult = true)
     public String insertCollect(String username, Integer threadId) {
         Account account = accountMapper.getAccountByUsername(username);
         if (account == null) {
@@ -44,6 +46,7 @@ public class CollectServiceImpl extends ServiceImpl<CollectMapper, Collect> impl
     }
 
     @Override
+    @OperationLog(value = "取消收藏帖子", logResult = true)
     public String removeCollect(String username, Integer threadId) {
         Account account = accountMapper.getAccountByUsername(username);
         if (account == null)
