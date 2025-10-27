@@ -23,4 +23,8 @@ public class PostVO {
     private String avatarUrl;
 
     private String nickname;
+
+    private Integer threadId;
+
+    private Integer topicId;
 }

@@ -6,10 +6,10 @@ import com.ayor.entity.pojo.Account;
 import com.ayor.entity.pojo.Post;
 import com.ayor.mapper.AccountMapper;
 import com.ayor.mapper.PostMapper;
+import com.ayor.mapper.ThreaddMapper;
 import com.ayor.service.PostService;
 import com.ayor.util.QuillUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import jakarta.annotation.Resource;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
@@ -29,6 +29,8 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
     private final AccountMapper accountMapper;
 
     private final QuillUtils quillUtils;
+
+    private final ThreaddMapper threaddMapper;
 
 
     @Override
@@ -66,13 +68,32 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         if (userID == null) {
             return "用户不存在";
         }
-        post.setAccountId(userID);
+        Integer topicId = threaddMapper.getTopicIdByThreadId(postDTO.getThreadId());
+        post.setAccountId(userID)   ;
         post.setContent(quillUtils.QuillDeltaConvertBase64ToURL(postDTO.getContent(), "posts/" + post.getThreadId() + "/"));
         post.setCreateTime(new Date());
+        post.setTopicId(topicId);
         return this.save(post) ? null : "发布失败, 未知异常";
     }
 
+    @Override
+    public String removePostAuthorizeUsername(Integer postId, String username) {
+        Post post = this.getById(postId);
+        if (post == null) {
+            return "帖子不存在";
+        }
+        if (!post.getAccountId().equals(accountMapper.getAccountIdByUsername(username))) {
+            return "没有权限";
+        }
+        return this.removeById(postId) ? null : "删除失败, 未知异常";
+    }
 
-
-
+    @Override
+    public String removePostPermission(Integer postId) {
+        Post post = this.getById(postId);
+        if (post == null) {
+            return "帖子不存在";
+        }
+        return this.removeById(postId) ? null : "删除失败, 未知异常";
+    }
 }
