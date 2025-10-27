@@ -49,7 +49,7 @@ public class SecurityConfiguration {
                 .authorizeHttpRequests(auth -> {
                     auth.requestMatchers("/api/auth/**").permitAll();
                     auth.requestMatchers("/api/*/info/**").permitAll();
-//                    auth.requestMatchers("/chat").permitAll();
+                    auth.requestMatchers("/chatboard").permitAll();
                     auth.anyRequest().authenticated();
                 })
                 .formLogin(auth -> {

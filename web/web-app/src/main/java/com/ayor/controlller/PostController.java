@@ -7,6 +7,7 @@ import com.ayor.service.PostService;
 import com.ayor.util.SecurityUtils;
 import jakarta.annotation.Resource;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -30,6 +31,18 @@ public class PostController {
     public Result<Void> addPost(@RequestBody @Validated PostDTO post) {
         String username = security.getSecurityUsername();
         return Result.messageHandler(() -> postService.insertPost(post, username));
+    }
+
+    @DeleteMapping("/delete")
+    public Result<Void> deletePost(@RequestParam(name = "post_id") Integer postId) {
+        String username = security.getSecurityUsername();
+        return Result.messageHandler(() -> postService.removePostAuthorizeUsername(postId, username));
+    }
+
+    @PreAuthorize("hasAuthority('ROLE_OWNER')")
+    @DeleteMapping("/perm/delete")
+    public Result<Void> deletePostPermission(@RequestParam(name = "post_id") Integer postId) {
+        return Result.messageHandler(() -> postService.removePostPermission(postId));
     }
 
 }

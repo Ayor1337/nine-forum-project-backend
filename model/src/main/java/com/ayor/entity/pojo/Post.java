@@ -29,6 +29,8 @@ public class Post {
 
     private Integer threadId;
 
+    private Integer topicId;
+
     @TableLogic
     private Boolean isDeleted;
 

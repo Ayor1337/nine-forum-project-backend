@@ -11,4 +11,8 @@ public interface PostService extends IService<Post> {
     List<PostVO> getPostsByThreadId(Integer threadId);
 
     String insertPost(PostDTO postDTO, String username);
+
+    String removePostAuthorizeUsername(Integer postId, String username);
+
+    String removePostPermission(Integer postId);
 }

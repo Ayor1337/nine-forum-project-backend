@@ -17,6 +17,9 @@ public interface ThreaddMapper extends BaseMapper<Threadd> {
 
     List<Threadd> getThreadsByIds(List<Integer> threadIds);
 
+    @Select("select topic_id from db_thread where thread_id = #{threadId}")
+    Integer getTopicIdByThreadId(Integer threadId);
+
     @Update("update db_thread set tag_id = null where thread_id = #{threadId} and topic_id = #{topicId}")
     Boolean removeThreadTag(Integer threadId, Integer topicId);
 

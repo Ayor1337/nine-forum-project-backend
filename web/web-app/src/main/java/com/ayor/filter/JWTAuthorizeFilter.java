@@ -42,7 +42,6 @@ public class JWTAuthorizeFilter extends OncePerRequestFilter {
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
         String authorization = request.getHeader("Authorization");
-
         if(authorization == null) {
             authorization = Optional.ofNullable(request.getCookies())
                     .map(cookies -> {
