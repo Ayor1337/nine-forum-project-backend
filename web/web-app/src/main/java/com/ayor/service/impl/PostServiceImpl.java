@@ -15,6 +15,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -85,7 +86,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         if (!post.getAccountId().equals(accountMapper.getAccountIdByUsername(username))) {
             return "没有权限";
         }
-        return this.removeById(postId) ? null : "删除失败, 未知异常";
+        return this.removeByIdLogic(post.getPostId()) ? null : "删除失败, 未知异常";
     }
 
     @Override
@@ -94,6 +95,15 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         if (post == null) {
             return "帖子不存在";
         }
-        return this.removeById(postId) ? null : "删除失败, 未知异常";
+        return this.removeByIdLogic(post.getPostId()) ? null : "删除失败, 未知异常";
+    }
+
+    private boolean removeByIdLogic(Serializable Id) {
+        Post post = this.getById(Id);
+        if (post == null) {
+            return false;
+        }
+        post.setIsDeleted(true);
+        return this.updateById(post);
     }
 }

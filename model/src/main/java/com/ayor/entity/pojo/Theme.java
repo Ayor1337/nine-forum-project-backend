@@ -19,7 +19,6 @@ public class Theme {
 
     private String title;
 
-    @TableLogic
     private Boolean isDeleted;
 
 }

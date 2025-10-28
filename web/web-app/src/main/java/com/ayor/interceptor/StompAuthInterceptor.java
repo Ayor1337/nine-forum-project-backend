@@ -9,11 +9,9 @@ import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.ChannelInterceptor;
 import org.springframework.messaging.support.MessageBuilder;
-import org.springframework.messaging.support.MessageHeaderAccessor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -29,21 +27,19 @@ public class StompAuthInterceptor implements ChannelInterceptor {
         if (acc.getCommand() == StompCommand.CONNECT) {
             String authorization = acc.getFirstNativeHeader("Authorization"); // 来自 STOMP connectHeaders
             DecodedJWT jwt = jwtUtil.resolveJwt(authorization);
-            if (jwt == null) {
-                throw new IllegalArgumentException("Invalid or missing Authorization");
+
+
+            if (jwt != null) {
+                UserDetails user = jwtUtil.toUser(jwt);
+                UsernamePasswordAuthenticationToken authentication =
+                        new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
+                acc.setUser(authentication);
+                SecurityContextHolder.getContext().setAuthentication(authentication);
             }
-
-            UserDetails user = jwtUtil.toUser(jwt);
-
-            UsernamePasswordAuthenticationToken authentication =
-                    new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
-
-            acc.setUser(authentication);
-
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+            return MessageBuilder.createMessage(message.getPayload(), acc.getMessageHeaders());
         }
 
-        return MessageBuilder.createMessage(message.getPayload(), acc.getMessageHeaders());
+        return message;
     }
 }
 

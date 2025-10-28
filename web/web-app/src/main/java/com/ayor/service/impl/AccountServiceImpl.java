@@ -1,6 +1,5 @@
 package com.ayor.service.impl;
 
-import com.ayor.aspect.OperationLog;
 import com.ayor.entity.Base64Upload;
 import com.ayor.entity.app.vo.UserInfoVO;
 import com.ayor.entity.app.vo.UserPermissionVO;
@@ -12,7 +11,6 @@ import com.ayor.minio.MinioService;
 import com.ayor.service.AccountService;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import jakarta.annotation.Resource;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.security.core.userdetails.User;
@@ -77,7 +75,6 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
     }
 
     @Override
-    @OperationLog(value = "更新用户头像", logResult = true)
     public String updateUserAvatar(String username, Base64Upload dto) {
         Account account = this.baseMapper.getAccountByUsername(username);
         if (account == null) {
@@ -89,12 +86,10 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         } catch (Exception e) {
             return "资源服务器异常";
         }
-
         return this.baseMapper.updateById(account) > 0 ? null : "更新失败, 未知异常";
     }
 
     @Override
-    @OperationLog(value = "更新用户横幅", logResult = true)
     public String updateUserBanner(String username, Base64Upload dto) {
         Account account = this.baseMapper.getAccountByUsername(username);
         if (account == null) {

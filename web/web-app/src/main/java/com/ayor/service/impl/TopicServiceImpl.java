@@ -16,6 +16,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -111,7 +112,16 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
             return "主题不存在";
         }
         threaddMapper.deleteThreadByTopicId(topicId);
-        return this.baseMapper.deleteById(topic) > 0 ? null : "删除失败, 未知异常";
+        return this.removeByIdLogical(topicId) ? null : "删除失败, 未知异常";
+    }
+
+    private boolean removeByIdLogical(Serializable topicId) {
+        Topic topic = this.getById(topicId);
+        if (topic == null) {
+            return false;
+        }
+        topic.setIsDeleted(true);
+        return this.updateById(topic);
     }
 
 }

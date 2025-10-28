@@ -31,7 +31,6 @@ public class Post {
 
     private Integer topicId;
 
-    @TableLogic
     private Boolean isDeleted;
 
 }

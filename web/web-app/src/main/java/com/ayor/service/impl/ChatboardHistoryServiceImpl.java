@@ -42,7 +42,7 @@ public class ChatboardHistoryServiceImpl extends ServiceImpl<ChatboardHistoryMap
         }
         ChatboardHistory chatboardHistory = new ChatboardHistory(null, account.getAccountId(), username, topicId, content, new Date());
         if (this.baseMapper.insert(chatboardHistory) > 0) {
-            simpMessagingTemplate.convertAndSend("/chat/topic/" + topicId, chatboardHistory);
+            simpMessagingTemplate.convertAndSend("/broadcast/topic/" + topicId, chatboardHistory);
             return null;
         }
         return "发送失败";

@@ -46,7 +46,6 @@ public class Threadd {
 
     private Boolean isSelected;
 
-    @TableLogic
     private Boolean isDeleted;
 
     private Boolean isAnnouncement;

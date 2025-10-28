@@ -39,6 +39,6 @@ public class Account {
 
     private Integer roleId;
 
-    @TableLogic
+//    @TableLogic
     private boolean isDeleted;
 }
