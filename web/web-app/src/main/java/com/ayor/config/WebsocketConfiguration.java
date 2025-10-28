@@ -18,21 +18,22 @@ public class WebsocketConfiguration implements WebSocketMessageBrokerConfigurer 
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        registry.addEndpoint("/chatboard")
+        registry.addEndpoint("/chatboard", "/chat")
                 .setAllowedOrigins("*");
+
     }
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
         config.setApplicationDestinationPrefixes("/app");
-        config.enableSimpleBroker("/chat");
+        config.setUserDestinationPrefix("/user");
+        config.enableSimpleBroker("/broadcast", "/transfer");
     }
 
     @Override
     public void configureClientInboundChannel(ChannelRegistration registration) {
-        registration
-                .taskExecutor().corePoolSize(4).maxPoolSize(16).queueCapacity(2000);
-        registration.interceptors(authInterceptor); // 先认证再授权
+        registration.interceptors(authInterceptor);
     }
+
 
 }

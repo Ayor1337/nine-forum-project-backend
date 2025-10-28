@@ -2,33 +2,36 @@ package com.ayor.entity.pojo;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableLogic;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.Date;
 
-@TableName("db_topic")
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class Topic {
+@Builder
+@TableName("db_conversation_message")
+public class ConversationMessage {
 
     @TableId(type = IdType.AUTO)
-    private Integer topicId;
+    private Integer conversationMessageId;
 
-    private String title;
+    private Integer conversationId;
 
-    private String coverUrl;
+    private String content;
 
-    private String description;
+    private Integer accountId;
 
     private Date createTime;
 
-    private Integer themeId;
+    private Date updateTime;
 
     private Boolean isDeleted;
+
+    private Boolean isEdit;
 
 }

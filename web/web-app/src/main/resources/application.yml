@@ -20,3 +20,11 @@ spring:
     bucket: nineforum
 server:
   port: 9966
+
+logging:
+  level:
+    org.springframework.messaging.simp: debug
+    org.springframework.messaging.simp.user: trace
+    org.springframework.web.socket.messaging: debug
+    org.springframework.messaging.simp.broker: debug
+

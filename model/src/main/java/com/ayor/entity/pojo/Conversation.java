@@ -10,24 +10,22 @@ import lombok.NoArgsConstructor;
 
 import java.util.Date;
 
-@TableName("db_topic")
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class Topic {
+@TableName("db_conversation")
+public class Conversation {
 
     @TableId(type = IdType.AUTO)
-    private Integer topicId;
+    private Integer conversationId;
 
-    private String title;
+    private Integer alphaAccountId;
 
-    private String coverUrl;
-
-    private String description;
+    private Integer betaAccountId;
 
     private Date createTime;
 
-    private Integer themeId;
+    private Date updateTime;
 
     private Boolean isDeleted;
 

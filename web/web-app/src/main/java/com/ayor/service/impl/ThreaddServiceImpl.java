@@ -21,6 +21,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -144,8 +145,7 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
             return "帖子已删除";
         }
         postMapper.removePostsByThreadId(threadId);
-        thread.setIsDeleted(true);
-        return this.updateById(thread) ? null : "删除失败";
+        return this.removeByIdLogical(threadId) ? null : "删除失败";
     }
 
     public String permRemoveThreadById(Integer threadId) {
@@ -157,8 +157,7 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
             return "帖子已删除";
         }
         postMapper.removePostsByThreadId(threadId);
-        thread.setIsDeleted(true);
-        return this.updateById(thread) ? null : "删除失败";
+        return this.removeByIdLogical(threadId) ? null : "删除失败";
     }
 
     @Override
@@ -280,6 +279,15 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
     private boolean existsThreadById(Integer threadId) {
         Threadd threadd = this.lambdaQuery().eq(Threadd::getThreadId, threadId).one();
         return threadd != null && !threadd.getIsDeleted();
+    }
+
+    private boolean removeByIdLogical(Serializable Id) {
+        Threadd threadd = this.getById(Id);
+        if (threadd == null) {
+            return false;
+        }
+        threadd.setIsDeleted(true);
+        return this.updateById(threadd);
     }
 
 
