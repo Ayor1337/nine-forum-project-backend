@@ -29,4 +29,6 @@ public class Conversation {
 
     private Boolean isDeleted;
 
+    private Integer hidden;
+
 }

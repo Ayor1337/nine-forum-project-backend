@@ -43,14 +43,15 @@ public class SecurityConfiguration {
     @Resource
     private JWTAuthorizeFilter jwtAuthorizeFilter;
 
+
     @Bean
     SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         return http
                 .authorizeHttpRequests(auth -> {
                     auth.requestMatchers("/api/auth/**").permitAll();
                     auth.requestMatchers("/api/*/info/**").permitAll();
-                    auth.requestMatchers("/chatboard", "/chat").permitAll();
-                    auth.anyRequest().authenticated();  
+                    auth.requestMatchers("/chat", "/chatboard", "/system").permitAll();
+                    auth.anyRequest().authenticated();
                 })
                 .formLogin(auth -> {
                     auth.loginProcessingUrl("/api/auth/login");

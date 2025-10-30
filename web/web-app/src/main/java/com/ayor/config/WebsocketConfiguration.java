@@ -18,7 +18,7 @@ public class WebsocketConfiguration implements WebSocketMessageBrokerConfigurer 
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        registry.addEndpoint("/chatboard", "/chat")
+        registry.addEndpoint("/chatboard", "/chat", "/system")
                 .setAllowedOrigins("*");
 
     }
@@ -27,7 +27,7 @@ public class WebsocketConfiguration implements WebSocketMessageBrokerConfigurer 
     public void configureMessageBroker(MessageBrokerRegistry config) {
         config.setApplicationDestinationPrefixes("/app");
         config.setUserDestinationPrefix("/user");
-        config.enableSimpleBroker("/broadcast", "/transfer");
+        config.enableSimpleBroker("/broadcast", "/transfer", "/notif");
     }
 
     @Override

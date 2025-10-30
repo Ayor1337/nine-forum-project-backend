@@ -4,8 +4,10 @@ import com.ayor.entity.app.vo.ConversationVO;
 import com.ayor.entity.app.vo.UserInfoVO;
 import com.ayor.entity.pojo.Account;
 import com.ayor.entity.pojo.Conversation;
+import com.ayor.entity.stomp.ChatUnread;
 import com.ayor.mapper.AccountMapper;
 import com.ayor.mapper.ConversationMapper;
+import com.ayor.service.ChatUnreadService;
 import com.ayor.service.ConversationService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +25,90 @@ import java.util.List;
 public class ConversationServiceImpl extends ServiceImpl<ConversationMapper, Conversation> implements ConversationService {
 
     private final AccountMapper accountMapper;
+
+    private final ChatUnreadService chatUnreadService;
+
+    @Override
+    public ConversationVO getConversationByAccountId(String username, Integer toAccountId) {
+        Integer accountId = accountMapper.getAccountIdByUsername( username);
+        if (accountId == null) {
+            return null;
+        }
+        Conversation conversation = this.lambdaQuery()
+                .eq(Conversation::getAlphaAccountId, accountId)
+                .eq(Conversation::getBetaAccountId, toAccountId)
+                .or()
+                .eq(Conversation::getAlphaAccountId, toAccountId)
+                .eq(Conversation::getBetaAccountId, accountId)
+                .one();
+        if (conversation == null) {
+            return null;
+        }
+        ConversationVO conversationVO = new ConversationVO();
+        conversationVO.setConversationId(conversation.getConversationId());
+        // 如果是发起者来查找对话
+        if (accountId.equals(conversation.getAlphaAccountId()) ) {
+            if(conversation.getHidden() == 1 ) {
+                conversation.setHidden(0);
+                this.updateById( conversation);
+                return conversationVO;
+            }
+            if (conversation.getHidden() == 3) {
+                conversation.setHidden(2);
+                this.updateById( conversation);
+                return conversationVO;
+            }
+            return conversationVO;
+        }
+        // 如果是接收者来查找对话
+        if (accountId.equals(conversation.getBetaAccountId())) {
+            if (conversation.getHidden() == 2) {
+                conversation.setHidden(0);
+                this.updateById( conversation);
+                return conversationVO;
+            }
+            if (conversation.getHidden() == 3) {
+                conversation.setHidden(1);
+                this.updateById( conversation);
+                return conversationVO;
+            }
+            return conversationVO;
+        }
+        return conversationVO;
+    }
+
+    @Override
+    public String hiddenConversation(Integer conversationId, String username) {
+        Conversation conversation = this.getById(conversationId);
+        Integer accountId = accountMapper.getAccountIdByUsername(username);
+        if (accountId == null) {
+            return "用户不存在";
+        }
+        if (conversation == null) {
+            return "对话不 存在";
+        }
+        if (accountId.equals(conversation.getAlphaAccountId())) {
+            if (conversation.getHidden() == 0) {
+                conversation.setHidden(1);
+            }
+            if (conversation.getHidden() == 2) {
+                conversation.setHidden(3);
+            }
+            this.updateById(conversation);
+            return null;
+        }
+        if (accountId.equals(conversation.getBetaAccountId())) {
+            if (conversation.getHidden() == 0) {
+                conversation.setHidden(2);
+            }
+            if (conversation.getHidden() == 1) {
+                conversation.setHidden(3);
+            }
+            this.updateById(conversation);
+            return null;
+        }
+        return "无权限";
+    }
 
     @Override
     public String createNewConversation(String username, String toUsername) {
@@ -67,25 +153,73 @@ public class ConversationServiceImpl extends ServiceImpl<ConversationMapper, Con
                 .list();
 
         initiativeConversations.forEach(conversation -> {
-            Account accountById = accountMapper.getAccountById(conversation.getBetaAccountId());
-            ConversationVO conversationVO = ConversationVO.builder()
-                    .conversationId(conversation.getConversationId())
-                    .userInfo(getUserInfoVO(accountById))
-                    .updateTime(conversation.getUpdateTime())
-                    .build();
-            conversationVOs.add(conversationVO);
+            if (conversation.getHidden() != 1 && conversation.getHidden() != 3) {
+                Account accountById = accountMapper.getAccountById(conversation.getBetaAccountId());
+                ConversationVO conversationVO = ConversationVO.builder()
+                        .conversationId(conversation.getConversationId())
+                        .userInfo(getUserInfoVO(accountById))
+                        .updateTime(conversation.getUpdateTime())
+                        .build();
+                conversationVOs.add(conversationVO);
+            }
         });
         reactiveConversations.forEach(conversation -> {
-            Account accountById = accountMapper.getAccountById(conversation.getAlphaAccountId());
-            ConversationVO conversationVO = ConversationVO.builder()
-                    .conversationId(conversation.getConversationId())
-                    .userInfo(getUserInfoVO(accountById))
-                    .updateTime(conversation.getUpdateTime())
-                    .build();
-            conversationVOs.add(conversationVO);
+            if (conversation.getHidden() != 2 && conversation.getHidden() != 3) {
+                Account accountById = accountMapper.getAccountById(conversation.getAlphaAccountId());
+                ConversationVO conversationVO = ConversationVO.builder()
+                        .conversationId(conversation.getConversationId())
+                        .userInfo(getUserInfoVO(accountById))
+                        .updateTime(conversation.getUpdateTime())
+                        .build();
+                conversationVOs.add(conversationVO);
+            }
         });
         return conversationVOs;
     }
+
+    @Override
+    public List<ChatUnread> getUnreadList(String username) {
+        Account account = accountMapper.getAccountByUsername(username);
+        List<Conversation> alphCconversationList = this.lambdaQuery()
+                .eq(Conversation::getAlphaAccountId, account.getAccountId())
+                .list();
+        List<Conversation> betaCconversationList = this.lambdaQuery()
+                .eq(Conversation::getBetaAccountId, account.getAccountId())
+                .list();
+        List<ChatUnread> chatUnreadList = new ArrayList<>();
+        alphCconversationList.forEach(con -> {
+            Long unread = chatUnreadService.getUnread(con.getConversationId(), username);
+            chatUnreadList.add(ChatUnread.builder()
+                    .conversationId(con.getConversationId())
+                    .fromUserId(con.getBetaAccountId())
+                    .unread(unread)
+                    .build());
+        });
+        betaCconversationList.forEach(con -> {
+            Long unread = chatUnreadService.getUnread(con.getConversationId(), username);
+            chatUnreadList.add(ChatUnread.builder()
+                    .conversationId(con.getConversationId())
+                    .fromUserId(con.getAlphaAccountId())
+                    .unread(unread)
+                    .build());
+        });
+        return chatUnreadList;
+    }
+
+    @Override
+    public String clearUnread(Integer conversationId, Integer fromUserId) {
+        String username = accountMapper.getUsernameById(fromUserId);
+        if (username == null) {
+            return "无此用户";
+        }
+        Conversation conversation = this.getById(conversationId);
+        if (conversation == null) {
+            return "无此对话";
+        }
+        chatUnreadService.clearUnread(conversationId, username);
+        return null;
+    }
+
 
     private UserInfoVO getUserInfoVO(Account account) {
         if (account == null) {
