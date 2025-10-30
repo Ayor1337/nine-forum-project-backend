@@ -1,4 +1,4 @@
-package com.ayor.aspect;
+package com.ayor.aspect.oplog;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;

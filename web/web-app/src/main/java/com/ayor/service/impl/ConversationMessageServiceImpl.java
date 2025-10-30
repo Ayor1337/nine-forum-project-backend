@@ -1,18 +1,21 @@
 package com.ayor.service.impl;
 
+import com.ayor.aspect.notification.NotificationType;
 import com.ayor.entity.app.dto.ConversationMessageDTO;
 import com.ayor.entity.app.vo.ConversationMessageVO;
 import com.ayor.entity.pojo.Account;
 import com.ayor.entity.pojo.ConversationMessage;
+import com.ayor.entity.stomp.ChatUnread;
 import com.ayor.mapper.AccountMapper;
 import com.ayor.mapper.ConversationMapper;
 import com.ayor.mapper.ConversationMessageMapper;
+import com.ayor.aspect.notification.Notification;
+import com.ayor.service.ChatUnreadService;
 import com.ayor.service.ConversationMessageService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.messaging.simp.user.SimpUserRegistry;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,7 +34,12 @@ public class ConversationMessageServiceImpl extends ServiceImpl<ConversationMess
 
     private final SimpMessagingTemplate simpMessagingTemplate;
 
+    private final ChatUnreadService chatUnreadService;
+
     @Override
+    @Notification(conversationId = "#conversationMessage.conversationId",
+            type = NotificationType.RECEIVED_MSG,
+            user = "#username")
     public String sendMessage(ConversationMessageDTO conversationMessage, String username) {
         Account account = accountMapper.getAccountByUsername(username);
         if(account == null) {
@@ -58,6 +66,10 @@ public class ConversationMessageServiceImpl extends ServiceImpl<ConversationMess
                     .convertAndSendToUser(usernameById,
                             "/transfer/conversation/" + conversationMessage.getConversationId(),
                             messageVO);
+            simpMessagingTemplate
+                    .convertAndSendToUser(username,
+                            "/transfer/conversation/" + conversationMessage.getConversationId(),
+                            messageVO);
             return null;
         }
         return "发送失败";
@@ -65,7 +77,7 @@ public class ConversationMessageServiceImpl extends ServiceImpl<ConversationMess
     }
 
     @Override
-    public List<ConversationMessageVO> getConversationMessageList(Integer conversationId) {
+    public List<ConversationMessageVO> getConversationMessageList(Integer conversationId, String username) {
         List<ConversationMessage> list = this.lambdaQuery()
                 .eq(ConversationMessage::getConversationId, conversationId)
                 .list();
@@ -78,6 +90,12 @@ public class ConversationMessageServiceImpl extends ServiceImpl<ConversationMess
             conversationMessageVOS.add(conversationMessageVO);
         });
 
+        ChatUnread emptyUnread = ChatUnread.emptyUnread(conversationId, accountMapper.getAccountIdByUsername( username));
+        chatUnreadService.clearUnread(conversationId, username);
+        simpMessagingTemplate
+                .convertAndSendToUser(username,
+                        "/notif",
+                        emptyUnread);
         return conversationMessageVOS;
     }
 

@@ -13,4 +13,6 @@ public class ConversationMessageDTO {
 
     private String content;
 
+    private Integer toUserId;
+
 }
