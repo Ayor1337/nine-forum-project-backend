@@ -14,7 +14,7 @@ public class CorsConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration cfg = new CorsConfiguration();
-        cfg.setAllowedOrigins(List.of("http://localhost"));
+        cfg.setAllowedOrigins(List.of("http://localhost:3000, http://localhost:80"));
         cfg.setAllowCredentials(true); // 若需要 Cookie
         cfg.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         cfg.setAllowedHeaders(List.of("*")); // 或精准列出

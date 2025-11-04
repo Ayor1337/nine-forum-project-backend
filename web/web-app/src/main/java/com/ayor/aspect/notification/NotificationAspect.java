@@ -2,9 +2,11 @@ package com.ayor.aspect.notification;
 
 import com.ayor.entity.pojo.Account;
 import com.ayor.entity.stomp.ChatUnread;
+import com.ayor.entity.stomp.MessageUnread;
 import com.ayor.mapper.AccountMapper;
 import com.ayor.mapper.ConversationMapper;
 import com.ayor.service.ChatUnreadService;
+import com.ayor.service.MessageUnreadService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -47,6 +49,8 @@ public class NotificationAspect {
 
     private final ChatUnreadService chatUnreadService;
 
+    private final MessageUnreadService messageUnreadService;
+
     @Around("@annotation(notification)")
     public Object around(ProceedingJoinPoint joinPoint, Notification notification) throws Throwable {
         Method method = ((MethodSignature) joinPoint.getSignature()).getMethod();
@@ -88,16 +92,20 @@ public class NotificationAspect {
 
 
         if (!isUserSubscribed(toUser, "/transfer/conversation/"+conversationId)) {
-            long unreadCount = chatUnreadService.addUnread(conversationId, toUser);
-
+            long unreadConversationCount = chatUnreadService.addUnread(conversationId, toUser);
+            long unreadMessageCount = messageUnreadService.addUnread(toUser, unreadConversationCount);
             ChatUnread chatUnread = ChatUnread
                     .builder()
-                    .unread(unreadCount)
+                    .unread(unreadConversationCount)
                     .fromUserId(account.getAccountId())
                     .conversationId(conversationId)
                     .build();
+            MessageUnread messageUnread = MessageUnread.builder()
+                    .unread(unreadMessageCount)
+                    .build();
 
-            messagingTemplate.convertAndSendToUser(toUser, "/notif", chatUnread);
+            messagingTemplate.convertAndSendToUser(toUser, "/notif-message", chatUnread);
+            messagingTemplate.convertAndSendToUser(toUser, "/notif", messageUnread);
         } else {
             chatUnreadService.clearUnread(conversationId, username);
         }

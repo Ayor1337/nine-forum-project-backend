@@ -7,7 +7,7 @@ services:
 #      dockerfile: Dockerfile
     image: mysql:latest
     ports:
-      - "6033:3306"
+      - "16033:3306"
     volumes:
       - /docker_volumes/nine_forum/mysql:/var/lib/mysql
     env_file:
@@ -23,7 +23,7 @@ services:
     container_name: nine-redis
     image: redis:latest
     ports:
-      - "6379:6379"
+      - "16379:6379"
     volumes:
       - /docker_volumes/nine_forum/redis:/data
     networks:

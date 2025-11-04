@@ -5,10 +5,10 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
     username: root
     password: ${MYSQL_PASSWORD}
-    url: jdbc:mysql://localhost:6033/nine_forum
+    url: jdbc:mysql://localhost:16033/nine_forum
   data:
     redis:
-      port: 6379
+      port: 16379
   security:
     jwt:
       secret-key: kenkouniyokunai

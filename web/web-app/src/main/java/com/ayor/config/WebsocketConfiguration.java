@@ -27,7 +27,8 @@ public class WebsocketConfiguration implements WebSocketMessageBrokerConfigurer 
     public void configureMessageBroker(MessageBrokerRegistry config) {
         config.setApplicationDestinationPrefixes("/app");
         config.setUserDestinationPrefix("/user");
-        config.enableSimpleBroker("/broadcast", "/transfer", "/notif");
+        config.enableSimpleBroker("/broadcast",
+                "/transfer", "/notif", "/notif-message");
     }
 
     @Override
