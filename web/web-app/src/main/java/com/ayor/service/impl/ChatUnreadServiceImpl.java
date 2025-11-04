@@ -36,9 +36,17 @@ public class ChatUnreadServiceImpl implements ChatUnreadService {
     }
 
     @Override
-    public void clearUnread(Integer conversationId, String fromUser) {
+    public long clearUnread(Integer conversationId, String fromUser) {
         String key = buildKey(conversationId, fromUser);
+        if (!existValue(key)) {
+            return 0;
+        }
+        String consume = template.opsForValue().get(key);
         template.delete(key);
+        if (consume != null) {
+            return Long.parseLong(consume);
+        }
+        return 0L;
     }
 
     public long incrUnread(Integer conversationId, String fromUser) {

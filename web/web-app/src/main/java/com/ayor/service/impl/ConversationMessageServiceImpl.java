@@ -6,12 +6,14 @@ import com.ayor.entity.app.vo.ConversationMessageVO;
 import com.ayor.entity.pojo.Account;
 import com.ayor.entity.pojo.ConversationMessage;
 import com.ayor.entity.stomp.ChatUnread;
+import com.ayor.entity.stomp.MessageUnread;
 import com.ayor.mapper.AccountMapper;
 import com.ayor.mapper.ConversationMapper;
 import com.ayor.mapper.ConversationMessageMapper;
 import com.ayor.aspect.notification.Notification;
 import com.ayor.service.ChatUnreadService;
 import com.ayor.service.ConversationMessageService;
+import com.ayor.service.MessageUnreadService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
@@ -35,6 +37,8 @@ public class ConversationMessageServiceImpl extends ServiceImpl<ConversationMess
     private final SimpMessagingTemplate simpMessagingTemplate;
 
     private final ChatUnreadService chatUnreadService;
+
+    private final MessageUnreadService messageUnreadService;
 
     @Override
     @Notification(conversationId = "#conversationMessage.conversationId",
@@ -91,11 +95,21 @@ public class ConversationMessageServiceImpl extends ServiceImpl<ConversationMess
         });
 
         ChatUnread emptyUnread = ChatUnread.emptyUnread(conversationId, accountMapper.getAccountIdByUsername( username));
-        chatUnreadService.clearUnread(conversationId, username);
+        long cost = chatUnreadService.clearUnread(conversationId, username);
+        long remaining =  messageUnreadService.clearUnread(username, cost);
+        MessageUnread messageUnread = MessageUnread.builder()
+                .unread(remaining)
+                .build();
+
+        simpMessagingTemplate
+                .convertAndSendToUser(username,
+                        "/notif-message",
+                        emptyUnread);
         simpMessagingTemplate
                 .convertAndSendToUser(username,
                         "/notif",
-                        emptyUnread);
+                        messageUnread);
+
         return conversationMessageVOS;
     }
 
