@@ -5,13 +5,18 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.io.Serial;
+import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class ThreadVO {
+public class ThreadVO implements Serializable {
+
+    @Serial
+    private static final long serialVersionUID = 114L;
 
     private Integer threadId;
 

@@ -27,6 +27,7 @@ public class ConversationController {
     @PostMapping("/new")
     public Result<Void> newConversation(@RequestParam("username") String toUsername) {
         String username = securityUtils.getSecurityUsername();
+        System.out.println(securityUtils.getSecurityUserId());
         return Result.messageHandler(() -> conversationService.createNewConversation(username, toUsername));
     }
 

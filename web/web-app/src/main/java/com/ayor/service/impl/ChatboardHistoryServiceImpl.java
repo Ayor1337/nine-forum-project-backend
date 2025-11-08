@@ -9,6 +9,7 @@ import com.ayor.service.ChatboardHistoryService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -49,6 +50,7 @@ public class ChatboardHistoryServiceImpl extends ServiceImpl<ChatboardHistoryMap
     }
 
     @Override
+    @Cacheable(value = "chatboardHistory", key = "#topicId")
     public List<ChatboardHistoryVO> getChatboardHistory(Integer topicId) {
         List<ChatboardHistory> chatboardHistories = this.lambdaQuery()
                 .eq(ChatboardHistory::getTopicId, topicId)

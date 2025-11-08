@@ -4,10 +4,15 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.io.Serial;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 public class TopicVO {
+
+    @Serial
+    private static final long serialVersionUID = 115L;
 
     private Integer topicId;
 

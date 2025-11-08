@@ -14,6 +14,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -63,7 +64,10 @@ public class LikeThreadServiceImpl extends ServiceImpl<LikeThreadMapper, LikeThr
     }
 
     @Override
-    public PageEntity<ThreadVO> getLikesByAccountId(Integer accountId, Integer currentPage, Integer pageSize) {
+    @Cacheable(value = "ThreadVO", key = "{#accountId+':pageNum:'+#currentPage+':pageSize:'+#pageSize}", condition = "#accountId != null")
+    public PageEntity<ThreadVO> getLikesByAccountId(Integer accountId,
+                                                    Integer currentPage,
+                                                    Integer pageSize) {
         Page<LikeThread> page = new Page<>(currentPage, pageSize);
         Account account = accountMapper.getAccountById(accountId);
         if (account == null) {
@@ -86,12 +90,14 @@ public class LikeThreadServiceImpl extends ServiceImpl<LikeThreadMapper, LikeThr
     }
 
     @Override
+    @Cacheable(value = "LikeCount", key = "#threadId", condition = "#threadId != null")
     public Integer getLikeCountByThreadId(Integer threadId) {
         Integer likeCountByThreadId = this.baseMapper.getLikeCountByThreadId(threadId);
         return likeCountByThreadId == null ? 0 : likeCountByThreadId;
     }
 
     @Override
+    @Cacheable(value = "IsLiked", key = "{#username+':'+#threadId}", condition = "#username != null")
     public Boolean isLikedByUsername(String username, Integer threadId) {
         Account account = accountMapper.getAccountByUsername(username);
         if (account == null) {
