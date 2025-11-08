@@ -116,7 +116,6 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         Date now = new Date();
         account.setCreateTime(now);
         account.setUpdateTime(now);
-        account.setIsDeleted(false);
         return this.save(account) ? null : "创建用户失败";
     }
 
@@ -143,7 +142,7 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         if (account == null) {
             return "用户不存在";
         }
-        account.setIsDeleted(true);
+        account.setDeleted(true);
         return this.updateById(account) ? null : "删除用户失败";
     }
 
