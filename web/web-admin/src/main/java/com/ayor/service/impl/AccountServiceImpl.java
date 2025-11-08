@@ -1,6 +1,7 @@
 package com.ayor.service.impl;
 
 import com.ayor.entity.PageEntity;
+import com.ayor.entity.admin.dto.AccountDTO;
 import com.ayor.entity.admin.vo.AccountVO;
 import com.ayor.entity.pojo.Account;
 import com.ayor.mapper.AccountMapper;
@@ -15,8 +16,10 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 @Service
@@ -95,6 +98,53 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
                 .eq(status != null, Account::getStatus, status)
                 .page(new Page<>(pageNum, pageSize));
         return new PageEntity<>(page.getTotal(), toVoList(page.getRecords()));
+    }
+
+    @Override
+    public String createAccount(AccountDTO accountDTO) {
+        if (accountDTO == null || !StringUtils.hasText(accountDTO.getUsername())) {
+            return "用户名不能为空";
+        }
+        Long count = this.lambdaQuery()
+                .eq(Account::getUsername, accountDTO.getUsername())
+                .count();
+        if (count != null && count > 0) {
+            return "用户名已存在";
+        }
+        Account account = new Account();
+        BeanUtils.copyProperties(accountDTO, account);
+        Date now = new Date();
+        account.setCreateTime(now);
+        account.setUpdateTime(now);
+        account.setIsDeleted(false);
+        return this.save(account) ? null : "创建用户失败";
+    }
+
+    @Override
+    public String updateAccount(AccountDTO accountDTO) {
+        if (accountDTO == null || accountDTO.getAccountId() == null) {
+            return "用户不存在";
+        }
+        Account account = this.getById(accountDTO.getAccountId());
+        if (account == null) {
+            return "用户不存在";
+        }
+        BeanUtils.copyProperties(accountDTO, account);
+        account.setUpdateTime(new Date());
+        return this.updateById(account) ? null : "更新用户失败";
+    }
+
+    @Override
+    public String deleteAccount(Integer accountId) {
+        if (accountId == null) {
+            return "用户不存在";
+        }
+        Account account = this.getById(accountId);
+        if (account == null) {
+            return "用户不存在";
+        }
+        account.setIsDeleted(true);
+        return this.updateById(account) ? null : "删除用户失败";
     }
 
     private List<AccountVO> toVoList(List<Account> accounts) {
