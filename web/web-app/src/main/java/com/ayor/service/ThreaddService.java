@@ -1,9 +1,9 @@
 package com.ayor.service;
 
+import com.ayor.entity.PageEntity;
 import com.ayor.entity.app.dto.TagUpdateDTO;
 import com.ayor.entity.app.dto.ThreadDTO;
 import com.ayor.entity.app.vo.AnnouncementVO;
-import com.ayor.entity.app.vo.ThreadPageVO;
 import com.ayor.entity.app.vo.ThreadVO;
 import com.ayor.entity.pojo.Threadd;
 import com.baomidou.mybatisplus.extension.service.IService;
@@ -17,7 +17,7 @@ public interface ThreaddService extends IService<Threadd> {
 
     ThreadVO getThreadById(Integer threadId);
 
-    ThreadPageVO getThreadPagesByUserId(Integer userId, Integer currentPage, Integer pageSize);
+    PageEntity<ThreadVO> getThreadPagesByUserId(Integer userId, Integer currentPage, Integer pageSize);
 
     String removeThreadById(Integer threadId, String username);
 

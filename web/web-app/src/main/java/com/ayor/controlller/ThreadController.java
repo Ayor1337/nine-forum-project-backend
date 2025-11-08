@@ -1,10 +1,10 @@
 package com.ayor.controlller;
 
+import com.ayor.entity.PageEntity;
 import com.ayor.entity.app.dto.Konekuto;
 import com.ayor.entity.app.dto.TagUpdateDTO;
 import com.ayor.entity.app.dto.ThreadDTO;
 import com.ayor.entity.app.vo.AnnouncementVO;
-import com.ayor.entity.app.vo.ThreadPageVO;
 import com.ayor.entity.app.vo.ThreadVO;
 import com.ayor.result.Result;
 import com.ayor.service.ThreaddService;
@@ -33,9 +33,9 @@ public class ThreadController {
 
 
     @GetMapping("/info/user")
-    public Result<ThreadPageVO> getThreadsByUserId(@RequestParam(name = "user_id") Integer userId,
-                                                   @RequestParam(name = "page") Integer page,
-                                                   @RequestParam(name = "page_size") Integer size) {
+    public Result<PageEntity<ThreadVO>> getThreadsByUserId(@RequestParam(name = "user_id") Integer userId,
+                                                 @RequestParam(name = "page") Integer page,
+                                                 @RequestParam(name = "page_size") Integer size) {
         return Result.dataMessageHandler(() -> threaddService.getThreadPagesByUserId(userId, page, size), "获取失败");
     }
 

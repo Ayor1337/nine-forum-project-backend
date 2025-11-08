@@ -46,6 +46,8 @@ services:
   rabbitmq:
     container_name: nine-rabbitmq
     image: rabbitmq:management
+    volumes:
+      - /docker_volumes/nine_forum/rabbitmq:/var/lib/rabbitmq
     networks:
       - forum-project
 

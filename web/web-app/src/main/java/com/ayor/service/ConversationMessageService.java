@@ -1,7 +1,5 @@
 package com.ayor.service;
 
-import com.ayor.aspect.notification.Notification;
-import com.ayor.aspect.notification.NotificationType;
 import com.ayor.entity.app.dto.ConversationMessageDTO;
 import com.ayor.entity.app.vo.ConversationMessageVO;
 import com.ayor.entity.pojo.ConversationMessage;

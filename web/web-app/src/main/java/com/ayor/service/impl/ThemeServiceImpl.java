@@ -10,7 +10,6 @@ import com.ayor.mapper.ThemeMapper;
 import com.ayor.mapper.TopicMapper;
 import com.ayor.service.ThemeService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import jakarta.annotation.Resource;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;

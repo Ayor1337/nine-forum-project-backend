@@ -5,7 +5,6 @@ import com.ayor.entity.app.vo.ThemeTopicVO;
 import com.ayor.entity.app.vo.ThemeVO;
 import com.ayor.result.Result;
 import com.ayor.service.ThemeService;
-import jakarta.annotation.Resource;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;

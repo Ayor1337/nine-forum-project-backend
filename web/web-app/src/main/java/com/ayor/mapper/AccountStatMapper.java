@@ -7,15 +7,15 @@ import org.apache.ibatis.annotations.Update;
 public interface AccountStatMapper extends BaseMapper<AccountStat> {
 
 
-    @Update("UPDATE db_account_stat " +
+    @Update("UPDATE account_stat " +
             "SET thread_count = " +
-            "(SELECT COUNT(*) FROM db_thread WHERE account_id = db_account_stat.account_id)")
+            "(SELECT COUNT(*) FROM thread WHERE account_id = account_stat.account_id)")
     void updateThreadCount();
 
 
-    @Update("UPDATE db_account_stat " +
+    @Update("UPDATE account_stat " +
             "SET post_count = " +
-            "(SELECT COUNT(*) FROM db_post WHERE account_id = db_account_stat.account_id)")
+            "(SELECT COUNT(*) FROM post WHERE account_id = account_stat.account_id)")
     void updatePostCount();
 
 

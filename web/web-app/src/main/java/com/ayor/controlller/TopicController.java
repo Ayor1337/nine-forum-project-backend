@@ -4,7 +4,6 @@ import com.ayor.entity.app.dto.TopicDTO;
 import com.ayor.entity.app.vo.TopicVO;
 import com.ayor.result.Result;
 import com.ayor.service.TopicService;
-import jakarta.annotation.Resource;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;

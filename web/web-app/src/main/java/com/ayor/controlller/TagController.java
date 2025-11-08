@@ -4,7 +4,6 @@ import com.ayor.entity.app.dto.TagDTO;
 import com.ayor.entity.app.vo.TagVO;
 import com.ayor.result.Result;
 import com.ayor.service.TagService;
-import jakarta.annotation.Resource;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;

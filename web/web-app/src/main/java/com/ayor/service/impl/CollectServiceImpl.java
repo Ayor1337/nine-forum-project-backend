@@ -1,6 +1,6 @@
 package com.ayor.service.impl;
 
-import com.ayor.entity.app.vo.ThreadPageVO;
+import com.ayor.entity.PageEntity;
 import com.ayor.entity.app.vo.ThreadVO;
 import com.ayor.entity.pojo.Account;
 import com.ayor.entity.pojo.Collect;
@@ -75,7 +75,7 @@ public class CollectServiceImpl extends ServiceImpl<CollectMapper, Collect> impl
     }
 
     @Override
-    public ThreadPageVO getCollectsByAccountId(Integer accountId, Integer pageNum, Integer pageSize) {
+    public PageEntity<ThreadVO> getCollectsByAccountId(Integer accountId, Integer pageNum, Integer pageSize) {
         Page<Collect> page = new Page<>(pageNum, pageSize);
         List<Collect> collects = this.lambdaQuery().eq(Collect::getAccountId, accountId)
                 .page(page).getRecords();
@@ -90,8 +90,7 @@ public class CollectServiceImpl extends ServiceImpl<CollectMapper, Collect> impl
             threadVO.setImageUrls(null);
             threadVOS.add(threadVO);
         });
-        ThreadPageVO threadPageVO = new ThreadPageVO((int) page.getTotal(), threadVOS);
-        return threadPageVO;
+        return new PageEntity<>(page.getTotal(), threadVOS);
     }
 }
 

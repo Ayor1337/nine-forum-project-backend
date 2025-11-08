@@ -5,7 +5,6 @@ import com.ayor.entity.app.vo.PostVO;
 import com.ayor.result.Result;
 import com.ayor.service.PostService;
 import com.ayor.util.SecurityUtils;
-import jakarta.annotation.Resource;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;

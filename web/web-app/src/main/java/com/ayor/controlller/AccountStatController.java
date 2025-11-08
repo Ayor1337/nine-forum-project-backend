@@ -4,7 +4,6 @@ import com.ayor.entity.app.vo.AccountStatVO;
 import com.ayor.result.Result;
 import com.ayor.service.AccountStatService;
 import com.ayor.util.SecurityUtils;
-import jakarta.annotation.Resource;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;

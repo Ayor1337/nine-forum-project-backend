@@ -6,7 +6,7 @@
 
 
     <select id="getThreadsByIds" resultType="com.ayor.entity.pojo.Threadd">
-        select * from db_thread where thread_id in
+        select * from thread where thread_id in
         <foreach item="item" index="index" collection="list" open="(" separator="," close=")">
             #{item}
         </foreach>
