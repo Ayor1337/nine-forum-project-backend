@@ -8,6 +8,7 @@ import com.ayor.service.AccountStatService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,6 +23,7 @@ public class AccountStatServiceImpl extends ServiceImpl<AccountStatMapper, Accou
 
 
     @Override
+    @Cacheable(value = "accountStat", key = "#username", condition = "#username != null")
     public AccountStatVO getAccountStatByUsername(String username) {
         Integer userId = accountMapper.getAccountIdByUsername(username);
         if (userId == null) {

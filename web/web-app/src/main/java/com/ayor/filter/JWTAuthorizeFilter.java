@@ -41,18 +41,18 @@ public class JWTAuthorizeFilter extends OncePerRequestFilter {
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
         String authorization = request.getHeader("Authorization");
-        if(authorization == null) {
-            authorization = Optional.ofNullable(request.getCookies())
-                    .map(cookies -> {
-                        for (Cookie cookie : cookies) {
-                            if(cookie.getName().equals("Authorization")) {
-
-                                return "Bearer " + cookie.getValue();
-                            }
-                        }
-                        return null;
-                    }).orElse( null);
-        }
+//        if(authorization == null) {
+//            authorization = Optional.ofNullable(request.getCookies())
+//                    .map(cookies -> {
+//                        for (Cookie cookie : cookies) {
+//                            if(cookie.getName().equals("Authorization")) {
+//
+//                                return "Bearer " + cookie.getValue();
+//                            }
+//                        }
+//                        return null;
+//                    }).orElse( null);
+//        }
         DecodedJWT jwt = jwtUtil.resolveJwt(authorization);
         if(jwt != null) {
             UserDetails user = jwtUtil.toUser(jwt);

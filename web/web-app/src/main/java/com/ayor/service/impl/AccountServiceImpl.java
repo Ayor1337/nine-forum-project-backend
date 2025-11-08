@@ -13,6 +13,9 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -48,6 +51,7 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
     }
 
     @Override
+    @Cacheable(value = "userInfo", key = "#username", condition = "#username != null")
     public UserInfoVO getUserInfo(String username) {
         Account account = accountMapper.getAccountByUsername(username);
         if (account == null) {
@@ -62,6 +66,7 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
     }
 
     @Override
+    @Cacheable(value = "userInfo", key = "#id", condition = "#id != null")
     public UserInfoVO getUserInfoById(Integer id) {
         Account account = accountMapper.getAccountById(id);
         if (account == null) {
@@ -75,6 +80,12 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
     }
 
     @Override
+    @Caching(
+            evict = {
+                    @CacheEvict(value = "userInfo", key = "#username"),
+                    @CacheEvict(value = "userInfo", key = "#id")
+            }
+    )
     public String updateUserAvatar(String username, Base64Upload dto) {
         Account account = this.baseMapper.getAccountByUsername(username);
         if (account == null) {

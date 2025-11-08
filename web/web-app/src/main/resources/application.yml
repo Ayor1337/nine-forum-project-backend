@@ -9,6 +9,9 @@ spring:
   data:
     redis:
       port: 16379
+  cache:
+    redis:
+      time-to-live: 86400
   security:
     jwt:
       secret-key: kenkouniyokunai
