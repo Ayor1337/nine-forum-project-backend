@@ -6,7 +6,7 @@ import org.apache.ibatis.annotations.Select;
 
 public interface CollectMapper extends BaseMapper<Collect> {
 
-    @Select("select count(*) from db_collect where thread_id = #{threadId}")
+    @Select("select count(*) from collect where thread_id = #{threadId}")
     Integer getCollectCountByThreadId(Integer threadId);
 
 }

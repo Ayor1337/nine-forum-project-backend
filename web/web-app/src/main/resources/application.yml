@@ -18,6 +18,15 @@ spring:
     access-key: admin
     secret-key: qwert123
     bucket: nineforum
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+    virtual-host: /nine_forum
+    listener:
+      simple:
+        acknowledge-mode: manual
 server:
   port: 9966
 

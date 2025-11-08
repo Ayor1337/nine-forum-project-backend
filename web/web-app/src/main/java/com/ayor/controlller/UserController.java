@@ -5,8 +5,6 @@ import com.ayor.entity.app.vo.UserInfoVO;
 import com.ayor.result.Result;
 import com.ayor.service.AccountService;
 import com.ayor.util.SecurityUtils;
-import jakarta.annotation.Resource;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 

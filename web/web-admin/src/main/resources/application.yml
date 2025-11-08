@@ -1,0 +1,31 @@
+spring:
+  application:
+    name: nine-forum-project
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: root
+    password: ${MYSQL_PASSWORD}
+    url: jdbc:mysql://localhost:16033/nine_forum
+  data:
+    redis:
+      port: 16379
+  security:
+    jwt:
+      secret-key: kenkouniyokunai
+      expire: 7
+  minio:
+    endpoint: http://localhost:9000
+    access-key: admin
+    secret-key: qwert123
+    bucket: nineforum
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+    virtual-host: /nine_forum
+    listener:
+      simple:
+        acknowledge-mode: manual
+server:
+  port: 9977

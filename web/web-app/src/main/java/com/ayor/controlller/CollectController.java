@@ -1,6 +1,7 @@
 package com.ayor.controlller;
 
-import com.ayor.entity.app.vo.ThreadPageVO;
+import com.ayor.entity.PageEntity;
+import com.ayor.entity.app.vo.ThreadVO;
 import com.ayor.result.Result;
 import com.ayor.service.CollectService;
 import com.ayor.util.SecurityUtils;
@@ -10,7 +11,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/collect")
-public class CollectController {
+public class    CollectController {
 
     private final CollectService collectService;
 
@@ -40,9 +41,9 @@ public class CollectController {
     }
 
     @GetMapping("/get_collects")
-    public Result<ThreadPageVO> getCollects(@RequestParam(name = "user_id") Integer userId,
-                                         @RequestParam(name = "page") Integer pageNum,
-                                         @RequestParam(name = "page_size") Integer pageSize) {
+    public Result<PageEntity<ThreadVO>> getCollects(@RequestParam(name = "user_id") Integer userId,
+                                                    @RequestParam(name = "page") Integer pageNum,
+                                                    @RequestParam(name = "page_size") Integer pageSize) {
         return Result.dataMessageHandler(() -> collectService.getCollectsByAccountId(userId, pageNum, pageSize), "获取失败");
     }
 

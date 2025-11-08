@@ -1,11 +1,9 @@
 package com.ayor.service;
 
-import com.ayor.entity.app.vo.CollectVO;
-import com.ayor.entity.app.vo.ThreadPageVO;
+import com.ayor.entity.PageEntity;
+import com.ayor.entity.app.vo.ThreadVO;
 import com.ayor.entity.pojo.Collect;
 import com.baomidou.mybatisplus.extension.service.IService;
-
-import java.util.List;
 
 public interface CollectService extends IService<Collect> {
 
@@ -17,5 +15,5 @@ public interface CollectService extends IService<Collect> {
 
     Integer getCollectCountByThreadId(Integer threadId);
 
-    ThreadPageVO getCollectsByAccountId(Integer accountId, Integer pageNum, Integer pageSize);
+    PageEntity<ThreadVO> getCollectsByAccountId(Integer accountId, Integer pageNum, Integer pageSize);
 }

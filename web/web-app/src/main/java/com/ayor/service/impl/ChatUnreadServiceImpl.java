@@ -14,7 +14,6 @@ public class ChatUnreadServiceImpl implements ChatUnreadService {
     private final StringRedisTemplate template;
 
     private String buildKey(Integer conversationId, String fromUser) {
-        
         return "chat:unread:" + fromUser + ":" + conversationId;
     }
 

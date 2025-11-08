@@ -1,10 +1,10 @@
 package com.ayor.service.impl;
 
+import com.ayor.entity.PageEntity;
 import com.ayor.entity.app.dto.TagUpdateDTO;
 import com.ayor.entity.app.dto.ThreadDTO;
 import com.ayor.entity.app.vo.AnnouncementVO;
 import com.ayor.entity.app.vo.TagVO;
-import com.ayor.entity.app.vo.ThreadPageVO;
 import com.ayor.entity.app.vo.ThreadVO;
 import com.ayor.entity.pojo.Account;
 import com.ayor.entity.pojo.Tag;
@@ -12,7 +12,6 @@ import com.ayor.entity.pojo.Threadd;
 import com.ayor.mapper.*;
 import com.ayor.service.ThreaddService;
 import com.ayor.util.QuillUtils;
-import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
@@ -93,15 +92,15 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
     }
 
     @Override
-    public ThreadPageVO getThreadPagesByUserId(Integer userId, Integer currentPage, Integer pageSize) {
+    public PageEntity<ThreadVO> getThreadPagesByUserId(Integer userId, Integer currentPage, Integer pageSize) {
         Page<Threadd> page = new Page<>(currentPage, pageSize);
         Page<Threadd> threads = this.lambdaQuery()
                 .eq(Threadd::getAccountId, userId)
                 .eq(Threadd::getIsDeleted, false)
                 .page(page);
         List<ThreadVO> threadVOS = getThreadVOS(threads.getRecords());
-        Integer totalPages = (int) threads.getTotal();
-        return new ThreadPageVO(totalPages, threadVOS);
+        Long totalPages = threads.getTotal();
+        return new PageEntity<>(totalPages, threadVOS);
     }
 
 

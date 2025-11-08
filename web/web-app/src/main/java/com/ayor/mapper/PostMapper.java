@@ -9,13 +9,13 @@ import java.util.List;
 
 public interface PostMapper extends BaseMapper<Post> {
 
-    @Select("select * from db_post where thread_id = #{threadId}")
+    @Select("select * from post where thread_id = #{threadId}")
     List<Post> getPostsByThreadId(Integer threadId);
 
-    @Update("update db_post set is_deleted = 1 where thread_id = #{threadId}")
+    @Update("update post set is_deleted = 1 where thread_id = #{threadId}")
     Integer removePostsByThreadId(Integer threadId);
 
-    @Select("select count(*) from db_post where account_id = #{accountId}")
+    @Select("select count(*) from post where account_id = #{accountId}")
     Integer getCountByAccountId(Integer accountId);
 
 }

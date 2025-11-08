@@ -11,7 +11,7 @@
                 WHEN alpha_account_id = #{accountId} THEN beta_account_id
                 WHEN beta_account_id = #{accountId} THEN alpha_account_id
                 END AS chat_partner_id
-        FROM db_conversation
+        FROM conversation
         WHERE (alpha_account_id = #{accountId} OR beta_account_id = #{accountId})
           AND is_deleted = 0 AND conversation_id = #{conversationId}
     </select>

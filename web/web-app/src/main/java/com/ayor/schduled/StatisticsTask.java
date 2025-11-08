@@ -1,12 +1,9 @@
 package com.ayor.schduled;
 
-import com.ayor.mapper.ThreaddMapper;
-import com.ayor.mapper.TopicStatMapper;
 import com.ayor.service.AccountStatService;
 import com.ayor.service.ThreaddService;
 import com.ayor.service.TopicStatService;
 import jakarta.annotation.PostConstruct;
-import jakarta.annotation.Resource;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.EnableScheduling;
