@@ -1,5 +1,6 @@
 package com.ayor.service.impl;
 
+import com.ayor.entity.admin.dto.RoleDTO;
 import com.ayor.entity.admin.vo.RoleVO;
 import com.ayor.entity.pojo.Role;
 import com.ayor.mapper.RoleMapper;
@@ -10,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,5 +36,35 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
         return roleVos;
     }
 
+    @Override
+    public String createRole(RoleDTO roleDTO) {
+        if (roleDTO == null || !StringUtils.hasText(roleDTO.getRoleName())) {
+            return "角色名称不能为空";
+        }
+        Role role = new Role();
+        BeanUtils.copyProperties(roleDTO, role);
+        return this.save(role) ? null : "创建角色失败";
+    }
+
+    @Override
+    public String updateRole(RoleDTO roleDTO) {
+        if (roleDTO == null || roleDTO.getRoleId() == null) {
+            return "角色不存在";
+        }
+        Role role = this.getById(roleDTO.getRoleId());
+        if (role == null) {
+            return "角色不存在";
+        }
+        BeanUtils.copyProperties(roleDTO, role);
+        return this.updateById(role) ? null : "更新角色失败";
+    }
+
+    @Override
+    public String deleteRole(Integer roleId) {
+        if (roleId == null) {
+            return "角色不存在";
+        }
+        return this.removeById(roleId) ? null : "删除角色失败";
+    }
 
 }
