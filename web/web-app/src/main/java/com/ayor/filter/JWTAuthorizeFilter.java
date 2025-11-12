@@ -7,7 +7,6 @@ import com.ayor.util.JWTUtils;
 import jakarta.annotation.Resource;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -22,7 +21,6 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 @Component
 public class JWTAuthorizeFilter extends OncePerRequestFilter {
@@ -56,19 +54,20 @@ public class JWTAuthorizeFilter extends OncePerRequestFilter {
         DecodedJWT jwt = jwtUtil.resolveJwt(authorization);
         if(jwt != null) {
             UserDetails user = jwtUtil.toUser(jwt);
+            Integer userId = Integer.parseInt(user.getUsername());
             // 获取用户权限
-            String roleNameByUsername = roleMapper.getRoleNameByUsername(user.getUsername());
+            String roleNameByUsername = roleMapper.getRoleNameByUserId(userId);
 
             // 创建新的授权信息
             List<GrantedAuthority> authorities = new ArrayList<>();
             authorities.add(new SimpleGrantedAuthority("ROLE_" + roleNameByUsername));
 
-            List<String> permissions = permissionMapper.getPermissionsByUsername(user.getUsername());
+            List<String> permissions = permissionMapper.getPermissionsByAccountId(userId);
             for (String permission : permissions) {
                 authorities.add(new SimpleGrantedAuthority("PERM_" +  permission));
             }
 
-            Integer topicId = roleMapper.getTopicIdByUsername(user.getUsername());
+            Integer topicId = roleMapper.getTopicIdByUserId(userId);
 
             if (topicId != null) {
                 authorities.add(new SimpleGrantedAuthority("TOPIC_" + topicId));

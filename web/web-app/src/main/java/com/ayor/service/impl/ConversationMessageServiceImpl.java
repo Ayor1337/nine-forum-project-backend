@@ -1,6 +1,7 @@
 package com.ayor.service.impl;
 
 import com.ayor.aspect.chat.ChatNotif;
+import com.ayor.entity.PageEntity;
 import com.ayor.entity.app.dto.ConversationMessageDTO;
 import com.ayor.entity.app.vo.ConversationMessageVO;
 import com.ayor.entity.pojo.Account;
@@ -10,6 +11,7 @@ import com.ayor.mapper.ConversationMapper;
 import com.ayor.mapper.ConversationMessageMapper;
 import com.ayor.service.ConversationMessageService;
 import com.ayor.type.NotificationType;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
@@ -36,9 +38,9 @@ public class ConversationMessageServiceImpl extends ServiceImpl<ConversationMess
     @Override
     @ChatNotif(conversationId = "#conversationMessage.conversationId",
             type = NotificationType.SEND_MSG,
-            user = "#username")
-    public String sendMessage(ConversationMessageDTO conversationMessage, String username) {
-        Account account = accountMapper.getAccountByUsername(username);
+            userId = "#accountId")
+    public String sendMessage(ConversationMessageDTO conversationMessage, Integer accountId) {
+        Account account = accountMapper.getAccountById(accountId);
         if(account == null) {
             return "用户不存在";
         }
@@ -59,13 +61,12 @@ public class ConversationMessageServiceImpl extends ServiceImpl<ConversationMess
             messageVO.setAvatarUrl(account.getAvatarUrl());
             Integer chatPartnerId = conversationMapper.getChatPartnerId(account.getAccountId(), conversationMessage
                                                         .getConversationId());
-            String usernameById = accountMapper.getUsernameById(chatPartnerId);
             simpMessagingTemplate
-                    .convertAndSendToUser(usernameById,
+                    .convertAndSendToUser(chatPartnerId.toString(),
                             "/transfer/conversation/" + conversationMessage.getConversationId(),
                             messageVO);
             simpMessagingTemplate
-                    .convertAndSendToUser(username,
+                    .convertAndSendToUser(accountId.toString(),
                             "/transfer/conversation/" + conversationMessage.getConversationId(),
                             messageVO);
             return null;
@@ -74,15 +75,17 @@ public class ConversationMessageServiceImpl extends ServiceImpl<ConversationMess
 
     }
 
+
     @Override
     @ChatNotif(conversationId = "#conversationId",
-            type = NotificationType.RECEIVED_MSG, user = "#username")
-    public List<ConversationMessageVO> getConversationMessageList(Integer conversationId, String username) {
-        List<ConversationMessage> list = this.lambdaQuery()
+            type = NotificationType.RECEIVED_MSG, userId = "#accountId")
+    public PageEntity<ConversationMessageVO> getConversationMessageList(Integer conversationId, Integer accountId, Integer pageNum) {
+        Page<ConversationMessage> page = this.lambdaQuery()
                 .eq(ConversationMessage::getConversationId, conversationId)
-                .list();
+                .orderByDesc(ConversationMessage::getCreateTime)
+                .page(Page.of(pageNum, 20));
         List<ConversationMessageVO> conversationMessageVOS = new ArrayList<>();
-        list.forEach(message -> {
+        page.getRecords().forEach(message -> {
             ConversationMessageVO conversationMessageVO = new ConversationMessageVO();
             BeanUtils.copyProperties(message, conversationMessageVO);
             conversationMessageVO
@@ -90,7 +93,7 @@ public class ConversationMessageServiceImpl extends ServiceImpl<ConversationMess
             conversationMessageVOS.add(conversationMessageVO);
         });
 
-        return conversationMessageVOS;
+        return new PageEntity<>(page.getTotal(), conversationMessageVOS);
     }
 
 }

@@ -10,8 +10,6 @@ import java.lang.annotation.*;
 @Documented
 public @interface MessageUnreadNotif {
 
-    String username() default "";
-
     String accountId() default "0";
 
     String subscribeDest();

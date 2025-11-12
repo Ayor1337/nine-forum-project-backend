@@ -11,4 +11,7 @@ public interface ThemeMapper extends BaseMapper<Theme> {
     @Select("select * from theme")
     List<Theme> getThemeList();
 
+    @Select("select theme_id from topic where topic_id = #{TopicId}")
+    Integer getThemeIdByTopicId(Integer TopicId);
+
 }

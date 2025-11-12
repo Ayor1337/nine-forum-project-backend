@@ -14,10 +14,10 @@ public interface PermissionMapper extends BaseMapper<Permission> {
             "on permission.role_id = role.role_id " +
             "INNER JOIN " +
             "nine_forum.account da on role.role_id = " +
-            "da.role_id WHERE da.username = #{username}")
-    List<String> getPermissionsByUsername(String username);
+            "da.role_id WHERE da.account_id = #{accountId}")
+    List<String> getPermissionsByAccountId(Integer accountId);
 
 
-    UserPermissionVO getUserPermissionVO(String username);
+    UserPermissionVO getUserPermissionVO(Integer accountId);
 
 }

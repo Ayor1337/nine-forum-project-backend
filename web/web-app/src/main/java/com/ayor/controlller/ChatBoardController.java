@@ -21,8 +21,8 @@ public class ChatBoardController {
 
     @PostMapping("/chat")
     public Result<Void> chat(@RequestBody ChatBoardMessage message) {
-        String username = securityUtils.getSecurityUsername();
-        return Result.messageHandler(() -> chatboardHistoryService.insertChatboardHistory(username, message.getTopicId(), message.getContent()));
+        Integer userId = securityUtils.getSecurityUserId();
+        return Result.messageHandler(() -> chatboardHistoryService.insertChatboardHistory(userId, message.getTopicId(), message.getContent()));
     }
 
     @GetMapping("/chat/history")

@@ -61,12 +61,12 @@ public class ChatNotifAspect {
                 context.setVariable(paramNames[i], args[i]);
             }
         }
-        String username = resolve(chatNotif.user(), context, String.class);
+        Integer userId = resolve(chatNotif.userId(), context, Integer.class);
         Integer conversationId = resolve(chatNotif.conversationId(), context, Integer.class);
 
         switch (chatNotif.type()){
-            case SEND_MSG -> chatMessageNotif(username, conversationId);
-            case RECEIVED_MSG -> readChatMessage(conversationId, username);
+            case SEND_MSG -> chatMessageNotif(userId, conversationId);
+            case RECEIVED_MSG -> readChatMessage(conversationId, userId);
         }
 
         return joinPoint.proceed();
@@ -87,17 +87,16 @@ public class ChatNotifAspect {
     }
 
     // 聊天消息通知
-    private void chatMessageNotif(String username, Integer conversationId) {
-        Account account = accountMapper.getAccountByUsername(username);
+    private void chatMessageNotif(Integer accountId, Integer conversationId) {
+        Account account = accountMapper.getAccountById(accountId);
         Integer toUserId = conversationMapper.getChatPartnerId(account.getAccountId(), conversationId);
-        String toUser = accountMapper.getUsernameById(toUserId);
 
         // 如果用户不在订阅中, 则不会发送未读消息的通知
-        if (stompUtils.isUserSubscribed(toUser, "/transfer/conversation/"+conversationId)) {
-            chatUnreadService.clearUnread(conversationId, username);
+        if (stompUtils.isUserSubscribed(toUserId.toString(), "/transfer/conversation/"+conversationId)) {
+            chatUnreadService.clearUnread(conversationId, accountId);
         } else {
-            long unreadConversationCount = chatUnreadService.addUnread(conversationId, toUser);
-            messageUnreadService.addUnread(toUser, UnreadMessageType.USER_MESSAGE, unreadConversationCount);
+            long unreadConversationCount = chatUnreadService.addUnread(conversationId, toUserId);
+            messageUnreadService.addUnread(toUserId, UnreadMessageType.USER_MESSAGE, unreadConversationCount);
             ChatUnread chatUnread = ChatUnread
                     .builder()
                     .unread(unreadConversationCount)
@@ -105,29 +104,29 @@ public class ChatNotifAspect {
                     .conversationId(conversationId)
                     .build();
 
-            messagingTemplate.convertAndSendToUser(toUser, "/notif/unread/whisper", chatUnread);
-            messagingTemplate.convertAndSendToUser(toUser, "/notif/unread/user", messageUnreadService.getUnreadVO(toUser, UnreadMessageType.USER_MESSAGE));
-            messagingTemplate.convertAndSendToUser(toUser, "/notif/unread", messageUnreadService.getUnreadVO(toUser));
+            messagingTemplate.convertAndSendToUser(toUserId.toString(), "/notif/unread/whisper", chatUnread);
+            messagingTemplate.convertAndSendToUser(toUserId.toString(), "/notif/unread/user", messageUnreadService.getUnreadVO(toUserId, UnreadMessageType.USER_MESSAGE));
+            messagingTemplate.convertAndSendToUser(toUserId.toString(), "/notif/unread", messageUnreadService.getUnreadVO(toUserId));
         }
 
     }
 
-    private void readChatMessage(Integer conversationId, String username) {
-        ChatUnread emptyUnread = ChatUnread.emptyUnread(conversationId, accountMapper.getAccountIdByUsername( username));
-        long cost = chatUnreadService.clearUnread(conversationId, username);
-        messageUnreadService.clearUnread(username, UnreadMessageType.USER_MESSAGE, cost);
-        MessageUnread messageUnread = messageUnreadService.getUnreadVO(username);
+    private void readChatMessage(Integer conversationId, Integer accountId) {
+        ChatUnread emptyUnread = ChatUnread.emptyUnread(conversationId, accountId);
+        long cost = chatUnreadService.clearUnread(conversationId, accountId);
+        messageUnreadService.clearUnread(accountId, UnreadMessageType.USER_MESSAGE, cost);
+        MessageUnread messageUnread = messageUnreadService.getUnreadVO(accountId);
 
         messagingTemplate
-                .convertAndSendToUser(username,
+                .convertAndSendToUser(accountId.toString(),
                         "/notif/unread/whisper",
                         emptyUnread);
         messagingTemplate
-                .convertAndSendToUser(username,
+                .convertAndSendToUser(accountId.toString(),
                         "/notif/unread",
                         messageUnread);
         messagingTemplate
-                .convertAndSendToUser(username,
+                .convertAndSendToUser(accountId.toString(),
                         "/notif/unread/user",
                         messageUnread);
     }

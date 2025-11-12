@@ -7,5 +7,5 @@ import com.baomidou.mybatisplus.extension.service.IService;
 
 public interface SystemMessageService extends IService<SystemMessage> {
 
-    PageEntity<SystemMessageVO> listSystemMessage(Integer pageNum, Integer pageSize, String username);
+    PageEntity<SystemMessageVO> listSystemMessage(Integer pageNum, Integer pageSize, Integer accountId);
 }

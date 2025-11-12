@@ -21,12 +21,12 @@ public class NotificationController {
 
     @GetMapping("/remaining_message_unread")
     public Result<MessageUnread> getNotification(@RequestParam(value = "type", required = false) String type) {
-        String username = securityUtils.getSecurityUsername();
+        Integer userId = securityUtils.getSecurityUserId();
         return Result.dataMessageHandler(() -> {
             if (type == null) {
-                return messageUnreadService.getUnreadVO(username);
+                return messageUnreadService.getUnreadVO(userId);
             } else {
-                return messageUnreadService.getUnreadVO(username, type);
+                return messageUnreadService.getUnreadVO(userId, type);
             }
         }, "获取未读消息失败");
     }

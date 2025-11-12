@@ -13,8 +13,8 @@ public class STOMPUtils {
 
     private final SimpUserRegistry userRegistry;
 
-    public boolean isUserSubscribed(String username, String destinationPrefix) {
-        SimpUser user = userRegistry.getUser(username);
+    public boolean isUserSubscribed(String userId, String destinationPrefix) {
+        SimpUser user = userRegistry.getUser(userId);
         if (user == null) return false;
 
         for (SimpSession session : user.getSessions()) {

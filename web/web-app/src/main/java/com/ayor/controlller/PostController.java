@@ -28,14 +28,14 @@ public class PostController {
 
     @PostMapping("/post")
     public Result<Void> addPost(@RequestBody @Validated PostDTO post) {
-        String username = security.getSecurityUsername();
-        return Result.messageHandler(() -> postService.insertPost(post, username));
+        Integer userId = security.getSecurityUserId();
+        return Result.messageHandler(() -> postService.insertPost(post, userId));
     }
 
     @DeleteMapping("/delete")
     public Result<Void> deletePost(@RequestParam(name = "post_id") Integer postId) {
-        String username = security.getSecurityUsername();
-        return Result.messageHandler(() -> postService.removePostAuthorizeUsername(postId, username));
+        Integer userId = security.getSecurityUserId();
+        return Result.messageHandler(() -> postService.removePostAuthorizeAccountId(postId, userId));
     }
 
     @PreAuthorize("hasAuthority('ROLE_OWNER')")

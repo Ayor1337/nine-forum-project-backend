@@ -19,20 +19,20 @@ public class LikeController {
 
     @PostMapping("/like_thread")
     public Result<Void> likeThread(@RequestParam(name = "thread_id") Integer threadId) {
-        String username = security.getSecurityUsername();
-        return Result.messageHandler(() -> likeThreadService.insertLikeThreadId(username, threadId));
+        Integer userId = security.getSecurityUserId();
+        return Result.messageHandler(() -> likeThreadService.insertLikeThreadId(userId, threadId));
     }
 
     @PostMapping("/unlike_thread")
     public Result<Void> unlikeThread(@RequestParam(name = "thread_id") Integer threadId) {
-        String username = security.getSecurityUsername();
-        return Result.messageHandler(() -> likeThreadService.removeLikeThreadId(username, threadId));
+        Integer userId = security.getSecurityUserId();
+        return Result.messageHandler(() -> likeThreadService.removeLikeThreadId(userId, threadId));
     }
 
     @GetMapping("/is_like")
     public Result<Boolean> isLiked(@RequestParam(name = "thread_id") Integer threadId) {
-        String username = security.getSecurityUsername();
-        return Result.dataMessageHandler(() -> likeThreadService.isLikedByUsername(username, threadId), "获取失败");
+        Integer userId = security.getSecurityUserId();
+        return Result.dataMessageHandler(() -> likeThreadService.isLikedByAccountId(userId, threadId), "获取失败");
     }
 
     @GetMapping("/get_like_count")

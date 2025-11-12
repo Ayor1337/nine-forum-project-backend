@@ -26,20 +26,17 @@ public class SystemMessageServiceImpl extends ServiceImpl<SystemMessageMapper, S
     private final AccountMapper accountMapper;
 
     @Override
-    @MessageUnreadNotif(username= "#username",
+    @MessageUnreadNotif(
+            accountId = "#accountId",
             subscribeDest = "/notif/system",
             type = UnreadMessageType.SYSTEM_MESSAGE,
             doRead = true
     )
-    public PageEntity<SystemMessageVO> listSystemMessage(Integer pageNum, Integer pageSize, String username) {
-        if (username == null || username.isEmpty()) {
+    public PageEntity<SystemMessageVO> listSystemMessage(Integer pageNum, Integer pageSize, Integer accountId) {
+        if (accountId == null) {
             return null;
         }
         if (pageNum == null || pageNum < 1) {
-            return null;
-        }
-        Integer accountId = accountMapper.getAccountIdByUsername(username);
-        if (accountId == null) {
             return null;
         }
         Page<SystemMessage> page = this.lambdaQuery()
@@ -48,7 +45,6 @@ public class SystemMessageServiceImpl extends ServiceImpl<SystemMessageMapper, S
                 .eq(SystemMessage::getAccountId, null)
                 .orderByDesc(SystemMessage::getCreateTime)
                 .page(Page.of(pageNum, pageSize));
-        System.out.println(toVOList(page.getRecords()));
         return new PageEntity<>(page.getTotal(), toVOList(page.getRecords()));
     }
 

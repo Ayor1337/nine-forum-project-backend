@@ -17,33 +17,27 @@ public class UserController {
 
     private final SecurityUtils security;
 
-
     @GetMapping("/info")
     public Result<UserInfoVO> getUserInfo() {
-        String username = security.getSecurityUsername();
-        return Result.dataMessageHandler(() -> accountService.getUserInfo(username), "获取用户信息失败,用户可能不存在");
-    }
-
-    @GetMapping("/info/by_username")
-    public Result<UserInfoVO> getUserInfoByUsername(@RequestParam("username") String username) {
-        return Result.dataMessageHandler(() -> accountService.getUserInfo(username), "获取用户信息失败,用户可能不存在");
+        Integer userId = security.getSecurityUserId();
+        return Result.dataMessageHandler(() -> accountService.getUserInfo(userId), "获取用户信息失败,用户可能不存在");
     }
 
     @GetMapping("/info/by_user_id")
     public Result<UserInfoVO> getUserInfoByUserId(@RequestParam("user_id") String userId) {
-        return Result.dataMessageHandler(() -> accountService.getUserInfoById(Integer.parseInt(userId)), "获取用户信息失败,用户可能不存在");
+        return Result.dataMessageHandler(() -> accountService.getUserInfo(Integer.parseInt(userId)), "获取用户信息失败,用户可能不存在");
     }
 
     @PutMapping("/update_avatar")
     public Result<Void> updateAvatar(@RequestBody Base64Upload dto) {
-        String username = security.getSecurityUsername();
-        return Result.messageHandler(() -> accountService.updateUserAvatar(username, dto));
+        Integer userId = security.getSecurityUserId();
+        return Result.messageHandler(() -> accountService.updateUserAvatar(userId, dto));
     }
 
     @PutMapping("/update_banner")
     public Result<Void> updateBanner( @RequestBody Base64Upload dto) {
-        String username = security.getSecurityUsername();
-        return Result.messageHandler(() -> accountService.updateUserBanner(username , dto));
+        Integer userId = security.getSecurityUserId();
+        return Result.messageHandler(() -> accountService.updateUserBanner(userId , dto));
     }
 
 }

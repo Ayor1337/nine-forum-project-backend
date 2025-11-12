@@ -33,12 +33,12 @@ public class LikeThreadServiceImpl extends ServiceImpl<LikeThreadMapper, LikeThr
     private final QuillUtils quillUtils;
 
     @Override
-    public String insertLikeThreadId(String username, Integer threadId) {
-        Account account = accountMapper.getAccountByUsername(username);
+    public String insertLikeThreadId(Integer accountId, Integer threadId) {
+        Account account = accountMapper.getAccountById(accountId);
         if (account == null) {
             return "用户不存在";
         }
-        if (isLikedByUsername(username, threadId)) {
+        if (isLikedByAccountId(accountId, threadId)) {
             return "不能重复点赞";
         }
         LikeThread likeThread = new LikeThread();
@@ -49,12 +49,11 @@ public class LikeThreadServiceImpl extends ServiceImpl<LikeThreadMapper, LikeThr
     }
 
     @Override
-    public String removeLikeThreadId(String username, Integer threadId) {
-        Account account = accountMapper.getAccountByUsername(username);
-        if (account == null) {
+    public String removeLikeThreadId(Integer accountId, Integer threadId) {
+        if (accountId == null) {
             return "取消点赞失败";
         }
-        LikeThread likeThread = this.lambdaQuery().eq(LikeThread::getAccountId, account.getAccountId())
+        LikeThread likeThread = this.lambdaQuery().eq(LikeThread::getAccountId, accountId)
                 .eq(LikeThread::getThreadId, threadId)
                 .one();
         if (likeThread == null) {
@@ -64,7 +63,6 @@ public class LikeThreadServiceImpl extends ServiceImpl<LikeThreadMapper, LikeThr
     }
 
     @Override
-    @Cacheable(value = "ThreadVO", key = "{#accountId+':pageNum:'+#currentPage+':pageSize:'+#pageSize}", condition = "#accountId != null")
     public PageEntity<ThreadVO> getLikesByAccountId(Integer accountId,
                                                     Integer currentPage,
                                                     Integer pageSize) {
@@ -90,21 +88,18 @@ public class LikeThreadServiceImpl extends ServiceImpl<LikeThreadMapper, LikeThr
     }
 
     @Override
-    @Cacheable(value = "LikeCount", key = "#threadId", condition = "#threadId != null")
     public Integer getLikeCountByThreadId(Integer threadId) {
         Integer likeCountByThreadId = this.baseMapper.getLikeCountByThreadId(threadId);
         return likeCountByThreadId == null ? 0 : likeCountByThreadId;
     }
 
     @Override
-    @Cacheable(value = "IsLiked", key = "{#username+':'+#threadId}", condition = "#username != null")
-    public Boolean isLikedByUsername(String username, Integer threadId) {
-        Account account = accountMapper.getAccountByUsername(username);
-        if (account == null) {
+    public Boolean isLikedByAccountId(Integer accountId, Integer threadId) {
+        if(accountId == null) {
             return false;
         }
         return this.lambdaQuery()
-                .eq(LikeThread::getAccountId, account.getAccountId())
+                .eq(LikeThread::getAccountId, accountId)
                 .eq(LikeThread::getThreadId, threadId).count() > 0;
     }
 

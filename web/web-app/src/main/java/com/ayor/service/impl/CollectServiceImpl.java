@@ -13,6 +13,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,17 +25,22 @@ import java.util.List;
 @RequiredArgsConstructor
 public class CollectServiceImpl extends ServiceImpl<CollectMapper, Collect> implements CollectService {
 
+    //TODO 缓存未完成
+
     private final AccountMapper accountMapper;
 
     private final ThreaddMapper threaddMapper;
 
     @Override
-    public String insertCollect(String username, Integer threadId) {
-        Account account = accountMapper.getAccountByUsername(username);
+    public String insertCollect(Integer accountId, Integer threadId) {
+        if (accountId == null || threadId == null) {
+            return "参数错误";
+        }
+        Account account = accountMapper.getAccountById(accountId);
         if (account == null) {
             return "用户不存在";
         }
-        if (isCollectedByUsername(username, threadId)) {
+        if (isCollectedByAccountId(accountId, threadId)) {
             return "不能重复收藏";
         }
         Collect collect = new Collect();
@@ -44,11 +50,11 @@ public class CollectServiceImpl extends ServiceImpl<CollectMapper, Collect> impl
     }
 
     @Override
-    public String removeCollect(String username, Integer threadId) {
-        Account account = accountMapper.getAccountByUsername(username);
-        if (account == null)
-            return "取消收藏失败";
-        Collect collect = this.lambdaQuery().eq(Collect::getAccountId, account.getAccountId())
+    public String removeCollect(Integer accountId, Integer threadId) {
+        if (accountId == null || threadId == null) {
+            return "参数错误";
+        }
+        Collect collect = this.lambdaQuery().eq(Collect::getAccountId, accountId)
                 .eq(Collect::getThreadId, threadId)
                 .one();
         if (collect == null) {
@@ -58,13 +64,12 @@ public class CollectServiceImpl extends ServiceImpl<CollectMapper, Collect> impl
     }
 
     @Override
-    public Boolean isCollectedByUsername(String username, Integer threadId) {
-        Account account = accountMapper.getAccountByUsername(username);
-        if (account == null) {
+    public Boolean isCollectedByAccountId(Integer accountId, Integer threadId) {
+        if (accountId == null) {
             return false;
         }
         return this.lambdaQuery()
-                .eq(Collect::getAccountId, account.getAccountId())
+                .eq(Collect::getAccountId, accountId)
                 .eq(Collect::getThreadId, threadId).count() > 0;
     }
 

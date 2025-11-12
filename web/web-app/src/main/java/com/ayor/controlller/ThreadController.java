@@ -52,14 +52,14 @@ public class ThreadController {
 
     @PostMapping("/post_thread")
     public Result<Void> postThread(@Valid @RequestBody ThreadDTO threadDTO) {
-        String username = security.getSecurityUsername();
-        return Result.messageHandler(() -> threaddService.insertThread(threadDTO, username));
+        Integer userId = security.getSecurityUserId();
+        return Result.messageHandler(() -> threaddService.insertThread(threadDTO, userId));
     }
 
     @DeleteMapping("/remove_thread")
     public Result<Void> removeThreadById(@RequestParam(name = "thread_id") Integer threadId) {
-        String username = security.getSecurityUsername();
-        return Result.messageHandler(() -> threaddService.removeThreadById(threadId, username));
+        Integer userId = security.getSecurityUserId();
+        return Result.messageHandler(() -> threaddService.removeThreadById(threadId, userId));
     }
 
     @PreAuthorize("hasRole('ROLE_OWNER') " +

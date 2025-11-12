@@ -108,7 +108,7 @@ public class JWTUtils {
             return null;
         Map<String, Claim> claims = jwt.getClaims();
         return User
-                .withUsername(claims.get("name").asString())
+                .withUsername(claims.get("id").toString())
                 .password("*****")
                 .authorities(claims.get("authorities").asArray(String.class))
                 .build();

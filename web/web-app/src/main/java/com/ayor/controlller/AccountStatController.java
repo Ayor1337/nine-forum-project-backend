@@ -21,7 +21,7 @@ public class AccountStatController {
 
     @RequestMapping("/info")
     public Result<AccountStatVO> getAccountStatInfo() {
-        String username = security.getSecurityUsername();
-        return Result.dataMessageHandler(() -> accountStatService.getAccountStatByUsername(username), "获取用户统计信息失败");
+        Integer userId = security.getSecurityUserId();
+        return Result.dataMessageHandler(() -> accountStatService.getAccountStatByUsername(userId), "获取用户统计信息失败");
     }
 }

@@ -7,11 +7,11 @@ import com.baomidou.mybatisplus.extension.service.IService;
 
 public interface CollectService extends IService<Collect> {
 
-    String insertCollect(String username, Integer threadId);
+    String insertCollect(Integer accountId, Integer threadId);
 
-    String removeCollect(String username, Integer threadId);
+    String removeCollect(Integer accountId, Integer threadId);
 
-    Boolean isCollectedByUsername(String username, Integer threadId);
+    Boolean isCollectedByAccountId(Integer accountId, Integer threadId);
 
     Integer getCollectCountByThreadId(Integer threadId);
 

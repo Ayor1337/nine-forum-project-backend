@@ -10,9 +10,9 @@ import java.util.List;
 public interface PostService extends IService<Post> {
     List<PostVO> getPostsByThreadId(Integer threadId);
 
-    String insertPost(PostDTO postDTO, String username);
+    String insertPost(PostDTO postDTO, Integer userId);
 
-    String removePostAuthorizeUsername(Integer postId, String username);
+    String removePostAuthorizeAccountId(Integer postId, Integer userId);
 
     String removePostPermission(Integer postId);
 }

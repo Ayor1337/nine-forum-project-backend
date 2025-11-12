@@ -15,7 +15,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.cache.annotation.Caching;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -51,43 +50,24 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
     }
 
     @Override
-    @Cacheable(value = "userInfo", key = "#username", condition = "#username != null")
-    public UserInfoVO getUserInfo(String username) {
-        Account account = accountMapper.getAccountByUsername(username);
-        if (account == null) {
+    @Cacheable(value = "userInfo", key = "#accountId", condition = "#accountId != null", unless = "#result == null")
+    public UserInfoVO getUserInfo(Integer accountId) {
+        Account account = this.getById(accountId);
+        if (accountId == null) {
             return null;
         }
         UserInfoVO userInfoVO = new UserInfoVO();
         BeanUtils.copyProperties(account, userInfoVO);
-        UserPermissionVO userPermissionVO = permissionMapper.getUserPermissionVO(username);
+        UserPermissionVO userPermissionVO = permissionMapper.getUserPermissionVO(accountId);
         userInfoVO.setPermission(userPermissionVO);
 
         return userInfoVO;
     }
 
     @Override
-    @Cacheable(value = "userInfo", key = "#id", condition = "#id != null")
-    public UserInfoVO getUserInfoById(Integer id) {
-        Account account = accountMapper.getAccountById(id);
-        if (account == null) {
-            return null;
-        }
-        UserInfoVO userInfoVO = new UserInfoVO();
-        BeanUtils.copyProperties(account, userInfoVO);
-        UserPermissionVO userPermissionVO = permissionMapper.getUserPermissionVO(account.getUsername());
-        userInfoVO.setPermission(userPermissionVO);
-        return userInfoVO;
-    }
-
-    @Override
-    @Caching(
-            evict = {
-                    @CacheEvict(value = "userInfo", key = "#username"),
-                    @CacheEvict(value = "userInfo", key = "#id")
-            }
-    )
-    public String updateUserAvatar(String username, Base64Upload dto) {
-        Account account = this.baseMapper.getAccountByUsername(username);
+    @CacheEvict(value = "userInfo", key = "#accountId")
+    public String updateUserAvatar(Integer accountId, Base64Upload dto) {
+        Account account = this.getById(accountId);
         if (account == null) {
             return "账户不存在";
         }
@@ -101,8 +81,9 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
     }
 
     @Override
-    public String updateUserBanner(String username, Base64Upload dto) {
-        Account account = this.baseMapper.getAccountByUsername(username);
+    @CacheEvict(value = "userInfo", key = "#accountId")
+    public String updateUserBanner(Integer accountId, Base64Upload dto) {
+        Account account = this.getById(accountId);
         if (account == null) {
             return "账户不存在";
         }
@@ -115,7 +96,7 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         return this.baseMapper.updateById(account) > 0 ? null : "更新失败, 未知异常";
     }
 
-    private boolean existsUserByUsername(String username) {
-        return this.baseMapper.exists(Wrappers.<Account>lambdaQuery().eq(Account::getUsername, username));
+    private boolean existsUserById(Integer accountId) {
+        return this.baseMapper.exists(Wrappers.<Account>lambdaQuery().eq(Account::getAccountId, accountId));
     }
 }

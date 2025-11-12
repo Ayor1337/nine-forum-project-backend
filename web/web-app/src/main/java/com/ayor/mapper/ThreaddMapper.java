@@ -9,6 +9,9 @@ import java.util.List;
 
 public interface ThreaddMapper extends BaseMapper<Threadd> {
 
+    @Select("select account_id from thread where thread_id = #{threadId}")
+    Integer getAccountIdByThreadIdInteger(Integer threadId);
+
     @Select("select * from thread where topic_id = #{topicId} order by create_time desc")
     List<Threadd> getThreadsByTopicId(Integer topicId);
 

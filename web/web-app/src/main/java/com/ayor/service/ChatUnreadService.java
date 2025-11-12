@@ -3,9 +3,10 @@ package com.ayor.service;
 public interface ChatUnreadService {
 
 
-    Long getUnread(Integer conversationId, String fromUser);
 
-    long clearUnread(Integer conversationId, String fromUser);
+    Long getUnread(Integer conversationId, Integer fromUserId);
 
-    long addUnread(Integer conversationId, String fromUser);
+    long clearUnread(Integer conversationId, Integer fromUserId);
+
+    long addUnread(Integer conversationId, Integer fromUserId);
 }

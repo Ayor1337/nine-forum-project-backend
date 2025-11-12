@@ -9,15 +9,15 @@ import java.util.List;
 
 public interface ConversationService extends IService<Conversation> {
 
-    ConversationVO getConversationByAccountId(String username, Integer toAccountId);
+    ConversationVO getConversationByAccountId(Integer accountId, Integer toAccountId);
 
-    String hiddenConversation(Integer conversationId, String username);
+    String hiddenConversation(Integer conversationId, Integer accountId);
 
-    String createNewConversation(String username, String toUsername);
+    String createNewConversation(Integer accountId, String toUsername);
 
-    List<ConversationVO> getConversationList(String username);
+    List<ConversationVO> getConversationList(Integer accountId);
 
-    List<ChatUnread> getUnreadList(String username);
+    List<ChatUnread> getUnreadList(Integer accountId);
 
     String clearUnread(Integer conversationId, Integer fromUserId);
 }

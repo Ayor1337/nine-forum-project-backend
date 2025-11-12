@@ -9,6 +9,7 @@ import com.ayor.service.ChatboardHistoryService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
@@ -28,10 +29,10 @@ public class ChatboardHistoryServiceImpl extends ServiceImpl<ChatboardHistoryMap
     private final SimpMessagingTemplate simpMessagingTemplate;
 
     @Override
-    public String insertChatboardHistory(String username,
+    public String insertChatboardHistory(Integer accountId,
                                          Integer topicId,
                                          String content) {
-        Account account = accountMapper.getAccountByUsername(username);
+        Account account = accountMapper.getAccountById(accountId);
         if(account == null) {
             return "用户不存在";
         }
@@ -41,7 +42,7 @@ public class ChatboardHistoryServiceImpl extends ServiceImpl<ChatboardHistoryMap
         if (content.length() > 50) {
             return "内容过长";
         }
-        ChatboardHistory chatboardHistory = new ChatboardHistory(null, account.getAccountId(), username, topicId, content, new Date());
+        ChatboardHistory chatboardHistory = new ChatboardHistory(null, account.getAccountId(), topicId, content, new Date());
         if (this.baseMapper.insert(chatboardHistory) > 0) {
             simpMessagingTemplate.convertAndSend("/broadcast/topic/" + topicId, chatboardHistory);
             return null;
@@ -50,7 +51,6 @@ public class ChatboardHistoryServiceImpl extends ServiceImpl<ChatboardHistoryMap
     }
 
     @Override
-    @Cacheable(value = "chatboardHistory", key = "#topicId")
     public List<ChatboardHistoryVO> getChatboardHistory(Integer topicId) {
         List<ChatboardHistory> chatboardHistories = this.lambdaQuery()
                 .eq(ChatboardHistory::getTopicId, topicId)

@@ -92,10 +92,10 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
     }
 
     @Override
-    public PageEntity<ThreadVO> getThreadPagesByUserId(Integer userId, Integer currentPage, Integer pageSize) {
+    public PageEntity<ThreadVO> getThreadPagesByUserId(Integer accountId, Integer currentPage, Integer pageSize) {
         Page<Threadd> page = new Page<>(currentPage, pageSize);
         Page<Threadd> threads = this.lambdaQuery()
-                .eq(Threadd::getAccountId, userId)
+                .eq(Threadd::getAccountId, accountId)
                 .eq(Threadd::getIsDeleted, false)
                 .page(page);
         List<ThreadVO> threadVOS = getThreadVOS(threads.getRecords());
@@ -134,9 +134,12 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
     }
 
     @Override
-    public String removeThreadById(Integer threadId, String username) {
+    public String removeThreadById(Integer threadId, Integer accountId) {
         Threadd thread = this.getById(threadId);
-        Account account = accountMapper.getAccountByUsername(username);
+        Account account = accountMapper.getAccountById(accountId);
+        if (account == null) {
+            return "用户不存在";
+        }
         if (!Objects.equals(account.getAccountId(), thread.getAccountId())) {
             return "权限不足";
         }
@@ -209,18 +212,14 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
     }
 
     @Override
-    public String insertThread(ThreadDTO threadDTO, String username) {
-        if (username == null) {
-            return "用户不存在";
-        }
-        Integer userId = accountMapper.getAccountIdByUsername(username);
-        if (userId == null) {
+    public String insertThread(ThreadDTO threadDTO, Integer accountId) {
+        if (accountId == null) {
             return "用户不存在";
         }
         Threadd threadd = new Threadd();
         BeanUtils.copyProperties(threadDTO, threadd);
         threadd.setContent(quillUtils.QuillDeltaConvertBase64ToURL(threadDTO.getContent(), "threads/" + threadd.getTopicId() + "/"));
-        threadd.setAccountId(userId);
+        threadd.setAccountId(accountId);
         threadd.setCreateTime(new Date());
 
         return this.save(threadd) ? null : "添加失败";

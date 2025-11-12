@@ -18,8 +18,6 @@ public class ChatboardHistory {
 
     private Integer accountId;
 
-    private String username;
-
     private Integer topicId;
 
     private String content;
