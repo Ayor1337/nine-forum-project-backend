@@ -5,11 +5,12 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serial;
+import java.io.Serializable;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class TopicVO {
+public class TopicVO implements Serializable  {
 
     @Serial
     private static final long serialVersionUID = 115L;

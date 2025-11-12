@@ -7,11 +7,9 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import org.springframework.security.core.userdetails.UserDetailsService;
 
 public interface AccountService extends UserDetailsService, IService<Account> {
-    UserInfoVO getUserInfo(String username);
+    UserInfoVO getUserInfo(Integer accountId);
 
-    UserInfoVO getUserInfoById(Integer id);
+    String updateUserAvatar(Integer accountId, Base64Upload dto);
 
-    String updateUserAvatar(String username, Base64Upload dto);
-
-    String updateUserBanner(String username, Base64Upload dto);
+    String updateUserBanner(Integer accountId, Base64Upload dto);
 }

@@ -17,11 +17,11 @@ public class MessageUnreadServiceImpl implements MessageUnreadService {
 
     private final StringRedisTemplate template;
 
-    private String buildKey(String user, UnreadMessageType type) {
+    private String buildKey(Integer userId, UnreadMessageType type) {
         return "message:" +
                 type.getType() +
                 ":unread:" +
-                user;
+                userId;
     }
 
     private boolean existValue(String key) {
@@ -29,65 +29,65 @@ public class MessageUnreadServiceImpl implements MessageUnreadService {
     }
 
     @Override
-    public Long getUnread(String user, UnreadMessageType type) {
-        String key = buildKey(user, type);
+    public Long getUnread(Integer userId, UnreadMessageType type) {
+        String key = buildKey(userId, type);
         String value = Optional.ofNullable(template.opsForValue().get(key))
                 .orElse("0");
         return Long.parseLong(value);
     }
 
     @Override
-    public Long getUnread(String user, String type) {
+    public Long getUnread(Integer userId, String type) {
         UnreadMessageType unreadMessageType = Arrays.stream(UnreadMessageType.values())
-                .findAny()
                 .filter(value -> value.getType().equals(type))
+                .findAny()
                 .orElse(null);
         if (unreadMessageType == null) {
             return 0L;
         }
-        String key = buildKey(user, unreadMessageType);
+        String key = buildKey(userId, unreadMessageType);
         String value = Optional.ofNullable(template.opsForValue().get(key))
                 .orElse("0");
         return Long.parseLong(value);
     }
 
-    public Long getAllUnread(String user) {
+    public Long getAllUnread(Integer userId) {
         Long unreadCount = 0L;
         for (UnreadMessageType value : UnreadMessageType.values()) {
-            unreadCount += getUnread(user, value);
+            unreadCount += getUnread(userId, value);
         }
         return unreadCount;
     }
 
     @Override
-    public MessageUnread getUnreadVO(String user, UnreadMessageType type) {
+    public MessageUnread getUnreadVO(Integer userId, UnreadMessageType type) {
         return MessageUnread.builder()
-                .unread(getUnread(user, type))
+                .unread(getUnread(userId, type))
                 .build();
     }
 
     @Override
-    public MessageUnread getUnreadVO(String user, String type) {
+    public MessageUnread getUnreadVO(Integer userId, String type) {
         return MessageUnread.builder()
-                .unread(getUnread(user, type))
+                .unread(getUnread(userId, type))
                 .build();
     }
 
     @Override
-    public MessageUnread getUnreadVO(String user) {
+    public MessageUnread getUnreadVO(Integer userId) {
         return MessageUnread.builder()
-                .unread(getAllUnread(user))
+                .unread(getAllUnread(userId))
                 .build();
     }
 
-    public void newUnread(String user, UnreadMessageType type, Long value) {
-        String key = buildKey(user, type);
+    public void newUnread(Integer userId, UnreadMessageType type, Long value) {
+        String key = buildKey(userId, type);
         template.opsForValue().set(key, value.toString());
     }
 
     @Override
-    public Long clearUnread(String user, UnreadMessageType type, Long value) {
-        String key = buildKey(user, type);
+    public Long clearUnread(Integer userId, UnreadMessageType type, Long value) {
+        String key = buildKey(userId, type);
 
         String unreadCount = template.opsForValue().get(key);
         if (unreadCount == null) {
@@ -97,7 +97,7 @@ public class MessageUnreadServiceImpl implements MessageUnreadService {
             template.delete(key);
         }
         if (value < Long.parseLong(unreadCount)) {
-           decrUnread(user, type, value);
+           decrUnread(userId, type, value);
         }
         if (Objects.equals(unreadCount, "0")) {
             template.delete(key);
@@ -107,29 +107,29 @@ public class MessageUnreadServiceImpl implements MessageUnreadService {
     }
 
     @Override
-    public Long clearUnread(String user, UnreadMessageType type) {
-        template.delete(buildKey(user, type));
+    public Long clearUnread(Integer userId, UnreadMessageType type) {
+        template.delete(buildKey(userId, type));
         return 0L;
     }
 
-    public long incrUnread(String user, UnreadMessageType type, Long value) {
-        String key = buildKey(user, type);
+    public long incrUnread(Integer userId, UnreadMessageType type, Long value) {
+        String key = buildKey(userId, type);
         Long increment = template.opsForValue().increment(key, value);
         return increment == null ? 0 : increment;
     }
 
-    public void decrUnread(String user, UnreadMessageType type, Long value) {
-        String key = buildKey(user, type);
+    public void decrUnread(Integer userId, UnreadMessageType type, Long value) {
+        String key = buildKey(userId, type);
         template.opsForValue().decrement(key, value);
     }
 
 
     @Override
-    public long addUnread(String user, UnreadMessageType type, Long value) {
-        if (getUnread(user, type) == 0) {
-            newUnread(user, type, value);
+    public long addUnread(Integer userId, UnreadMessageType type, Long value) {
+        if (getUnread(userId, type) == 0) {
+            newUnread(userId, type, value);
             return 1;
         }
-        return incrUnread(user, type, 1L);
+        return incrUnread(userId, type, 1L);
     }
 }

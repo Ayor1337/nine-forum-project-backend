@@ -7,13 +7,13 @@ import com.baomidou.mybatisplus.extension.service.IService;
 
 
 public interface LikeThreadService extends IService<LikeThread> {
-    String insertLikeThreadId(String username, Integer threadId);
+    String insertLikeThreadId(Integer accountId, Integer threadId);
 
-    String removeLikeThreadId(String username, Integer threadId);
+    String removeLikeThreadId(Integer accountId, Integer threadId);
 
     PageEntity<ThreadVO> getLikesByAccountId(Integer accountId, Integer currentPage, Integer pageSize);
 
     Integer getLikeCountByThreadId(Integer threadId);
 
-    Boolean isLikedByUsername(String username, Integer threadId);
+    Boolean isLikedByAccountId(Integer accountId, Integer threadId);
 }

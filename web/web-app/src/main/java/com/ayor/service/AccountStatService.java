@@ -6,7 +6,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 
 public interface AccountStatService extends IService<AccountStat> {
 
-    AccountStatVO getAccountStatByUsername(String username);
+    AccountStatVO getAccountStatByUsername(Integer accountId);
 
     void updateAccountStat();
 }

@@ -7,7 +7,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import java.util.List;
 
 public interface ChatboardHistoryService extends IService<ChatboardHistory> {
-    String insertChatboardHistory(String username,
+    String insertChatboardHistory(Integer accountId,
                                   Integer topicId,
                                   String content);
 

@@ -16,7 +16,7 @@ import java.lang.annotation.*;
 @Documented
 public @interface ChatNotif {
 
-    String user() default "";
+    String userId() default "";
 
     String conversationId() default "";
 

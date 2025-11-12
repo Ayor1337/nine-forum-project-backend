@@ -17,9 +17,9 @@ public interface ThreaddService extends IService<Threadd> {
 
     ThreadVO getThreadById(Integer threadId);
 
-    PageEntity<ThreadVO> getThreadPagesByUserId(Integer userId, Integer currentPage, Integer pageSize);
+    PageEntity<ThreadVO> getThreadPagesByUserId(Integer accountId, Integer currentPage, Integer pageSize);
 
-    String removeThreadById(Integer threadId, String username);
+    String removeThreadById(Integer threadId, Integer accountId);
 
     String permRemoveThreadById(Integer threadId);
 
@@ -29,7 +29,7 @@ public interface ThreaddService extends IService<Threadd> {
 
     List<AnnouncementVO> getAnnouncementThreads(Integer topicId);
 
-    String insertThread(ThreadDTO threadDTO, String username);
+    String insertThread(ThreadDTO threadDTO, Integer accountId);
 
     String updateThreadTag(TagUpdateDTO tagUpdateDTO);
 

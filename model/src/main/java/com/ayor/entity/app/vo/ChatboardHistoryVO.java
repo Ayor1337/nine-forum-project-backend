@@ -20,8 +20,6 @@ public class ChatboardHistoryVO implements Serializable {
 
     private Integer accountId;
 
-    private String username;
-
     private Integer topicId;
 
     private String content;

@@ -2,6 +2,7 @@ package com.ayor.service.impl;
 
 import com.ayor.service.ChatUnreadService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -13,8 +14,9 @@ public class ChatUnreadServiceImpl implements ChatUnreadService {
 
     private final StringRedisTemplate template;
 
-    private String buildKey(Integer conversationId, String fromUser) {
-        return "chat:unread:" + fromUser + ":" + conversationId;
+
+    private String buildKey(Integer conversationId, Integer fromUserId) {
+        return "chat:unread:" + fromUserId + ":" + conversationId;
     }
 
     private boolean existValue(String key) {
@@ -22,21 +24,21 @@ public class ChatUnreadServiceImpl implements ChatUnreadService {
     }
 
     @Override
-    public Long getUnread(Integer conversationId, String fromUser) {
-        String key = buildKey(conversationId, fromUser);
+    public Long getUnread(Integer conversationId, Integer fromUserId) {
+        String key = buildKey(conversationId, fromUserId);
         String value = Optional.ofNullable(template.opsForValue().get(key))
                 .orElse("0");
         return Long.parseLong(value);
     }
 
-    public void newUnread(Integer conversationId, String fromUser) {
-        String key = buildKey(conversationId, fromUser);
+    public void newUnread(Integer conversationId, Integer fromUserId) {
+        String key = buildKey(conversationId, fromUserId);
         template.opsForValue().set(key, "1");
     }
 
     @Override
-    public long clearUnread(Integer conversationId, String fromUser) {
-        String key = buildKey(conversationId, fromUser);
+    public long clearUnread(Integer conversationId, Integer fromUserId) {
+        String key = buildKey(conversationId, fromUserId);
         if (!existValue(key)) {
             return 0;
         }
@@ -48,24 +50,24 @@ public class ChatUnreadServiceImpl implements ChatUnreadService {
         return 0L;
     }
 
-    public long incrUnread(Integer conversationId, String fromUser) {
-        String key = buildKey(conversationId, fromUser);
+    public long incrUnread(Integer conversationId, Integer fromUserId) {
+        String key = buildKey(conversationId, fromUserId);
         Long increment = template.opsForValue().increment(key);
         return increment == null ? 0 : increment;
     }
 
-    public void decrUnread(Integer conversationId, String fromUser) {
-        String key = buildKey(conversationId, fromUser);
+    public void decrUnread(Integer conversationId, Integer fromUserId) {
+        String key = buildKey(conversationId, fromUserId);
         template.opsForValue().decrement(key);
     }
 
 
     @Override
-    public long addUnread(Integer conversationId, String fromUser) {
-        if (getUnread(conversationId, fromUser) == 0) {
-            newUnread(conversationId, fromUser);
+    public long addUnread(Integer conversationId, Integer fromUserId) {
+        if (getUnread(conversationId, fromUserId) == 0) {
+            newUnread(conversationId, fromUserId);
             return 1;
         }
-        return incrUnread(conversationId, fromUser);
+        return incrUnread(conversationId, fromUserId);
     }
 }

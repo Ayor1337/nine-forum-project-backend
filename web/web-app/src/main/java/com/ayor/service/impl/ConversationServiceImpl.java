@@ -12,6 +12,8 @@ import com.ayor.service.ConversationService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,8 +31,8 @@ public class ConversationServiceImpl extends ServiceImpl<ConversationMapper, Con
     private final ChatUnreadService chatUnreadService;
 
     @Override
-    public ConversationVO getConversationByAccountId(String username, Integer toAccountId) {
-        Integer accountId = accountMapper.getAccountIdByUsername( username);
+    @Cacheable(value = "conversation", key = "#result.conversationId", condition = "#accountId != null && #toAccountId != null")
+    public ConversationVO getConversationByAccountId(Integer accountId, Integer toAccountId) {
         if (accountId == null) {
             return null;
         }
@@ -78,14 +80,14 @@ public class ConversationServiceImpl extends ServiceImpl<ConversationMapper, Con
     }
 
     @Override
-    public String hiddenConversation(Integer conversationId, String username) {
+    @CacheEvict(value = "conversation", key = "#conversationId", condition = "#accountId != null")
+    public String hiddenConversation(Integer conversationId, Integer accountId) {
         Conversation conversation = this.getById(conversationId);
-        Integer accountId = accountMapper.getAccountIdByUsername(username);
         if (accountId == null) {
             return "用户不存在";
         }
         if (conversation == null) {
-            return "对话不 存在";
+            return "对话不存在";
         }
         if (accountId.equals(conversation.getAlphaAccountId())) {
             if (conversation.getHidden() == 0) {
@@ -111,8 +113,9 @@ public class ConversationServiceImpl extends ServiceImpl<ConversationMapper, Con
     }
 
     @Override
-    public String createNewConversation(String username, String toUsername) {
-        Account fromAccount = accountMapper.getAccountByUsername(username);
+    @CacheEvict(value = "conversationList", key = "#accountId", condition = "#accountId != null")
+    public String createNewConversation(Integer accountId, String toUsername) {
+        Account fromAccount = accountMapper.getAccountById(accountId);
         if (fromAccount == null) {
             return "发送用户不存在";
         }
@@ -139,8 +142,9 @@ public class ConversationServiceImpl extends ServiceImpl<ConversationMapper, Con
     }
 
     @Override
-    public List<ConversationVO> getConversationList(String username) {
-        Account account = accountMapper.getAccountByUsername(username);
+    @Cacheable(value = "conversationList", key = "#accountId", condition = "#accountId != null", unless = "#result == null")
+    public List<ConversationVO> getConversationList(Integer accountId) {
+        Account account = accountMapper.getAccountById(accountId);
         if (account == null) {
             return null;
         }
@@ -178,8 +182,8 @@ public class ConversationServiceImpl extends ServiceImpl<ConversationMapper, Con
     }
 
     @Override
-    public List<ChatUnread> getUnreadList(String username) {
-        Account account = accountMapper.getAccountByUsername(username);
+    public List<ChatUnread> getUnreadList(Integer accountId) {
+        Account account = accountMapper.getAccountById(accountId);
         List<Conversation> alphCconversationList = this.lambdaQuery()
                 .eq(Conversation::getAlphaAccountId, account.getAccountId())
                 .list();
@@ -188,7 +192,7 @@ public class ConversationServiceImpl extends ServiceImpl<ConversationMapper, Con
                 .list();
         List<ChatUnread> chatUnreadList = new ArrayList<>();
         alphCconversationList.forEach(con -> {
-            Long unread = chatUnreadService.getUnread(con.getConversationId(), username);
+            Long unread = chatUnreadService.getUnread(con.getConversationId(), accountId);
             chatUnreadList.add(ChatUnread.builder()
                     .conversationId(con.getConversationId())
                     .fromUserId(con.getBetaAccountId())
@@ -196,7 +200,7 @@ public class ConversationServiceImpl extends ServiceImpl<ConversationMapper, Con
                     .build());
         });
         betaCconversationList.forEach(con -> {
-            Long unread = chatUnreadService.getUnread(con.getConversationId(), username);
+            Long unread = chatUnreadService.getUnread(con.getConversationId(), accountId);
             chatUnreadList.add(ChatUnread.builder()
                     .conversationId(con.getConversationId())
                     .fromUserId(con.getAlphaAccountId())
@@ -208,15 +212,14 @@ public class ConversationServiceImpl extends ServiceImpl<ConversationMapper, Con
 
     @Override
     public String clearUnread(Integer conversationId, Integer fromUserId) {
-        String username = accountMapper.getUsernameById(fromUserId);
-        if (username == null) {
+        if (fromUserId == null) {
             return "无此用户";
         }
         Conversation conversation = this.getById(conversationId);
         if (conversation == null) {
             return "无此对话";
         }
-        chatUnreadService.clearUnread(conversationId, username);
+        chatUnreadService.clearUnread(conversationId, fromUserId);
         return null;
     }
 

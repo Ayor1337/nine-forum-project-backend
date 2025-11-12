@@ -1,6 +1,5 @@
 package com.ayor.aspect.unread;
 
-import com.ayor.mapper.AccountMapper;
 import com.ayor.service.MessageUnreadService;
 import com.ayor.type.UnreadMessageType;
 import com.ayor.util.STOMPUtils;
@@ -36,7 +35,6 @@ public class MessageUnreadNotifAspect {
 
     private final STOMPUtils stompUtils;
 
-    private final AccountMapper accountMapper;
 
     private final MessageUnreadService messageUnreadService;
 
@@ -54,18 +52,10 @@ public class MessageUnreadNotifAspect {
             }
         }
 
-        String username = resolve(messageUnreadNotif.username(), context, String.class);
         Integer accountId = resolve(messageUnreadNotif.accountId(), context, Integer.class);
         String subscribeDest = messageUnreadNotif.subscribeDest();
-        if (accountId != 0 && username != null) {
-            throw new IllegalArgumentException("username和accountId只能存在一个");
-        }
         if (accountId != 0) {
             sendNotificationToUser(accountId, subscribeDest, messageUnreadNotif.type(), messageUnreadNotif.doRead());
-            return joinPoint.proceed();
-        }
-        if (username != null) {
-            sendNotificationToUser(username, subscribeDest, messageUnreadNotif.type(), messageUnreadNotif.doRead());
             return joinPoint.proceed();
         }
 
@@ -86,26 +76,17 @@ public class MessageUnreadNotifAspect {
         }
     }
 
-    private void sendNotificationToUser(String username, String subscribeDest, UnreadMessageType type, boolean doRead) {
-        sendMessage(username, subscribeDest, type, doRead);
-    }
-
     private void sendNotificationToUser(Integer accountId, String subscribeDest, UnreadMessageType type, boolean doRead) {
-        String username = accountMapper.getUsernameById(accountId);
-        sendMessage(username, subscribeDest, type, doRead);
-    }
-
-    private void sendMessage(String username, String subscribeDest, UnreadMessageType type, boolean doRead) {
         if (doRead) {
-            messageUnreadService.clearUnread(username, type);
+            messageUnreadService.clearUnread(accountId, type);
         } else {
-            if (!stompUtils.isUserSubscribed(username, subscribeDest)) {
-                messageUnreadService.addUnread(username, type, 1L);
+            if (!stompUtils.isUserSubscribed(accountId.toString(), subscribeDest)) {
+                messageUnreadService.addUnread(accountId, type, 1L);
             }
         }
-        messagingTemplate.convertAndSendToUser(username, "/notif/unread", messageUnreadService.getUnreadVO(username));
-        messagingTemplate.convertAndSendToUser(username, "/notif/unread/"+ type.getType(),
-                messageUnreadService.getUnreadVO(username, type));
+        messagingTemplate.convertAndSendToUser(accountId.toString(), "/notif/unread", messageUnreadService.getUnreadVO(accountId));
+        messagingTemplate.convertAndSendToUser(accountId.toString(), "/notif/unread/"+ type.getType(),
+                messageUnreadService.getUnreadVO(accountId, type));
     }
 
 }

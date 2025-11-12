@@ -23,8 +23,8 @@ public class SystemMessageController {
     @GetMapping("/list")
     public Result<PageEntity<SystemMessageVO>> getSystemMessageGrp(@RequestParam("page_num") Integer pageNum,
                                                                    @RequestParam("page_size") Integer pageSize) {
-        String username = securityUtils.getSecurityUsername();
-        return Result.dataMessageHandler(() -> systemMessageService.listSystemMessage(pageNum, pageSize, username), "获取系统消息成功");
+        Integer userId = securityUtils.getSecurityUserId();
+        return Result.dataMessageHandler(() -> systemMessageService.listSystemMessage(pageNum, pageSize, userId), "获取系统消息成功");
     }
 
 }

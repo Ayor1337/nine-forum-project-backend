@@ -5,19 +5,19 @@ import com.ayor.type.UnreadMessageType;
 
 public interface MessageUnreadService {
 
-    Long getUnread(String user, UnreadMessageType type);
+    Long getUnread(Integer userId, UnreadMessageType type);
 
-    Long getUnread(String user, String type);
+    Long getUnread(Integer userId, String type);
 
-    MessageUnread getUnreadVO(String user, UnreadMessageType type);
+    MessageUnread getUnreadVO(Integer userId, UnreadMessageType type);
 
-    MessageUnread getUnreadVO(String user, String type);
+    MessageUnread getUnreadVO(Integer userId, String type);
 
-    MessageUnread getUnreadVO(String user);
+    MessageUnread getUnreadVO(Integer userId);
 
-    Long clearUnread(String user, UnreadMessageType type, Long value);
+    Long clearUnread(Integer userId, UnreadMessageType type, Long value);
 
-    Long clearUnread(String user, UnreadMessageType type);
+    Long clearUnread(Integer userId, UnreadMessageType type);
 
-    long addUnread(String user, UnreadMessageType type, Long value);
+    long addUnread(Integer userId, UnreadMessageType type, Long value);
 }

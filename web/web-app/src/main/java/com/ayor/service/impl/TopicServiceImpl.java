@@ -5,6 +5,7 @@ import com.ayor.entity.app.dto.TopicDTO;
 import com.ayor.entity.app.vo.TopicVO;
 import com.ayor.entity.pojo.Topic;
 import com.ayor.entity.pojo.TopicStat;
+import com.ayor.mapper.ThemeMapper;
 import com.ayor.mapper.ThreaddMapper;
 import com.ayor.mapper.TopicMapper;
 import com.ayor.mapper.TopicStatMapper;
@@ -13,6 +14,9 @@ import com.ayor.service.TopicService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,6 +39,7 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
     private final TopicStatMapper topicStatMapper;
 
     @Override
+    @Cacheable(value = "topicName", key = "#topicId", condition = "#topicId != null", unless = "#result == null")
     public String getTopicNameById(Integer topicId) {
         Topic topic = this.lambdaQuery().eq(Topic::getTopicId, topicId).one();
         if (topic == null || topic.getIsDeleted()) {
@@ -44,6 +49,7 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
     }
 
     @Override
+    @Cacheable(value = "topicList", key = "#themeId", condition = "#themeId != null", unless = "#result == null")
     public List<TopicVO> getTopicListByThemeId(Integer themeId) {
         List<Topic> topics = topicMapper.getTopicByThemeId(themeId);
         List<TopicVO> topicVOList = new ArrayList<>();
@@ -63,6 +69,11 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
     }
 
     @Override
+    @Caching(evict = {
+            @CacheEvict(value = "topicName", key = "#topicDTO.topicId", condition = "#topicDTO.topicId != null"),
+            @CacheEvict(value = "topicList", key = "#topicDTO.themeId", condition = "#topicDTO.themeId != null"),
+            @CacheEvict(value = "themeTopicList", key = "'all'")
+    })
     public String insertTopic(TopicDTO topicDTO) {
         if (topicDTO == null || topicDTO.getTitle().equals("待输入标题")) {
             return "请填写主题";
@@ -86,6 +97,11 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
     }
 
     @Override
+    @Caching(evict = {
+            @CacheEvict(value = "topicName", key = "#topicDTO.topicId"),
+            @CacheEvict(value = "topicList", key = "#topicDTO.themeId"),
+            @CacheEvict(value = "themeTopicList", key = "'all'")
+    })
     public String updateTopic(TopicDTO topicDTO) {
         if (topicDTO == null || topicDTO.getTitle().equals("待输入标题")) {
             return "请填写主题";
@@ -106,11 +122,17 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
     }
 
     @Override
+     @Caching(evict = {
+            @CacheEvict(value = "topicName", key = "#topicId", condition = "#topicId != null "),
+            @CacheEvict(value = "topicList", key = "@themeMapper.getThemeIdByTopicId(#topicId)", condition = "#topicId != null "),
+             @CacheEvict(value = "themeTopicList", key = "'all'")
+     })
     public String deleteTopic(Integer topicId) {
         Topic topic = this.getById(topicId);
         if (topic == null) {
             return "主题不存在";
         }
+        Integer themeId = topic.getThemeId();
         threaddMapper.deleteThreadByTopicId(topicId);
         return this.removeByIdLogical(topicId) ? null : "删除失败, 未知异常";
     }

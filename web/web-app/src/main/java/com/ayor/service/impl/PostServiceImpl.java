@@ -1,5 +1,6 @@
 package com.ayor.service.impl;
 
+import com.ayor.aspect.unread.MessageUnreadNotif;
 import com.ayor.entity.app.dto.PostDTO;
 import com.ayor.entity.app.vo.PostVO;
 import com.ayor.entity.pojo.Account;
@@ -56,7 +57,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
     }
 
     @Override
-    public String insertPost(PostDTO postDTO, String username) {
+    public String insertPost(PostDTO postDTO, Integer userId) {
         if (postDTO.getContent() == null) {
             return "请填写内容";
         }
@@ -65,12 +66,11 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         }
         Post post = new Post();
         BeanUtils.copyProperties(postDTO, post);
-        Integer userID = accountMapper.getAccountIdByUsername(username);
-        if (userID == null) {
+        if (userId == null) {
             return "用户不存在";
         }
         Integer topicId = threaddMapper.getTopicIdByThreadId(postDTO.getThreadId());
-        post.setAccountId(userID)   ;
+        post.setAccountId(userId)   ;
         post.setContent(quillUtils.QuillDeltaConvertBase64ToURL(postDTO.getContent(), "posts/" + post.getThreadId() + "/"));
         post.setCreateTime(new Date());
         post.setTopicId(topicId);
@@ -78,12 +78,12 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
     }
 
     @Override
-    public String removePostAuthorizeUsername(Integer postId, String username) {
+    public String removePostAuthorizeAccountId(Integer postId, Integer userId) {
         Post post = this.getById(postId);
         if (post == null) {
             return "帖子不存在";
         }
-        if (!post.getAccountId().equals(accountMapper.getAccountIdByUsername(username))) {
+        if (!post.getAccountId().equals(userId)) {
             return "没有权限";
         }
         return this.removeByIdLogic(post.getPostId()) ? null : "删除失败, 未知异常";

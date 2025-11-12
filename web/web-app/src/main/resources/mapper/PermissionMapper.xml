@@ -15,7 +15,7 @@
             account
                 JOIN role ON account.role_id = role.role_id
                 LEFT JOIN permission ON account.role_id = permission.role_id
-        WHERE account.username = #{username}
+        WHERE account.account_id = #{accountId}
         GROUP BY account_id, role_name, role.topic_id
     </select>
 

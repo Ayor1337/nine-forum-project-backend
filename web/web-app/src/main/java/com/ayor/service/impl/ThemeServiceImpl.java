@@ -12,6 +12,9 @@ import com.ayor.service.ThemeService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,6 +31,7 @@ public class ThemeServiceImpl extends ServiceImpl<ThemeMapper, Theme> implements
     private final TopicMapper topicMapper;
 
     @Override
+    @Cacheable(value = "themeList", key = "'all'")
     public List<ThemeVO> getThemeList() {
         List<Theme> themes = themeMapper.getThemeList();
         List<ThemeVO> themeVOList = new ArrayList<>();
@@ -46,6 +50,10 @@ public class ThemeServiceImpl extends ServiceImpl<ThemeMapper, Theme> implements
     }
 
     @Override
+    @Caching(evict = {
+            @CacheEvict(value = "themeList", key = "'all'"),
+            @CacheEvict(value = "themeTopicList", key = "'all'")
+    })
     public String insertTheme(ThemeDTO themeDTO) {
         if (themeDTO == null) {
             return "请填写主题名称";
@@ -56,6 +64,7 @@ public class ThemeServiceImpl extends ServiceImpl<ThemeMapper, Theme> implements
     }
 
     @Override
+    @Cacheable(value = "themeTopicList", key = "'all'")
     public List<ThemeTopicVO> getThemeTopicList() {
         List<Theme> themeList = themeMapper.getThemeList();
         List<ThemeTopicVO> themeTopicVOList = new ArrayList<>();

@@ -19,20 +19,20 @@ public class    CollectController {
 
     @PostMapping("/collect_thread")
     public Result<Void> collectThread(@RequestParam(name = "thread_id") Integer threadId) {
-        String username = security.getSecurityUsername();
-        return Result.messageHandler(() -> collectService.insertCollect(username, threadId));
+        Integer userId = security.getSecurityUserId();
+        return Result.messageHandler(() -> collectService.insertCollect(userId, threadId));
     }
 
     @PostMapping("/uncollect_thread")
     public Result<Void> uncollectThread(@RequestParam(name = "thread_id") Integer threadId) {
-        String username = security.getSecurityUsername();
-        return Result.messageHandler(() -> collectService.removeCollect(username, threadId));
+        Integer userId = security.getSecurityUserId();
+        return Result.messageHandler(() -> collectService.removeCollect(userId, threadId));
     }
 
     @GetMapping("/is_collect")
     public Result<Boolean> isCollected(@RequestParam(name = "thread_id") Integer threadId) {
-        String username = security.getSecurityUsername();
-        return Result.dataMessageHandler(() -> collectService.isCollectedByUsername(username, threadId), "获取失败");
+        Integer userId = security.getSecurityUserId();
+        return Result.dataMessageHandler(() -> collectService.isCollectedByAccountId(userId, threadId), "获取失败");
     }
 
     @GetMapping("/get_collect_count")
