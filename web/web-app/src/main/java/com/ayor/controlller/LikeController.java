@@ -29,13 +29,13 @@ public class LikeController {
         return Result.messageHandler(() -> likeThreadService.removeLikeThreadId(userId, threadId));
     }
 
-    @GetMapping("/is_like")
+    @GetMapping("/info/is_like")
     public Result<Boolean> isLiked(@RequestParam(name = "thread_id") Integer threadId) {
         Integer userId = security.getSecurityUserId();
         return Result.dataMessageHandler(() -> likeThreadService.isLikedByAccountId(userId, threadId), "获取失败");
     }
 
-    @GetMapping("/get_like_count")
+    @GetMapping("/info/get_like_count")
     public Result<Integer> getLikeCountByThreadId(@RequestParam(name = "thread_id") Integer threadId) {
         return Result.dataMessageHandler(() -> likeThreadService.getLikeCountByThreadId(threadId), "获取失败");
     }

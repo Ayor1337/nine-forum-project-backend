@@ -59,6 +59,10 @@ public class JWTUtils {
         return Boolean.TRUE.equals(template.hasKey(CONST.JWT_BLACK_LIST + uuid));
     }
 
+    private boolean isInvalidEmailToken(String uuid) {
+        return Boolean.FALSE.equals(template.hasKey(CONST.JWT_EMAIL_VERIFY + uuid));
+    }
+
     public String createJwt(UserDetails userDetails, int id, String username) {
         Algorithm algorithm = Algorithm.HMAC256(key);
         Date expire = this.expiredTime();
@@ -71,6 +75,22 @@ public class JWTUtils {
                 .withIssuedAt(new Date())
                 .sign(algorithm);
     }
+
+    public String createJwt(String email) {
+        Algorithm algorithm = Algorithm.HMAC256(key);
+        Date expire = this.expiredHourTime();
+        String uuid = UUID.randomUUID().toString();
+        String token = JWT.create()
+                .withJWTId(uuid)
+                .withClaim("email", email)
+                .withExpiresAt(expire)
+                .withIssuedAt(new Date())
+                .sign(algorithm);
+        template.opsForValue().set(CONST.JWT_EMAIL_VERIFY + uuid, "", expire.getTime(), TimeUnit.MILLISECONDS);
+        return token;
+    }
+
+
 
     public DecodedJWT resolveJwt(String token) {
         String convertedToken = convertToken(token);
@@ -91,6 +111,21 @@ public class JWTUtils {
 
     }
 
+    public DecodedJWT resolveEmailJwt(String token) {
+        Algorithm algorithm = Algorithm.HMAC256(key);
+        JWTVerifier jwtVerifier = JWT.require(algorithm).build();
+        try {
+            DecodedJWT verify = jwtVerifier.verify(token);
+            if (this.isInvalidEmailToken(verify.getId())) {
+                return null;
+            }
+            Date expiresAt = verify.getExpiresAt();
+            return new Date().after(expiresAt) ? null : verify;
+        } catch (JWTVerificationException e) {
+            return null;
+        }
+    }
+
     public String convertToken(String token) {
         if (token == null || !token.startsWith("Bearer "))
             return null;
@@ -100,6 +135,12 @@ public class JWTUtils {
     public Date expiredTime() {
         Calendar calendar = Calendar.getInstance();
         calendar.add(Calendar.HOUR, expire * 24);
+        return calendar.getTime();
+    }
+
+    public Date expiredHourTime() {
+        Calendar calendar = Calendar.getInstance();
+        calendar.add(Calendar.HOUR, 3);
         return calendar.getTime();
     }
 

@@ -2,6 +2,7 @@ package com.ayor.mapper;
 
 import com.ayor.entity.pojo.AccountStat;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Update;
 
 public interface AccountStatMapper extends BaseMapper<AccountStat> {
@@ -17,6 +18,9 @@ public interface AccountStatMapper extends BaseMapper<AccountStat> {
             "SET post_count = " +
             "(SELECT COUNT(*) FROM post WHERE account_id = account_stat.account_id)")
     void updatePostCount();
+
+    @Insert("INSERT INTO account_stat (account_id) VALUES (#{accountId})")
+    boolean insertNewAccountStat(Integer accountId);
 
 
 

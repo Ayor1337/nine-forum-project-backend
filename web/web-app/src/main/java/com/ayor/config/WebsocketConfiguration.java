@@ -30,7 +30,8 @@ public class WebsocketConfiguration implements WebSocketMessageBrokerConfigurer 
         config.enableSimpleBroker(
                 "/broadcast",
                 "/transfer",
-                "/notif");
+                "/notif",
+                "/verify");
     }
 
     @Override

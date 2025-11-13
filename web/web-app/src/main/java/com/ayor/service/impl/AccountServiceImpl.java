@@ -1,14 +1,19 @@
 package com.ayor.service.impl;
 
+import com.auth0.jwt.interfaces.DecodedJWT;
 import com.ayor.entity.Base64Upload;
+import com.ayor.entity.app.dto.AccountDTO;
 import com.ayor.entity.app.vo.UserInfoVO;
 import com.ayor.entity.app.vo.UserPermissionVO;
 import com.ayor.entity.pojo.Account;
+import com.ayor.entity.pojo.AccountStat;
 import com.ayor.mapper.AccountMapper;
+import com.ayor.mapper.AccountStatMapper;
 import com.ayor.mapper.PermissionMapper;
 import com.ayor.mapper.RoleMapper;
 import com.ayor.minio.MinioService;
 import com.ayor.service.AccountService;
+import com.ayor.util.JWTUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
@@ -18,8 +23,11 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Date;
 
 @Service
 @Transactional
@@ -33,6 +41,12 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
     private final RoleMapper roleMapper;
 
     private final MinioService minioService;
+
+    private final PasswordEncoder passwordEncoder;
+
+    private final AccountStatMapper accountStatMapper;
+
+    private final JWTUtils jwtUtils;
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
@@ -96,7 +110,36 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         return this.baseMapper.updateById(account) > 0 ? null : "更新失败, 未知异常";
     }
 
+    @Override
+    public String insertNewAccount(AccountDTO accountDTO) {
+        if (existsUserByUsername(accountDTO.getUsername())) {
+            return "用户名已存在";
+        }
+        DecodedJWT decodedJWT = jwtUtils.resolveEmailJwt(accountDTO.getToken());
+        if (decodedJWT == null) {
+            return "验证失败";
+        }
+        Account account = new Account();
+        BeanUtils.copyProperties(accountDTO, account);
+        account.setAvatarUrl("nineforum/avatar/default.jpg");
+        account.setBannerUrl("nineforum/banner/default.webp");
+        account.setEmail(decodedJWT.getClaim("email").asString());
+        account.setCreateTime(new Date());
+        String encodePwd = passwordEncoder.encode(account.getPassword());
+        account.setStatus(1);
+        account.setRoleId(3);
+        account.setPassword(encodePwd);
+        if (this.save(account)) {
+             return accountStatMapper.insertNewAccountStat(account.getAccountId()) ? null : "添加统计数据失败";
+        }
+        return "添加失败, 未知异常";
+    }
+
     private boolean existsUserById(Integer accountId) {
         return this.baseMapper.exists(Wrappers.<Account>lambdaQuery().eq(Account::getAccountId, accountId));
+    }
+
+    private boolean existsUserByUsername(String username) {
+        return this.baseMapper.exists(Wrappers.<Account>lambdaQuery().eq(Account::getUsername, username));
     }
 }

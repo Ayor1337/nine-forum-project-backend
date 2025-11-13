@@ -15,13 +15,15 @@ import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
+import org.springframework.beans.factory.BeanFactory;
+import org.springframework.context.expression.BeanFactoryResolver;
+import org.springframework.context.expression.MethodBasedEvaluationContext;
 import org.springframework.core.DefaultParameterNameDiscoverer;
 import org.springframework.core.ParameterNameDiscoverer;
 import org.springframework.expression.EvaluationContext;
 import org.springframework.expression.Expression;
 import org.springframework.expression.ExpressionParser;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
-import org.springframework.expression.spel.support.StandardEvaluationContext;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Component;
 
@@ -32,6 +34,8 @@ import java.lang.reflect.Method;
 @Slf4j
 @RequiredArgsConstructor
 public class ChatNotifAspect {
+
+    private final BeanFactory beanFactory;
 
     private final ExpressionParser parser = new SpelExpressionParser();
 
@@ -55,14 +59,15 @@ public class ChatNotifAspect {
         Object[] args = joinPoint.getArgs();
         String[] paramNames = nameDiscoverer.getParameterNames(method);
 
-        EvaluationContext context = new StandardEvaluationContext();
+        MethodBasedEvaluationContext ctx = new MethodBasedEvaluationContext(joinPoint.getTarget(), method, args, nameDiscoverer);
+        ctx.setBeanResolver(new BeanFactoryResolver(beanFactory));
         if (paramNames != null) {
             for (int i = 0; i < paramNames.length; i++) {
-                context.setVariable(paramNames[i], args[i]);
+                ctx.setVariable(paramNames[i], args[i]);
             }
         }
-        Integer userId = resolve(chatNotif.userId(), context, Integer.class);
-        Integer conversationId = resolve(chatNotif.conversationId(), context, Integer.class);
+        Integer userId = resolve(chatNotif.userId(), ctx, Integer.class);
+        Integer conversationId = resolve(chatNotif.conversationId(), ctx, Integer.class);
 
         switch (chatNotif.type()){
             case SEND_MSG -> chatMessageNotif(userId, conversationId);
@@ -117,17 +122,25 @@ public class ChatNotifAspect {
         messageUnreadService.clearUnread(accountId, UnreadMessageType.USER_MESSAGE, cost);
         MessageUnread messageUnread = messageUnreadService.getUnreadVO(accountId);
 
-        messagingTemplate
-                .convertAndSendToUser(accountId.toString(),
-                        "/notif/unread/whisper",
-                        emptyUnread);
-        messagingTemplate
-                .convertAndSendToUser(accountId.toString(),
-                        "/notif/unread",
-                        messageUnread);
-        messagingTemplate
-                .convertAndSendToUser(accountId.toString(),
-                        "/notif/unread/user",
-                        messageUnread);
+        if(stompUtils.isUserSubscribed(accountId.toString(), "/notif/unread/whisper")) {
+            messagingTemplate
+                    .convertAndSendToUser(accountId.toString(),
+                            "/notif/unread/whisper",
+                            emptyUnread);
+        }
+        if(stompUtils.isUserSubscribed(accountId.toString(), "/notif/unread")){
+            messagingTemplate
+                    .convertAndSendToUser(accountId.toString(),
+                            "/notif/unread",
+                            messageUnread);
+        }
+        if(stompUtils.isUserSubscribed(accountId.toString(), "/notif/unread/user")) {
+            messagingTemplate
+                    .convertAndSendToUser(accountId.toString(),
+                            "/notif/unread/user",
+                            messageUnread);
+        }
+
+
     }
 }

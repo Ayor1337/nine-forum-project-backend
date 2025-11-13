@@ -24,14 +24,11 @@ public class BroadcastServiceImpl implements BroadcastService {
 
     private final STOMPUtils stompUtils;
 
-    private final AccountMapper accountMapper;
-
     private final SystemMessageMapper systemMessageMapper;
 
     @Override
     @MessageUnreadNotif(accountId = "#message.sendTo", subscribeDest = "/notif/system", type = UnreadMessageType.SYSTEM_MESSAGE)
     public <T> void userSystemBroadcast(UserSystemMessage<T> message) {
-        Account sendTo = accountMapper.getAccountById(message.getSendTo());
 
         SystemMessage systemMessage = SystemMessage
                 .SystemMessageIndividual(message.getTitle(),
@@ -46,8 +43,8 @@ public class BroadcastServiceImpl implements BroadcastService {
                 .createTime(systemMessage.getCreateTime())
                 .build();
 
-        if (stompUtils.isUserSubscribed(sendTo.getUsername(), "/notif/system")) {
-            messagingTemplate.convertAndSendToUser(sendTo.getUsername(), "/notif/system", messageVO);
+        if (stompUtils.isUserSubscribed(message.getSendTo().toString(), "/notif/system")) {
+            messagingTemplate.convertAndSendToUser(message.getSendTo().toString(), "/notif/system", messageVO);
         }
     }
 
