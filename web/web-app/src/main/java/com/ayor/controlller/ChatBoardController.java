@@ -12,20 +12,20 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api")
+@RequestMapping("/api/chat")
 public class ChatBoardController {
 
     private final ChatboardHistoryService chatboardHistoryService;
 
     private final SecurityUtils securityUtils;
 
-    @PostMapping("/chat")
+    @PostMapping("/send")
     public Result<Void> chat(@RequestBody ChatBoardMessage message) {
         Integer userId = securityUtils.getSecurityUserId();
         return Result.messageHandler(() -> chatboardHistoryService.insertChatboardHistory(userId, message.getTopicId(), message.getContent()));
     }
 
-    @GetMapping("/chat/history")
+    @GetMapping("/info/history")
     public Result<List<ChatboardHistoryVO>> getHistory(@RequestParam("topic_id")Integer topicId) {
         return Result.dataMessageHandler(() -> chatboardHistoryService.getChatboardHistory(topicId), "获取聊天记录失败");
     }

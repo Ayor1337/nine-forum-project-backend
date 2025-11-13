@@ -5,7 +5,7 @@ import lombok.Getter;
 @Getter
 public enum UnreadMessageType {
 
-    REPLAY_MESSAGE("replay"),
+    REPLY_MESSAGE("reply"),
 
     SYSTEM_MESSAGE("system"),
 

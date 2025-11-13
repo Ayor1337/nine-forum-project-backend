@@ -1,7 +1,9 @@
 package com.ayor.controlller;
 
+import com.ayor.entity.PageEntity;
 import com.ayor.entity.app.dto.PostDTO;
 import com.ayor.entity.app.vo.PostVO;
+import com.ayor.entity.app.vo.ReplyMessageVO;
 import com.ayor.result.Result;
 import com.ayor.service.PostService;
 import com.ayor.util.SecurityUtils;
@@ -42,6 +44,13 @@ public class PostController {
     @DeleteMapping("/perm/delete")
     public Result<Void> deletePostPermission(@RequestParam(name = "post_id") Integer postId) {
         return Result.messageHandler(() -> postService.removePostPermission(postId));
+    }
+
+    @GetMapping("/message/list")
+    public Result<PageEntity<ReplyMessageVO>> getReplyMessage(@RequestParam("page_num") Integer pageNum,
+                                                            @RequestParam(value = "page_size", defaultValue = "7") Integer pageSize) {
+        Integer userId = security.getSecurityUserId();
+        return Result.dataMessageHandler(() -> postService.listReplyMessage(pageNum, pageSize, userId), "获取失败");
     }
 
 }

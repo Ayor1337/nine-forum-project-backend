@@ -38,4 +38,6 @@ public class Account {
 
 //    @TableLogic
     private boolean isDeleted;
+
+    private String email;
 }

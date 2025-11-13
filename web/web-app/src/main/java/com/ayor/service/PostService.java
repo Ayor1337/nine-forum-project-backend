@@ -1,7 +1,9 @@
 package com.ayor.service;
 
+import com.ayor.entity.PageEntity;
 import com.ayor.entity.app.dto.PostDTO;
 import com.ayor.entity.app.vo.PostVO;
+import com.ayor.entity.app.vo.ReplyMessageVO;
 import com.ayor.entity.pojo.Post;
 import com.baomidou.mybatisplus.extension.service.IService;
 
@@ -15,4 +17,6 @@ public interface PostService extends IService<Post> {
     String removePostAuthorizeAccountId(Integer postId, Integer userId);
 
     String removePostPermission(Integer postId);
+
+    PageEntity<ReplyMessageVO> listReplyMessage(Integer pageNum, Integer pageSize, Integer accountId);
 }

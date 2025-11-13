@@ -69,6 +69,9 @@ public class StompAuthInterceptor implements ChannelInterceptor {
         if (destination == null) {
             return false;
         }
+        if (destination.contains("/verify")) {
+            return true;
+        }
         if (destination.contains("/broadcast")) {
             return true;
         }

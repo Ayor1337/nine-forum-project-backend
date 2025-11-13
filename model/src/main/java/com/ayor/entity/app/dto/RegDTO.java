@@ -1,6 +1,6 @@
 package com.ayor.entity.app.dto;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Email;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -8,12 +8,8 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class TagDTO {
+public class RegDTO {
 
-    @NotNull
-    private String tag;
-
-    @NotNull
-    private Integer topicId;
-
+    @Email
+    private String email;
 }

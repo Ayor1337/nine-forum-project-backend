@@ -23,8 +23,6 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SystemMessageServiceImpl extends ServiceImpl<SystemMessageMapper, SystemMessage> implements SystemMessageService {
 
-    private final AccountMapper accountMapper;
-
     @Override
     @MessageUnreadNotif(
             accountId = "#accountId",

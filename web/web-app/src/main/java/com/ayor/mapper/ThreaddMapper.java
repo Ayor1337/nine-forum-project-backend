@@ -15,6 +15,11 @@ public interface ThreaddMapper extends BaseMapper<Threadd> {
     @Select("select * from thread where topic_id = #{topicId} order by create_time desc")
     List<Threadd> getThreadsByTopicId(Integer topicId);
 
+    @Select("select * from thread " +
+            "where account_id = #{accountId} and " +
+            "create_time >= DATE_SUB(NOW(), INTERVAL 7 DAY)")
+    List<Threadd> getThreadAroundWeekById(Integer accountId);
+
     @Select("select title from thread where thread_id = #{threadId}")
     String getThreadTitleById(Integer threadId);
 

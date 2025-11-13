@@ -27,7 +27,7 @@ public class ThreadController {
 
 
     @GetMapping("/info/topic")
-    public Result<List<ThreadVO>> getThreadsByTopicId(@RequestParam(name = "topic_id") Integer topicId) throws InterruptedException {
+    public Result<List<ThreadVO>> getThreadsByTopicId(@RequestParam(name = "topic_id") Integer topicId) {
         return Result.dataMessageHandler(() -> threaddService.getThreadVOsByTopicId(topicId), "获取失败");
     }
 

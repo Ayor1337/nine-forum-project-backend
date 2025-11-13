@@ -29,13 +29,13 @@ public class    CollectController {
         return Result.messageHandler(() -> collectService.removeCollect(userId, threadId));
     }
 
-    @GetMapping("/is_collect")
+    @GetMapping("/info/is_collect")
     public Result<Boolean> isCollected(@RequestParam(name = "thread_id") Integer threadId) {
         Integer userId = security.getSecurityUserId();
         return Result.dataMessageHandler(() -> collectService.isCollectedByAccountId(userId, threadId), "获取失败");
     }
 
-    @GetMapping("/get_collect_count")
+    @GetMapping("/info/get_collect_count")
     public Result<Integer> getCollectCountByThreadId(@RequestParam(name = "thread_id") Integer threadId) {
         return Result.dataMessageHandler(() -> collectService.getCollectCountByThreadId(threadId), "获取失败");
     }

@@ -32,6 +32,10 @@ spring:
     listener:
       simple:
         acknowledge-mode: manual
+  mail:
+    host: smtp.163.com
+    username: ayor1337@163.com
+    password: WEWshPE62xYFUTxr
 server:
   port: 9966
 
