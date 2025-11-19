@@ -27,10 +27,11 @@ public class ThreadController {
 
 
     @GetMapping("/info/topic")
-    public Result<List<ThreadVO>> getThreadsByTopicId(@RequestParam(name = "topic_id") Integer topicId) {
-        return Result.dataMessageHandler(() -> threaddService.getThreadVOsByTopicId(topicId), "获取失败");
+    public Result<PageEntity<ThreadVO>> getThreadsByTopicId(@RequestParam("page_num")Integer pageNum,
+                                                          @RequestParam(value = "page_size", defaultValue = "10") Integer pageSize,
+                                                          @RequestParam(name = "topic_id") Integer topicId) {
+        return Result.dataMessageHandler(() -> threaddService.getThreadVOsByTopicId(topicId, pageNum, pageSize), "获取失败");
     }
-
 
     @GetMapping("/info/user")
     public Result<PageEntity<ThreadVO>> getThreadsByUserId(@RequestParam(name = "user_id") Integer userId,

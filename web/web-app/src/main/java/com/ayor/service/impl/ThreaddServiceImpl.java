@@ -59,6 +59,23 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
     }
 
     @Override
+    public PageEntity<ThreadVO> getThreadVOsByTopicId(Integer topicId, Integer pageNum, Integer pageSize) {
+        if (topicId == null) {
+            return null;
+        }
+        if (topicMapper.isTopicDelete(topicId)) {
+            return null;
+        }
+        Page<Threadd> threads = this.lambdaQuery()
+                .eq(Threadd::getTopicId, topicId)
+                .eq(Threadd::getIsDeleted, false)
+                .page(Page.of(pageNum, pageSize));
+        System.out.println(threads.getRecords().size());
+
+        return new PageEntity<>(threads.getTotal(), getThreadVOS(threads.getRecords()));
+    }
+
+    @Override
     public String getThreadTitleById(Integer threadId) {
         if (threadId == null || !existsThreadById(threadId)) {
             return null;
