@@ -13,6 +13,8 @@ import java.util.List;
 public interface ThreaddService extends IService<Threadd> {
     List<ThreadVO> getThreadVOsByTopicId(Integer topicId);
 
+    PageEntity<ThreadVO> getThreadVOsByTopicId(Integer topicId, Integer pageNum, Integer pageSize);
+
     String getThreadTitleById(Integer threadId);
 
     ThreadVO getThreadById(Integer threadId);
