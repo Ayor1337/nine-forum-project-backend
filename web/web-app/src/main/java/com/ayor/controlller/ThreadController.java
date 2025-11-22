@@ -96,7 +96,7 @@ public class ThreadController {
     }
 
     @PreAuthorize("hasRole('ROLE_OWNER') " +
-            "or hasAuthority('PERM_DELETE_THREAD')" +
+            "or hasAuthority('PERM_sDELETE_THREAD')" +
             "and hasAuthority('TOPIC_' + #konekuto.getTopicId())")
     @PostMapping("/perm/remove_thread")
     public Result<Void> removeThreadByIdPermission(@RequestBody Konekuto konekuto) {
@@ -108,4 +108,6 @@ public class ThreadController {
     public Result<Void> viewThread(@RequestParam(name = "thread_id") Integer threadId) {
         return Result.messageHandler(() -> threaddService.updateViewCount(threadId));
     }
+
+
 }

@@ -1,6 +1,7 @@
 package com.ayor.service.impl;
 
 import com.ayor.entity.PageEntity;
+import com.ayor.entity.app.documennt.ThreadDoc;
 import com.ayor.entity.app.dto.TagUpdateDTO;
 import com.ayor.entity.app.dto.ThreadDTO;
 import com.ayor.entity.app.vo.AnnouncementVO;
@@ -55,7 +56,7 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
             return null;
         }
         List<Threadd> threads = this.baseMapper.getThreadsByTopicId(topicId);
-        return getThreadVOS(threads);
+        return toVOs(threads);
     }
 
     @Override
@@ -70,9 +71,8 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
                 .eq(Threadd::getTopicId, topicId)
                 .eq(Threadd::getIsDeleted, false)
                 .page(Page.of(pageNum, pageSize));
-        System.out.println(threads.getRecords().size());
 
-        return new PageEntity<>(threads.getTotal(), getThreadVOS(threads.getRecords()));
+        return new PageEntity<>(threads.getTotal(), toVOs(threads.getRecords()));
     }
 
     @Override
@@ -115,14 +115,13 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
                 .eq(Threadd::getAccountId, accountId)
                 .eq(Threadd::getIsDeleted, false)
                 .page(page);
-        List<ThreadVO> threadVOS = getThreadVOS(threads.getRecords());
+        List<ThreadVO> threadVOS = toVOs(threads.getRecords());
         Long totalPages = threads.getTotal();
         return new PageEntity<>(totalPages, threadVOS);
     }
 
-
     @NotNull
-    private List<ThreadVO> getThreadVOS(List<Threadd> threads) {
+    private List<ThreadVO> toVOs(List<Threadd> threads) {
         List<ThreadVO> threadVOList = new ArrayList<>();
         threads.forEach(threadd -> {
             if (!threadd.getIsDeleted()) {
@@ -291,6 +290,20 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
         return null;
     }
 
+    @Override
+    public List<ThreadDoc> toThreadDocs(List<Threadd> threads) {
+        List<ThreadDoc> threadDocs = new ArrayList<>();
+        threads.forEach(thread -> {
+            ThreadDoc threadDoc = new ThreadDoc();
+            BeanUtils.copyProperties(thread, threadDoc);
+            threadDoc.setContent(quillUtils.QuillStringToString(thread.getContent()));
+            threadDoc.setId("THREAD_"+thread.getThreadId());
+            threadDoc.setIsThreadTopic(true);
+            threadDocs.add(threadDoc);
+        });
+        return threadDocs;
+    }
+
     private boolean existsThreadById(Integer threadId) {
         Threadd threadd = this.lambdaQuery().eq(Threadd::getThreadId, threadId).one();
         return threadd != null && !threadd.getIsDeleted();
@@ -304,7 +317,5 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
         threadd.setIsDeleted(true);
         return this.updateById(threadd);
     }
-
-
 
 }

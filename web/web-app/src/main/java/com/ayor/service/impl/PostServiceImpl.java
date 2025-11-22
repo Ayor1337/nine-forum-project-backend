@@ -2,6 +2,7 @@ package com.ayor.service.impl;
 
 import com.ayor.aspect.unread.MessageUnreadNotif;
 import com.ayor.entity.PageEntity;
+import com.ayor.entity.app.documennt.ThreadDoc;
 import com.ayor.entity.app.dto.PostDTO;
 import com.ayor.entity.app.vo.PostVO;
 import com.ayor.entity.app.vo.ReplyMessageVO;
@@ -157,6 +158,30 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
 
         List<ReplyMessageVO> vos = toVOList(page.getRecords());
         return new PageEntity<>(page.getTotal(), vos);
+    }
+
+
+    @Override
+    public List<ThreadDoc> toThreadDoc(List<Post> posts) {
+        Map<Integer, Threadd> threadMap = new HashMap<>();
+
+        List<ThreadDoc> threadDocs = new ArrayList<>();
+        posts.forEach(post -> {
+            if (!threadMap.containsKey(post.getThreadId())) {
+                Threadd thread = threaddMapper.selectById(post.getThreadId());
+                threadMap.put(post.getThreadId(), thread);
+            }
+            Threadd thread = threadMap.get(post.getThreadId());
+            ThreadDoc threadDoc = new ThreadDoc();
+            BeanUtils.copyProperties(thread, threadDoc);
+            threadDoc.setContent(quillUtils.QuillStringToString(post.getContent()));
+            threadDoc.setCreateTime(post.getCreateTime());
+            threadDoc.setUpdateTime(post.getUpdateTime());
+            threadDoc.setId("POST-" + post.getPostId());
+            threadDoc.setIsThreadTopic(false);
+            threadDocs.add(threadDoc);
+        });
+        return threadDocs;
     }
 
     private List<ReplyMessageVO> toVOList(List<Post> posts) {

@@ -1,6 +1,7 @@
 package com.ayor.service;
 
 import com.ayor.entity.PageEntity;
+import com.ayor.entity.app.documennt.ThreadDoc;
 import com.ayor.entity.app.dto.TagUpdateDTO;
 import com.ayor.entity.app.dto.ThreadDTO;
 import com.ayor.entity.app.vo.AnnouncementVO;
@@ -40,4 +41,6 @@ public interface ThreaddService extends IService<Threadd> {
     void updateThreadStat();
 
     String updateViewCount(Integer threadId);
+
+    List<ThreadDoc> toThreadDocs(List<Threadd> threads);
 }
