@@ -36,6 +36,9 @@ spring:
     host: smtp.163.com
     username: ayor1337@163.com
     password: WEWshPE62xYFUTxr
+  elasticsearch:
+    uris: http://localhost:9200
+
 server:
   port: 9966
 

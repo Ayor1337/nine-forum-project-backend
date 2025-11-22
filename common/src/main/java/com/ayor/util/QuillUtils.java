@@ -79,6 +79,18 @@ public class QuillUtils {
         return QuillArrayToDeltaString(filteredDelta);
     }
 
+    public String QuillStringToString(String content) {
+        StringBuilder builder = new StringBuilder();
+        String s = QuillDeltaFilterNonImage(content);
+        List<Map<String, Object>> maps = QuillDeltaToArray(s);
+        for (Map<String, Object> map : maps) {
+            if (map.containsKey("insert")) {
+                builder.append(map.get("insert"));
+            }
+        }
+        return builder.toString();
+    }
+
     // 将图片滤出成一个 List, 限制为 5 个
     public List<String> QuillDeltaFilterImage (String content) {
         AtomicInteger count = new AtomicInteger();

@@ -1,6 +1,7 @@
 package com.ayor.service;
 
 import com.ayor.entity.PageEntity;
+import com.ayor.entity.app.documennt.ThreadDoc;
 import com.ayor.entity.app.dto.PostDTO;
 import com.ayor.entity.app.vo.PostVO;
 import com.ayor.entity.app.vo.ReplyMessageVO;
@@ -19,4 +20,6 @@ public interface PostService extends IService<Post> {
     String removePostPermission(Integer postId);
 
     PageEntity<ReplyMessageVO> listReplyMessage(Integer pageNum, Integer pageSize, Integer accountId);
+
+    List<ThreadDoc> toThreadDoc(List<Post> posts);
 }
