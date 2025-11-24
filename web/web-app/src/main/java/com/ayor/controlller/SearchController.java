@@ -2,12 +2,14 @@ package com.ayor.controlller;
 
 import com.ayor.entity.PageEntity;
 import com.ayor.entity.app.documennt.ThreadDoc;
+import com.ayor.entity.app.vo.HotKeywordVO;
 import com.ayor.result.Result;
 import com.ayor.service.SearchService;
 import com.ayor.util.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Set;
 
@@ -20,7 +22,7 @@ public class SearchController {
 
     private final SecurityUtils securityUtils;
 
-    @GetMapping("/query")
+    @GetMapping("/info/query")
     public Result<PageEntity<ThreadDoc>> search(@RequestParam(name = "query") String query,
                                      @RequestParam(name = "pageNum", defaultValue = "1") int pageNum,
                                      @RequestParam(name = "pageSize", defaultValue = "10") int pageSize) {
@@ -49,5 +51,11 @@ public class SearchController {
             }
             return searchService.removeSearchHistory(query, userId);
         });
+    }
+
+    @GetMapping("/info/hot_keyword")
+    public Result<List<HotKeywordVO>> getHotSearch(@RequestParam(name = "size", defaultValue = "10") int size,
+                                                   @RequestParam(name = "duration", defaultValue = "7") int duration) {
+        return Result.dataMessageHandler(() -> searchService.getHotKeywords(size, Duration.ofDays(duration)), "获取热门搜索失败");
     }
 }
