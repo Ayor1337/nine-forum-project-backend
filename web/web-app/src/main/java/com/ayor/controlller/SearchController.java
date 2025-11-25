@@ -24,6 +24,10 @@ public class SearchController {
 
     @GetMapping("/info/query")
     public Result<PageEntity<ThreadDoc>> search(@RequestParam(name = "query") String query,
+                                     @RequestParam(name = "type", defaultValue = "all") String type,
+                                     @RequestParam(name = "onlyThreadTopic", defaultValue = "false") boolean onlyThreadTopic,
+                                     @RequestParam(name = "enableHistory", defaultValue = "true") boolean enableHistory,
+                                     @RequestParam(name = "duration", defaultValue = "7") int duration,
                                      @RequestParam(name = "pageNum", defaultValue = "1") int pageNum,
                                      @RequestParam(name = "pageSize", defaultValue = "10") int pageSize) {
         Integer userId = securityUtils.getSecurityUserId();
