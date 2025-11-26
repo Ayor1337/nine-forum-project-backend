@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.Duration;
+import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
@@ -23,15 +24,30 @@ public class SearchController {
     private final SecurityUtils securityUtils;
 
     @GetMapping("/info/query")
-    public Result<PageEntity<ThreadDoc>> search(@RequestParam(name = "query") String query,
-                                     @RequestParam(name = "type", defaultValue = "all") String type,
+    public Result<PageEntity<ThreadDoc>> searchThread(@RequestParam(name = "query") String query,
                                      @RequestParam(name = "onlyThreadTopic", defaultValue = "false") boolean onlyThreadTopic,
+                                     @RequestParam(name = "topicId", required = false) Integer topicId,
                                      @RequestParam(name = "enableHistory", defaultValue = "true") boolean enableHistory,
-                                     @RequestParam(name = "duration", defaultValue = "7") int duration,
+                                     @RequestParam(name = "startTime", required = false) Long startTime,
+                                     @RequestParam(name = "endTime", required = false) Long endTime,
+                                     @RequestParam(name = "order", defaultValue = "rel") String order,
                                      @RequestParam(name = "pageNum", defaultValue = "1") int pageNum,
                                      @RequestParam(name = "pageSize", defaultValue = "10") int pageSize) {
         Integer userId = securityUtils.getSecurityUserId();
-        return Result.dataMessageHandler(() -> searchService.searchThreads(query, userId, pageNum, pageSize), "搜索失败");
+        return Result.dataMessageHandler(() -> searchService.searchThreads(
+                query, userId, topicId, enableHistory, onlyThreadTopic, startTime, endTime, order, pageNum, pageSize), "搜索失败");
+    }
+
+    @GetMapping("/info/query/user")
+    public Result<Void> searchUser(@RequestParam(name = "query") String query,
+                                   @RequestParam(name = "onlyThreadTopic", defaultValue = "false") boolean onlyThreadTopic,
+                                   @RequestParam(name = "topicId", required = false) Integer topicId,
+                                   @RequestParam(name = "enableHistory", defaultValue = "true") boolean enableHistory,
+                                   @RequestParam(name = "duration", defaultValue = "7") int duration,
+                                   @RequestParam(name = "pageNum", defaultValue = "1") int pageNum,
+                                   @RequestParam(name = "pageSize", defaultValue = "10") int pageSize) {
+        // TODO
+        return Result.ok();
     }
 
     @GetMapping("/history")

@@ -24,9 +24,7 @@ public class ThemeController {
         return Result.dataMessageHandler(themeService::getThemeList, "获取列表失败");
     }
 
-
-    @PreAuthorize("hasAnyRole('ROLE_OWNER')")
-    @GetMapping("/list_themes_contains_topics")
+    @GetMapping("/info/list_themes_contains_topics")
     public Result<List<ThemeTopicVO>> getThemesContainsTopics() {
         return Result.dataMessageHandler(themeService::getThemeTopicList, "获取列表失败");
     }

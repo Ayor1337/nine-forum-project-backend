@@ -4,6 +4,7 @@ import com.auth0.jwt.interfaces.DecodedJWT;
 import com.ayor.util.JWTUtils;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
@@ -25,7 +26,7 @@ public class StompAuthInterceptor implements ChannelInterceptor {
     private JWTUtils jwtUtil;
 
     @Override
-    public Message<?> preSend(Message<?> message, MessageChannel channel) {
+    public Message<?> preSend(@NotNull Message<?> message, @NotNull MessageChannel channel) {
         StompHeaderAccessor acc = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
         if (acc == null || acc.getCommand() == null) {
             return message;
@@ -87,6 +88,5 @@ public class StompAuthInterceptor implements ChannelInterceptor {
     private boolean canSend(Principal p, String destination) {
         return true;
     }
+
 }
-
-
