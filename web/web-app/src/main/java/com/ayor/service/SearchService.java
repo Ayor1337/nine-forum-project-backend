@@ -11,7 +11,16 @@ import java.util.Set;
 public interface SearchService {
 
 
-    PageEntity<ThreadDoc> searchThreads(String keyword, Integer userId, int pageNum, int pageSize);
+    PageEntity<ThreadDoc> searchThreads(String keyword,
+                                        Integer userId,
+                                        Integer topicId,
+                                        boolean enableHistory,
+                                        boolean onlyThreadTopic,
+                                        Long startTime,
+                                        Long endTime,
+                                        String order,
+                                        int pageNum,
+                                        int pageSize);
 
     Set<String> getSearchHistory(Integer userId);
 
