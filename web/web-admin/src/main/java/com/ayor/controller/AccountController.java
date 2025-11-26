@@ -5,6 +5,7 @@ import com.ayor.entity.admin.dto.AccountDTO;
 import com.ayor.entity.admin.vo.AccountVO;
 import com.ayor.result.Result;
 import com.ayor.service.AccountService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -59,8 +60,8 @@ public class AccountController {
         return Result.messageHandler(() -> accountService.createAccount(accountDTO));
     }
 
-    @PutMapping
-    public Result<Void> updateAccount(@RequestBody AccountDTO accountDTO) {
+    @PutMapping("/update")
+    public Result<Void> updateAccount(@RequestBody @Valid AccountDTO accountDTO) {
         return Result.messageHandler(() -> accountService.updateAccount(accountDTO));
     }
 
