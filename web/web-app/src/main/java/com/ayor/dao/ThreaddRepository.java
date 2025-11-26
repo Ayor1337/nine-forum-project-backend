@@ -13,4 +13,6 @@ public interface ThreaddRepository extends ElasticsearchRepository<ThreadDoc, In
 
     Page<ThreadDoc> findThreaddByTitleOrContentIgnoreCase(String title, String content, Pageable pageable);
 
+
+
 }

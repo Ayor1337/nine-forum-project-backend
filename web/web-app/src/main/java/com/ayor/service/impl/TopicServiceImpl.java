@@ -5,7 +5,6 @@ import com.ayor.entity.app.dto.TopicDTO;
 import com.ayor.entity.app.vo.TopicVO;
 import com.ayor.entity.pojo.Topic;
 import com.ayor.entity.pojo.TopicStat;
-import com.ayor.mapper.ThemeMapper;
 import com.ayor.mapper.ThreaddMapper;
 import com.ayor.mapper.TopicMapper;
 import com.ayor.mapper.TopicStatMapper;
@@ -128,6 +127,18 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
              @CacheEvict(value = "themeTopicList", key = "'all'")
      })
     public String deleteTopic(Integer topicId) {
+        Topic topic = this.getById(topicId);
+        if (topic == null) {
+            return "主题不存在";
+        }
+        Integer themeId = topic.getThemeId();
+        threaddMapper.deleteThreadByTopicId(topicId);
+        return this.removeByIdLogical(topicId) ? null : "删除失败, 未知异常";
+    }
+
+
+
+    public String deleteTopicLogical(Integer topicId) {
         Topic topic = this.getById(topicId);
         if (topic == null) {
             return "主题不存在";
