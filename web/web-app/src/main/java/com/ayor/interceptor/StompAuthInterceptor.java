@@ -17,6 +17,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
 import java.security.Principal;
+import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Component
@@ -24,6 +26,12 @@ public class StompAuthInterceptor implements ChannelInterceptor {
 
     @Resource
     private JWTUtils jwtUtil;
+
+    private static final Map<String, List<String>> ENDPOINT_DEST_WHITELIST = Map.of(
+            "/chatboard", List.of("/broadcast"),
+            "/chat", List.of("/transfer", "/notif"),
+            "/system", List.of("/notif", "/verify")
+    );
 
     @Override
     public Message<?> preSend(@NotNull Message<?> message, @NotNull MessageChannel channel) {
@@ -48,14 +56,14 @@ public class StompAuthInterceptor implements ChannelInterceptor {
             case SUBSCRIBE -> {
                 Principal principal = acc.getUser();
                 String dest = acc.getDestination();
-                if (!canSubscribe(principal, dest)) {
+                if (!canSubscribe(principal, dest, acc)) {
                     throw new AccessDeniedException("无权查看消息");
                 }
             }
             case SEND -> {
                 Principal principal = acc.getUser();
                 String dest = acc.getDestination();
-                if (!canSend(principal, dest)) {
+                if (!canSend(principal, dest, acc)) {
                     throw new AccessDeniedException("无权发送消息");
                 }
             }
@@ -66,8 +74,11 @@ public class StompAuthInterceptor implements ChannelInterceptor {
         return message;
     }
 
-    private boolean canSubscribe(Principal p, String destination) {
+    private boolean canSubscribe(Principal p, String destination, StompHeaderAccessor accessor) {
         if (destination == null) {
+            return false;
+        }
+        if (!matchEndpointDestination(accessor, destination)) {
             return false;
         }
         if (destination.contains("/verify")) {
@@ -85,8 +96,32 @@ public class StompAuthInterceptor implements ChannelInterceptor {
         return false;
     }
 
-    private boolean canSend(Principal p, String destination) {
-        return true;
+    private boolean canSend(Principal p, String destination, StompHeaderAccessor accessor) {
+        if (destination == null) {
+            return false;
+        }
+        return matchEndpointDestination(accessor, destination);
+    }
+
+    private boolean matchEndpointDestination(StompHeaderAccessor accessor, String destination) {
+        Map<String, Object> attributes = accessor.getSessionAttributes();
+        if (attributes == null) {
+            return true;
+        }
+        Object endpointPath = attributes.get("endpointPath");
+        if (endpointPath == null) {
+            return true;
+        }
+        List<String> allowed = ENDPOINT_DEST_WHITELIST.get(endpointPath.toString());
+        if (allowed == null || allowed.isEmpty()) {
+            return true;
+        }
+        for (String prefix : allowed) {
+            if (destination.startsWith(prefix) || destination.startsWith("/user" + prefix)) {
+                return true;
+            }
+        }
+        return false;
     }
 
 }

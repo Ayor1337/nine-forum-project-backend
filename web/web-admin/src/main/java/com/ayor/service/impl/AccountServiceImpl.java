@@ -3,14 +3,20 @@ package com.ayor.service.impl;
 import com.ayor.entity.PageEntity;
 import com.ayor.entity.admin.dto.AccountDTO;
 import com.ayor.entity.admin.vo.AccountVO;
+import com.ayor.entity.message.UserViolationMessage;
+import com.ayor.entity.message.UserViolationMessageTemplate;
 import com.ayor.entity.pojo.Account;
 import com.ayor.mapper.AccountMapper;
 import com.ayor.mapper.RoleMapper;
 import com.ayor.service.AccountService;
+import com.ayor.type.UserViolationType;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.BeanUtils;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -18,9 +24,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 @Service
 @Transactional
@@ -28,6 +32,8 @@ import java.util.List;
 public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> implements AccountService  {
 
     private final RoleMapper roleMapper;
+
+    private final RabbitTemplate rabbitTemplate;
 
     private static final List<String> allowedRoles = List.of("OWNER");
 
@@ -38,7 +44,6 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
             throw new UsernameNotFoundException("用户不存在");
         }
         String roleName = roleMapper.getRoleNameById(account.getRoleId());
-
         if (!allowedRoles.contains(roleName)) {
             throw new UsernameNotFoundException("用户权限不足");
         }
@@ -54,6 +59,27 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
     public List<AccountVO> getAccountsAsSelectOptions() {
         List<Account> accounts = this.lambdaQuery()
                 .orderByDesc(Account::getCreateTime)
+                .last("limit 10")
+                .list();
+        List<AccountVO> accountVos = new ArrayList<>();
+        accounts.forEach(account -> {
+            AccountVO accountVO = new AccountVO();
+            accountVO.setAccountId(account.getAccountId());
+            accountVO.setUsername(account.getUsername());
+            accountVos.add(accountVO);
+        });
+
+        return accountVos;
+    }
+
+    @Override
+    public List<AccountVO> getAccountsAsSelectOptions(String query) {
+        if (!StringUtils.hasText(query)) {
+            return getAccountsAsSelectOptions();
+        }
+        List<Account> accounts = this.lambdaQuery()
+                .orderByDesc(Account::getCreateTime)
+                .like(StringUtils.hasText(query), Account::getUsername, query)
                 .last("limit 10")
                 .list();
         List<AccountVO> accountVos = new ArrayList<>();
@@ -94,29 +120,84 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
 
     @Override
     public PageEntity<AccountVO> getAccounts(Integer pageNum, Integer pageSize, Integer status) {
+        if (status == null) {
+            return getAccounts(pageNum, pageSize);
+        }
         Page<Account> page = this.lambdaQuery()
-                .eq(status != null, Account::getStatus, status)
+                .eq(Account::getStatus, status)
                 .page(new Page<>(pageNum, pageSize));
         return new PageEntity<>(page.getTotal(), toVoList(page.getRecords()));
     }
 
     @Override
-    public String createAccount(AccountDTO accountDTO) {
-        if (accountDTO == null || !StringUtils.hasText(accountDTO.getUsername())) {
-            return "用户名不能为空";
+    public PageEntity<AccountVO> getAccounts(String query, Integer pageNum, Integer pageSize, Integer status) {
+        if (query == null) {
+            return getAccounts(pageNum, pageSize, status);
         }
-        Long count = this.lambdaQuery()
-                .eq(Account::getUsername, accountDTO.getUsername())
-                .count();
-        if (count != null && count > 0) {
-            return "用户名已存在";
+        Page<Account> page = this.lambdaQuery()
+                .like(StringUtils.hasText(query), Account::getUsername, query)
+                .eq(status != null, Account::getStatus, status)
+                .page(new Page<>(pageNum, pageSize));
+        return new PageEntity<>(page.getTotal(), toVoList(page.getRecords()));
+    }
+
+
+    @Override
+    @CacheEvict(value = "userInfo", key = "#accountId")
+    public String violationProfile(Integer accountId, String type) {
+        if (accountId == null || !existsUserById(accountId)) {
+            return "用户不存在";
         }
-        Account account = new Account();
-        BeanUtils.copyProperties(accountDTO, account);
-        Date now = new Date();
-        account.setCreateTime(now);
-        account.setUpdateTime(now);
-        return this.save(account) ? null : "创建用户失败";
+        if (type == null) {
+            return "用户违规类型不存在";
+        }
+        Account account = this.getById(accountId);
+        UserViolationType userViolationType;
+        UserViolationMessage<String> message;
+        switch (type) {
+            case "nickname" -> userViolationType = UserViolationType.NICKNAME_VIOLATION;
+            case "banner" -> userViolationType = UserViolationType.BANNER_VIOLATION;
+            case "avatar" -> userViolationType = UserViolationType.AVATAR_VIOLATION;
+            default -> {
+                return "用户违规类型不存在";
+            }
+        }
+        switch (userViolationType) {
+            case NICKNAME_VIOLATION -> {
+                account.setNickname("改名"+ UUID.randomUUID().toString().substring(0,3));
+                message = new UserViolationMessage<>(
+                        UserViolationMessageTemplate.NICKNAME_VIOLATION,
+                        "用户违规处理",
+                        account.getAccountId(),
+                        userViolationType
+                );
+            }
+            case BANNER_VIOLATION -> {
+                account.setBannerUrl("nineforum/banner/default.webp");
+                message = new UserViolationMessage<>(
+                        UserViolationMessageTemplate.BANNER_VIOLATION,
+                        "用户违规处理",
+                        account.getAccountId(),
+                        userViolationType
+                );
+            }
+            case AVATAR_VIOLATION -> {
+                account.setAvatarUrl("nineforum/avatar/default.jpg");
+                message = new UserViolationMessage<>(
+                        UserViolationMessageTemplate.AVATAR_VIOLATION,
+                        "用户违规处理",
+                        account.getAccountId(),
+                        userViolationType
+                );
+            }
+            default -> {
+                return "用户违规类型不存在";
+            }
+        }
+        this.updateById(account);
+        // 监听器还没做
+        rabbitTemplate.convertAndSend("broadcast.direct", "broadcast", message);
+        return null;
     }
 
     @Override
@@ -156,4 +237,9 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         }
         return accountVos;
     }
+
+    private boolean existsUserById(Integer accountId) {
+        return this.baseMapper.exists(Wrappers.<Account>lambdaQuery().eq(Account::getAccountId, accountId));
+    }
+
 }
