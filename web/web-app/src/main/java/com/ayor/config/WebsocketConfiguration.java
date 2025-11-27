@@ -1,6 +1,7 @@
 package com.ayor.config;
 
 import com.ayor.interceptor.StompAuthInterceptor;
+import com.ayor.interceptor.WebsocketHandshakeInterceptor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.ChannelRegistration;
@@ -15,11 +16,13 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 public class WebsocketConfiguration implements WebSocketMessageBrokerConfigurer {
 
     private final StompAuthInterceptor authInterceptor;
+    private final WebsocketHandshakeInterceptor websocketHandshakeInterceptor;
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/chatboard", "/chat", "/system")
-                .setAllowedOrigins("*");
+                .setAllowedOrigins("*")
+                .addInterceptors(websocketHandshakeInterceptor);
 
     }
 

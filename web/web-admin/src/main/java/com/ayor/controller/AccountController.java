@@ -5,6 +5,7 @@ import com.ayor.entity.admin.dto.AccountDTO;
 import com.ayor.entity.admin.vo.AccountVO;
 import com.ayor.result.Result;
 import com.ayor.service.AccountService;
+import com.ayor.type.UserViolationType;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -27,15 +28,11 @@ public class AccountController {
     private final AccountService accountService;
 
     @GetMapping("/list")
-    public Result<PageEntity<AccountVO>> getAccounts(@RequestParam("page_num") Integer pageNum,
+    public Result<PageEntity<AccountVO>> getAccounts(@RequestParam(value = "query", required = false) String query,
+                                          @RequestParam(value = "page_num", defaultValue = "1") Integer pageNum,
                                           @RequestParam(value = "page_size", defaultValue = "10") Integer pageSize,
                                           @RequestParam(value = "status", required = false) Integer status) {
-        return Result.dataMessageHandler(() -> {
-            if (status != null) {
-                return accountService.getAccounts(pageNum, pageSize, status);
-            }
-            return accountService.getAccounts(pageNum, pageSize);
-        }, "获取用户列表失败");
+        return Result.dataMessageHandler(() ->  accountService.getAccounts(query, pageNum, pageSize, status), "获取用户列表失败");
     }
 
     @GetMapping("/get_account_by_id")
@@ -51,14 +48,16 @@ public class AccountController {
     }
 
     @GetMapping("/list_user_options")
-    public Result<List<AccountVO>> listUsers() {
-        return Result.dataMessageHandler(accountService::getAccountsAsSelectOptions, "获取用户列表失败");
+    public Result<List<AccountVO>> listUsers(@RequestParam(name = "query", required = false) String query) {
+        return Result.dataMessageHandler(() -> accountService.getAccountsAsSelectOptions(query), "获取用户列表失败");
     }
 
-    @PostMapping
-    public Result<Void> createAccount(@RequestBody AccountDTO accountDTO) {
-        return Result.messageHandler(() -> accountService.createAccount(accountDTO));
+    @PostMapping("/submit_violation")
+    public Result<Void> violationProfile(@RequestParam(name = "accountId") Integer accountId,
+                                         @RequestParam(name = "type") String type) {
+        return Result.messageHandler(() -> accountService.violationProfile(accountId, type));
     }
+
 
     @PutMapping("/update")
     public Result<Void> updateAccount(@RequestBody @Valid AccountDTO accountDTO) {

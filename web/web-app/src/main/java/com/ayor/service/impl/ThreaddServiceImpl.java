@@ -70,6 +70,7 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
         Page<Threadd> threads = this.lambdaQuery()
                 .eq(Threadd::getTopicId, topicId)
                 .eq(Threadd::getIsDeleted, false)
+                .orderByDesc(Threadd::getCreateTime)
                 .page(Page.of(pageNum, pageSize));
 
         return new PageEntity<>(threads.getTotal(), toVOs(threads.getRecords()));
@@ -113,6 +114,7 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
         Page<Threadd> page = new Page<>(currentPage, pageSize);
         Page<Threadd> threads = this.lambdaQuery()
                 .eq(Threadd::getAccountId, accountId)
+                .orderByAsc(Threadd::getCreateTime)
                 .eq(Threadd::getIsDeleted, false)
                 .page(page);
         List<ThreadVO> threadVOS = toVOs(threads.getRecords());

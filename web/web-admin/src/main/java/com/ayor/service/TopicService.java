@@ -6,11 +6,15 @@ import com.ayor.entity.admin.vo.TopicVO;
 import com.ayor.entity.pojo.Topic;
 import com.baomidou.mybatisplus.extension.service.IService;
 
+import java.util.List;
+
 public interface TopicService extends IService<Topic> {
 
     PageEntity<TopicVO> getTopics(Integer pageNum, Integer pageSize);
 
     PageEntity<TopicVO> getTopicsByThemeId(Integer themeId, Integer pageNum, Integer pageSize);
+
+    List<TopicVO> getTopicsAsOptions(String query);
 
     String createTopic(TopicDTO topicDTO);
 
