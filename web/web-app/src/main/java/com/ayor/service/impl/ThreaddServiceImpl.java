@@ -1,7 +1,7 @@
 package com.ayor.service.impl;
 
 import com.ayor.entity.PageEntity;
-import com.ayor.entity.app.documennt.ThreadDoc;
+import com.ayor.entity.app.document.ThreadDoc;
 import com.ayor.entity.app.dto.TagUpdateDTO;
 import com.ayor.entity.app.dto.ThreadDTO;
 import com.ayor.entity.app.vo.AnnouncementVO;
@@ -140,8 +140,8 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
 
                 threadVO.setTag(tagVO);
                 threadVO.setAccountName(account.getNickname());
-                threadVO.setContent(quillUtils.QuillDeltaFilterNonImage(threadd.getContent()));
-                threadVO.setImageUrls(quillUtils.QuillDeltaFilterImage(threadd.getContent()));
+                threadVO.setContent(quillUtils.quillDeltaFilterNonImage(threadd.getContent()));
+                threadVO.setImageUrls(quillUtils.quillDeltaFilterImage(threadd.getContent()));
                 threadVO.setAvatarUrl(account.getAvatarUrl());
                 threadVO.setAccountId(account.getAccountId());
 
@@ -236,9 +236,10 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
         }
         Threadd threadd = new Threadd();
         BeanUtils.copyProperties(threadDTO, threadd);
-        threadd.setContent(quillUtils.QuillDeltaConvertBase64ToURL(threadDTO.getContent(), "threads/" + threadd.getTopicId() + "/"));
+        threadd.setContent(quillUtils.quillDeltaConvertBase64ToURL(threadDTO.getContent(), "threads/" + threadd.getTopicId() + "/"));
         threadd.setAccountId(accountId);
         threadd.setCreateTime(new Date());
+
 
         return this.save(threadd) ? null : "添加失败";
     }
@@ -293,12 +294,12 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
     }
 
     @Override
-    public List<ThreadDoc> toThreadDocs(List<Threadd> threads) {
+    public List<ThreadDoc> toThreadDocs(List<Threadd>     threads) {
         List<ThreadDoc> threadDocs = new ArrayList<>();
         threads.forEach(thread -> {
             ThreadDoc threadDoc = new ThreadDoc();
             BeanUtils.copyProperties(thread, threadDoc);
-            threadDoc.setContent(quillUtils.QuillStringToString(thread.getContent()));
+            threadDoc.setContent(quillUtils.quillStringToString(thread.getContent()));
             threadDoc.setId("THREAD_"+thread.getThreadId());
             threadDoc.setIsThreadTopic(true);
             threadDocs.add(threadDoc);

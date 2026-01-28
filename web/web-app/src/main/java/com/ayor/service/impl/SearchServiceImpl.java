@@ -3,15 +3,13 @@ package com.ayor.service.impl;
 import co.elastic.clients.elasticsearch._types.aggregations.Aggregation;
 import co.elastic.clients.elasticsearch._types.aggregations.StringTermsBucket;
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
-import co.elastic.clients.json.JsonData;
 import com.ayor.dao.SearchLogDocRepository;
 import com.ayor.dao.ThreaddRepository;
 import com.ayor.entity.PageEntity;
-import com.ayor.entity.app.documennt.SearchLogDoc;
-import com.ayor.entity.app.documennt.ThreadDoc;
+import com.ayor.entity.app.document.SearchLogDoc;
+import com.ayor.entity.app.document.ThreadDoc;
 import com.ayor.entity.app.vo.HotKeywordVO;
 import com.ayor.service.SearchService;
-import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -27,7 +25,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 

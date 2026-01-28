@@ -94,7 +94,7 @@ public class SecurityConfiguration {
                                         AuthenticationException exception) throws IOException, ServletException {
         resp.setContentType("application/json");
         resp.setCharacterEncoding("UTF-8");
-        resp.getWriter().write(Result.fail(401, exception.getMessage()).toJSONString());
+        resp.getWriter().write(Result.fail(401, "用户名或密码错误").toJSONString());
     }
 
     public void onLogoutSuccess(HttpServletRequest req,

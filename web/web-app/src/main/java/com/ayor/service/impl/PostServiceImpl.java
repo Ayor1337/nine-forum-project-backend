@@ -2,7 +2,7 @@ package com.ayor.service.impl;
 
 import com.ayor.aspect.unread.MessageUnreadNotif;
 import com.ayor.entity.PageEntity;
-import com.ayor.entity.app.documennt.ThreadDoc;
+import com.ayor.entity.app.document.ThreadDoc;
 import com.ayor.entity.app.dto.PostDTO;
 import com.ayor.entity.app.vo.PostVO;
 import com.ayor.entity.app.vo.ReplyMessageVO;
@@ -86,7 +86,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         }
         Integer topicId = threaddMapper.getTopicIdByThreadId(postDTO.getThreadId());
         post.setAccountId(userId)   ;
-        post.setContent(quillUtils.QuillDeltaConvertBase64ToURL(postDTO.getContent(), "posts/" + post.getThreadId() + "/"));
+        post.setContent(quillUtils.quillDeltaConvertBase64ToURL(postDTO.getContent(), "posts/" + post.getThreadId() + "/"));
         post.setCreateTime(new Date());
         post.setTopicId(topicId);
         if (this.save(post)) {
@@ -174,7 +174,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
             Threadd thread = threadMap.get(post.getThreadId());
             ThreadDoc threadDoc = new ThreadDoc();
             BeanUtils.copyProperties(thread, threadDoc);
-            threadDoc.setContent(quillUtils.QuillStringToString(post.getContent()));
+            threadDoc.setContent(quillUtils.quillStringToString(post.getContent()));
             threadDoc.setCreateTime(post.getCreateTime());
             threadDoc.setUpdateTime(post.getUpdateTime());
             threadDoc.setId("POST-" + post.getPostId());
@@ -199,7 +199,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         vo.setPostId(post.getPostId());
         vo.setThreadId(post.getThreadId());
         vo.setThreadTitle(threaddMapper.getThreadTitleById(post.getThreadId()));
-        vo.setContent(quillUtils.QuillDeltaFilterNonImage(post.getContent()));
+        vo.setContent(quillUtils.quillDeltaFilterNonImage(post.getContent()));
         vo.setTopicId(threaddMapper.getTopicIdByThreadId(post.getThreadId()));
         vo.setCreateTime(post.getCreateTime());
         vo.setNickname(accountMapper.getAccountById(post.getAccountId()).getNickname());

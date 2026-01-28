@@ -30,7 +30,7 @@ public class BroadcastServiceImpl implements BroadcastService {
     public <T> void userSystemBroadcast(UserSystemMessage<T> message) {
 
         SystemMessage systemMessage = SystemMessage
-                .SystemMessageIndividual(message.getTitle(),
+                .createSystemMessageIndividual(message.getTitle(),
                 String.valueOf(message.getMessage()),
                 message.getSendTo());
         systemMessageMapper.insert(systemMessage);
@@ -51,7 +51,7 @@ public class BroadcastServiceImpl implements BroadcastService {
     @MessageUnreadNotif(accountId = "#message.sendTo", subscribeDest = "/notif/system", type = UnreadMessageType.SYSTEM_MESSAGE)
     public <T> void userViolationBroadcast(UserViolationMessage<T> message) {
         SystemMessage systemMessage = SystemMessage
-                .SystemMessageIndividual(message.getTitle(),
+                .createSystemMessageIndividual(message.getTitle(),
                         String.valueOf(message.getMessage()),
                         message.getSendTo());
         systemMessageMapper.insert(systemMessage);

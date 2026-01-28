@@ -1,7 +1,7 @@
 package com.ayor.service;
 
 import com.ayor.entity.PageEntity;
-import com.ayor.entity.app.documennt.ThreadDoc;
+import com.ayor.entity.app.document.ThreadDoc;
 import com.ayor.entity.app.dto.TagUpdateDTO;
 import com.ayor.entity.app.dto.ThreadDTO;
 import com.ayor.entity.app.vo.AnnouncementVO;
