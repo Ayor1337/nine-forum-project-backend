@@ -24,7 +24,7 @@ public class SystemMessage {
 
     private Integer accountId;
 
-    public static SystemMessage SystemMessageGroup(String title, String content) {
+    public static SystemMessage createSystemMessageGroup(String title, String content) {
         SystemMessage systemMessage = new SystemMessage();
         systemMessage.setTitle(title);
         systemMessage.setContent(content);
@@ -32,7 +32,7 @@ public class SystemMessage {
         return systemMessage;
     }
 
-    public static SystemMessage SystemMessageIndividual(String title, String content, Integer accountId) {
+    public static SystemMessage createSystemMessageIndividual(String title, String content, Integer accountId) {
         SystemMessage systemMessage = new SystemMessage();
         systemMessage.setTitle(title);
         systemMessage.setContent(content);

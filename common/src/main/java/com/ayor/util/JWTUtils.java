@@ -168,7 +168,7 @@ public class JWTUtils {
     }
 
 
-    public Integer toID(DecodedJWT decodedJWT) {
+    public Integer toId(DecodedJWT decodedJWT) {
         if (decodedJWT == null)
             return null;
         Map<String, Claim> claims = decodedJWT.getClaims();

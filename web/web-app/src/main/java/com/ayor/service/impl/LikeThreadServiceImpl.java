@@ -79,7 +79,7 @@ public class LikeThreadServiceImpl extends ServiceImpl<LikeThreadMapper, LikeThr
         for (Threadd thread : threads) {
             ThreadVO threadVO = new ThreadVO();
             BeanUtils.copyProperties(thread, threadVO);
-            threadVO.setContent(quillUtils.QuillDeltaFilterNonImage(thread.getContent()));
+            threadVO.setContent(quillUtils.quillDeltaFilterNonImage(thread.getContent()));
             threadVOS.add(threadVO);
         }
 
