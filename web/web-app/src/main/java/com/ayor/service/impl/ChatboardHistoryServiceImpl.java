@@ -1,16 +1,16 @@
 package com.ayor.service.impl;
 
+import com.ayor.entity.PageEntity;
 import com.ayor.entity.app.vo.ChatboardHistoryVO;
 import com.ayor.entity.pojo.Account;
 import com.ayor.entity.pojo.ChatboardHistory;
 import com.ayor.mapper.AccountMapper;
 import com.ayor.mapper.ChatboardHistoryMapper;
 import com.ayor.service.ChatboardHistoryService;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -51,21 +51,26 @@ public class ChatboardHistoryServiceImpl extends ServiceImpl<ChatboardHistoryMap
     }
 
     @Override
-    public List<ChatboardHistoryVO> getChatboardHistory(Integer topicId) {
-        List<ChatboardHistory> chatboardHistories = this.lambdaQuery()
+    public PageEntity<ChatboardHistoryVO> getChatboardHistory(Integer topicId, Integer pageNum, Integer pageSize) {
+        Page<ChatboardHistory> page = this.lambdaQuery()
                 .eq(ChatboardHistory::getTopicId, topicId)
-                .orderByAsc(ChatboardHistory::getCreateTime)
-                .list();
+                .orderByDesc(ChatboardHistory::getCreateTime)
+                .page(Page.of(pageNum, pageSize));
+        List<ChatboardHistory> records = page.getRecords();
+
+        if (records == null || records.isEmpty()) {
+            return new PageEntity<>(0L, new ArrayList<>());
+        }
 
         List<ChatboardHistoryVO> chatboardHistoryVOS = new ArrayList<>();
-        chatboardHistories.forEach(chatboardHistory -> {
+        records.forEach(chatboardHistory -> {
             ChatboardHistoryVO chatboardHistoryVO = new ChatboardHistoryVO();
             chatboardHistoryVO.setChatboardHistoryId(chatboardHistory.getChatboardHistoryId());
             BeanUtils.copyProperties(chatboardHistory, chatboardHistoryVO);
             chatboardHistoryVOS.add(chatboardHistoryVO);
         });
 
-        return chatboardHistoryVOS;
+        return new PageEntity<>(page.getTotal(), chatboardHistoryVOS);
     }
 
 }
