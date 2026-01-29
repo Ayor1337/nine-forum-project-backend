@@ -39,8 +39,8 @@ spring:
   elasticsearch:
     uris: http://localhost:9200
   spotify:
-    client-id: dd3135839b5642e49fe1000692167050
-    client-secret: 425963a190e84e1abad68b1899e7b29f
+    client-id: ${SPOTIFY_CLIENT_ID}
+    client-secret: ${SPOTIFY_CLIENT_SECRET}
     redirect-uri: http://127.0.0.1:9966/api/spotify/callback
     scopes: user-read-currently-playing,user-read-playback-state
     auth-url: https://accounts.spotify.com/authorize
