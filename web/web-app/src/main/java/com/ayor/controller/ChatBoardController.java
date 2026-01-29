@@ -1,5 +1,6 @@
 package com.ayor.controller;
 
+import com.ayor.entity.PageEntity;
 import com.ayor.entity.app.vo.ChatboardHistoryVO;
 import com.ayor.entity.stomp.ChatBoardMessage;
 import com.ayor.result.Result;
@@ -26,8 +27,10 @@ public class ChatBoardController {
     }
 
     @GetMapping("/info/history")
-    public Result<List<ChatboardHistoryVO>> getHistory(@RequestParam("topic_id")Integer topicId) {
-        return Result.dataMessageHandler(() -> chatboardHistoryService.getChatboardHistory(topicId), "获取聊天记录失败");
+    public Result<PageEntity<ChatboardHistoryVO>> getHistory(@RequestParam("topic_id")Integer topicId,
+                                                             @RequestParam(value = "page_num", defaultValue = "1") Integer pageNum,
+                                                             @RequestParam(value = "page_size", defaultValue = "10") Integer pageSize) {
+        return Result.dataMessageHandler(() -> chatboardHistoryService.getChatboardHistory(topicId, pageNum, pageSize), "获取聊天记录失败");
     }
 
 
