@@ -66,6 +66,10 @@ public class ChatboardHistoryServiceImpl extends ServiceImpl<ChatboardHistoryMap
         records.forEach(chatboardHistory -> {
             ChatboardHistoryVO chatboardHistoryVO = new ChatboardHistoryVO();
             chatboardHistoryVO.setChatboardHistoryId(chatboardHistory.getChatboardHistoryId());
+            Account account = accountMapper.getAccountById(chatboardHistory.getAccountId());
+            chatboardHistoryVO.setNickname(account.getNickname());
+            chatboardHistoryVO.setAvatarUrl(account.getAvatarUrl());
+            chatboardHistoryVO.setBannerUrl(account.getBannerUrl());
             BeanUtils.copyProperties(chatboardHistory, chatboardHistoryVO);
             chatboardHistoryVOS.add(chatboardHistoryVO);
         });
