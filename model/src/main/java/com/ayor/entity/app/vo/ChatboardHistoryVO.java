@@ -22,7 +22,9 @@ public class ChatboardHistoryVO implements Serializable {
 
     private String nickname;
 
-    private String accountAvatar;
+    private String avatarUrl;
+
+    private String bannerUrl;
 
     private Integer topicId;
 
