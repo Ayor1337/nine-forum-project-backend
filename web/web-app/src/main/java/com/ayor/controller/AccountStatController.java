@@ -19,7 +19,9 @@ public class AccountStatController {
 
     private final SecurityUtils security;
     /**
-     * getAccountStatInfo 方法。
+     * 获取当前登录用户的统计概览。
+     *
+     * @return 用户统计数据，包含帖子、主题等聚合信息
      */
 
 

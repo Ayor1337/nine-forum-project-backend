@@ -17,7 +17,7 @@ public class LikeController {
 
     private final SecurityUtils security;
     /**
-     * likeThread 方法。
+     * 点赞帖子。
      */
 
     @PostMapping("/threads/{thread_id}/likes")
@@ -26,7 +26,7 @@ public class LikeController {
         return Result.messageHandler(() -> likeThreadService.insertLikeThreadId(userId, threadId));
     }
     /**
-     * unlikeThread 方法。
+     * 取消点赞帖子。
      */
 
     @DeleteMapping("/threads/{thread_id}/likes")
@@ -35,7 +35,7 @@ public class LikeController {
         return Result.messageHandler(() -> likeThreadService.removeLikeThreadId(userId, threadId));
     }
     /**
-     * isLiked 方法。
+     * 判断当前用户是否点赞了指定帖子。
      */
 
     @GetMapping("/threads/{thread_id}/likes/me")
@@ -44,7 +44,7 @@ public class LikeController {
         return Result.dataMessageHandler(() -> likeThreadService.isLikedByAccountId(userId, threadId), "获取失败");
     }
     /**
-     * getLikeCountByThreadId 方法。
+     * 获取帖子点赞数。
      */
 
     @GetMapping("/threads/{thread_id}/likes/count")
@@ -52,7 +52,7 @@ public class LikeController {
         return Result.dataMessageHandler(() -> likeThreadService.getLikeCountByThreadId(threadId), "获取失败");
     }
     /**
-     * getLikes 方法。
+     * 获取当前用户的点赞列表。
      */
 
     @GetMapping("/users/{user_id}/liked-threads")

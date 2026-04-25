@@ -25,7 +25,7 @@ public class ConversationController {
 
     private final SecurityUtils securityUtils;
     /**
-     * newConversation 方法。
+     * 发起新的私聊会话。
      */
 
     @PostMapping
@@ -34,7 +34,7 @@ public class ConversationController {
         return Result.messageHandler(() -> conversationService.createNewConversation(userId, toUsername));
     }
     /**
-     * startConversation 方法。
+     * 获取或创建与指定用户的会话。
      */
 
     @GetMapping("/with-user/{account_id}")
@@ -43,7 +43,7 @@ public class ConversationController {
         return Result.dataMessageHandler(() -> conversationService.getConversationByAccountId(userId, toAccountId), "获取聊天列表失败");
     }
     /**
-     * hideConversation 方法。
+     * 隐藏指定会话。
      */
 
     @DeleteMapping("/{conversation_id}")
@@ -52,7 +52,7 @@ public class ConversationController {
         return Result.messageHandler(() -> conversationService.hiddenConversation(conversationId, userId));
     }
     /**
-     * listConversation 方法。
+     * 获取当前用户的会话列表。
      */
 
     @GetMapping
@@ -61,7 +61,7 @@ public class ConversationController {
         return Result.dataMessageHandler(() -> conversationService.getConversationList(userId), "获取聊天列表失败");
     }
     /**
-     * sendMessage 方法。
+     * 发送私聊消息。
      */
 
     @PostMapping("/{conversation_id}/messages")
@@ -72,7 +72,7 @@ public class ConversationController {
         return Result.messageHandler(() -> conversationMessageService.sendMessage(conversationMessage, userId));
     }
     /**
-     * listMessage 方法。
+     * 获取会话消息列表。
      */
 
     @GetMapping("/{conversation_id}/messages")
@@ -82,7 +82,7 @@ public class ConversationController {
         return Result.dataMessageHandler(() -> conversationMessageService.getConversationMessageList(conversationId,  userId, pageNum), "获取聊天列表失败");
     }
     /**
-     * getUnreadMessageCount 方法。
+     * 获取未读会话消息数量。
      */
 
     @GetMapping("/unread-messages")
@@ -91,7 +91,7 @@ public class ConversationController {
         return Result.dataMessageHandler(() -> conversationService.getUnreadList(userId), "获取未读消息数量失败");
     }
     /**
-     * clearUnreadMessageCount 方法。
+     * 清空会话未读消息数量。
      */
 
     @DeleteMapping("/{conversation_id}/unread-messages")

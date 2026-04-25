@@ -18,7 +18,10 @@ public class BreadController {
 
     private final ThreaddService threaddService;
     /**
-     * getTopicInfo 方法。
+     * 获取主题标题，用于面包屑展示。
+     *
+     * @param topicId 主题 ID
+     * @return 主题标题
      */
 
     @GetMapping("/topics/{topic_id}/breadcrumb")
@@ -26,7 +29,10 @@ public class BreadController {
         return Result.dataMessageHandler(() -> topicService.getTopicNameById(topicId), "获取帖子信息失败");
     }
     /**
-     * getThreadInfo 方法。
+     * 获取帖子标题，用于面包屑展示。
+     *
+     * @param threadId 帖子 ID
+     * @return 帖子标题
      */
 
     @GetMapping("/threads/{thread_id}/breadcrumb")

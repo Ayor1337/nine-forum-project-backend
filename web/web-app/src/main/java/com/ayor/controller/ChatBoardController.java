@@ -20,7 +20,11 @@ public class ChatBoardController {
 
     private final SecurityUtils securityUtils;
     /**
-     * chat 方法。
+     * 发送聊天频道消息并写入聊天记录。
+     *
+     * @param topicId 主题 ID
+     * @param message 聊天消息内容
+     * @return 发送结果
      */
 
     @PostMapping
@@ -30,7 +34,12 @@ public class ChatBoardController {
         return Result.messageHandler(() -> chatboardHistoryService.insertChatboardHistory(userId, topicId, message.getContent()));
     }
     /**
-     * getHistory 方法。
+     * 获取主题聊天室的聊天记录。
+     *
+     * @param topicId 主题 ID
+     * @param pageNum 页码
+     * @param pageSize 每页数量
+     * @return 聊天记录分页数据
      */
 
     @GetMapping
