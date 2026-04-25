@@ -17,6 +17,9 @@ import java.util.List;
 @Service
 @Transactional
 public class TagServiceImpl extends ServiceImpl<TagMapper, Tag> implements TagService {
+    /**
+     * listTags 方法。
+     */
 
 
     @Override
@@ -30,6 +33,9 @@ public class TagServiceImpl extends ServiceImpl<TagMapper, Tag> implements TagSe
         });
         return tagVOList;
     }
+    /**
+     * listTagsByTopicId 方法。
+     */
 
     @Override
     public List<TagVO> listTagsByTopicId(Integer topicId) {
@@ -45,6 +51,9 @@ public class TagServiceImpl extends ServiceImpl<TagMapper, Tag> implements TagSe
         });
         return tagVOList;
     }
+    /**
+     * insertNewTag 方法。
+     */
 
     @Override
     public String insertNewTag(TagDTO tagDTO) {

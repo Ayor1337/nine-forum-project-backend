@@ -19,6 +19,9 @@ public class SystemMessageController {
     private final SystemMessageService systemMessageService;
 
     private final SecurityUtils securityUtils;
+    /**
+     * getSystemMessages 方法。
+     */
 
     @GetMapping
     public Result<PageEntity<SystemMessageVO>> getSystemMessages(@RequestParam("page_num") Integer pageNum,

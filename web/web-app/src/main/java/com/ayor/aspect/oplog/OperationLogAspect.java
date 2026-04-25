@@ -23,6 +23,14 @@ public class OperationLogAspect {
 
     private final ObjectMapper objectMapper;
 
+    /**
+     * 在目标方法执行前后记录操作日志。
+     *
+     * @param joinPoint 切点
+     * @param operationLog 操作日志注解
+     * @return 目标方法返回值
+     * @throws Throwable 目标方法异常
+     */
     @Around("@annotation(operationLog)")
     public Object around(ProceedingJoinPoint joinPoint, OperationLog operationLog) throws Throwable {
         MethodSignature signature = (MethodSignature) joinPoint.getSignature();
@@ -49,6 +57,12 @@ public class OperationLogAspect {
         }
     }
 
+    /**
+     * 将对象序列化为 JSON 字符串。
+     *
+     * @param value 待序列化对象
+     * @return JSON 字符串
+     */
     private String toJson(Object value) {
         if (value == null) {
             return "null";

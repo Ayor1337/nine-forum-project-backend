@@ -36,6 +36,9 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
     private final MinioService minioService;
 
     private final TopicStatMapper topicStatMapper;
+    /**
+     * getTopicNameById 方法。
+     */
 
     @Override
     @Cacheable(value = "topicName", key = "#topicId", condition = "#topicId != null", unless = "#result == null")
@@ -46,6 +49,9 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
         }
         return topic.getTitle();
     }
+    /**
+     * getTopicListByThemeId 方法。
+     */
 
     @Override
     @Cacheable(value = "topicList", key = "#themeId", condition = "#themeId != null", unless = "#result == null")
@@ -73,6 +79,9 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
             @CacheEvict(value = "topicList", key = "#topicDTO.themeId", condition = "#topicDTO.themeId != null"),
             @CacheEvict(value = "themeTopicList", key = "'all'")
     })
+    /**
+     * insertTopic 方法。
+     */
     public String insertTopic(TopicDTO topicDTO) {
         if (topicDTO == null || topicDTO.getTitle().equals("待输入标题")) {
             return "请填写主题";
@@ -101,6 +110,9 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
             @CacheEvict(value = "topicList", key = "#topicDTO.themeId"),
             @CacheEvict(value = "themeTopicList", key = "'all'")
     })
+    /**
+     * updateTopic 方法。
+     */
     public String updateTopic(TopicDTO topicDTO) {
         if (topicDTO == null || topicDTO.getTitle().equals("待输入标题")) {
             return "请填写主题";
@@ -126,6 +138,9 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
             @CacheEvict(value = "topicList", key = "@themeMapper.getThemeIdByTopicId(#topicId)", condition = "#topicId != null "),
              @CacheEvict(value = "themeTopicList", key = "'all'")
      })
+    /**
+     * deleteTopic 方法。
+     */
     public String deleteTopic(Integer topicId) {
         Topic topic = this.getById(topicId);
         if (topic == null) {
@@ -135,6 +150,9 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
         threaddMapper.deleteThreadByTopicId(topicId);
         return this.removeByIdLogical(topicId) ? null : "删除失败, 未知异常";
     }
+    /**
+     * deleteTopicLogical 方法。
+     */
 
 
 
@@ -147,6 +165,9 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
         threaddMapper.deleteThreadByTopicId(topicId);
         return this.removeByIdLogical(topicId) ? null : "删除失败, 未知异常";
     }
+    /**
+     * removeByIdLogical 方法。
+     */
 
     private boolean removeByIdLogical(Serializable topicId) {
         Topic topic = this.getById(topicId);

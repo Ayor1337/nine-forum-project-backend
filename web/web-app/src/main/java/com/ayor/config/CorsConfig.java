@@ -11,6 +11,11 @@ import java.util.List;
 @Configuration
 public class CorsConfig {
 
+    /**
+     * 构造全局 CORS 配置。
+     *
+     * @return CORS 配置源
+     */
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration cfg = new CorsConfiguration();

@@ -16,29 +16,44 @@ public class LikeController {
     private final LikeThreadService likeThreadService;
 
     private final SecurityUtils security;
+    /**
+     * likeThread 方法。
+     */
 
     @PostMapping("/threads/{thread_id}/likes")
     public Result<Void> likeThread(@PathVariable(name = "thread_id") Integer threadId) {
         Integer userId = security.getSecurityUserId();
         return Result.messageHandler(() -> likeThreadService.insertLikeThreadId(userId, threadId));
     }
+    /**
+     * unlikeThread 方法。
+     */
 
     @DeleteMapping("/threads/{thread_id}/likes")
     public Result<Void> unlikeThread(@PathVariable(name = "thread_id") Integer threadId) {
         Integer userId = security.getSecurityUserId();
         return Result.messageHandler(() -> likeThreadService.removeLikeThreadId(userId, threadId));
     }
+    /**
+     * isLiked 方法。
+     */
 
     @GetMapping("/threads/{thread_id}/likes/me")
     public Result<Boolean> isLiked(@PathVariable(name = "thread_id") Integer threadId) {
         Integer userId = security.getSecurityUserId();
         return Result.dataMessageHandler(() -> likeThreadService.isLikedByAccountId(userId, threadId), "获取失败");
     }
+    /**
+     * getLikeCountByThreadId 方法。
+     */
 
     @GetMapping("/threads/{thread_id}/likes/count")
     public Result<Integer> getLikeCountByThreadId(@PathVariable(name = "thread_id") Integer threadId) {
         return Result.dataMessageHandler(() -> likeThreadService.getLikeCountByThreadId(threadId), "获取失败");
     }
+    /**
+     * getLikes 方法。
+     */
 
     @GetMapping("/users/{user_id}/liked-threads")
     public Result<PageEntity<ThreadVO>> getLikes(@PathVariable(name = "user_id") Integer userId,

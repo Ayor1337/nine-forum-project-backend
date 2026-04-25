@@ -10,6 +10,11 @@ import org.springframework.cache.annotation.EnableCaching;
 @EnableCaching
 public class WebAppApplication {
 
+    /**
+     * 启动应用。
+     *
+     * @param args 启动参数
+     */
     public static void main(String[] args) {
         SpringApplication.run(WebAppApplication.class, args);
     }

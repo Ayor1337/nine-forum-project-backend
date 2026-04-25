@@ -44,6 +44,13 @@ public class SecurityConfiguration {
     private JWTAuthorizeFilter jwtAuthorizeFilter;
 
 
+    /**
+     * 构造 Spring Security 过滤链。
+     *
+     * @param http HTTP 安全构建器
+     * @return 安全过滤链
+     * @throws Exception 配置异常
+     */
     @Bean
     SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         return http
@@ -98,6 +105,14 @@ public class SecurityConfiguration {
                 .build();
     }
 
+    /**
+     * 登录成功后的响应处理。
+     *
+     * @param req HTTP 请求
+     * @param resp HTTP 响应
+     * @param auth 认证信息
+     * @throws IOException IO 异常
+     */
     public void onAuthenticationSuccess(HttpServletRequest req,
                                         HttpServletResponse resp,
                                         Authentication  auth) throws IOException {
@@ -113,6 +128,15 @@ public class SecurityConfiguration {
         resp.getWriter().write(Result.ok(authorizeVO).toJSONString());
     }
 
+    /**
+     * 登录失败后的响应处理。
+     *
+     * @param req HTTP 请求
+     * @param resp HTTP 响应
+     * @param exception 认证异常
+     * @throws IOException IO 异常
+     * @throws ServletException Servlet 异常
+     */
     public void onAuthenticationFailure(HttpServletRequest req,
                                         HttpServletResponse resp,
                                         AuthenticationException exception) throws IOException, ServletException {
@@ -121,6 +145,15 @@ public class SecurityConfiguration {
         resp.getWriter().write(Result.fail(401, "用户名或密码错误").toJSONString());
     }
 
+    /**
+     * 退出登录成功后的响应处理。
+     *
+     * @param req HTTP 请求
+     * @param resp HTTP 响应
+     * @param auth 认证信息
+     * @throws IOException IO 异常
+     * @throws ServletException Servlet 异常
+     */
     public void onLogoutSuccess(HttpServletRequest req,
                                 HttpServletResponse resp,
                                 Authentication auth) throws IOException, ServletException {
@@ -136,6 +169,15 @@ public class SecurityConfiguration {
         }
     }
 
+    /**
+     * 访问被拒绝时的响应处理。
+     *
+     * @param req HTTP 请求
+     * @param resp HTTP 响应
+     * @param e 权限异常
+     * @throws IOException IO 异常
+     * @throws ServletException Servlet 异常
+     */
     public void onAccessDeny(HttpServletRequest req,
                              HttpServletResponse resp,
                              AccessDeniedException e) throws IOException, ServletException {
@@ -144,6 +186,14 @@ public class SecurityConfiguration {
         resp.getWriter().write(Result.fail(403, "权限不足, 请联系管理员").toJSONString());
     }
 
+    /**
+     * 未认证时的响应处理。
+     *
+     * @param req HTTP 请求
+     * @param resp HTTP 响应
+     * @param e 认证异常
+     * @throws IOException IO 异常
+     */
     public void onUnauthorized(HttpServletRequest req,
                                HttpServletResponse resp,
                                AuthenticationException e) throws IOException {

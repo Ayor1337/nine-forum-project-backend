@@ -30,6 +30,9 @@ public class SystemMessageServiceImpl extends ServiceImpl<SystemMessageMapper, S
             type = UnreadMessageType.SYSTEM_MESSAGE,
             doRead = true
     )
+    /**
+     * listSystemMessage 方法。
+     */
     public PageEntity<SystemMessageVO> listSystemMessage(Integer pageNum, Integer pageSize, Integer accountId) {
         if (accountId == null) {
             return null;
@@ -45,6 +48,9 @@ public class SystemMessageServiceImpl extends ServiceImpl<SystemMessageMapper, S
                 .page(Page.of(pageNum, pageSize));
         return new PageEntity<>(page.getTotal(), toVOList(page.getRecords()));
     }
+    /**
+     * toVOList 方法。
+     */
 
 
     private List<SystemMessageVO> toVOList(List<SystemMessage> systemMessageList) {

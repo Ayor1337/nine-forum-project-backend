@@ -24,6 +24,9 @@ public class BroadcastServiceImpl implements BroadcastService {
     private final STOMPUtils stompUtils;
 
     private final SystemMessageMapper systemMessageMapper;
+    /**
+     * userSystemBroadcast 方法。
+     */
 
     @Override
     @MessageUnreadNotif(accountId = "#message.sendTo", subscribeDest = "/notif/system", type = UnreadMessageType.SYSTEM_MESSAGE)
@@ -46,6 +49,9 @@ public class BroadcastServiceImpl implements BroadcastService {
             messagingTemplate.convertAndSendToUser(message.getSendTo().toString(), "/notif/system", messageVO);
         }
     }
+    /**
+     * userViolationBroadcast 方法。
+     */
 
     @Override
     @MessageUnreadNotif(accountId = "#message.sendTo", subscribeDest = "/notif/system", type = UnreadMessageType.SYSTEM_MESSAGE)

@@ -26,6 +26,9 @@ public class ELIndexServiceImpl implements ESIndexService {
     private final ThreaddService threaddService;
 
     private final PostService postService;
+    /**
+     * initIndex 方法。
+     */
 
 
     @Override
@@ -37,6 +40,9 @@ public class ELIndexServiceImpl implements ESIndexService {
             throw new RuntimeException("索引初始化失败: " + e.getMessage());
         }
     }
+    /**
+     * initThreadIndex 方法。
+     */
 
     private void initThreadIndex() {
         try {
@@ -59,6 +65,9 @@ public class ELIndexServiceImpl implements ESIndexService {
             throw new RuntimeException("Thread 索引初始化失败: " + e.getMessage());
         }
     }
+    /**
+     * initPostIndex 方法。
+     */
 
     private void initPostIndex() {
         try {

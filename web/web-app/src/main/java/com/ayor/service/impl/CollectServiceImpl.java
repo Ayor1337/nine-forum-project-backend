@@ -30,6 +30,9 @@ public class CollectServiceImpl extends ServiceImpl<CollectMapper, Collect> impl
     private final AccountMapper accountMapper;
 
     private final ThreaddMapper threaddMapper;
+    /**
+     * insertCollect 方法。
+     */
 
     @Override
     public String insertCollect(Integer accountId, Integer threadId) {
@@ -48,6 +51,9 @@ public class CollectServiceImpl extends ServiceImpl<CollectMapper, Collect> impl
         collect.setAccountId(account.getAccountId());
         return this.save(collect) ? null : "收藏失败";
     }
+    /**
+     * removeCollect 方法。
+     */
 
     @Override
     public String removeCollect(Integer accountId, Integer threadId) {
@@ -62,6 +68,9 @@ public class CollectServiceImpl extends ServiceImpl<CollectMapper, Collect> impl
         }
         return this.removeById(collect) ? null : "取消收藏失败";
     }
+    /**
+     * isCollectedByAccountId 方法。
+     */
 
     @Override
     public Boolean isCollectedByAccountId(Integer accountId, Integer threadId) {
@@ -72,12 +81,18 @@ public class CollectServiceImpl extends ServiceImpl<CollectMapper, Collect> impl
                 .eq(Collect::getAccountId, accountId)
                 .eq(Collect::getThreadId, threadId).count() > 0;
     }
+    /**
+     * getCollectCountByThreadId 方法。
+     */
 
     @Override
     public Integer getCollectCountByThreadId(Integer threadId) {
         Integer collectCountByThreadId = this.baseMapper.getCollectCountByThreadId(threadId);
         return collectCountByThreadId == null ? 0 : collectCountByThreadId;
     }
+    /**
+     * getCollectsByAccountId 方法。
+     */
 
     @Override
     public PageEntity<ThreadVO> getCollectsByAccountId(Integer accountId, Integer pageNum, Integer pageSize) {

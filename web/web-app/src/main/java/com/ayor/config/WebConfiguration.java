@@ -7,6 +7,11 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 @Configuration
 public class WebConfiguration {
 
+    /**
+     * 创建密码加密器。
+     *
+     * @return BCrypt 密码加密器
+     */
     @Bean
     BCryptPasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();

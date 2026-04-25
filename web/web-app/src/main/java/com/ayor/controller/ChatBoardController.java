@@ -19,6 +19,9 @@ public class ChatBoardController {
     private final ChatboardHistoryService chatboardHistoryService;
 
     private final SecurityUtils securityUtils;
+    /**
+     * chat 方法。
+     */
 
     @PostMapping
     public Result<Void> chat(@PathVariable("topic_id") Integer topicId,
@@ -26,6 +29,9 @@ public class ChatBoardController {
         Integer userId = securityUtils.getSecurityUserId();
         return Result.messageHandler(() -> chatboardHistoryService.insertChatboardHistory(userId, topicId, message.getContent()));
     }
+    /**
+     * getHistory 方法。
+     */
 
     @GetMapping
     public Result<PageEntity<ChatboardHistoryVO>> getHistory(@PathVariable("topic_id")Integer topicId,

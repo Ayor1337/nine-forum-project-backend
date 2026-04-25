@@ -18,16 +18,25 @@ import java.util.List;
 public class ThemeController {
 
     private final ThemeService themeService;
+    /**
+     * getThemeList 方法。
+     */
 
     @GetMapping
     public Result<List<ThemeVO>> getThemeList() {
         return Result.dataMessageHandler(themeService::getThemeList, "获取列表失败");
     }
+    /**
+     * getThemesContainsTopics 方法。
+     */
 
     @GetMapping("/topics")
     public Result<List<ThemeTopicVO>> getThemesContainsTopics() {
         return Result.dataMessageHandler(themeService::getThemeTopicList, "获取列表失败");
     }
+    /**
+     * insertTheme 方法。
+     */
 
     @PreAuthorize("hasAnyRole('ROLE_OWNER')")
     @PostMapping

@@ -18,6 +18,9 @@ public class TopicStatServiceImpl extends ServiceImpl<TopicStatMapper, TopicStat
 
 
     private final CacheManager cacheManager;
+    /**
+     * updateTopicStat 方法。
+     */
 
     @Override
     public void updateTopicStat() {

@@ -29,6 +29,9 @@ public class ThemeServiceImpl extends ServiceImpl<ThemeMapper, Theme> implements
     private final ThemeMapper themeMapper;
 
     private final TopicMapper topicMapper;
+    /**
+     * getThemeList 方法。
+     */
 
     @Override
     @Cacheable(value = "themeList", key = "'all'")
@@ -54,6 +57,9 @@ public class ThemeServiceImpl extends ServiceImpl<ThemeMapper, Theme> implements
             @CacheEvict(value = "themeList", key = "'all'"),
             @CacheEvict(value = "themeTopicList", key = "'all'")
     })
+    /**
+     * insertTheme 方法。
+     */
     public String insertTheme(ThemeDTO themeDTO) {
         if (themeDTO == null) {
             return "请填写主题名称";
@@ -62,6 +68,9 @@ public class ThemeServiceImpl extends ServiceImpl<ThemeMapper, Theme> implements
         BeanUtils.copyProperties(themeDTO, theme);
         return themeMapper.insert(theme) > 0 ? null : "添加失败, 未知异常";
     }
+    /**
+     * getThemeTopicList 方法。
+     */
 
     @Override
     @Cacheable(value = "themeTopicList", key = "'all'")

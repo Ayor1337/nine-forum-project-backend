@@ -18,6 +18,9 @@ public class AccountStatController {
 
 
     private final SecurityUtils security;
+    /**
+     * getAccountStatInfo 方法。
+     */
 
 
     @GetMapping("/stats")

@@ -25,6 +25,13 @@ public class EmailListener {
     private String username;
 
 
+    /**
+     * 消费邮件验证消息并发送验证邮件。
+     *
+     * @param emailVerifyMessage 邮件验证消息
+     * @param message RabbitMQ 消息体
+     * @param channel RabbitMQ 通道
+     */
     @RabbitHandler
     public void onMessage(EmailVerifyMessage emailVerifyMessage,
                           Message message,
@@ -52,6 +59,14 @@ public class EmailListener {
 
     }
 
+    /**
+     * 构造验证邮件内容。
+     *
+     * @param title 邮件标题
+     * @param content 邮件正文
+     * @param email 收件人邮箱
+     * @return 邮件对象
+     */
     private SimpleMailMessage createMessage(String title, String content, String email) {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setSubject(title);
