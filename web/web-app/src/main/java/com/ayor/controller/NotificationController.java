@@ -19,7 +19,10 @@ public class NotificationController {
 
     private final SecurityUtils securityUtils;
     /**
-     * getNotification 方法。
+     * 获取当前用户的未读消息统计。
+     *
+     * @param type 可选消息类型；传入后仅返回该类型的未读数，不传则返回全部汇总
+     * @return 未读消息对象
      */
 
     @GetMapping("/unread-count")

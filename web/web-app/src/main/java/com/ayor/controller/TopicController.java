@@ -17,7 +17,7 @@ public class TopicController {
 
     private final TopicService topicService;
     /**
-     * getTopicList 方法。
+     * 获取指定主题下的话题列表。
      */
 
     @GetMapping("/themes/{theme_id}/topics")
@@ -25,7 +25,7 @@ public class TopicController {
         return Result.dataMessageHandler(() -> topicService.getTopicListByThemeId(themeId), "获取主题下的帖子列表失败");
     }
     /**
-     * insertTopic 方法。
+     * 新建话题。
      */
 
     @PreAuthorize("hasAnyRole('ROLE_OWNER')")
@@ -34,7 +34,7 @@ public class TopicController {
         return Result.messageHandler(() -> topicService.insertTopic(topicDTO));
     }
     /**
-     * updateTopic 方法。
+     * 更新话题信息。
      */
 
     @PreAuthorize("hasAnyRole('ROLE_OWNER')")
@@ -45,7 +45,7 @@ public class TopicController {
         return Result.messageHandler(() -> topicService.updateTopic(topicDTO));
     }
     /**
-     * deleteTopic 方法。
+     * 删除话题。
      */
 
     @PreAuthorize("hasAnyRole('ROLE_OWNER')")

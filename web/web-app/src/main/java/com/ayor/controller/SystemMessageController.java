@@ -20,7 +20,7 @@ public class SystemMessageController {
 
     private final SecurityUtils securityUtils;
     /**
-     * getSystemMessages 方法。
+     * 获取当前用户的系统消息列表。
      */
 
     @GetMapping

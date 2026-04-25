@@ -17,7 +17,7 @@ public class UserController {
 
     private final SecurityUtils security;
     /**
-     * getUserInfo 方法。
+     * 获取当前登录用户的资料。
      */
 
     @GetMapping("/me")
@@ -26,7 +26,7 @@ public class UserController {
         return Result.dataMessageHandler(() -> accountService.getUserInfo(userId), "获取用户信息失败,用户可能不存在");
     }
     /**
-     * getUserInfoByUserId 方法。
+     * 根据用户 ID 获取公开资料。
      */
 
     @GetMapping("/{user_id}")
@@ -34,7 +34,7 @@ public class UserController {
         return Result.dataMessageHandler(() -> accountService.getUserInfo(userId), "获取用户信息失败,用户可能不存在");
     }
     /**
-     * updateAvatar 方法。
+     * 更新当前用户头像。
      */
 
     @PutMapping("/me/avatar")
@@ -43,7 +43,7 @@ public class UserController {
         return Result.messageHandler(() -> accountService.updateUserAvatar(userId, dto));
     }
     /**
-     * updateBanner 方法。
+     * 更新当前用户横幅图。
      */
 
     @PutMapping("/me/banner")

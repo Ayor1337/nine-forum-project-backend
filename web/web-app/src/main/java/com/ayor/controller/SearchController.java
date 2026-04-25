@@ -22,7 +22,18 @@ public class SearchController {
 
     private final SecurityUtils securityUtils;
     /**
-     * searchThread 方法。
+     * 在 Elasticsearch 中搜索帖子并返回分页结果。
+     *
+     * @param query 搜索关键字
+     * @param onlyThreadTopic 是否只搜索帖子本体
+     * @param topicId 主题过滤条件
+     * @param enableHistory 是否记录搜索历史
+     * @param startTime 起始时间戳
+     * @param endTime 结束时间戳
+     * @param order 排序方式
+     * @param pageNum 页码
+     * @param pageSize 每页数量
+     * @return 帖子搜索结果
      */
 
     @GetMapping("/threads")
@@ -40,7 +51,16 @@ public class SearchController {
                 query, userId, topicId, enableHistory, onlyThreadTopic, startTime, endTime, order, pageNum, pageSize), "搜索失败");
     }
     /**
-     * searchUser 方法。
+     * 用户搜索入口，当前仅保留接口占位。
+     *
+     * @param query 搜索关键字
+     * @param onlyThreadTopic 是否只搜索帖子本体
+     * @param topicId 主题过滤条件
+     * @param enableHistory 是否记录搜索历史
+     * @param duration 统计范围
+     * @param pageNum 页码
+     * @param pageSize 每页数量
+     * @return 预留响应
      */
 
     @GetMapping("/users")
@@ -51,11 +71,13 @@ public class SearchController {
                                    @RequestParam(name = "duration", defaultValue = "7") int duration,
                                    @RequestParam(name = "page_num", defaultValue = "1") int pageNum,
                                    @RequestParam(name = "page_size", defaultValue = "10") int pageSize) {
-        // TODO
+        // 当前接口暂未接入具体用户搜索实现
         return Result.ok();
     }
     /**
-     * getSearchHistory 方法。
+     * 获取当前用户的全部搜索历史。
+     *
+     * @return 搜索历史集合
      */
 
     @GetMapping("/history")
@@ -64,7 +86,10 @@ public class SearchController {
         return Result.dataMessageHandler(() -> searchService.getSearchHistory(userId), "获取搜索历史失败");
     }
     /**
-     * getSearchQueryHistory 方法。
+     * 获取当前用户的搜索历史查询入口。
+     *
+     * @param query 预留的关键字参数，当前实现不参与过滤
+     * @return 搜索历史集合
      */
 
     @GetMapping("/history/query")
@@ -73,7 +98,10 @@ public class SearchController {
         return Result.dataMessageHandler(() -> searchService.getSearchHistory(userId), "获取搜索历史失败");
     }
     /**
-     * deleteSearchHistory 方法。
+     * 删除当前用户的搜索历史。
+     *
+     * @param query 可选关键字；不传则清空全部历史
+     * @return 删除结果
      */
 
     @DeleteMapping("/history")
@@ -87,7 +115,11 @@ public class SearchController {
         });
     }
     /**
-     * getHotSearch 方法。
+     * 获取热门搜索词。
+     *
+     * @param size 返回数量
+     * @param duration 统计天数
+     * @return 热门关键词列表
      */
 
     @GetMapping("/hot-keywords")

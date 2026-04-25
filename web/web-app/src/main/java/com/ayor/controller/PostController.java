@@ -23,7 +23,7 @@ public class PostController {
 
     private final SecurityUtils security;
     /**
-     * getPostsByThreadId 方法。
+     * 获取帖子下的评论列表。
      */
 
     @GetMapping("/threads/{thread_id}/posts")
@@ -31,7 +31,7 @@ public class PostController {
         return Result.dataMessageHandler(() -> postService.getPostsByThreadId(threadId), "获取失败");
     }
     /**
-     * addPost 方法。
+     * 发布评论。
      */
 
     @PostMapping("/threads/{thread_id}/posts")
@@ -42,7 +42,7 @@ public class PostController {
         return Result.messageHandler(() -> postService.insertPost(post, userId));
     }
     /**
-     * deletePost 方法。
+     * 删除当前用户的评论。
      */
 
     @DeleteMapping("/posts/{post_id}")
@@ -51,7 +51,7 @@ public class PostController {
         return Result.messageHandler(() -> postService.removePostAuthorizeAccountId(postId, userId));
     }
     /**
-     * deletePostPermission 方法。
+     * 管理员删除评论。
      */
 
     @PreAuthorize("hasAuthority('ROLE_OWNER')")
@@ -60,7 +60,7 @@ public class PostController {
         return Result.messageHandler(() -> postService.removePostPermission(postId));
     }
     /**
-     * getReplyMessage 方法。
+     * 获取回复消息分页数据。
      */
 
     @GetMapping("/posts/reply-messages")

@@ -19,7 +19,7 @@ public class ThemeController {
 
     private final ThemeService themeService;
     /**
-     * getThemeList 方法。
+     * 获取全部主题列表。
      */
 
     @GetMapping
@@ -27,7 +27,7 @@ public class ThemeController {
         return Result.dataMessageHandler(themeService::getThemeList, "获取列表失败");
     }
     /**
-     * getThemesContainsTopics 方法。
+     * 获取包含话题的主题聚合列表。
      */
 
     @GetMapping("/topics")
@@ -35,7 +35,7 @@ public class ThemeController {
         return Result.dataMessageHandler(themeService::getThemeTopicList, "获取列表失败");
     }
     /**
-     * insertTheme 方法。
+     * 新增主题。
      */
 
     @PreAuthorize("hasAnyRole('ROLE_OWNER')")

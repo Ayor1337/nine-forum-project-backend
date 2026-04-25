@@ -17,7 +17,10 @@ public class TagController {
 
     private final TagService tagService;
     /**
-     * getTagList 方法。
+     * 获取指定主题下的话题标签列表。
+     *
+     * @param topicId 主题 ID
+     * @return 标签列表
      */
 
 
@@ -30,7 +33,11 @@ public class TagController {
             "or hasAuthority('PERM_INSERT_TAG')" +
             "and hasAuthority('TOPIC_' + #topicId)")
     /**
-     * insertNewTag 方法。
+     * 新增主题标签。
+     *
+     * @param topicId 主题 ID
+     * @param tagDTO 标签信息
+     * @return 新增结果
      */
     @PostMapping
     public Result<Void> insertNewTag(@PathVariable(name = "topic_id") Integer topicId,

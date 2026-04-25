@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @Slf4j
 public class ValidateController {
     /**
-     * handleValidationException 方法。
+     * 处理参数校验失败。
      */
 
     @ExceptionHandler(value = MethodArgumentNotValidException.class)
@@ -20,7 +20,7 @@ public class ValidateController {
         return Result.fail(203, "请求参数验证有误");
     }
     /**
-     * handleMissingRequestValueException 方法。
+     * 处理缺少请求参数异常。
      */
 
     @ExceptionHandler(value = MissingRequestValueException.class)

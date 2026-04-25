@@ -17,7 +17,7 @@ public class    CollectController {
 
     private final SecurityUtils security;
     /**
-     * collectThread 方法。
+     * 收藏帖子。
      */
 
     @PostMapping("/threads/{thread_id}/collections")
@@ -26,7 +26,7 @@ public class    CollectController {
         return Result.messageHandler(() -> collectService.insertCollect(userId, threadId));
     }
     /**
-     * uncollectThread 方法。
+     * 取消收藏帖子。
      */
 
     @DeleteMapping("/threads/{thread_id}/collections")
@@ -35,7 +35,7 @@ public class    CollectController {
         return Result.messageHandler(() -> collectService.removeCollect(userId, threadId));
     }
     /**
-     * isCollected 方法。
+     * 判断当前用户是否收藏了指定帖子。
      */
 
     @GetMapping("/threads/{thread_id}/collections/me")
@@ -44,7 +44,7 @@ public class    CollectController {
         return Result.dataMessageHandler(() -> collectService.isCollectedByAccountId(userId, threadId), "获取失败");
     }
     /**
-     * getCollectCountByThreadId 方法。
+     * 获取帖子收藏数。
      */
 
     @GetMapping("/threads/{thread_id}/collections/count")
@@ -52,7 +52,7 @@ public class    CollectController {
         return Result.dataMessageHandler(() -> collectService.getCollectCountByThreadId(threadId), "获取失败");
     }
     /**
-     * getCollects 方法。
+     * 获取当前用户的收藏列表。
      */
 
     @GetMapping("/users/{user_id}/collected-threads")

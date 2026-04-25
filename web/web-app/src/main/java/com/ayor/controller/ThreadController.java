@@ -24,7 +24,7 @@ public class ThreadController {
 
     private final SecurityUtils security;
     /**
-     * getThreadsByTopicId 方法。
+     * 获取指定主题下的帖子列表。
      */
 
 
@@ -35,7 +35,7 @@ public class ThreadController {
         return Result.dataMessageHandler(() -> threaddService.getThreadVOsByTopicId(topicId, pageNum, pageSize), "获取失败");
     }
     /**
-     * getThreadsByUserId 方法。
+     * 获取指定用户发布的帖子列表。
      */
 
     @GetMapping("/users/{user_id}/threads")
@@ -47,14 +47,14 @@ public class ThreadController {
 
     // 注意调度
     /**
-     * getThreadById 方法。
+     * 获取帖子详情。
      */
     @GetMapping("/threads/{thread_id}")
     public Result<ThreadVO> getThreadById(@PathVariable(name = "thread_id") Integer threadId) {
         return Result.dataMessageHandler(() -> threaddService.getThreadById(threadId), "获取失败");
     }
     /**
-     * getAnnouncementByTopicId 方法。
+     * 获取主题下的公告帖子。
      */
 
     @GetMapping("/topics/{topic_id}/announcements")
@@ -62,7 +62,7 @@ public class ThreadController {
         return Result.dataMessageHandler(() -> threaddService.getAnnouncementThreads(topicId), "获取失败");
     }
     /**
-     * postThread 方法。
+     * 发布新帖子。
      */
 
     @PostMapping("/threads")
@@ -71,7 +71,7 @@ public class ThreadController {
         return Result.messageHandler(() -> threaddService.insertThread(threadDTO, userId));
     }
     /**
-     * removeThreadById 方法。
+     * 删除当前用户发布的帖子。
      */
 
     @DeleteMapping("/threads/{thread_id}")
@@ -84,7 +84,7 @@ public class ThreadController {
             "or hasAuthority('PERM_UPDATE_TAG')" +
             "and hasAuthority('TOPIC_' + #topicId)")
     /**
-     * updateTag 方法。
+     * 修改帖子标签。
      */
     @PutMapping("/moderation/threads/{thread_id}/tag")
     public Result<Void> updateTag(@PathVariable(name = "thread_id") Integer threadId,
@@ -99,7 +99,7 @@ public class ThreadController {
             "or hasAuthority('PERM_UPDATE_TAG')" +
             "and hasAuthority('TOPIC_' + #topicId)")
     /**
-     * deleteThreadTag 方法。
+     * 删除帖子标签。
      */
     @DeleteMapping("/moderation/threads/{thread_id}/tag")
     public Result<Void> deleteThreadTag(@PathVariable(name = "thread_id") Integer threadId,
@@ -111,7 +111,7 @@ public class ThreadController {
             "or hasAuthority('PERM_UPDATE_TAG')" +
             "and hasAuthority('TOPIC_' + #topicId)")
     /**
-     * setAnnouncement 方法。
+     * 将帖子设为主题公告。
      */
     @PutMapping("/topics/{topic_id}/announcements/{thread_id}")
     public Result<Void> setAnnouncement(@PathVariable(name = "topic_id") Integer topicId,
@@ -123,7 +123,7 @@ public class ThreadController {
             "or hasAuthority('PERM_UPDATE_TAG')" +
             "and hasAuthority('TOPIC_' + #topicId)")
     /**
-     * unsetAnnouncement 方法。
+     * 取消帖子公告状态。
      */
     @DeleteMapping("/topics/{topic_id}/announcements/{thread_id}")
     public Result<Void> unsetAnnouncement(@PathVariable(name = "topic_id") Integer topicId,
@@ -135,7 +135,7 @@ public class ThreadController {
             "or hasAuthority('PERM_sDELETE_THREAD')" +
             "and hasAuthority('TOPIC_' + #topicId)")
     /**
-     * removeThreadByIdPermission 方法。
+     * 管理员删除帖子。
      */
     @DeleteMapping("/moderation/threads/{thread_id}")
     public Result<Void> removeThreadByIdPermission(@PathVariable(name = "thread_id") Integer threadId,
@@ -145,7 +145,7 @@ public class ThreadController {
 
     // You see but you do not observe
     /**
-     * viewThread 方法。
+     * 记录帖子浏览次数。
      */
     @PostMapping("/threads/{thread_id}/views")
     public Result<Void> viewThread(@PathVariable(name = "thread_id") Integer threadId) {
