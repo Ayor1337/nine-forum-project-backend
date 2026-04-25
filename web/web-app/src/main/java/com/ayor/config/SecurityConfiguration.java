@@ -36,8 +36,6 @@ public class SecurityConfiguration {
 
     private static final String LOGIN_PATH = "/api/auth/login";
 
-    private static final String LOGOUT_PATH = "/api/auth/logout";
-
     private static final String[] PUBLIC_AUTH_ENDPOINTS = {
             "/api/auth/register-verifications",
             "/api/auth/registrations",
@@ -109,9 +107,7 @@ public class SecurityConfiguration {
                     auth.failureHandler(this::onAuthenticationFailure);
                 })
                 .logout(auth -> {
-                    auth.logoutRequestMatcher(req ->
-                            "DELETE".equals(req.getMethod()) &&
-                                    LOGOUT_PATH.equals(req.getServletPath()));
+                    auth.logoutUrl("/api/auth/logout");
                     auth.logoutSuccessHandler(this::onLogoutSuccess);
                 })
                 .sessionManagement(auth -> {
