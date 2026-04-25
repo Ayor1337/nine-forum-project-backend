@@ -18,16 +18,35 @@ public class QuillUtils {
     @Resource
     private MinioService minioService;
 
+    /**
+     * 将 Quill Delta 字符串解析为 ops 列表。
+     *
+     * @param content Quill Delta 字符串
+     * @return ops 列表
+     */
     public List<Map<String, Object>> quillDeltaToArray(String content) {
         Map<String, List<Map<String, Object>>> delta = JSON.parseObject(content, new TypeReference<>() {});
         return delta.get("ops");
 
     }
 
+    /**
+     * 将 ops 列表重新序列化为 Quill Delta 字符串。
+     *
+     * @param delta ops 列表
+     * @return Quill Delta 字符串
+     */
     public String quillArrayToDeltaString(List<Map<String, Object>> delta) {
         return JSON.toJSONString(Map.of("ops",  delta));
     }
 
+    /**
+     * 将 Quill Delta 中的 Base64 图片上传到对象存储并替换为 URL。
+     *
+     * @param content Quill Delta 字符串
+     * @param path 上传目录
+     * @return 替换后的 Quill Delta 字符串
+     */
     public String quillDeltaConvertBase64ToURL(String content, String path) {
         // 将 QuillDelta 转换为 List 对象
         List<Map<String, Object>> delta = quillDeltaToArray(content);
@@ -60,7 +79,12 @@ public class QuillUtils {
         return quillArrayToDeltaString(delta);
     }
 
-    // 过滤所有图片
+    /**
+     * 过滤掉包含图片的 ops。
+     *
+     * @param content Quill Delta 字符串
+     * @return 过滤后的 Quill Delta 字符串
+     */
     public String quillDeltaFilterNonImage(String content) {
         List<Map<String, Object>> delta = quillDeltaToArray(content);
         List<Map<String, Object>> filteredDelta = new ArrayList<>();
@@ -79,6 +103,12 @@ public class QuillUtils {
         return quillArrayToDeltaString(filteredDelta);
     }
 
+    /**
+     * 将 Quill Delta 中的文本内容拼接为普通字符串。
+     *
+     * @param content Quill Delta 字符串
+     * @return 拼接后的文本
+     */
     public String quillStringToString(String content) {
         StringBuilder builder = new StringBuilder();
         String s = quillDeltaFilterNonImage(content);
@@ -91,7 +121,12 @@ public class QuillUtils {
         return builder.toString();
     }
 
-    // 将图片滤出成一个 List, 限制为 5 个
+    /**
+     * 提取 Quill Delta 中的图片 URL，最多返回 3 个。
+     *
+     * @param content Quill Delta 字符串
+     * @return 图片 URL 列表
+     */
     public List<String> quillDeltaFilterImage(String content) {
         AtomicInteger count = new AtomicInteger();
 

@@ -24,6 +24,11 @@ public class MinioService {
     @Value("${spring.minio.bucket}")
     private String bucketName;
 
+    /**
+     * 创建 MinIO 桶，如果桶已存在则直接返回。
+     *
+     * @throws Exception MinIO 操作失败时抛出
+     */
     public void createBucket() throws Exception {
         boolean exists = minioClient.bucketExists(BucketExistsArgs.builder()
                 .bucket(bucketName).build());
@@ -33,6 +38,14 @@ public class MinioService {
         }
     }
 
+    /**
+     * 上传 Base64 编码文件到指定目录。
+     *
+     * @param dto 文件内容与文件名
+     * @param path 目标目录前缀
+     * @return 文件对象路径
+     * @throws Exception MinIO 或 Base64 处理失败时抛出
+     */
     public String uploadBase64(Base64Upload dto, String path) throws Exception {
         String prefix = endpoint + "/" + bucketName + "/";
 
@@ -74,6 +87,13 @@ public class MinioService {
         return String.format("%s/%s", bucketName, objectName);
     }
 
+    /**
+     * 上传头像文件。
+     *
+     * @param dto 文件内容与文件名
+     * @return 当前实现保留占位返回
+     * @throws Exception MinIO 或 Base64 处理失败时抛出
+     */
     @Deprecated(message = "")
     public String uploadAvatar(Base64Upload dto) throws Exception {
 //        // 1. 定义访问前缀
@@ -122,6 +142,12 @@ public class MinioService {
     }
 
 
+    /**
+     * 删除指定对象文件。
+     *
+     * @param objectName 对象名
+     * @throws Exception MinIO 操作失败时抛出
+     */
     public void deleteFile(String objectName) throws Exception {
         minioClient.removeObject(
                 RemoveObjectArgs.builder()
@@ -130,7 +156,12 @@ public class MinioService {
                         .build());
     }
 
-
+    /**
+     * 获取文件扩展名。
+     *
+     * @param fileName 文件名
+     * @return 扩展名
+     */
     private String getFileExtension(String fileName) {
         return fileName.substring(fileName.lastIndexOf(".") + 1);
     }

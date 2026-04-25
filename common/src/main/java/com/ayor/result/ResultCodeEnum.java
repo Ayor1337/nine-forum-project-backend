@@ -54,6 +54,12 @@ public enum ResultCodeEnum {
 
     private final String message;
 
+    /**
+     * 构造返回码枚举。
+     *
+     * @param code 返回码
+     * @param message 返回消息
+     */
     ResultCodeEnum(Integer code, String message) {
         this.code = code;
         this.message = message;
