@@ -25,7 +25,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import java.io.IOException;
@@ -81,7 +80,9 @@ public class SecurityConfiguration {
                     auth.failureHandler(this::onAuthenticationFailure);
                 })
                 .logout(auth -> {
-                    auth.logoutRequestMatcher(new AntPathRequestMatcher("/api/auth/sessions/current", "DELETE"));
+                    auth.logoutRequestMatcher(req ->
+                            "DELETE".equals(req.getMethod()) &&
+                                    "/api/auth/sessions/current".equals(req.getServletPath()));
                     auth.logoutSuccessHandler(this::onLogoutSuccess);
                 })
                 .sessionManagement(auth -> {

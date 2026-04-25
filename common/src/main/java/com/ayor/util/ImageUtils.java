@@ -4,6 +4,12 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class ImageUtils {
+    /**
+     * 从图片 URL 中提取对象名。
+     *
+     * @param url 图片地址
+     * @return 对象名
+     */
     public static String extractObjectName(String url) {
         int queryIndex = url.indexOf('?');
         String cleanUrl = (queryIndex == -1) ? url : url.substring(0, queryIndex);

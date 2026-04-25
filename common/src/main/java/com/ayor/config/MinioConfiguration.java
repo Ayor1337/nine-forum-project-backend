@@ -16,6 +16,11 @@ public class MinioConfiguration {
     @Value("${spring.minio.secret-key}")
     private String secretKey;
 
+    /**
+     * 构造 MinIO 客户端 Bean。
+     *
+     * @return MinIO 客户端
+     */
     @Bean
     public MinioClient minioClient() {
         return MinioClient.builder()
