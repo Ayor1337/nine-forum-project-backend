@@ -18,17 +18,17 @@ public class AuthorizeController {
 
     private final AccountService accountService;
 
-    @PostMapping("/register_verify")
+    @PostMapping("/register-verifications")
     public Result<String> registerVerify(@RequestBody @Valid RegDTO regDTO) {
         return Result.dataMessageHandler(() -> authorizeService.createAuthorizeToken(regDTO.getEmail()), "邮件发送失败");
     }
 
-    @PostMapping("/register")
+    @PostMapping("/registrations")
     public Result<Void> register(@RequestBody @Valid AccountDTO accountDTO) {
         return Result.messageHandler(() -> accountService.insertNewAccount(accountDTO));
     }
 
-    @GetMapping("/verify")
+    @GetMapping("/register-verifications")
     @ResponseBody
     public String verify(@RequestParam("email") String email,
                          @RequestParam("token") String token) {

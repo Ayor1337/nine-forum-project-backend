@@ -12,22 +12,24 @@ import java.util.List;
 
 @RequiredArgsConstructor
 @RestController
-@RequestMapping("/api/tag")
+@RequestMapping("/api/topics/{topic_id}/tags")
 public class TagController {
 
     private final TagService tagService;
 
 
-    @GetMapping("/info/list_by_topic")
-    public Result<List<TagVO>> getTagList(@RequestParam(name = "topic_id") Integer topicId) {
+    @GetMapping
+    public Result<List<TagVO>> getTagList(@PathVariable(name = "topic_id") Integer topicId) {
         return Result.dataMessageHandler(() -> tagService.listTagsByTopicId(topicId), "获取失败");
     }
 
     @PreAuthorize("hasRole('ROLE_OWNER') " +
             "or hasAuthority('PERM_INSERT_TAG')" +
-            "and hasAuthority('TOPIC_' + #tagDTO.topicId)")
-    @PutMapping("/perm/insert_new_tag")
-    public Result<Void> insertNewTag(@RequestBody TagDTO tagDTO) {
+            "and hasAuthority('TOPIC_' + #topicId)")
+    @PostMapping
+    public Result<Void> insertNewTag(@PathVariable(name = "topic_id") Integer topicId,
+                                     @RequestBody TagDTO tagDTO) {
+        tagDTO.setTopicId(topicId);
         return Result.messageHandler(() -> tagService.insertNewTag(tagDTO));
     }
 

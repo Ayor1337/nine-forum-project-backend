@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/system/message")
+@RequestMapping("/api/system-messages")
 @RequiredArgsConstructor
 public class SystemMessageController {
 
@@ -20,7 +20,7 @@ public class SystemMessageController {
 
     private final SecurityUtils securityUtils;
 
-    @GetMapping("/list")
+    @GetMapping
     public Result<PageEntity<SystemMessageVO>> getSystemMessages(@RequestParam("page_num") Integer pageNum,
                                                                    @RequestParam(value = "page_size", defaultValue = "7") Integer pageSize) {
         Integer userId = securityUtils.getSecurityUserId();

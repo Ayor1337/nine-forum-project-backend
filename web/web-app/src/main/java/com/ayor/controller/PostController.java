@@ -16,37 +16,39 @@ import java.util.List;
 
 @RequiredArgsConstructor
 @RestController
-@RequestMapping("/api/post")
+@RequestMapping("/api")
 public class PostController {
 
     private final PostService postService;
 
     private final SecurityUtils security;
 
-    @GetMapping("/info/thread")
-    public Result<List<PostVO>> getPostsByThreadId(@RequestParam(name = "thread_id") String threadId) {
-        return Result.dataMessageHandler(() -> postService.getPostsByThreadId(Integer.parseInt(threadId)), "获取失败");
+    @GetMapping("/threads/{thread_id}/posts")
+    public Result<List<PostVO>> getPostsByThreadId(@PathVariable(name = "thread_id") Integer threadId) {
+        return Result.dataMessageHandler(() -> postService.getPostsByThreadId(threadId), "获取失败");
     }
 
-    @PostMapping("/post")
-    public Result<Void> addPost(@RequestBody @Validated PostDTO post) {
+    @PostMapping("/threads/{thread_id}/posts")
+    public Result<Void> addPost(@PathVariable(name = "thread_id") Integer threadId,
+                                @RequestBody @Validated PostDTO post) {
+        post.setThreadId(threadId);
         Integer userId = security.getSecurityUserId();
         return Result.messageHandler(() -> postService.insertPost(post, userId));
     }
 
-    @DeleteMapping("/delete")
-    public Result<Void> deletePost(@RequestParam(name = "post_id") Integer postId) {
+    @DeleteMapping("/posts/{post_id}")
+    public Result<Void> deletePost(@PathVariable(name = "post_id") Integer postId) {
         Integer userId = security.getSecurityUserId();
         return Result.messageHandler(() -> postService.removePostAuthorizeAccountId(postId, userId));
     }
 
     @PreAuthorize("hasAuthority('ROLE_OWNER')")
-    @DeleteMapping("/perm/delete")
-    public Result<Void> deletePostPermission(@RequestParam(name = "post_id") Integer postId) {
+    @DeleteMapping("/moderation/posts/{post_id}")
+    public Result<Void> deletePostPermission(@PathVariable(name = "post_id") Integer postId) {
         return Result.messageHandler(() -> postService.removePostPermission(postId));
     }
 
-    @GetMapping("/message/list")
+    @GetMapping("/posts/reply-messages")
     public Result<PageEntity<ReplyMessageVO>> getReplyMessage(@RequestParam("page_num") Integer pageNum,
                                                             @RequestParam(value = "page_size", defaultValue = "7") Integer pageSize) {
         Integer userId = security.getSecurityUserId();

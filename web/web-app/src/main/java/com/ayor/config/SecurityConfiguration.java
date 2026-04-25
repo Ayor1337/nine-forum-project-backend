@@ -14,6 +14,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.BeanUtils;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -24,6 +25,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import java.io.IOException;
@@ -48,17 +50,38 @@ public class SecurityConfiguration {
         return http
                 .authorizeHttpRequests(auth -> {
                     auth.requestMatchers("/api/auth/**").permitAll();
-                    auth.requestMatchers("/api/*/info/**").permitAll();
+                    auth.requestMatchers("/api/users/me", "/api/users/me/**").authenticated();
+                    auth.requestMatchers(HttpMethod.GET,
+                            "/api/users/{user_id}",
+                            "/api/themes",
+                            "/api/themes/topics",
+                            "/api/themes/{theme_id}/topics",
+                            "/api/topics/{topic_id}/tags",
+                            "/api/topics/{topic_id}/threads",
+                            "/api/users/{user_id}/threads",
+                            "/api/threads/{thread_id}",
+                            "/api/topics/{topic_id}/announcements",
+                            "/api/threads/{thread_id}/posts",
+                            "/api/threads/{thread_id}/likes/count",
+                            "/api/users/{user_id}/liked-threads",
+                            "/api/threads/{thread_id}/collections/count",
+                            "/api/users/{user_id}/collected-threads",
+                            "/api/search/users",
+                            "/api/search/hot-keywords",
+                            "/api/topics/{topic_id}/chat-messages",
+                            "/api/topics/{topic_id}/breadcrumb",
+                            "/api/threads/{thread_id}/breadcrumb"
+                    ).permitAll();
                     auth.requestMatchers("/chat", "/chatboard", "/system").permitAll();
                     auth.anyRequest().authenticated();
                 })
                 .formLogin(auth -> {
-                    auth.loginProcessingUrl("/api/auth/login");
+                    auth.loginProcessingUrl("/api/auth/sessions");
                     auth.successHandler(this::onAuthenticationSuccess);
                     auth.failureHandler(this::onAuthenticationFailure);
                 })
                 .logout(auth -> {
-                    auth.logoutUrl("/api/auth/logout");
+                    auth.logoutRequestMatcher(new AntPathRequestMatcher("/api/auth/sessions/current", "DELETE"));
                     auth.logoutSuccessHandler(this::onLogoutSuccess);
                 })
                 .sessionManagement(auth -> {

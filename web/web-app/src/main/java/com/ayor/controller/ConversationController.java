@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/conversation")
+@RequestMapping("/api/conversations")
 @RequiredArgsConstructor
 public class ConversationController {
 
@@ -25,52 +25,54 @@ public class ConversationController {
 
     private final SecurityUtils securityUtils;
 
-    @PostMapping("/new")
+    @PostMapping
     public Result<Void> newConversation(@RequestParam("username") String toUsername) {
         Integer userId = securityUtils.getSecurityUserId();
         return Result.messageHandler(() -> conversationService.createNewConversation(userId, toUsername));
     }
 
-    @GetMapping("/talk")
-    public Result<ConversationVO> startConversation(@RequestParam("accountId") Integer toAccountId) {
+    @GetMapping("/with-user/{account_id}")
+    public Result<ConversationVO> startConversation(@PathVariable("account_id") Integer toAccountId) {
         Integer userId = securityUtils.getSecurityUserId();
         return Result.dataMessageHandler(() -> conversationService.getConversationByAccountId(userId, toAccountId), "获取聊天列表失败");
     }
 
-    @PostMapping("/hide")
-    public Result<Void> hideConversation(@RequestParam("conversationId") Integer conversationId) {
+    @DeleteMapping("/{conversation_id}")
+    public Result<Void> hideConversation(@PathVariable("conversation_id") Integer conversationId) {
         Integer userId = securityUtils.getSecurityUserId();
         return Result.messageHandler(() -> conversationService.hiddenConversation(conversationId, userId));
     }
 
-    @GetMapping("/list")
+    @GetMapping
     public Result<List<ConversationVO>> listConversation() {
         Integer userId = securityUtils.getSecurityUserId();
         return Result.dataMessageHandler(() -> conversationService.getConversationList(userId), "获取聊天列表失败");
     }
 
-    @PostMapping("/send")
-    public Result<Void> sendMessage(@RequestBody ConversationMessageDTO conversationMessage) {
+    @PostMapping("/{conversation_id}/messages")
+    public Result<Void> sendMessage(@PathVariable("conversation_id") Integer conversationId,
+                                    @RequestBody ConversationMessageDTO conversationMessage) {
+        conversationMessage.setConversationId(conversationId);
         Integer userId = securityUtils.getSecurityUserId();
         return Result.messageHandler(() -> conversationMessageService.sendMessage(conversationMessage, userId));
     }
 
-    @GetMapping("/message/list")
-    public Result<PageEntity<ConversationMessageVO>> listMessage(@RequestParam("conversationId") Integer conversationId,
+    @GetMapping("/{conversation_id}/messages")
+    public Result<PageEntity<ConversationMessageVO>> listMessage(@PathVariable("conversation_id") Integer conversationId,
                                                                  @RequestParam("page_num") Integer pageNum) {
         Integer userId = securityUtils.getSecurityUserId();
         return Result.dataMessageHandler(() -> conversationMessageService.getConversationMessageList(conversationId,  userId, pageNum), "获取聊天列表失败");
     }
 
-    @GetMapping("/message/unread")
+    @GetMapping("/unread-messages")
     public Result<List<ChatUnread>> getUnreadMessageCount() {
         Integer userId = securityUtils.getSecurityUserId();
         return Result.dataMessageHandler(() -> conversationService.getUnreadList(userId), "获取未读消息数量失败");
     }
 
-    @GetMapping("/message/read")
-    public Result<Void> clearUnreadMessageCount(@RequestParam("conversationId") Integer conversationId,
-                                                @RequestParam("fromUserId") Integer fromUserId) {
+    @DeleteMapping("/{conversation_id}/unread-messages")
+    public Result<Void> clearUnreadMessageCount(@PathVariable("conversation_id") Integer conversationId,
+                                                @RequestParam("from_user_id") Integer fromUserId) {
         return Result.messageHandler(() -> conversationService.clearUnread(conversationId, fromUserId));
     }
 
