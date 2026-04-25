@@ -44,9 +44,14 @@
 
 ## 鉴权与公开接口
 
-公开接口：
+公开认证接口：
 
-- `/api/auth/**`
+- `POST /api/auth/register-verifications`
+- `GET /api/auth/register-verifications`
+- `POST /api/auth/registrations`
+- `POST /api/auth/login`
+
+公开资源接口：
 - `GET /api/users/{user_id}`
 - `GET /api/themes`
 - `GET /api/themes/topics`
@@ -76,8 +81,8 @@
 | POST | `/api/auth/register-verifications` | 发送注册验证邮件 | 公开 |
 | GET | `/api/auth/register-verifications` | 校验注册邮箱 Token | 公开 |
 | POST | `/api/auth/registrations` | 注册账号 | 公开 |
-| POST | `/api/auth/sessions` | 登录 | 公开 |
-| DELETE | `/api/auth/sessions/current` | 登出 | 登录 |
+| POST | `/api/auth/login` | 登录 | 公开 |
+| DELETE | `/api/auth/logout` | 登出 | 登录 |
 
 ### POST `/api/auth/register-verifications`
 
@@ -113,7 +118,7 @@ Query 参数：
 
 响应：`Result<Void>`。
 
-### POST `/api/auth/sessions`
+### POST `/api/auth/login`
 
 登录由 Spring Security `formLogin` 提供。
 
@@ -126,7 +131,7 @@ Query 参数：
 
 响应：`Result<AuthorizeVO>`，字段包含 `username`、`role`、`token`、`expire`。
 
-### DELETE `/api/auth/sessions/current`
+### DELETE `/api/auth/logout`
 
 请求头：
 
@@ -353,8 +358,8 @@ Query 参数：
 | `POST /api/auth/register_verify` | `POST /api/auth/register-verifications` |
 | `GET /api/auth/verify` | `GET /api/auth/register-verifications` |
 | `POST /api/auth/register` | `POST /api/auth/registrations` |
-| `POST /api/auth/login` | `POST /api/auth/sessions` |
-| `POST /api/auth/logout` | `DELETE /api/auth/sessions/current` |
+| `POST /api/auth/login` | `POST /api/auth/login` |
+| `POST /api/auth/logout` | `DELETE /api/auth/logout` |
 | `GET /api/user/info` | `GET /api/users/me` |
 | `GET /api/user/info/by_user_id` | `GET /api/users/{user_id}` |
 | `PUT /api/user/update_avatar` | `PUT /api/users/me/avatar` |

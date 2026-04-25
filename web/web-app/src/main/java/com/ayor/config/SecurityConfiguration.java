@@ -34,6 +34,48 @@ import java.io.PrintWriter;
 @EnableMethodSecurity
 public class SecurityConfiguration {
 
+    private static final String LOGIN_PATH = "/api/auth/login";
+
+    private static final String LOGOUT_PATH = "/api/auth/logout";
+
+    private static final String[] PUBLIC_AUTH_ENDPOINTS = {
+            "/api/auth/register-verifications",
+            "/api/auth/registrations",
+            LOGIN_PATH
+    };
+
+    private static final String[] AUTHENTICATED_USER_ENDPOINTS = {
+            "/api/users/me",
+            "/api/users/me/**"
+    };
+    private static final String[] PUBLIC_GET_ENDPOINTS = {
+            "/api/users/{user_id}",
+            "/api/themes",
+            "/api/themes/topics",
+            "/api/themes/{theme_id}/topics",
+            "/api/topics/{topic_id}/tags",
+            "/api/topics/{topic_id}/threads",
+            "/api/users/{user_id}/threads",
+            "/api/threads/{thread_id}",
+            "/api/topics/{topic_id}/announcements",
+            "/api/threads/{thread_id}/posts",
+            "/api/threads/{thread_id}/likes/count",
+            "/api/users/{user_id}/liked-threads",
+            "/api/threads/{thread_id}/collections/count",
+            "/api/users/{user_id}/collected-threads",
+            "/api/search/users",
+            "/api/search/hot-keywords",
+            "/api/topics/{topic_id}/chat-messages",
+            "/api/topics/{topic_id}/breadcrumb",
+            "/api/threads/{thread_id}/breadcrumb"
+    };
+
+    private static final String[] PUBLIC_PAGE_ENDPOINTS = {
+            "/chat",
+            "/chatboard",
+            "/system"
+    };
+
     @Resource
     private JWTUtils jwtUtil;
 
@@ -55,41 +97,21 @@ public class SecurityConfiguration {
     SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         return http
                 .authorizeHttpRequests(auth -> {
-                    auth.requestMatchers("/api/auth/**").permitAll();
-                    auth.requestMatchers("/api/users/me", "/api/users/me/**").authenticated();
-                    auth.requestMatchers(HttpMethod.GET,
-                            "/api/users/{user_id}",
-                            "/api/themes",
-                            "/api/themes/topics",
-                            "/api/themes/{theme_id}/topics",
-                            "/api/topics/{topic_id}/tags",
-                            "/api/topics/{topic_id}/threads",
-                            "/api/users/{user_id}/threads",
-                            "/api/threads/{thread_id}",
-                            "/api/topics/{topic_id}/announcements",
-                            "/api/threads/{thread_id}/posts",
-                            "/api/threads/{thread_id}/likes/count",
-                            "/api/users/{user_id}/liked-threads",
-                            "/api/threads/{thread_id}/collections/count",
-                            "/api/users/{user_id}/collected-threads",
-                            "/api/search/users",
-                            "/api/search/hot-keywords",
-                            "/api/topics/{topic_id}/chat-messages",
-                            "/api/topics/{topic_id}/breadcrumb",
-                            "/api/threads/{thread_id}/breadcrumb"
-                    ).permitAll();
-                    auth.requestMatchers("/chat", "/chatboard", "/system").permitAll();
+                    auth.requestMatchers(PUBLIC_AUTH_ENDPOINTS).permitAll();
+                    auth.requestMatchers(AUTHENTICATED_USER_ENDPOINTS).authenticated();
+                    auth.requestMatchers(HttpMethod.GET, PUBLIC_GET_ENDPOINTS).permitAll();
+                    auth.requestMatchers(PUBLIC_PAGE_ENDPOINTS).permitAll();
                     auth.anyRequest().authenticated();
                 })
                 .formLogin(auth -> {
-                    auth.loginProcessingUrl("/api/auth/sessions");
+                    auth.loginProcessingUrl(LOGIN_PATH);
                     auth.successHandler(this::onAuthenticationSuccess);
                     auth.failureHandler(this::onAuthenticationFailure);
                 })
                 .logout(auth -> {
                     auth.logoutRequestMatcher(req ->
                             "DELETE".equals(req.getMethod()) &&
-                                    "/api/auth/sessions/current".equals(req.getServletPath()));
+                                    LOGOUT_PATH.equals(req.getServletPath()));
                     auth.logoutSuccessHandler(this::onLogoutSuccess);
                 })
                 .sessionManagement(auth -> {
