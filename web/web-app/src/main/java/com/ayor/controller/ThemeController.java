@@ -14,23 +14,23 @@ import java.util.List;
 
 @RequiredArgsConstructor
 @RestController
-@RequestMapping("/api/theme")
+@RequestMapping("/api/themes")
 public class ThemeController {
 
     private final ThemeService themeService;
 
-    @GetMapping("/info/list")
+    @GetMapping
     public Result<List<ThemeVO>> getThemeList() {
         return Result.dataMessageHandler(themeService::getThemeList, "获取列表失败");
     }
 
-    @GetMapping("/info/list_themes_contains_topics")
+    @GetMapping("/topics")
     public Result<List<ThemeTopicVO>> getThemesContainsTopics() {
         return Result.dataMessageHandler(themeService::getThemeTopicList, "获取列表失败");
     }
 
     @PreAuthorize("hasAnyRole('ROLE_OWNER')")
-    @PutMapping("/insert")
+    @PostMapping
     public Result<Void> insertTheme(@RequestBody @Validated ThemeDTO themeVO) {
         return Result.messageHandler(() -> themeService.insertTheme(themeVO));
     }

@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/notif")
+@RequestMapping("/api/notifications")
 @RequiredArgsConstructor
 public class NotificationController {
 
@@ -19,7 +19,7 @@ public class NotificationController {
 
     private final SecurityUtils securityUtils;
 
-    @GetMapping("/remaining_message_unread")
+    @GetMapping("/unread-count")
     public Result<MessageUnread> getNotification(@RequestParam(value = "type", required = false) String type) {
         Integer userId = securityUtils.getSecurityUserId();
         return Result.dataMessageHandler(() -> {
