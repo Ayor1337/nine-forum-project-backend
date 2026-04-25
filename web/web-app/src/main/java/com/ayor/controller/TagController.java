@@ -16,6 +16,9 @@ import java.util.List;
 public class TagController {
 
     private final TagService tagService;
+    /**
+     * getTagList 方法。
+     */
 
 
     @GetMapping
@@ -26,6 +29,9 @@ public class TagController {
     @PreAuthorize("hasRole('ROLE_OWNER') " +
             "or hasAuthority('PERM_INSERT_TAG')" +
             "and hasAuthority('TOPIC_' + #topicId)")
+    /**
+     * insertNewTag 方法。
+     */
     @PostMapping
     public Result<Void> insertNewTag(@PathVariable(name = "topic_id") Integer topicId,
                                      @RequestBody TagDTO tagDTO) {

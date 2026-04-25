@@ -29,6 +29,9 @@ public class ConversationServiceImpl extends ServiceImpl<ConversationMapper, Con
     private final AccountMapper accountMapper;
 
     private final ChatUnreadService chatUnreadService;
+    /**
+     * getConversationByAccountId 方法。
+     */
 
     @Override
     @Cacheable(value = "conversation", key = "#result.conversationId", condition = "#accountId != null && #toAccountId != null")
@@ -78,6 +81,9 @@ public class ConversationServiceImpl extends ServiceImpl<ConversationMapper, Con
         }
         return conversationVO;
     }
+    /**
+     * hiddenConversation 方法。
+     */
 
     @Override
     @CacheEvict(value = "conversation", key = "#conversationId", condition = "#accountId != null")
@@ -111,6 +117,9 @@ public class ConversationServiceImpl extends ServiceImpl<ConversationMapper, Con
         }
         return "无权限";
     }
+    /**
+     * createNewConversation 方法。
+     */
 
     @Override
     @CacheEvict(value = "conversationList", key = "#accountId", condition = "#accountId != null")
@@ -140,6 +149,9 @@ public class ConversationServiceImpl extends ServiceImpl<ConversationMapper, Con
         conversation.setUpdateTime(new Date());
         return save(conversation) ? null : "创建失败";
     }
+    /**
+     * getConversationList 方法。
+     */
 
     @Override
     @Cacheable(value = "conversationList", key = "#accountId", condition = "#accountId != null", unless = "#result == null")
@@ -180,6 +192,9 @@ public class ConversationServiceImpl extends ServiceImpl<ConversationMapper, Con
         });
         return conversationVOs;
     }
+    /**
+     * getUnreadList 方法。
+     */
 
     @Override
     public List<ChatUnread> getUnreadList(Integer accountId) {
@@ -209,6 +224,9 @@ public class ConversationServiceImpl extends ServiceImpl<ConversationMapper, Con
         });
         return chatUnreadList;
     }
+    /**
+     * clearUnread 方法。
+     */
 
     @Override
     public String clearUnread(Integer conversationId, Integer fromUserId) {
@@ -222,6 +240,9 @@ public class ConversationServiceImpl extends ServiceImpl<ConversationMapper, Con
         chatUnreadService.clearUnread(conversationId, fromUserId);
         return null;
     }
+    /**
+     * getUserInfoVO 方法。
+     */
 
 
     private UserInfoVO getUserInfoVO(Account account) {

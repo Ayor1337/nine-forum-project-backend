@@ -24,6 +24,9 @@ public class StatisticsTask {
 
     private final TopicStatService topicStatService;
 
+    /**
+     * 启动后立即执行一次统计更新。
+     */
     @PostConstruct
     public void startUp() {
         try {
@@ -35,6 +38,11 @@ public class StatisticsTask {
         }
     }
 
+    /**
+     * 定时更新用户统计信息。
+     *
+     * @throws SQLSyntaxErrorException SQL 异常
+     */
     @Scheduled(cron = "0 0 0 * * *")
     public void accountStatistics() throws SQLSyntaxErrorException {
         log.info("开始更新用户统计信息");
@@ -42,6 +50,11 @@ public class StatisticsTask {
         log.info("更新用户统计信息完成");
     }
 
+    /**
+     * 定时更新帖子统计信息。
+     *
+     * @throws SQLSyntaxErrorException SQL 异常
+     */
     @Scheduled(cron = "0 0 * * * *")
     public void threadStatistics() throws SQLSyntaxErrorException {
         log.info("开始更新帖子统计信息");
@@ -49,6 +62,11 @@ public class StatisticsTask {
         log.info("更新帖子统计信息完成");
     }
 
+    /**
+     * 定时更新主题统计信息。
+     *
+     * @throws SQLSyntaxErrorException SQL 异常
+     */
     @Scheduled(cron = "0 0 * * * *")
     public void topicStatistics() throws SQLSyntaxErrorException {
         log.info("开始更新主题统计信息");

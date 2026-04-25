@@ -11,6 +11,11 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class RabbitConfiguration {
 
+    /**
+     * 创建邮件交换机。
+     *
+     * @return 交换机
+     */
     @Bean("mail_exchange")
     public Exchange mailExchange() {
         return ExchangeBuilder
@@ -18,6 +23,11 @@ public class RabbitConfiguration {
                 .build();
     }
 
+    /**
+     * 创建邮件队列。
+     *
+     * @return 队列
+     */
     @Bean("mail_queue")
     public Queue mailQueue() {
         return QueueBuilder
@@ -25,6 +35,13 @@ public class RabbitConfiguration {
                 .build();
     }
 
+    /**
+     * 绑定邮件交换机和邮件队列。
+     *
+     * @param queue 邮件队列
+     * @param exchange 邮件交换机
+     * @return 绑定关系
+     */
     @Bean("mail_binding")
     public Binding mailBinding(@Qualifier("mail_queue") Queue queue,
                                @Qualifier("mail_exchange") Exchange exchange) {
@@ -35,6 +52,12 @@ public class RabbitConfiguration {
                 .noargs();
     }
 
+    /**
+     * 创建 JSON 消息转换器。
+     *
+     * @param objectMapper JSON ObjectMapper
+     * @return 消息转换器
+     */
     @Bean
     public MessageConverter converter(ObjectMapper objectMapper) {
         return new Jackson2JsonMessageConverter(objectMapper);

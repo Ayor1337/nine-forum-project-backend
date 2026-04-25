@@ -16,6 +16,9 @@ import java.util.Optional;
 public class MessageUnreadServiceImpl implements MessageUnreadService {
 
     private final StringRedisTemplate template;
+    /**
+     * buildKey 方法。
+     */
 
     private String buildKey(Integer userId, UnreadMessageType type) {
         return "message:" +
@@ -23,10 +26,16 @@ public class MessageUnreadServiceImpl implements MessageUnreadService {
                 ":unread:" +
                 userId;
     }
+    /**
+     * existValue 方法。
+     */
 
     private boolean existValue(String key) {
         return template.hasKey(key);
     }
+    /**
+     * getUnread 方法。
+     */
 
     @Override
     public Long getUnread(Integer userId, UnreadMessageType type) {
@@ -35,6 +44,9 @@ public class MessageUnreadServiceImpl implements MessageUnreadService {
                 .orElse("0");
         return Long.parseLong(value);
     }
+    /**
+     * getUnread 方法。
+     */
 
     @Override
     public Long getUnread(Integer userId, String type) {
@@ -50,6 +62,9 @@ public class MessageUnreadServiceImpl implements MessageUnreadService {
                 .orElse("0");
         return Long.parseLong(value);
     }
+    /**
+     * getAllUnread 方法。
+     */
 
     public Long getAllUnread(Integer userId) {
         Long unreadCount = 0L;
@@ -58,6 +73,9 @@ public class MessageUnreadServiceImpl implements MessageUnreadService {
         }
         return unreadCount;
     }
+    /**
+     * getUnreadVO 方法。
+     */
 
     @Override
     public MessageUnread getUnreadVO(Integer userId, UnreadMessageType type) {
@@ -65,6 +83,9 @@ public class MessageUnreadServiceImpl implements MessageUnreadService {
                 .unread(getUnread(userId, type))
                 .build();
     }
+    /**
+     * getUnreadVO 方法。
+     */
 
     @Override
     public MessageUnread getUnreadVO(Integer userId, String type) {
@@ -72,6 +93,9 @@ public class MessageUnreadServiceImpl implements MessageUnreadService {
                 .unread(getUnread(userId, type))
                 .build();
     }
+    /**
+     * getUnreadVO 方法。
+     */
 
     @Override
     public MessageUnread getUnreadVO(Integer userId) {
@@ -79,11 +103,17 @@ public class MessageUnreadServiceImpl implements MessageUnreadService {
                 .unread(getAllUnread(userId))
                 .build();
     }
+    /**
+     * newUnread 方法。
+     */
 
     public void newUnread(Integer userId, UnreadMessageType type, Long value) {
         String key = buildKey(userId, type);
         template.opsForValue().set(key, value.toString());
     }
+    /**
+     * clearUnread 方法。
+     */
 
     @Override
     public Long clearUnread(Integer userId, UnreadMessageType type, Long value) {
@@ -105,23 +135,35 @@ public class MessageUnreadServiceImpl implements MessageUnreadService {
         String remaining = template.opsForValue().get(key);
         return remaining == null ? 0L : Long.parseLong(remaining);
     }
+    /**
+     * clearUnread 方法。
+     */
 
     @Override
     public Long clearUnread(Integer userId, UnreadMessageType type) {
         template.delete(buildKey(userId, type));
         return 0L;
     }
+    /**
+     * incrUnread 方法。
+     */
 
     public long incrUnread(Integer userId, UnreadMessageType type, Long value) {
         String key = buildKey(userId, type);
         Long increment = template.opsForValue().increment(key, value);
         return increment == null ? 0 : increment;
     }
+    /**
+     * decrUnread 方法。
+     */
 
     public void decrUnread(Integer userId, UnreadMessageType type, Long value) {
         String key = buildKey(userId, type);
         template.opsForValue().decrement(key, value);
     }
+    /**
+     * addUnread 方法。
+     */
 
 
     @Override

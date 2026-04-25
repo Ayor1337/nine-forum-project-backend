@@ -16,17 +16,26 @@ import java.util.List;
 public class TopicController {
 
     private final TopicService topicService;
+    /**
+     * getTopicList 方法。
+     */
 
     @GetMapping("/themes/{theme_id}/topics")
     public Result<List<TopicVO>> getTopicList(@PathVariable(name = "theme_id") Integer themeId) {
         return Result.dataMessageHandler(() -> topicService.getTopicListByThemeId(themeId), "获取主题下的帖子列表失败");
     }
+    /**
+     * insertTopic 方法。
+     */
 
     @PreAuthorize("hasAnyRole('ROLE_OWNER')")
     @PostMapping("/topics")
     public Result<Void> insertTopic(@RequestBody TopicDTO topicDTO) {
         return Result.messageHandler(() -> topicService.insertTopic(topicDTO));
     }
+    /**
+     * updateTopic 方法。
+     */
 
     @PreAuthorize("hasAnyRole('ROLE_OWNER')")
     @PutMapping("/topics/{topic_id}")
@@ -35,6 +44,9 @@ public class TopicController {
         topicDTO.setTopicId(topicId);
         return Result.messageHandler(() -> topicService.updateTopic(topicDTO));
     }
+    /**
+     * deleteTopic 方法。
+     */
 
     @PreAuthorize("hasAnyRole('ROLE_OWNER')")
     @DeleteMapping("/topics/{topic_id}")

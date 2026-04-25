@@ -46,6 +46,9 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
     private final QuillUtils quillUtils;
 
     private final TagMapper tagMapper;
+    /**
+     * getThreadVOsByTopicId 方法。
+     */
 
     @Override
     public List<ThreadVO> getThreadVOsByTopicId(Integer topicId) {
@@ -58,6 +61,9 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
         List<Threadd> threads = this.baseMapper.getThreadsByTopicId(topicId);
         return toVOs(threads);
     }
+    /**
+     * getThreadVOsByTopicId 方法。
+     */
 
     @Override
     public PageEntity<ThreadVO> getThreadVOsByTopicId(Integer topicId, Integer pageNum, Integer pageSize) {
@@ -75,6 +81,9 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
 
         return new PageEntity<>(threads.getTotal(), toVOs(threads.getRecords()));
     }
+    /**
+     * getThreadTitleById 方法。
+     */
 
     @Override
     public String getThreadTitleById(Integer threadId) {
@@ -84,6 +93,9 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
         Threadd threadd = this.baseMapper.selectById(threadId);
         return threadd.getTitle();
     }
+    /**
+     * getThreadById 方法。
+     */
 
     @Override
     public ThreadVO getThreadById(Integer threadId) {
@@ -108,6 +120,9 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
         threadVO.setAccountId(account.getAccountId());
         return threadVO;
     }
+    /**
+     * getThreadPagesByUserId 方法。
+     */
 
     @Override
     public PageEntity<ThreadVO> getThreadPagesByUserId(Integer accountId, Integer currentPage, Integer pageSize) {
@@ -121,6 +136,9 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
         Long totalPages = threads.getTotal();
         return new PageEntity<>(totalPages, threadVOS);
     }
+    /**
+     * toVOs 方法。
+     */
 
     @NotNull
     private List<ThreadVO> toVOs(List<Threadd> threads) {
@@ -150,6 +168,9 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
         });
         return threadVOList;
     }
+    /**
+     * removeThreadById 方法。
+     */
 
     @Override
     public String removeThreadById(Integer threadId, Integer accountId) {
@@ -167,6 +188,9 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
         postMapper.removePostsByThreadId(threadId);
         return this.removeByIdLogical(threadId) ? null : "删除失败";
     }
+    /**
+     * permRemoveThreadById 方法。
+     */
 
     public String permRemoveThreadById(Integer threadId) {
         Threadd thread = this.getById(threadId);
@@ -179,6 +203,9 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
         postMapper.removePostsByThreadId(threadId);
         return this.removeByIdLogical(threadId) ? null : "删除失败";
     }
+    /**
+     * setAnnouncementByThreadId 方法。
+     */
 
     @Override
     public String setAnnouncementByThreadId(Integer threadId, Integer topicId) {
@@ -195,6 +222,9 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
         thread.setIsAnnouncement(true);
         return this.updateById(thread) ? null : "修改失败";
     }
+    /**
+     * removeAnnouncementByThreadId 方法。
+     */
 
     @Override
     public String removeAnnouncementByThreadId(Integer threadId, Integer topicId) {
@@ -211,6 +241,9 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
         thread.setIsAnnouncement(false);
         return this.updateById(thread) ? null : "修改失败";
     }
+    /**
+     * getAnnouncementThreads 方法。
+     */
 
     @Override
     public List<AnnouncementVO> getAnnouncementThreads(Integer topicId) {
@@ -228,6 +261,9 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
         });
         return announcementVOList;
     }
+    /**
+     * insertThread 方法。
+     */
 
     @Override
     public String insertThread(ThreadDTO threadDTO, Integer accountId) {
@@ -243,6 +279,9 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
 
         return this.save(threadd) ? null : "添加失败";
     }
+    /**
+     * updateThreadTag 方法。
+     */
 
     @Override
     public String updateThreadTag(TagUpdateDTO tagUpdateDTO) {
@@ -264,6 +303,9 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
 
         return this.updateById(threadd) ? null : "修改失败";
     }
+    /**
+     * removeThreadTag 方法。
+     */
 
     @Override
     public String removeThreadTag(Integer threadId, Integer topicId) {
@@ -272,12 +314,18 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
         }
         return this.baseMapper.removeThreadTag(threadId, topicId) ? null : "修改失败";
     }
+    /**
+     * updateThreadStat 方法。
+     */
 
     @Override
     public void updateThreadStat() {
         this.baseMapper.updateThreadPostCount();
         this.baseMapper.updateLikeCount();
     }
+    /**
+     * updateViewCount 方法。
+     */
 
     @Override
     public String updateViewCount(Integer threadId) {
@@ -292,6 +340,9 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
         lock.unlock();
         return null;
     }
+    /**
+     * toThreadDocs 方法。
+     */
 
     @Override
     public List<ThreadDoc> toThreadDocs(List<Threadd>     threads) {
@@ -306,11 +357,17 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
         });
         return threadDocs;
     }
+    /**
+     * existsThreadById 方法。
+     */
 
     private boolean existsThreadById(Integer threadId) {
         Threadd threadd = this.lambdaQuery().eq(Threadd::getThreadId, threadId).one();
         return threadd != null && !threadd.getIsDeleted();
     }
+    /**
+     * removeByIdLogical 方法。
+     */
 
     private boolean removeByIdLogical(Serializable Id) {
         Threadd threadd = this.getById(Id);

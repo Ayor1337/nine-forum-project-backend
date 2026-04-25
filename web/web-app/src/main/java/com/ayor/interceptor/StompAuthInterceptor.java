@@ -26,6 +26,9 @@ public class StompAuthInterceptor implements ChannelInterceptor {
 
     @Resource
     private JWTUtils jwtUtil;
+    /**
+     * Map.of 方法。
+     */
 
     private static final Map<String, List<String>> ENDPOINT_DEST_WHITELIST = Map.of(
             "/chatboard", List.of("/broadcast"),
@@ -33,6 +36,13 @@ public class StompAuthInterceptor implements ChannelInterceptor {
             "/system", List.of("/notif", "/verify")
     );
 
+    /**
+     * 在 STOMP 连接、订阅和发送阶段执行鉴权。
+     *
+     * @param message STOMP 消息
+     * @param channel 消息通道
+     * @return 原始消息
+     */
     @Override
     public Message<?> preSend(@NotNull Message<?> message, @NotNull MessageChannel channel) {
         StompHeaderAccessor acc = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
@@ -74,6 +84,14 @@ public class StompAuthInterceptor implements ChannelInterceptor {
         return message;
     }
 
+    /**
+     * 判断当前用户是否允许订阅指定目的地。
+     *
+     * @param p 当前主体
+     * @param destination 订阅目的地
+     * @param accessor STOMP 头访问器
+     * @return 允许订阅返回 true
+     */
     private boolean canSubscribe(Principal p, String destination, StompHeaderAccessor accessor) {
         if (destination == null) {
             return false;
@@ -96,6 +114,14 @@ public class StompAuthInterceptor implements ChannelInterceptor {
         return false;
     }
 
+    /**
+     * 判断当前用户是否允许发送到指定目的地。
+     *
+     * @param p 当前主体
+     * @param destination 发送目的地
+     * @param accessor STOMP 头访问器
+     * @return 允许发送返回 true
+     */
     private boolean canSend(Principal p, String destination, StompHeaderAccessor accessor) {
         if (destination == null) {
             return false;
@@ -103,6 +129,13 @@ public class StompAuthInterceptor implements ChannelInterceptor {
         return matchEndpointDestination(accessor, destination);
     }
 
+    /**
+     * 校验目的地是否与当前 WebSocket 端点匹配。
+     *
+     * @param accessor STOMP 头访问器
+     * @param destination 目的地
+     * @return 匹配返回 true
+     */
     private boolean matchEndpointDestination(StompHeaderAccessor accessor, String destination) {
         Map<String, Object> attributes = accessor.getSessionAttributes();
         if (attributes == null) {

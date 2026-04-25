@@ -39,6 +39,9 @@ public class ConversationMessageServiceImpl extends ServiceImpl<ConversationMess
     @ChatNotif(conversationId = "#conversationMessage.conversationId",
             type = NotificationType.SEND_MSG,
             userId = "#accountId")
+    /**
+     * sendMessage 方法。
+     */
     public String sendMessage(ConversationMessageDTO conversationMessage, Integer accountId) {
         Account account = accountMapper.getAccountById(accountId);
         if(account == null) {
@@ -79,6 +82,9 @@ public class ConversationMessageServiceImpl extends ServiceImpl<ConversationMess
     @Override
     @ChatNotif(conversationId = "#conversationId",
             type = NotificationType.RECEIVED_MSG, userId = "#accountId")
+    /**
+     * getConversationMessageList 方法。
+     */
     public PageEntity<ConversationMessageVO> getConversationMessageList(Integer conversationId, Integer accountId, Integer pageNum) {
         Page<ConversationMessage> page = this.lambdaQuery()
                 .eq(ConversationMessage::getConversationId, conversationId)

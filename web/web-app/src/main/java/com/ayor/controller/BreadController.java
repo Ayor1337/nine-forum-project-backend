@@ -17,11 +17,17 @@ public class BreadController {
     private final TopicService topicService;
 
     private final ThreaddService threaddService;
+    /**
+     * getTopicInfo 方法。
+     */
 
     @GetMapping("/topics/{topic_id}/breadcrumb")
     public Result<String> getTopicInfo(@PathVariable(name = "topic_id") Integer topicId) {
         return Result.dataMessageHandler(() -> topicService.getTopicNameById(topicId), "获取帖子信息失败");
     }
+    /**
+     * getThreadInfo 方法。
+     */
 
     @GetMapping("/threads/{thread_id}/breadcrumb")
     public Result<String> getThreadInfo(@PathVariable(name = "thread_id") Integer threadId) {

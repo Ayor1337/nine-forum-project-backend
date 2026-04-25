@@ -9,6 +9,9 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @RestControllerAdvice
 @Slf4j
 public class AccessController {
+    /**
+     * handleAccessDeniedException 方法。
+     */
 
     @ExceptionHandler(value = AccessDeniedException.class)
     public Result<Void> handleAccessDeniedException(AccessDeniedException e) {

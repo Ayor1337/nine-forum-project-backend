@@ -18,6 +18,9 @@ public class NotificationController {
     private final MessageUnreadService messageUnreadService;
 
     private final SecurityUtils securityUtils;
+    /**
+     * getNotification 方法。
+     */
 
     @GetMapping("/unread-count")
     public Result<MessageUnread> getNotification(@RequestParam(value = "type", required = false) String type) {

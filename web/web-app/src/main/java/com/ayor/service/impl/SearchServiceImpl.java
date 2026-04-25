@@ -42,10 +42,16 @@ public class SearchServiceImpl implements SearchService {
     private final ElasticsearchOperations operations;
 
     static final List<String> ORDER = List.of("asc", "desc", "rel");
+    /**
+     * buildKey 方法。
+     */
 
     private String buildKey(Integer userId) {
         return "search:history:" + userId;
     }
+    /**
+     * searchThreads 方法。
+     */
 
     @Override
     public PageEntity<ThreadDoc> searchThreads(String keyword,
@@ -144,12 +150,18 @@ public class SearchServiceImpl implements SearchService {
 
         return new PageEntity<>(threads.getTotalHits(), list);
     }
+    /**
+     * getSearchHistory 方法。
+     */
 
     @Override
     public Set<String> getSearchHistory(Integer userId) {
         return redisTemplate.opsForZSet()
                 .reverseRange(buildKey(userId), 0, 5);
     }
+    /**
+     * insertSearchHistory 方法。
+     */
 
     private void insertSearchHistory(String keyword, Integer userId) {
         if (keyword == null || keyword.isEmpty()) {
@@ -157,6 +169,9 @@ public class SearchServiceImpl implements SearchService {
         }
     	redisTemplate.opsForZSet().add(buildKey(userId), keyword, System.currentTimeMillis());
     }
+    /**
+     * removeSearchHistory 方法。
+     */
 
     @Override
     public String removeSearchHistory(String keyword, Integer userId) {
@@ -166,12 +181,18 @@ public class SearchServiceImpl implements SearchService {
         }
         return "删除失败";
     }
+    /**
+     * removeSearchHistory 方法。
+     */
 
     @Override
     public String removeSearchHistory(Integer userId) {
         Boolean removed = redisTemplate.delete("search:history:" + userId);
         return removed ? null : "删除失败";
     }
+    /**
+     * getHotKeywords 方法。
+     */
 
     @Override
     public List<HotKeywordVO> getHotKeywords(int size, Duration duration) {

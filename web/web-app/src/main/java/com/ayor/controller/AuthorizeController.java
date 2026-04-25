@@ -17,16 +17,25 @@ public class AuthorizeController {
     private final AuthorizeService authorizeService;
 
     private final AccountService accountService;
+    /**
+     * registerVerify 方法。
+     */
 
     @PostMapping("/register-verifications")
     public Result<String> registerVerify(@RequestBody @Valid RegDTO regDTO) {
         return Result.dataMessageHandler(() -> authorizeService.createAuthorizeToken(regDTO.getEmail()), "邮件发送失败");
     }
+    /**
+     * register 方法。
+     */
 
     @PostMapping("/registrations")
     public Result<Void> register(@RequestBody @Valid AccountDTO accountDTO) {
         return Result.messageHandler(() -> accountService.insertNewAccount(accountDTO));
     }
+    /**
+     * verify 方法。
+     */
 
     @GetMapping("/register-verifications")
     @ResponseBody

@@ -7,6 +7,11 @@ import org.springframework.data.elasticsearch.client.elc.ElasticsearchConfigurat
 
 @Configuration
 public class ESConfiguration extends ElasticsearchConfiguration {
+    /**
+     * 创建 Elasticsearch 客户端配置。
+     *
+     * @return 客户端配置
+     */
     @NotNull
     @Override
     public ClientConfiguration clientConfiguration() {

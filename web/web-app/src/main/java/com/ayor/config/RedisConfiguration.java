@@ -28,6 +28,12 @@ import java.util.Objects;
 @Slf4j
 public class RedisConfiguration {
 
+    /**
+     * 创建默认 Redis 连接工厂。
+     *
+     * @param redisProperties Redis 配置
+     * @return 连接工厂
+     */
     @Bean("defaultRedisConnectionFactory")
     public RedisConnectionFactory defaultRedisConnectionFactory (RedisProperties redisProperties) {
         RedisStandaloneConfiguration config = new RedisStandaloneConfiguration();
@@ -44,11 +50,23 @@ public class RedisConfiguration {
         return new LettuceConnectionFactory(config);
     }
 
+    /**
+     * 创建字符串 Redis 模板。
+     *
+     * @param redisConnectionFactory Redis 连接工厂
+     * @return 字符串模板
+     */
     @Bean("redisTemplate")
     public StringRedisTemplate stringRedisTemplate (@Qualifier("defaultRedisConnectionFactory") RedisConnectionFactory redisConnectionFactory) {
         return new StringRedisTemplate(redisConnectionFactory);
     }
 
+    /**
+     * 创建缓存 Redis 连接工厂。
+     *
+     * @param redisProperties Redis 配置
+     * @return 连接工厂
+     */
     @Bean("cacheRedisConnectionFactory")
     public RedisConnectionFactory cacheRedisConnectionFactory(RedisProperties redisProperties) {
         RedisStandaloneConfiguration config = new RedisStandaloneConfiguration();
@@ -66,6 +84,12 @@ public class RedisConfiguration {
         return new LettuceConnectionFactory(config);
     }
 
+    /**
+     * 创建 Redis 缓存管理器。
+     *
+     * @param redisConnectionFactory Redis 连接工厂
+     * @return 缓存管理器
+     */
     @Bean
     public RedisCacheManager cacheManager(@Qualifier("cacheRedisConnectionFactory") RedisConnectionFactory redisConnectionFactory) {
         return RedisCacheManager.builder(redisConnectionFactory)

@@ -47,6 +47,9 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
     private final AccountStatMapper accountStatMapper;
 
     private final JWTUtils jwtUtils;
+    /**
+     * loadUserByUsername 方法。
+     */
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
@@ -62,6 +65,9 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
                 .roles(roleName)
                 .build();
     }
+    /**
+     * getUserInfo 方法。
+     */
 
     @Override
     @Cacheable(value = "userInfo", key = "#accountId", condition = "#accountId != null", unless = "#result == null")
@@ -77,6 +83,9 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
 
         return userInfoVO;
     }
+    /**
+     * updateUserAvatar 方法。
+     */
 
     @Override
     @CacheEvict(value = "userInfo", key = "#accountId")
@@ -93,6 +102,9 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         }
         return this.baseMapper.updateById(account) > 0 ? null : "更新失败, 未知异常";
     }
+    /**
+     * updateUserBanner 方法。
+     */
 
     @Override
     @CacheEvict(value = "userInfo", key = "#accountId")
@@ -109,6 +121,9 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         }
         return this.baseMapper.updateById(account) > 0 ? null : "更新失败, 未知异常";
     }
+    /**
+     * insertNewAccount 方法。
+     */
 
     @Override
     public String insertNewAccount(AccountDTO accountDTO) {
@@ -134,10 +149,16 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         }
         return "添加失败, 未知异常";
     }
+    /**
+     * existsUserById 方法。
+     */
 
     private boolean existsUserById(Integer accountId) {
         return this.baseMapper.exists(Wrappers.<Account>lambdaQuery().eq(Account::getAccountId, accountId));
     }
+    /**
+     * existsUserByUsername 方法。
+     */
 
     private boolean existsUserByUsername(String username) {
         return this.baseMapper.exists(Wrappers.<Account>lambdaQuery().eq(Account::getUsername, username));

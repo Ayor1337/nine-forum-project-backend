@@ -21,6 +21,9 @@ public class SearchController {
     private final SearchService searchService;
 
     private final SecurityUtils securityUtils;
+    /**
+     * searchThread 方法。
+     */
 
     @GetMapping("/threads")
     public Result<PageEntity<ThreadDoc>> searchThread(@RequestParam(name = "query") String query,
@@ -36,6 +39,9 @@ public class SearchController {
         return Result.dataMessageHandler(() -> searchService.searchThreads(
                 query, userId, topicId, enableHistory, onlyThreadTopic, startTime, endTime, order, pageNum, pageSize), "搜索失败");
     }
+    /**
+     * searchUser 方法。
+     */
 
     @GetMapping("/users")
     public Result<Void> searchUser(@RequestParam(name = "query") String query,
@@ -48,18 +54,27 @@ public class SearchController {
         // TODO
         return Result.ok();
     }
+    /**
+     * getSearchHistory 方法。
+     */
 
     @GetMapping("/history")
     public Result<Set<String>> getSearchHistory() {
         Integer userId = securityUtils.getSecurityUserId();
         return Result.dataMessageHandler(() -> searchService.getSearchHistory(userId), "获取搜索历史失败");
     }
+    /**
+     * getSearchQueryHistory 方法。
+     */
 
     @GetMapping("/history/query")
     public Result<Set<String>> getSearchQueryHistory(@RequestParam(name = "query", required = false) String query) {
         Integer userId = securityUtils.getSecurityUserId();
         return Result.dataMessageHandler(() -> searchService.getSearchHistory(userId), "获取搜索历史失败");
     }
+    /**
+     * deleteSearchHistory 方法。
+     */
 
     @DeleteMapping("/history")
     public Result<Void> deleteSearchHistory(@RequestParam(name = "query", required = false) String query) {
@@ -71,6 +86,9 @@ public class SearchController {
             return searchService.removeSearchHistory(query, userId);
         });
     }
+    /**
+     * getHotSearch 方法。
+     */
 
     @GetMapping("/hot-keywords")
     public Result<List<HotKeywordVO>> getHotSearch(@RequestParam(name = "size", defaultValue = "10") int size,

@@ -20,6 +20,9 @@ public class AuthorizeServiceImpl implements AuthorizeService {
     private final RabbitTemplate rabbitTemplate;
 
     private final SimpMessagingTemplate messagingTemplate;
+    /**
+     * createAuthorizeToken 方法。
+     */
 
     @Override
     public String createAuthorizeToken(String email) {
@@ -28,6 +31,9 @@ public class AuthorizeServiceImpl implements AuthorizeService {
         DecodedJWT decodedJWT = jwtUtils.resolveEmailJwt(token);
         return decodedJWT.getId();
     }
+    /**
+     * validateAuthorizeToken 方法。
+     */
 
     @Override
     public boolean validateAuthorizeToken(String token, String email) {

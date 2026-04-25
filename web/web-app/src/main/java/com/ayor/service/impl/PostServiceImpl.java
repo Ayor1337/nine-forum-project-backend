@@ -44,6 +44,9 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
     private final SimpMessagingTemplate messagingTemplate;
 
     private final STOMPUtils stompUtils;
+    /**
+     * getPostsByThreadId 方法。
+     */
 
 
     @Override
@@ -72,6 +75,9 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
             accountId = "@threaddMapper.getAccountIdByThreadIdInteger(#postDTO.threadId)",
             subscribeDest = "/notif/reply",
             type = UnreadMessageType.REPLY_MESSAGE)
+    /**
+     * insertPost 方法。
+     */
     public String insertPost(PostDTO postDTO, Integer userId) {
         if (postDTO.getContent() == null) {
             return "请填写内容";
@@ -102,6 +108,9 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         }
         return "发布失败, 未知异常";
     }
+    /**
+     * removePostAuthorizeAccountId 方法。
+     */
 
     @Override
     public String removePostAuthorizeAccountId(Integer postId, Integer userId) {
@@ -114,6 +123,9 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         }
         return this.removeByIdLogic(post.getPostId()) ? null : "删除失败, 未知异常";
     }
+    /**
+     * removePostPermission 方法。
+     */
 
     @Override
     public String removePostPermission(Integer postId) {
@@ -131,6 +143,9 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
             type = UnreadMessageType.REPLY_MESSAGE,
             doRead = true
     )
+    /**
+     * listReplyMessage 方法。
+     */
     public PageEntity<ReplyMessageVO> listReplyMessage(Integer pageNum, Integer pageSize, Integer accountId) {
         if (accountId == null) return new PageEntity<>(0L, Collections.emptyList());
         if (pageNum == null || pageNum < 1) pageNum = 1;
@@ -159,6 +174,9 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         List<ReplyMessageVO> vos = toVOList(page.getRecords());
         return new PageEntity<>(page.getTotal(), vos);
     }
+    /**
+     * toThreadDoc 方法。
+     */
 
 
     @Override
@@ -183,6 +201,9 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         });
         return threadDocs;
     }
+    /**
+     * toVOList 方法。
+     */
 
     private List<ReplyMessageVO> toVOList(List<Post> posts) {
         List<ReplyMessageVO> vos = new ArrayList<>();
@@ -192,6 +213,9 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         });
         return vos;
     }
+    /**
+     * toVO 方法。
+     */
 
     @NotNull
     private ReplyMessageVO toVO(Post post) {
@@ -205,6 +229,9 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         vo.setNickname(accountMapper.getAccountById(post.getAccountId()).getNickname());
         return vo;
     }
+    /**
+     * removeByIdLogic 方法。
+     */
 
 
     private boolean removeByIdLogic(Serializable Id) {

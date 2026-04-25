@@ -13,6 +13,13 @@ public class STOMPUtils {
 
     private final SimpUserRegistry userRegistry;
 
+    /**
+     * 判断用户是否已订阅指定前缀的目的地。
+     *
+     * @param userId 用户 ID
+     * @param destinationPrefix 目的地前缀
+     * @return 已订阅返回 true
+     */
     public boolean isUserSubscribed(String userId, String destinationPrefix) {
         SimpUser user = userRegistry.getUser(userId);
         if (user == null) return false;

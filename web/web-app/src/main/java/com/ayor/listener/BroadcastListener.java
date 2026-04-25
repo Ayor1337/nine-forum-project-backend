@@ -22,6 +22,15 @@ public class BroadcastListener {
 
     private final BroadcastService broadcastService;
 
+    /**
+     * 消费广播消息并转发到对应的广播服务。
+     *
+     * @param payload 广播消息
+     * @param message RabbitMQ 消息体
+     * @param channel RabbitMQ 通道
+     * @param <T> 消息载荷类型
+     * @throws IOException IO 异常
+     */
     @RabbitHandler
     public <T> void onMessage(BroadcastMessage<T> payload,
                               Message message,

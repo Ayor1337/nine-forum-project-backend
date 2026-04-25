@@ -30,6 +30,9 @@ public class LikeThreadServiceImpl extends ServiceImpl<LikeThreadMapper, LikeThr
     private final ThreaddMapper threaddMapper;
 
     private final QuillUtils quillUtils;
+    /**
+     * insertLikeThreadId 方法。
+     */
 
     @Override
     public String insertLikeThreadId(Integer accountId, Integer threadId) {
@@ -46,6 +49,9 @@ public class LikeThreadServiceImpl extends ServiceImpl<LikeThreadMapper, LikeThr
 
         return this.save(likeThread) ? null : "点赞失败";
     }
+    /**
+     * removeLikeThreadId 方法。
+     */
 
     @Override
     public String removeLikeThreadId(Integer accountId, Integer threadId) {
@@ -60,6 +66,9 @@ public class LikeThreadServiceImpl extends ServiceImpl<LikeThreadMapper, LikeThr
         }
         return this.removeById(likeThread) ? null : "取消点赞失败";
     }
+    /**
+     * getLikesByAccountId 方法。
+     */
 
     @Override
     public PageEntity<ThreadVO> getLikesByAccountId(Integer accountId,
@@ -85,12 +94,18 @@ public class LikeThreadServiceImpl extends ServiceImpl<LikeThreadMapper, LikeThr
 
         return new PageEntity<>(likePage.getTotal(), threadVOS);
     }
+    /**
+     * getLikeCountByThreadId 方法。
+     */
 
     @Override
     public Integer getLikeCountByThreadId(Integer threadId) {
         Integer likeCountByThreadId = this.baseMapper.getLikeCountByThreadId(threadId);
         return likeCountByThreadId == null ? 0 : likeCountByThreadId;
     }
+    /**
+     * isLikedByAccountId 方法。
+     */
 
     @Override
     public Boolean isLikedByAccountId(Integer accountId, Integer threadId) {

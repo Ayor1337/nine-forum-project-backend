@@ -27,6 +27,9 @@ public class ChatboardHistoryServiceImpl extends ServiceImpl<ChatboardHistoryMap
     private final AccountMapper accountMapper;
 
     private final SimpMessagingTemplate simpMessagingTemplate;
+    /**
+     * insertChatboardHistory 方法。
+     */
 
     @Override
     public String insertChatboardHistory(Integer accountId,
@@ -49,6 +52,9 @@ public class ChatboardHistoryServiceImpl extends ServiceImpl<ChatboardHistoryMap
         }
         return "发送失败";
     }
+    /**
+     * getChatboardHistory 方法。
+     */
 
     @Override
     public PageEntity<ChatboardHistoryVO> getChatboardHistory(Integer topicId, Integer pageNum, Integer pageSize) {

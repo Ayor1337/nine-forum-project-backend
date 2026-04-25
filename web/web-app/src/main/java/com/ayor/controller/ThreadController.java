@@ -23,6 +23,9 @@ public class ThreadController {
     private final ThreaddService threaddService;
 
     private final SecurityUtils security;
+    /**
+     * getThreadsByTopicId 方法。
+     */
 
 
     @GetMapping("/topics/{topic_id}/threads")
@@ -31,6 +34,9 @@ public class ThreadController {
                                                           @RequestParam(value = "page_size", defaultValue = "10") Integer pageSize) {
         return Result.dataMessageHandler(() -> threaddService.getThreadVOsByTopicId(topicId, pageNum, pageSize), "获取失败");
     }
+    /**
+     * getThreadsByUserId 方法。
+     */
 
     @GetMapping("/users/{user_id}/threads")
     public Result<PageEntity<ThreadVO>> getThreadsByUserId(@PathVariable(name = "user_id") Integer userId,
@@ -40,21 +46,33 @@ public class ThreadController {
     }
 
     // 注意调度
+    /**
+     * getThreadById 方法。
+     */
     @GetMapping("/threads/{thread_id}")
     public Result<ThreadVO> getThreadById(@PathVariable(name = "thread_id") Integer threadId) {
         return Result.dataMessageHandler(() -> threaddService.getThreadById(threadId), "获取失败");
     }
+    /**
+     * getAnnouncementByTopicId 方法。
+     */
 
     @GetMapping("/topics/{topic_id}/announcements")
     public Result<List<AnnouncementVO>> getAnnouncementByTopicId(@PathVariable(name = "topic_id") Integer topicId) {
         return Result.dataMessageHandler(() -> threaddService.getAnnouncementThreads(topicId), "获取失败");
     }
+    /**
+     * postThread 方法。
+     */
 
     @PostMapping("/threads")
     public Result<Void> postThread(@Valid @RequestBody ThreadDTO threadDTO) {
         Integer userId = security.getSecurityUserId();
         return Result.messageHandler(() -> threaddService.insertThread(threadDTO, userId));
     }
+    /**
+     * removeThreadById 方法。
+     */
 
     @DeleteMapping("/threads/{thread_id}")
     public Result<Void> removeThreadById(@PathVariable(name = "thread_id") Integer threadId) {
@@ -65,6 +83,9 @@ public class ThreadController {
     @PreAuthorize("hasRole('ROLE_OWNER') " +
             "or hasAuthority('PERM_UPDATE_TAG')" +
             "and hasAuthority('TOPIC_' + #topicId)")
+    /**
+     * updateTag 方法。
+     */
     @PutMapping("/moderation/threads/{thread_id}/tag")
     public Result<Void> updateTag(@PathVariable(name = "thread_id") Integer threadId,
                                   @RequestParam(name = "topic_id") Integer topicId,
@@ -77,6 +98,9 @@ public class ThreadController {
     @PreAuthorize("hasRole('ROLE_OWNER') " +
             "or hasAuthority('PERM_UPDATE_TAG')" +
             "and hasAuthority('TOPIC_' + #topicId)")
+    /**
+     * deleteThreadTag 方法。
+     */
     @DeleteMapping("/moderation/threads/{thread_id}/tag")
     public Result<Void> deleteThreadTag(@PathVariable(name = "thread_id") Integer threadId,
                                         @RequestParam(name = "topic_id") Integer topicId) {
@@ -86,6 +110,9 @@ public class ThreadController {
     @PreAuthorize("hasRole('ROLE_OWNER') " +
             "or hasAuthority('PERM_UPDATE_TAG')" +
             "and hasAuthority('TOPIC_' + #topicId)")
+    /**
+     * setAnnouncement 方法。
+     */
     @PutMapping("/topics/{topic_id}/announcements/{thread_id}")
     public Result<Void> setAnnouncement(@PathVariable(name = "topic_id") Integer topicId,
                                         @PathVariable(name = "thread_id") Integer threadId) {
@@ -95,6 +122,9 @@ public class ThreadController {
     @PreAuthorize("hasRole('ROLE_OWNER') " +
             "or hasAuthority('PERM_UPDATE_TAG')" +
             "and hasAuthority('TOPIC_' + #topicId)")
+    /**
+     * unsetAnnouncement 方法。
+     */
     @DeleteMapping("/topics/{topic_id}/announcements/{thread_id}")
     public Result<Void> unsetAnnouncement(@PathVariable(name = "topic_id") Integer topicId,
                                           @PathVariable(name = "thread_id") Integer threadId) {
@@ -104,6 +134,9 @@ public class ThreadController {
     @PreAuthorize("hasRole('ROLE_OWNER') " +
             "or hasAuthority('PERM_sDELETE_THREAD')" +
             "and hasAuthority('TOPIC_' + #topicId)")
+    /**
+     * removeThreadByIdPermission 方法。
+     */
     @DeleteMapping("/moderation/threads/{thread_id}")
     public Result<Void> removeThreadByIdPermission(@PathVariable(name = "thread_id") Integer threadId,
                                                    @RequestParam(name = "topic_id") Integer topicId) {
@@ -111,6 +144,9 @@ public class ThreadController {
     }
 
     // You see but you do not observe
+    /**
+     * viewThread 方法。
+     */
     @PostMapping("/threads/{thread_id}/views")
     public Result<Void> viewThread(@PathVariable(name = "thread_id") Integer threadId) {
         return Result.messageHandler(() -> threaddService.updateViewCount(threadId));
