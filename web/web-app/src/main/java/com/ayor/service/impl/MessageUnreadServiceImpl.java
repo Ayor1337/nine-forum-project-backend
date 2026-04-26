@@ -16,6 +16,9 @@ import java.util.Optional;
 public class MessageUnreadServiceImpl implements MessageUnreadService {
 
     private final StringRedisTemplate template;
+    /**
+     * 构造 Redis 中使用的 key。
+     */
 
     private String buildKey(Integer userId, UnreadMessageType type) {
         return "message:" +
@@ -23,10 +26,16 @@ public class MessageUnreadServiceImpl implements MessageUnreadService {
                 ":unread:" +
                 userId;
     }
+    /**
+     * 判断指定 Redis key 是否存在。
+     */
 
     private boolean existValue(String key) {
         return template.hasKey(key);
     }
+    /**
+     * 获取指定用户的未读数量。
+     */
 
     @Override
     public Long getUnread(Integer userId, UnreadMessageType type) {
@@ -35,6 +44,9 @@ public class MessageUnreadServiceImpl implements MessageUnreadService {
                 .orElse("0");
         return Long.parseLong(value);
     }
+    /**
+     * 获取指定用户的未读数量。
+     */
 
     @Override
     public Long getUnread(Integer userId, String type) {
@@ -50,6 +62,9 @@ public class MessageUnreadServiceImpl implements MessageUnreadService {
                 .orElse("0");
         return Long.parseLong(value);
     }
+    /**
+     * 汇总当前用户的全部未读消息数量。
+     */
 
     public Long getAllUnread(Integer userId) {
         Long unreadCount = 0L;
@@ -58,6 +73,9 @@ public class MessageUnreadServiceImpl implements MessageUnreadService {
         }
         return unreadCount;
     }
+    /**
+     * 构造指定类型未读消息的展示对象。
+     */
 
     @Override
     public MessageUnread getUnreadVO(Integer userId, UnreadMessageType type) {
@@ -65,6 +83,9 @@ public class MessageUnreadServiceImpl implements MessageUnreadService {
                 .unread(getUnread(userId, type))
                 .build();
     }
+    /**
+     * 构造指定类型未读消息的展示对象。
+     */
 
     @Override
     public MessageUnread getUnreadVO(Integer userId, String type) {
@@ -72,6 +93,9 @@ public class MessageUnreadServiceImpl implements MessageUnreadService {
                 .unread(getUnread(userId, type))
                 .build();
     }
+    /**
+     * 构造当前用户全部未读消息的展示对象。
+     */
 
     @Override
     public MessageUnread getUnreadVO(Integer userId) {
@@ -79,11 +103,17 @@ public class MessageUnreadServiceImpl implements MessageUnreadService {
                 .unread(getAllUnread(userId))
                 .build();
     }
+    /**
+     * 初始化指定用户的未读数量。
+     */
 
     public void newUnread(Integer userId, UnreadMessageType type, Long value) {
         String key = buildKey(userId, type);
         template.opsForValue().set(key, value.toString());
     }
+    /**
+     * 清空指定会话的未读数量，并同步更新总未读数。
+     */
 
     @Override
     public Long clearUnread(Integer userId, UnreadMessageType type, Long value) {
@@ -105,23 +135,35 @@ public class MessageUnreadServiceImpl implements MessageUnreadService {
         String remaining = template.opsForValue().get(key);
         return remaining == null ? 0L : Long.parseLong(remaining);
     }
+    /**
+     * 清空指定会话的未读数量，并同步更新总未读数。
+     */
 
     @Override
     public Long clearUnread(Integer userId, UnreadMessageType type) {
         template.delete(buildKey(userId, type));
         return 0L;
     }
+    /**
+     * 将指定用户的未读数量加一。
+     */
 
     public long incrUnread(Integer userId, UnreadMessageType type, Long value) {
         String key = buildKey(userId, type);
         Long increment = template.opsForValue().increment(key, value);
         return increment == null ? 0 : increment;
     }
+    /**
+     * 将指定用户的未读数量减一。
+     */
 
     public void decrUnread(Integer userId, UnreadMessageType type, Long value) {
         String key = buildKey(userId, type);
         template.opsForValue().decrement(key, value);
     }
+    /**
+     * 按指定值增加未读数量，并返回最新结果。
+     */
 
 
     @Override

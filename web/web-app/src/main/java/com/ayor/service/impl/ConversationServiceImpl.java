@@ -29,6 +29,9 @@ public class ConversationServiceImpl extends ServiceImpl<ConversationMapper, Con
     private final AccountMapper accountMapper;
 
     private final ChatUnreadService chatUnreadService;
+    /**
+     * 获取当前用户与指定用户之间的会话信息。
+     */
 
     @Override
     @Cacheable(value = "conversation", key = "#result.conversationId", condition = "#accountId != null && #toAccountId != null")
@@ -78,6 +81,9 @@ public class ConversationServiceImpl extends ServiceImpl<ConversationMapper, Con
         }
         return conversationVO;
     }
+    /**
+     * 隐藏当前用户的会话。
+     */
 
     @Override
     @CacheEvict(value = "conversation", key = "#conversationId", condition = "#accountId != null")
@@ -111,6 +117,9 @@ public class ConversationServiceImpl extends ServiceImpl<ConversationMapper, Con
         }
         return "无权限";
     }
+    /**
+     * 创建新的私聊会话。
+     */
 
     @Override
     @CacheEvict(value = "conversationList", key = "#accountId", condition = "#accountId != null")
@@ -140,6 +149,9 @@ public class ConversationServiceImpl extends ServiceImpl<ConversationMapper, Con
         conversation.setUpdateTime(new Date());
         return save(conversation) ? null : "创建失败";
     }
+    /**
+     * 获取当前用户的会话列表。
+     */
 
     @Override
     @Cacheable(value = "conversationList", key = "#accountId", condition = "#accountId != null", unless = "#result == null")
@@ -180,6 +192,9 @@ public class ConversationServiceImpl extends ServiceImpl<ConversationMapper, Con
         });
         return conversationVOs;
     }
+    /**
+     * 获取当前用户的未读会话摘要。
+     */
 
     @Override
     public List<ChatUnread> getUnreadList(Integer accountId) {
@@ -209,6 +224,9 @@ public class ConversationServiceImpl extends ServiceImpl<ConversationMapper, Con
         });
         return chatUnreadList;
     }
+    /**
+     * 清空指定会话的未读数量，并同步更新总未读数。
+     */
 
     @Override
     public String clearUnread(Integer conversationId, Integer fromUserId) {
@@ -222,6 +240,9 @@ public class ConversationServiceImpl extends ServiceImpl<ConversationMapper, Con
         chatUnreadService.clearUnread(conversationId, fromUserId);
         return null;
     }
+    /**
+     * 将用户实体转换为会话展示所需的用户信息。
+     */
 
 
     private UserInfoVO getUserInfoVO(Account account) {

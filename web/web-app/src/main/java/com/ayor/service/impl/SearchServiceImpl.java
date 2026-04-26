@@ -3,15 +3,13 @@ package com.ayor.service.impl;
 import co.elastic.clients.elasticsearch._types.aggregations.Aggregation;
 import co.elastic.clients.elasticsearch._types.aggregations.StringTermsBucket;
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
-import co.elastic.clients.json.JsonData;
 import com.ayor.dao.SearchLogDocRepository;
 import com.ayor.dao.ThreaddRepository;
 import com.ayor.entity.PageEntity;
-import com.ayor.entity.app.documennt.SearchLogDoc;
-import com.ayor.entity.app.documennt.ThreadDoc;
+import com.ayor.entity.app.document.SearchLogDoc;
+import com.ayor.entity.app.document.ThreadDoc;
 import com.ayor.entity.app.vo.HotKeywordVO;
 import com.ayor.service.SearchService;
-import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -27,7 +25,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 
@@ -45,10 +42,16 @@ public class SearchServiceImpl implements SearchService {
     private final ElasticsearchOperations operations;
 
     static final List<String> ORDER = List.of("asc", "desc", "rel");
+    /**
+     * 构造 Redis 中使用的 key。
+     */
 
     private String buildKey(Integer userId) {
         return "search:history:" + userId;
     }
+    /**
+     * 在 Elasticsearch 中搜索帖子并返回分页结果。
+     */
 
     @Override
     public PageEntity<ThreadDoc> searchThreads(String keyword,
@@ -147,12 +150,18 @@ public class SearchServiceImpl implements SearchService {
 
         return new PageEntity<>(threads.getTotalHits(), list);
     }
+    /**
+     * 获取指定用户的搜索历史。
+     */
 
     @Override
     public Set<String> getSearchHistory(Integer userId) {
         return redisTemplate.opsForZSet()
                 .reverseRange(buildKey(userId), 0, 5);
     }
+    /**
+     * 将搜索关键字写入用户搜索历史。
+     */
 
     private void insertSearchHistory(String keyword, Integer userId) {
         if (keyword == null || keyword.isEmpty()) {
@@ -160,6 +169,9 @@ public class SearchServiceImpl implements SearchService {
         }
     	redisTemplate.opsForZSet().add(buildKey(userId), keyword, System.currentTimeMillis());
     }
+    /**
+     * 删除用户的指定搜索历史记录。
+     */
 
     @Override
     public String removeSearchHistory(String keyword, Integer userId) {
@@ -169,12 +181,18 @@ public class SearchServiceImpl implements SearchService {
         }
         return "删除失败";
     }
+    /**
+     * 删除用户的指定搜索历史记录。
+     */
 
     @Override
     public String removeSearchHistory(Integer userId) {
         Boolean removed = redisTemplate.delete("search:history:" + userId);
         return removed ? null : "删除失败";
     }
+    /**
+     * 统计并返回热门搜索词。
+     */
 
     @Override
     public List<HotKeywordVO> getHotKeywords(int size, Duration duration) {

@@ -11,6 +11,11 @@ import java.util.Optional;
 @Component
 public class SecurityUtils {
 
+    /**
+     * 获取当前认证用户的 ID。
+     *
+     * @return 用户 ID，未认证时返回 0
+     */
     public Integer getSecurityUserId() {
         return Optional.ofNullable(SecurityContextHolder.getContext())
                 .map(SecurityContext::getAuthentication)
@@ -24,7 +29,12 @@ public class SecurityUtils {
                 })
                 .orElse(0);
     }
-    
+
+    /**
+     * 获取当前认证对象。
+     *
+     * @return 认证对象，未认证时返回 null
+     */
     public Authentication getAuthentication() {
         return Optional.ofNullable(SecurityContextHolder.getContext())
                 .map(SecurityContext::getAuthentication)

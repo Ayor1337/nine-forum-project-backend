@@ -1,6 +1,6 @@
 package com.ayor.dao;
 
-import com.ayor.entity.app.documennt.SearchLogDoc;
+import com.ayor.entity.app.document.SearchLogDoc;
 import org.springframework.data.elasticsearch.repository.ElasticsearchRepository;
 import org.springframework.stereotype.Repository;
 

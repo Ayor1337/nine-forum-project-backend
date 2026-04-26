@@ -53,6 +53,14 @@ public class ChatNotifAspect {
 
     private final MessageUnreadService messageUnreadService;
 
+    /**
+     * 在聊天相关方法执行前后发送未读消息通知。
+     *
+     * @param joinPoint 切点
+     * @param chatNotif 聊天通知注解
+     * @return 目标方法返回值
+     * @throws Throwable 目标方法异常
+     */
     @Around("@annotation(chatNotif)")
     public Object around(ProceedingJoinPoint joinPoint, ChatNotif chatNotif) throws Throwable {
         Method method = ((MethodSignature) joinPoint.getSignature()).getMethod();
@@ -77,7 +85,15 @@ public class ChatNotifAspect {
         return joinPoint.proceed();
     }
 
-    // 解析 SpEL 表达式
+    /**
+     * 解析 SpEL 表达式。
+     *
+     * @param expressionString 表达式字符串
+     * @param context 计算上下文
+     * @param returnType 返回类型
+     * @param <T> 返回值类型
+     * @return 解析结果
+     */
     private <T> T resolve(String expressionString, EvaluationContext context, Class<T> returnType) {
         if (expressionString == null || expressionString.isEmpty()) {
             return null;
@@ -91,7 +107,12 @@ public class ChatNotifAspect {
         }
     }
 
-    // 聊天消息通知
+    /**
+     * 发送聊天消息未读通知。
+     *
+     * @param accountId 发送者账号 ID
+     * @param conversationId 会话 ID
+     */
     private void chatMessageNotif(Integer accountId, Integer conversationId) {
         Account account = accountMapper.getAccountById(accountId);
         Integer toUserId = conversationMapper.getChatPartnerId(account.getAccountId(), conversationId);
@@ -116,6 +137,12 @@ public class ChatNotifAspect {
 
     }
 
+    /**
+     * 发送已读聊天消息通知。
+     *
+     * @param conversationId 会话 ID
+     * @param accountId 账号 ID
+     */
     private void readChatMessage(Integer conversationId, Integer accountId) {
         ChatUnread emptyUnread = ChatUnread.emptyUnread(conversationId, accountId);
         long cost = chatUnreadService.clearUnread(conversationId, accountId);

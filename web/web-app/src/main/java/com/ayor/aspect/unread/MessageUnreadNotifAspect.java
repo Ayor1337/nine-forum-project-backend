@@ -42,6 +42,14 @@ public class MessageUnreadNotifAspect {
 
     private final MessageUnreadService messageUnreadService;
 
+    /**
+     * 在消息相关方法执行前后更新未读消息计数并推送通知。
+     *
+     * @param joinPoint 切点
+     * @param messageUnreadNotif 未读消息通知注解
+     * @return 目标方法返回值
+     * @throws Throwable 目标方法异常
+     */
     @Around("@annotation(messageUnreadNotif)")
     public Object around(ProceedingJoinPoint joinPoint, MessageUnreadNotif messageUnreadNotif) throws Throwable {
         Method method = ((MethodSignature) joinPoint.getSignature()).getMethod();
@@ -69,7 +77,15 @@ public class MessageUnreadNotifAspect {
         return joinPoint.proceed();
     }
 
-
+    /**
+     * 解析 SpEL 表达式。
+     *
+     * @param expressionString 表达式字符串
+     * @param context 计算上下文
+     * @param returnType 返回类型
+     * @param <T> 返回值类型
+     * @return 解析结果
+     */
     private <T> T resolve(String expressionString, EvaluationContext context, Class<T> returnType) {
         if (expressionString == null || expressionString.isEmpty()) {
             return null;
@@ -83,6 +99,14 @@ public class MessageUnreadNotifAspect {
         }
     }
 
+    /**
+     * 向指定用户发送未读消息通知。
+     *
+     * @param accountId 账号 ID
+     * @param subscribeDest 订阅目的地
+     * @param type 未读消息类型
+     * @param doRead 是否已读
+     */
     private void sendNotificationToUser(Integer accountId, String subscribeDest, UnreadMessageType type, boolean doRead) {
         if (doRead) {
             messageUnreadService.clearUnread(accountId, type);

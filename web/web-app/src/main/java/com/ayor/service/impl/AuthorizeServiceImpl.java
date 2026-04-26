@@ -20,6 +20,9 @@ public class AuthorizeServiceImpl implements AuthorizeService {
     private final RabbitTemplate rabbitTemplate;
 
     private final SimpMessagingTemplate messagingTemplate;
+    /**
+     * 生成用于注册验证的邮箱 token。
+     */
 
     @Override
     public String createAuthorizeToken(String email) {
@@ -28,6 +31,9 @@ public class AuthorizeServiceImpl implements AuthorizeService {
         DecodedJWT decodedJWT = jwtUtils.resolveEmailJwt(token);
         return decodedJWT.getId();
     }
+    /**
+     * 校验注册邮箱的验证 token。
+     */
 
     @Override
     public boolean validateAuthorizeToken(String token, String email) {

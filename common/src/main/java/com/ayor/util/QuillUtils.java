@@ -18,19 +18,38 @@ public class QuillUtils {
     @Resource
     private MinioService minioService;
 
-    public List<Map<String, Object>> QuillDeltaToArray(String content) {
+    /**
+     * 将 Quill Delta 字符串解析为 ops 列表。
+     *
+     * @param content Quill Delta 字符串
+     * @return ops 列表
+     */
+    public List<Map<String, Object>> quillDeltaToArray(String content) {
         Map<String, List<Map<String, Object>>> delta = JSON.parseObject(content, new TypeReference<>() {});
         return delta.get("ops");
 
     }
 
-    public String QuillArrayToDeltaString(List<Map<String, Object>> delta) {
+    /**
+     * 将 ops 列表重新序列化为 Quill Delta 字符串。
+     *
+     * @param delta ops 列表
+     * @return Quill Delta 字符串
+     */
+    public String quillArrayToDeltaString(List<Map<String, Object>> delta) {
         return JSON.toJSONString(Map.of("ops",  delta));
     }
 
-    public String QuillDeltaConvertBase64ToURL(String content, String path) {
+    /**
+     * 将 Quill Delta 中的 Base64 图片上传到对象存储并替换为 URL。
+     *
+     * @param content Quill Delta 字符串
+     * @param path 上传目录
+     * @return 替换后的 Quill Delta 字符串
+     */
+    public String quillDeltaConvertBase64ToURL(String content, String path) {
         // 将 QuillDelta 转换为 List 对象
-        List<Map<String, Object>> delta = QuillDeltaToArray(content);
+        List<Map<String, Object>> delta = quillDeltaToArray(content);
 
         // 遍历 ops, 获取 ops 中的 values
         delta.forEach(ops -> {
@@ -57,12 +76,17 @@ public class QuillUtils {
         });
 
         // 将 List 重新封装成 JSON 字符串
-        return QuillArrayToDeltaString(delta);
+        return quillArrayToDeltaString(delta);
     }
 
-    // 过滤所有图片
-    public String QuillDeltaFilterNonImage (String content) {
-        List<Map<String, Object>> delta = QuillDeltaToArray(content);
+    /**
+     * 过滤掉包含图片的 ops。
+     *
+     * @param content Quill Delta 字符串
+     * @return 过滤后的 Quill Delta 字符串
+     */
+    public String quillDeltaFilterNonImage(String content) {
+        List<Map<String, Object>> delta = quillDeltaToArray(content);
         List<Map<String, Object>> filteredDelta = new ArrayList<>();
         delta.forEach(ops -> {
             ops.forEach((key, value) -> {
@@ -76,13 +100,19 @@ public class QuillUtils {
                 }
             });
         });
-        return QuillArrayToDeltaString(filteredDelta);
+        return quillArrayToDeltaString(filteredDelta);
     }
 
-    public String QuillStringToString(String content) {
+    /**
+     * 将 Quill Delta 中的文本内容拼接为普通字符串。
+     *
+     * @param content Quill Delta 字符串
+     * @return 拼接后的文本
+     */
+    public String quillStringToString(String content) {
         StringBuilder builder = new StringBuilder();
-        String s = QuillDeltaFilterNonImage(content);
-        List<Map<String, Object>> maps = QuillDeltaToArray(s);
+        String s = quillDeltaFilterNonImage(content);
+        List<Map<String, Object>> maps = quillDeltaToArray(s);
         for (Map<String, Object> map : maps) {
             if (map.containsKey("insert")) {
                 builder.append(map.get("insert"));
@@ -91,11 +121,16 @@ public class QuillUtils {
         return builder.toString();
     }
 
-    // 将图片滤出成一个 List, 限制为 5 个
-    public List<String> QuillDeltaFilterImage (String content) {
+    /**
+     * 提取 Quill Delta 中的图片 URL，最多返回 3 个。
+     *
+     * @param content Quill Delta 字符串
+     * @return 图片 URL 列表
+     */
+    public List<String> quillDeltaFilterImage(String content) {
         AtomicInteger count = new AtomicInteger();
 
-        List<Map<String, Object>> delta = QuillDeltaToArray(content);
+        List<Map<String, Object>> delta = quillDeltaToArray(content);
         List<String> imageUrls = new ArrayList<>();
         delta.forEach(ops -> {
             ops.forEach((key, value) -> {

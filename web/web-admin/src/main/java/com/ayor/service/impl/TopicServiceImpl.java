@@ -43,6 +43,16 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
     }
 
     @Override
+    public List<TopicVO> getTopicsAsOptions(String query) {
+        List<Topic> topics = this.lambdaQuery()
+                .like(Topic::getTitle, query)
+                .orderByDesc(Topic::getCreateTime)
+                .last("limit 10")
+                .list();
+        return toVOList(topics);
+    }
+
+    @Override
     public String createTopic(TopicDTO topicDTO) {
         if (topicDTO == null || !StringUtils.hasText(topicDTO.getTitle())) {
             return "话题标题不能为空";

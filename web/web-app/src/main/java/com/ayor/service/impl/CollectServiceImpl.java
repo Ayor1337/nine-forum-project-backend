@@ -25,11 +25,14 @@ import java.util.List;
 @RequiredArgsConstructor
 public class CollectServiceImpl extends ServiceImpl<CollectMapper, Collect> implements CollectService {
 
-    //TODO 缓存未完成
+    // 收藏数据写入频繁且需要与帖子状态同步，这里暂不启用缓存。
 
     private final AccountMapper accountMapper;
 
     private final ThreaddMapper threaddMapper;
+    /**
+     * 为当前用户收藏指定帖子，重复收藏会被拒绝。
+     */
 
     @Override
     public String insertCollect(Integer accountId, Integer threadId) {
@@ -48,6 +51,9 @@ public class CollectServiceImpl extends ServiceImpl<CollectMapper, Collect> impl
         collect.setAccountId(account.getAccountId());
         return this.save(collect) ? null : "收藏失败";
     }
+    /**
+     * 取消当前用户对指定帖子的收藏。
+     */
 
     @Override
     public String removeCollect(Integer accountId, Integer threadId) {
@@ -62,6 +68,9 @@ public class CollectServiceImpl extends ServiceImpl<CollectMapper, Collect> impl
         }
         return this.removeById(collect) ? null : "取消收藏失败";
     }
+    /**
+     * 判断用户是否已经收藏指定帖子。
+     */
 
     @Override
     public Boolean isCollectedByAccountId(Integer accountId, Integer threadId) {
@@ -72,12 +81,18 @@ public class CollectServiceImpl extends ServiceImpl<CollectMapper, Collect> impl
                 .eq(Collect::getAccountId, accountId)
                 .eq(Collect::getThreadId, threadId).count() > 0;
     }
+    /**
+     * 获取指定帖子的收藏数。
+     */
 
     @Override
     public Integer getCollectCountByThreadId(Integer threadId) {
         Integer collectCountByThreadId = this.baseMapper.getCollectCountByThreadId(threadId);
         return collectCountByThreadId == null ? 0 : collectCountByThreadId;
     }
+    /**
+     * 分页获取用户收藏的帖子列表。
+     */
 
     @Override
     public PageEntity<ThreadVO> getCollectsByAccountId(Integer accountId, Integer pageNum, Integer pageSize) {

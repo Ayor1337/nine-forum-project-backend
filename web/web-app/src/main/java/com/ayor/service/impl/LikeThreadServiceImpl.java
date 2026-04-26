@@ -30,6 +30,9 @@ public class LikeThreadServiceImpl extends ServiceImpl<LikeThreadMapper, LikeThr
     private final ThreaddMapper threaddMapper;
 
     private final QuillUtils quillUtils;
+    /**
+     * 为指定帖子记录一次点赞。
+     */
 
     @Override
     public String insertLikeThreadId(Integer accountId, Integer threadId) {
@@ -46,6 +49,9 @@ public class LikeThreadServiceImpl extends ServiceImpl<LikeThreadMapper, LikeThr
 
         return this.save(likeThread) ? null : "点赞失败";
     }
+    /**
+     * 删除指定帖子上的点赞记录。
+     */
 
     @Override
     public String removeLikeThreadId(Integer accountId, Integer threadId) {
@@ -60,6 +66,9 @@ public class LikeThreadServiceImpl extends ServiceImpl<LikeThreadMapper, LikeThr
         }
         return this.removeById(likeThread) ? null : "取消点赞失败";
     }
+    /**
+     * 分页获取用户点赞过的帖子列表。
+     */
 
     @Override
     public PageEntity<ThreadVO> getLikesByAccountId(Integer accountId,
@@ -79,18 +88,24 @@ public class LikeThreadServiceImpl extends ServiceImpl<LikeThreadMapper, LikeThr
         for (Threadd thread : threads) {
             ThreadVO threadVO = new ThreadVO();
             BeanUtils.copyProperties(thread, threadVO);
-            threadVO.setContent(quillUtils.QuillDeltaFilterNonImage(thread.getContent()));
+            threadVO.setContent(quillUtils.quillDeltaFilterNonImage(thread.getContent()));
             threadVOS.add(threadVO);
         }
 
         return new PageEntity<>(likePage.getTotal(), threadVOS);
     }
+    /**
+     * 获取指定帖子的点赞数。
+     */
 
     @Override
     public Integer getLikeCountByThreadId(Integer threadId) {
         Integer likeCountByThreadId = this.baseMapper.getLikeCountByThreadId(threadId);
         return likeCountByThreadId == null ? 0 : likeCountByThreadId;
     }
+    /**
+     * 判断用户是否点赞了指定帖子。
+     */
 
     @Override
     public Boolean isLikedByAccountId(Integer accountId, Integer threadId) {

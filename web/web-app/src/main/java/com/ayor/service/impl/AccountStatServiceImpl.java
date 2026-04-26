@@ -19,6 +19,9 @@ import org.springframework.transaction.annotation.Transactional;
 public class AccountStatServiceImpl extends ServiceImpl<AccountStatMapper, AccountStat> implements AccountStatService {
 
     private final AccountStatMapper accountStatMapper;
+    /**
+     * 根据用户 ID 获取账号统计信息。
+     */
 
     @Override
     public AccountStatVO getAccountStatByUsername(Integer accountId) {
@@ -34,6 +37,9 @@ public class AccountStatServiceImpl extends ServiceImpl<AccountStatMapper, Accou
 
         return accountStatVO;
     }
+    /**
+     * 刷新所有用户的统计数据。
+     */
 
 
     @Override

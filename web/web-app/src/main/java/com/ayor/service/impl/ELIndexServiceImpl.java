@@ -26,6 +26,9 @@ public class ELIndexServiceImpl implements ESIndexService {
     private final ThreaddService threaddService;
 
     private final PostService postService;
+    /**
+     * 初始化 Elasticsearch 索引。
+     */
 
 
     @Override
@@ -37,6 +40,9 @@ public class ELIndexServiceImpl implements ESIndexService {
             throw new RuntimeException("索引初始化失败: " + e.getMessage());
         }
     }
+    /**
+     * 初始化帖子索引。
+     */
 
     private void initThreadIndex() {
         try {
@@ -59,6 +65,9 @@ public class ELIndexServiceImpl implements ESIndexService {
             throw new RuntimeException("Thread 索引初始化失败: " + e.getMessage());
         }
     }
+    /**
+     * 初始化评论索引。
+     */
 
     private void initPostIndex() {
         try {
