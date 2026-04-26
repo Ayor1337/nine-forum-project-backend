@@ -150,6 +150,7 @@ Query 参数：
 | PUT | `/api/users/me/avatar` | 更新当前用户头像 | `Result<Void>` |
 | PUT | `/api/users/me/banner` | 更新当前用户横幅图 | `Result<Void>` |
 | PUT | `/api/users/me/profile` | 更新当前用户个人资料 | `Result<Void>` |
+| POST | `/api/users/me/password` | 通过旧密码更新当前账号密码 | `Result<Void>` |
 | GET | `/api/users/me/stats` | 获取当前用户统计 | `Result<AccountStatVO>` |
 
 头像和横幅请求体 `Base64Upload`：
@@ -166,6 +167,13 @@ Query 参数：
 | `nickname` | String | 否 | 长度 3-20 |
 | `bio` | String | 否 | 长度 6-50 |
 | `avatar` | `Base64Upload` | 否 | 传入时同步更新头像 |
+
+密码修改请求体 `PasswordChangeDTO`：
+
+| 字段 | 类型 | 必填 | 约束 |
+| --- | --- | --- | --- |
+| `oldPassword` | String | 是 | 当前密码 |
+| `newPassword` | String | 否 | 长度 6-16，仅字母、数字、下划线 |
 
 ## 主题、话题、标签
 
