@@ -34,6 +34,15 @@ public class JWTAuthorizeFilter extends OncePerRequestFilter {
     @Resource
     private RoleMapper roleMapper;
 
+    /**
+     * 解析请求中的 JWT，并把用户权限写入 Spring Security 上下文。
+     *
+     * @param request HTTP 请求
+     * @param response HTTP 响应
+     * @param filterChain 过滤器链
+     * @throws ServletException Servlet 异常
+     * @throws IOException IO 异常
+     */
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,

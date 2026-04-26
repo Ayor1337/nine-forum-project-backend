@@ -17,6 +17,9 @@ import java.util.List;
 @Service
 @Transactional
 public class TagServiceImpl extends ServiceImpl<TagMapper, Tag> implements TagService {
+    /**
+     * 获取所有标签列表。
+     */
 
 
     @Override
@@ -30,6 +33,9 @@ public class TagServiceImpl extends ServiceImpl<TagMapper, Tag> implements TagSe
         });
         return tagVOList;
     }
+    /**
+     * 获取指定主题下已关联的标签列表。
+     */
 
     @Override
     public List<TagVO> listTagsByTopicId(Integer topicId) {
@@ -45,6 +51,9 @@ public class TagServiceImpl extends ServiceImpl<TagMapper, Tag> implements TagSe
         });
         return tagVOList;
     }
+    /**
+     * 新增一个主题标签，并保存标签与主题的关联。
+     */
 
     @Override
     public String insertNewTag(TagDTO tagDTO) {

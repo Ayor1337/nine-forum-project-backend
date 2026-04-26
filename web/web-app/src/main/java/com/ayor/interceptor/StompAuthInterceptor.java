@@ -17,6 +17,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
 import java.security.Principal;
+import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Component
@@ -24,7 +26,23 @@ public class StompAuthInterceptor implements ChannelInterceptor {
 
     @Resource
     private JWTUtils jwtUtil;
+    /**
+     * Map.of 方法。
+     */
 
+    private static final Map<String, List<String>> ENDPOINT_DEST_WHITELIST = Map.of(
+            "/chatboard", List.of("/broadcast"),
+            "/chat", List.of("/transfer", "/notif"),
+            "/system", List.of("/notif", "/verify")
+    );
+
+    /**
+     * 在 STOMP 连接、订阅和发送阶段执行鉴权。
+     *
+     * @param message STOMP 消息
+     * @param channel 消息通道
+     * @return 原始消息
+     */
     @Override
     public Message<?> preSend(@NotNull Message<?> message, @NotNull MessageChannel channel) {
         StompHeaderAccessor acc = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
@@ -48,14 +66,14 @@ public class StompAuthInterceptor implements ChannelInterceptor {
             case SUBSCRIBE -> {
                 Principal principal = acc.getUser();
                 String dest = acc.getDestination();
-                if (!canSubscribe(principal, dest)) {
+                if (!canSubscribe(principal, dest, acc)) {
                     throw new AccessDeniedException("无权查看消息");
                 }
             }
             case SEND -> {
                 Principal principal = acc.getUser();
                 String dest = acc.getDestination();
-                if (!canSend(principal, dest)) {
+                if (!canSend(principal, dest, acc)) {
                     throw new AccessDeniedException("无权发送消息");
                 }
             }
@@ -66,8 +84,19 @@ public class StompAuthInterceptor implements ChannelInterceptor {
         return message;
     }
 
-    private boolean canSubscribe(Principal p, String destination) {
+    /**
+     * 判断当前用户是否允许订阅指定目的地。
+     *
+     * @param p 当前主体
+     * @param destination 订阅目的地
+     * @param accessor STOMP 头访问器
+     * @return 允许订阅返回 true
+     */
+    private boolean canSubscribe(Principal p, String destination, StompHeaderAccessor accessor) {
         if (destination == null) {
+            return false;
+        }
+        if (!matchEndpointDestination(accessor, destination)) {
             return false;
         }
         if (destination.contains("/verify")) {
@@ -85,8 +114,47 @@ public class StompAuthInterceptor implements ChannelInterceptor {
         return false;
     }
 
-    private boolean canSend(Principal p, String destination) {
-        return true;
+    /**
+     * 判断当前用户是否允许发送到指定目的地。
+     *
+     * @param p 当前主体
+     * @param destination 发送目的地
+     * @param accessor STOMP 头访问器
+     * @return 允许发送返回 true
+     */
+    private boolean canSend(Principal p, String destination, StompHeaderAccessor accessor) {
+        if (destination == null) {
+            return false;
+        }
+        return matchEndpointDestination(accessor, destination);
+    }
+
+    /**
+     * 校验目的地是否与当前 WebSocket 端点匹配。
+     *
+     * @param accessor STOMP 头访问器
+     * @param destination 目的地
+     * @return 匹配返回 true
+     */
+    private boolean matchEndpointDestination(StompHeaderAccessor accessor, String destination) {
+        Map<String, Object> attributes = accessor.getSessionAttributes();
+        if (attributes == null) {
+            return true;
+        }
+        Object endpointPath = attributes.get("endpointPath");
+        if (endpointPath == null) {
+            return true;
+        }
+        List<String> allowed = ENDPOINT_DEST_WHITELIST.get(endpointPath.toString());
+        if (allowed == null || allowed.isEmpty()) {
+            return true;
+        }
+        for (String prefix : allowed) {
+            if (destination.startsWith(prefix) || destination.startsWith("/user" + prefix)) {
+                return true;
+            }
+        }
+        return false;
     }
 
 }

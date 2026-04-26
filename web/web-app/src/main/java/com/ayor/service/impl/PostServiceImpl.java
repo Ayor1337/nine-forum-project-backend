@@ -2,7 +2,7 @@ package com.ayor.service.impl;
 
 import com.ayor.aspect.unread.MessageUnreadNotif;
 import com.ayor.entity.PageEntity;
-import com.ayor.entity.app.documennt.ThreadDoc;
+import com.ayor.entity.app.document.ThreadDoc;
 import com.ayor.entity.app.dto.PostDTO;
 import com.ayor.entity.app.vo.PostVO;
 import com.ayor.entity.app.vo.ReplyMessageVO;
@@ -44,6 +44,9 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
     private final SimpMessagingTemplate messagingTemplate;
 
     private final STOMPUtils stompUtils;
+    /**
+     * 获取指定帖子下的评论列表。
+     */
 
 
     @Override
@@ -72,6 +75,9 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
             accountId = "@threaddMapper.getAccountIdByThreadIdInteger(#postDTO.threadId)",
             subscribeDest = "/notif/reply",
             type = UnreadMessageType.REPLY_MESSAGE)
+    /**
+     * 新增评论并处理相关通知与索引。
+     */
     public String insertPost(PostDTO postDTO, Integer userId) {
         if (postDTO.getContent() == null) {
             return "请填写内容";
@@ -86,7 +92,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         }
         Integer topicId = threaddMapper.getTopicIdByThreadId(postDTO.getThreadId());
         post.setAccountId(userId)   ;
-        post.setContent(quillUtils.QuillDeltaConvertBase64ToURL(postDTO.getContent(), "posts/" + post.getThreadId() + "/"));
+        post.setContent(quillUtils.quillDeltaConvertBase64ToURL(postDTO.getContent(), "posts/" + post.getThreadId() + "/"));
         post.setCreateTime(new Date());
         post.setTopicId(topicId);
         if (this.save(post)) {
@@ -102,6 +108,9 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         }
         return "发布失败, 未知异常";
     }
+    /**
+     * 校验作者身份后删除评论。
+     */
 
     @Override
     public String removePostAuthorizeAccountId(Integer postId, Integer userId) {
@@ -114,6 +123,9 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         }
         return this.removeByIdLogic(post.getPostId()) ? null : "删除失败, 未知异常";
     }
+    /**
+     * 管理员直接删除评论。
+     */
 
     @Override
     public String removePostPermission(Integer postId) {
@@ -131,6 +143,9 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
             type = UnreadMessageType.REPLY_MESSAGE,
             doRead = true
     )
+    /**
+     * 分页获取回复消息列表。
+     */
     public PageEntity<ReplyMessageVO> listReplyMessage(Integer pageNum, Integer pageSize, Integer accountId) {
         if (accountId == null) return new PageEntity<>(0L, Collections.emptyList());
         if (pageNum == null || pageNum < 1) pageNum = 1;
@@ -159,6 +174,9 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         List<ReplyMessageVO> vos = toVOList(page.getRecords());
         return new PageEntity<>(page.getTotal(), vos);
     }
+    /**
+     * 将评论实体转换为搜索索引文档。
+     */
 
 
     @Override
@@ -174,7 +192,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
             Threadd thread = threadMap.get(post.getThreadId());
             ThreadDoc threadDoc = new ThreadDoc();
             BeanUtils.copyProperties(thread, threadDoc);
-            threadDoc.setContent(quillUtils.QuillStringToString(post.getContent()));
+            threadDoc.setContent(quillUtils.quillStringToString(post.getContent()));
             threadDoc.setCreateTime(post.getCreateTime());
             threadDoc.setUpdateTime(post.getUpdateTime());
             threadDoc.setId("POST-" + post.getPostId());
@@ -183,6 +201,9 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         });
         return threadDocs;
     }
+    /**
+     * 将评论实体列表转换为回复视图对象列表。
+     */
 
     private List<ReplyMessageVO> toVOList(List<Post> posts) {
         List<ReplyMessageVO> vos = new ArrayList<>();
@@ -192,6 +213,9 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         });
         return vos;
     }
+    /**
+     * 将单条评论实体转换为回复视图对象。
+     */
 
     @NotNull
     private ReplyMessageVO toVO(Post post) {
@@ -199,12 +223,15 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         vo.setPostId(post.getPostId());
         vo.setThreadId(post.getThreadId());
         vo.setThreadTitle(threaddMapper.getThreadTitleById(post.getThreadId()));
-        vo.setContent(quillUtils.QuillDeltaFilterNonImage(post.getContent()));
+        vo.setContent(quillUtils.quillDeltaFilterNonImage(post.getContent()));
         vo.setTopicId(threaddMapper.getTopicIdByThreadId(post.getThreadId()));
         vo.setCreateTime(post.getCreateTime());
         vo.setNickname(accountMapper.getAccountById(post.getAccountId()).getNickname());
         return vo;
     }
+    /**
+     * 将评论标记为已删除。
+     */
 
 
     private boolean removeByIdLogic(Serializable Id) {

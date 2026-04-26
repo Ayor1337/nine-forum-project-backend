@@ -14,6 +14,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.BeanUtils;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -33,6 +34,46 @@ import java.io.PrintWriter;
 @EnableMethodSecurity
 public class SecurityConfiguration {
 
+    private static final String LOGIN_PATH = "/api/auth/login";
+
+    private static final String[] PUBLIC_AUTH_ENDPOINTS = {
+            "/api/auth/register-verifications",
+            "/api/auth/registrations",
+            LOGIN_PATH
+    };
+
+    private static final String[] AUTHENTICATED_USER_ENDPOINTS = {
+            "/api/users/me",
+            "/api/users/me/**"
+    };
+    private static final String[] PUBLIC_GET_ENDPOINTS = {
+            "/api/users/{user_id}",
+            "/api/themes",
+            "/api/themes/topics",
+            "/api/themes/{theme_id}/topics",
+            "/api/topics/{topic_id}/tags",
+            "/api/topics/{topic_id}/threads",
+            "/api/users/{user_id}/threads",
+            "/api/threads/{thread_id}",
+            "/api/topics/{topic_id}/announcements",
+            "/api/threads/{thread_id}/posts",
+            "/api/threads/{thread_id}/likes/count",
+            "/api/users/{user_id}/liked-threads",
+            "/api/threads/{thread_id}/collections/count",
+            "/api/users/{user_id}/collected-threads",
+            "/api/search/users",
+            "/api/search/hot-keywords",
+            "/api/topics/{topic_id}/chat-messages",
+            "/api/topics/{topic_id}/breadcrumb",
+            "/api/threads/{thread_id}/breadcrumb"
+    };
+
+    private static final String[] PUBLIC_PAGE_ENDPOINTS = {
+            "/chat",
+            "/chatboard",
+            "/system"
+    };
+
     @Resource
     private JWTUtils jwtUtil;
 
@@ -43,17 +84,25 @@ public class SecurityConfiguration {
     private JWTAuthorizeFilter jwtAuthorizeFilter;
 
 
+    /**
+     * 构造 Spring Security 过滤链。
+     *
+     * @param http HTTP 安全构建器
+     * @return 安全过滤链
+     * @throws Exception 配置异常
+     */
     @Bean
     SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         return http
                 .authorizeHttpRequests(auth -> {
-                    auth.requestMatchers("/api/auth/**").permitAll();
-                    auth.requestMatchers("/api/*/info/**").permitAll();
-                    auth.requestMatchers("/chat", "/chatboard", "/system").permitAll();
+                    auth.requestMatchers(PUBLIC_AUTH_ENDPOINTS).permitAll();
+                    auth.requestMatchers(AUTHENTICATED_USER_ENDPOINTS).authenticated();
+                    auth.requestMatchers(HttpMethod.GET, PUBLIC_GET_ENDPOINTS).permitAll();
+                    auth.requestMatchers(PUBLIC_PAGE_ENDPOINTS).permitAll();
                     auth.anyRequest().authenticated();
                 })
                 .formLogin(auth -> {
-                    auth.loginProcessingUrl("/api/auth/login");
+                    auth.loginProcessingUrl(LOGIN_PATH);
                     auth.successHandler(this::onAuthenticationSuccess);
                     auth.failureHandler(this::onAuthenticationFailure);
                 })
@@ -74,6 +123,14 @@ public class SecurityConfiguration {
                 .build();
     }
 
+    /**
+     * 登录成功后的响应处理。
+     *
+     * @param req HTTP 请求
+     * @param resp HTTP 响应
+     * @param auth 认证信息
+     * @throws IOException IO 异常
+     */
     public void onAuthenticationSuccess(HttpServletRequest req,
                                         HttpServletResponse resp,
                                         Authentication  auth) throws IOException {
@@ -89,14 +146,32 @@ public class SecurityConfiguration {
         resp.getWriter().write(Result.ok(authorizeVO).toJSONString());
     }
 
+    /**
+     * 登录失败后的响应处理。
+     *
+     * @param req HTTP 请求
+     * @param resp HTTP 响应
+     * @param exception 认证异常
+     * @throws IOException IO 异常
+     * @throws ServletException Servlet 异常
+     */
     public void onAuthenticationFailure(HttpServletRequest req,
                                         HttpServletResponse resp,
                                         AuthenticationException exception) throws IOException, ServletException {
         resp.setContentType("application/json");
         resp.setCharacterEncoding("UTF-8");
-        resp.getWriter().write(Result.fail(401, exception.getMessage()).toJSONString());
+        resp.getWriter().write(Result.fail(401, "用户名或密码错误").toJSONString());
     }
 
+    /**
+     * 退出登录成功后的响应处理。
+     *
+     * @param req HTTP 请求
+     * @param resp HTTP 响应
+     * @param auth 认证信息
+     * @throws IOException IO 异常
+     * @throws ServletException Servlet 异常
+     */
     public void onLogoutSuccess(HttpServletRequest req,
                                 HttpServletResponse resp,
                                 Authentication auth) throws IOException, ServletException {
@@ -112,6 +187,15 @@ public class SecurityConfiguration {
         }
     }
 
+    /**
+     * 访问被拒绝时的响应处理。
+     *
+     * @param req HTTP 请求
+     * @param resp HTTP 响应
+     * @param e 权限异常
+     * @throws IOException IO 异常
+     * @throws ServletException Servlet 异常
+     */
     public void onAccessDeny(HttpServletRequest req,
                              HttpServletResponse resp,
                              AccessDeniedException e) throws IOException, ServletException {
@@ -120,6 +204,14 @@ public class SecurityConfiguration {
         resp.getWriter().write(Result.fail(403, "权限不足, 请联系管理员").toJSONString());
     }
 
+    /**
+     * 未认证时的响应处理。
+     *
+     * @param req HTTP 请求
+     * @param resp HTTP 响应
+     * @param e 认证异常
+     * @throws IOException IO 异常
+     */
     public void onUnauthorized(HttpServletRequest req,
                                HttpServletResponse resp,
                                AuthenticationException e) throws IOException {

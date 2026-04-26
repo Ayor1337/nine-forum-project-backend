@@ -30,7 +30,7 @@ services:
       - forum-project
   minio:
     container_name: nine-minio
-    image: minio/minio:latest
+    image: minio/minio:RELEASE.2025-04-22T22-12-26Z-cpuv1
     ports:
       - "9000:9000"
       - "9001:9001"
@@ -50,6 +50,35 @@ services:
       - /docker_volumes/nine_forum/rabbitmq:/var/lib/rabbitmq
     networks:
       - forum-project
+  elasticsearch:
+    container_name: nine-elasticsearch
+    image: docker.elastic.co/elasticsearch/elasticsearch:9.2.1
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - ES_JAVA_OPTS=-Xms1g -Xmx1g   # 内存根据你机器情况改
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+    networks:
+      - forum-project
+  kibana:
+    container_name: nine-kibana
+    image: docker.elastic.co/kibana/kibana:9.2.1
+    depends_on:
+      - elasticsearch
+    ports:
+      - "5601:5601"
+    environment:
+      - ELASTICSEARCH_HOSTS=http://nine-elasticsearch:9200
+    networks:
+      - forum-project
+
+volumes:
+  es_data:
+
 
 networks:
   forum-project:

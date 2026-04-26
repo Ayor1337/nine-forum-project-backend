@@ -1,7 +1,7 @@
 package com.ayor.service.impl;
 
 import com.ayor.entity.PageEntity;
-import com.ayor.entity.app.documennt.ThreadDoc;
+import com.ayor.entity.app.document.ThreadDoc;
 import com.ayor.entity.app.dto.TagUpdateDTO;
 import com.ayor.entity.app.dto.ThreadDTO;
 import com.ayor.entity.app.vo.AnnouncementVO;
@@ -34,7 +34,7 @@ import java.util.concurrent.locks.ReentrantLock;
 @RequiredArgsConstructor
 public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> implements ThreaddService {
 
-    // TODO 防止 topic_id虚假然后删除了其他的thread (topic_id 与 threadId 不符)
+    // 删除操作需要校验 topicId 与 threadId 的对应关系，避免误删其他主题的帖子。
 
 
     private final AccountMapper accountMapper;
@@ -46,6 +46,9 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
     private final QuillUtils quillUtils;
 
     private final TagMapper tagMapper;
+    /**
+     * 获取指定主题下的帖子列表或分页结果。
+     */
 
     @Override
     public List<ThreadVO> getThreadVOsByTopicId(Integer topicId) {
@@ -58,6 +61,9 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
         List<Threadd> threads = this.baseMapper.getThreadsByTopicId(topicId);
         return toVOs(threads);
     }
+    /**
+     * 获取指定主题下的帖子列表或分页结果。
+     */
 
     @Override
     public PageEntity<ThreadVO> getThreadVOsByTopicId(Integer topicId, Integer pageNum, Integer pageSize) {
@@ -70,10 +76,14 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
         Page<Threadd> threads = this.lambdaQuery()
                 .eq(Threadd::getTopicId, topicId)
                 .eq(Threadd::getIsDeleted, false)
+                .orderByDesc(Threadd::getCreateTime)
                 .page(Page.of(pageNum, pageSize));
 
         return new PageEntity<>(threads.getTotal(), toVOs(threads.getRecords()));
     }
+    /**
+     * 根据帖子 ID 获取标题。
+     */
 
     @Override
     public String getThreadTitleById(Integer threadId) {
@@ -83,6 +93,9 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
         Threadd threadd = this.baseMapper.selectById(threadId);
         return threadd.getTitle();
     }
+    /**
+     * 根据帖子 ID 获取帖子详情。
+     */
 
     @Override
     public ThreadVO getThreadById(Integer threadId) {
@@ -107,18 +120,25 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
         threadVO.setAccountId(account.getAccountId());
         return threadVO;
     }
+    /**
+     * 分页获取用户发布的帖子列表。
+     */
 
     @Override
     public PageEntity<ThreadVO> getThreadPagesByUserId(Integer accountId, Integer currentPage, Integer pageSize) {
         Page<Threadd> page = new Page<>(currentPage, pageSize);
         Page<Threadd> threads = this.lambdaQuery()
                 .eq(Threadd::getAccountId, accountId)
+                .orderByAsc(Threadd::getCreateTime)
                 .eq(Threadd::getIsDeleted, false)
                 .page(page);
         List<ThreadVO> threadVOS = toVOs(threads.getRecords());
         Long totalPages = threads.getTotal();
         return new PageEntity<>(totalPages, threadVOS);
     }
+    /**
+     * 将帖子实体列表转换为视图对象列表。
+     */
 
     @NotNull
     private List<ThreadVO> toVOs(List<Threadd> threads) {
@@ -138,8 +158,8 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
 
                 threadVO.setTag(tagVO);
                 threadVO.setAccountName(account.getNickname());
-                threadVO.setContent(quillUtils.QuillDeltaFilterNonImage(threadd.getContent()));
-                threadVO.setImageUrls(quillUtils.QuillDeltaFilterImage(threadd.getContent()));
+                threadVO.setContent(quillUtils.quillDeltaFilterNonImage(threadd.getContent()));
+                threadVO.setImageUrls(quillUtils.quillDeltaFilterImage(threadd.getContent()));
                 threadVO.setAvatarUrl(account.getAvatarUrl());
                 threadVO.setAccountId(account.getAccountId());
 
@@ -148,6 +168,9 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
         });
         return threadVOList;
     }
+    /**
+     * 校验作者后删除帖子。
+     */
 
     @Override
     public String removeThreadById(Integer threadId, Integer accountId) {
@@ -165,6 +188,9 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
         postMapper.removePostsByThreadId(threadId);
         return this.removeByIdLogical(threadId) ? null : "删除失败";
     }
+    /**
+     * 管理员直接删除帖子。
+     */
 
     public String permRemoveThreadById(Integer threadId) {
         Threadd thread = this.getById(threadId);
@@ -177,6 +203,9 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
         postMapper.removePostsByThreadId(threadId);
         return this.removeByIdLogical(threadId) ? null : "删除失败";
     }
+    /**
+     * 将帖子设置为主题公告。
+     */
 
     @Override
     public String setAnnouncementByThreadId(Integer threadId, Integer topicId) {
@@ -193,6 +222,9 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
         thread.setIsAnnouncement(true);
         return this.updateById(thread) ? null : "修改失败";
     }
+    /**
+     * 取消帖子公告状态。
+     */
 
     @Override
     public String removeAnnouncementByThreadId(Integer threadId, Integer topicId) {
@@ -209,6 +241,9 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
         thread.setIsAnnouncement(false);
         return this.updateById(thread) ? null : "修改失败";
     }
+    /**
+     * 获取主题下的公告帖子列表。
+     */
 
     @Override
     public List<AnnouncementVO> getAnnouncementThreads(Integer topicId) {
@@ -226,6 +261,9 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
         });
         return announcementVOList;
     }
+    /**
+     * 创建帖子并同步写入索引与统计。
+     */
 
     @Override
     public String insertThread(ThreadDTO threadDTO, Integer accountId) {
@@ -234,12 +272,16 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
         }
         Threadd threadd = new Threadd();
         BeanUtils.copyProperties(threadDTO, threadd);
-        threadd.setContent(quillUtils.QuillDeltaConvertBase64ToURL(threadDTO.getContent(), "threads/" + threadd.getTopicId() + "/"));
+        threadd.setContent(quillUtils.quillDeltaConvertBase64ToURL(threadDTO.getContent(), "threads/" + threadd.getTopicId() + "/"));
         threadd.setAccountId(accountId);
         threadd.setCreateTime(new Date());
 
+
         return this.save(threadd) ? null : "添加失败";
     }
+    /**
+     * 更新帖子标签信息。
+     */
 
     @Override
     public String updateThreadTag(TagUpdateDTO tagUpdateDTO) {
@@ -261,6 +303,9 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
 
         return this.updateById(threadd) ? null : "修改失败";
     }
+    /**
+     * 删除帖子上的标签。
+     */
 
     @Override
     public String removeThreadTag(Integer threadId, Integer topicId) {
@@ -269,12 +314,18 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
         }
         return this.baseMapper.removeThreadTag(threadId, topicId) ? null : "修改失败";
     }
+    /**
+     * 刷新帖子统计信息。
+     */
 
     @Override
     public void updateThreadStat() {
         this.baseMapper.updateThreadPostCount();
         this.baseMapper.updateLikeCount();
     }
+    /**
+     * 增加帖子的浏览次数。
+     */
 
     @Override
     public String updateViewCount(Integer threadId) {
@@ -289,25 +340,34 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
         lock.unlock();
         return null;
     }
+    /**
+     * 将帖子实体列表转换为搜索文档列表。
+     */
 
     @Override
-    public List<ThreadDoc> toThreadDocs(List<Threadd> threads) {
+    public List<ThreadDoc> toThreadDocs(List<Threadd>     threads) {
         List<ThreadDoc> threadDocs = new ArrayList<>();
         threads.forEach(thread -> {
             ThreadDoc threadDoc = new ThreadDoc();
             BeanUtils.copyProperties(thread, threadDoc);
-            threadDoc.setContent(quillUtils.QuillStringToString(thread.getContent()));
+            threadDoc.setContent(quillUtils.quillStringToString(thread.getContent()));
             threadDoc.setId("THREAD_"+thread.getThreadId());
             threadDoc.setIsThreadTopic(true);
             threadDocs.add(threadDoc);
         });
         return threadDocs;
     }
+    /**
+     * 判断帖子是否存在。
+     */
 
     private boolean existsThreadById(Integer threadId) {
         Threadd threadd = this.lambdaQuery().eq(Threadd::getThreadId, threadId).one();
         return threadd != null && !threadd.getIsDeleted();
     }
+    /**
+     * 将帖子标记为逻辑删除。
+     */
 
     private boolean removeByIdLogical(Serializable Id) {
         Threadd threadd = this.getById(Id);

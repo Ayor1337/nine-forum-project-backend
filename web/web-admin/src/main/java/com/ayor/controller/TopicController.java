@@ -36,6 +36,12 @@ public class TopicController {
         return Result.dataMessageHandler(() -> topicService.getTopics(pageNum, pageSize), "获取话题列表失败");
     }
 
+    @GetMapping("/list_options")
+    public Result<PageEntity<TopicVO>> getTopicsAsOptions(@RequestParam("page_num") Integer pageNum,
+                                                 @RequestParam(value = "page_size", defaultValue = "10") Integer pageSize) {
+        return Result.dataMessageHandler(() -> topicService.getTopics(pageNum, pageSize), "获取话题列表失败");
+    }
+
     @PostMapping
     public Result<Void> createTopic(@RequestBody TopicDTO topicDTO) {
         return Result.messageHandler(() -> topicService.createTopic(topicDTO));
