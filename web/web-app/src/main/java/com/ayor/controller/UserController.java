@@ -2,10 +2,12 @@ package com.ayor.controller;
 
 import com.ayor.entity.Base64Upload;
 import com.ayor.entity.app.dto.AccountProfileDTO;
+import com.ayor.entity.app.dto.PasswordChangeDTO;
 import com.ayor.entity.app.vo.UserInfoVO;
 import com.ayor.result.Result;
 import com.ayor.service.AccountService;
 import com.ayor.util.SecurityUtils;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -59,9 +61,19 @@ public class UserController {
      */
 
     @PutMapping("/me/banner")
-    public Result<Void> updateBanner( @RequestBody Base64Upload dto) {
+    public Result<Void> updateBanner(@RequestBody Base64Upload dto) {
         Integer userId = security.getSecurityUserId();
         return Result.messageHandler(() -> accountService.updateUserBanner(userId , dto));
+    }
+
+    /**
+     * 通过旧密码更新当前账号密码
+     */
+    @PostMapping("/me/password")
+    public Result<Void> updatePassword(@RequestBody PasswordChangeDTO dto,
+                                       HttpServletRequest request) {
+        String token = request.getHeader("Authorization");
+        return Result.messageHandler(() -> accountService.updatePasswordWithOld(token, dto));
     }
 
 }

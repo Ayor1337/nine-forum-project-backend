@@ -3,6 +3,7 @@ package com.ayor.service;
 import com.ayor.entity.Base64Upload;
 import com.ayor.entity.app.dto.AccountDTO;
 import com.ayor.entity.app.dto.AccountProfileDTO;
+import com.ayor.entity.app.dto.PasswordChangeDTO;
 import com.ayor.entity.app.vo.UserInfoVO;
 import com.ayor.entity.pojo.Account;
 import com.baomidou.mybatisplus.extension.service.IService;
@@ -65,5 +66,7 @@ public interface AccountService extends UserDetailsService, IService<Account> {
      */
     String insertNewAccount(AccountDTO accountDTO);
 
-    String updateUserProfile(Integer userId, AccountProfileDTO profileDTO);
+    String updateUserProfile(Integer accountId, AccountProfileDTO profileDTO);
+
+    String updatePasswordWithOld(String token, PasswordChangeDTO pwDto);
 }
