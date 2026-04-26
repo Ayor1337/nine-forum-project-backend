@@ -28,7 +28,7 @@ public class ChatboardHistoryServiceImpl extends ServiceImpl<ChatboardHistoryMap
 
     private final SimpMessagingTemplate simpMessagingTemplate;
     /**
-     * insertChatboardHistory 方法。
+     * 保存聊天室消息到聊天记录中。
      */
 
     @Override
@@ -53,7 +53,7 @@ public class ChatboardHistoryServiceImpl extends ServiceImpl<ChatboardHistoryMap
         return "发送失败";
     }
     /**
-     * getChatboardHistory 方法。
+     * 分页查询指定主题的聊天室历史消息。
      */
 
     @Override

@@ -40,7 +40,7 @@ public class ConversationMessageServiceImpl extends ServiceImpl<ConversationMess
             type = NotificationType.SEND_MSG,
             userId = "#accountId")
     /**
-     * sendMessage 方法。
+     * 发送会话消息并触发通知。
      */
     public String sendMessage(ConversationMessageDTO conversationMessage, Integer accountId) {
         Account account = accountMapper.getAccountById(accountId);
@@ -83,7 +83,7 @@ public class ConversationMessageServiceImpl extends ServiceImpl<ConversationMess
     @ChatNotif(conversationId = "#conversationId",
             type = NotificationType.RECEIVED_MSG, userId = "#accountId")
     /**
-     * getConversationMessageList 方法。
+     * 分页获取会话消息列表。
      */
     public PageEntity<ConversationMessageVO> getConversationMessageList(Integer conversationId, Integer accountId, Integer pageNum) {
         Page<ConversationMessage> page = this.lambdaQuery()

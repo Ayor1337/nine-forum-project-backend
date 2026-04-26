@@ -34,7 +34,7 @@ import java.util.concurrent.locks.ReentrantLock;
 @RequiredArgsConstructor
 public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> implements ThreaddService {
 
-    // TODO 防止 topic_id虚假然后删除了其他的thread (topic_id 与 threadId 不符)
+    // 删除操作需要校验 topicId 与 threadId 的对应关系，避免误删其他主题的帖子。
 
 
     private final AccountMapper accountMapper;
@@ -47,7 +47,7 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
 
     private final TagMapper tagMapper;
     /**
-     * getThreadVOsByTopicId 方法。
+     * 获取指定主题下的帖子列表或分页结果。
      */
 
     @Override
@@ -62,7 +62,7 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
         return toVOs(threads);
     }
     /**
-     * getThreadVOsByTopicId 方法。
+     * 获取指定主题下的帖子列表或分页结果。
      */
 
     @Override
@@ -82,7 +82,7 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
         return new PageEntity<>(threads.getTotal(), toVOs(threads.getRecords()));
     }
     /**
-     * getThreadTitleById 方法。
+     * 根据帖子 ID 获取标题。
      */
 
     @Override
@@ -94,7 +94,7 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
         return threadd.getTitle();
     }
     /**
-     * getThreadById 方法。
+     * 根据帖子 ID 获取帖子详情。
      */
 
     @Override
@@ -121,7 +121,7 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
         return threadVO;
     }
     /**
-     * getThreadPagesByUserId 方法。
+     * 分页获取用户发布的帖子列表。
      */
 
     @Override
@@ -137,7 +137,7 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
         return new PageEntity<>(totalPages, threadVOS);
     }
     /**
-     * toVOs 方法。
+     * 将帖子实体列表转换为视图对象列表。
      */
 
     @NotNull
@@ -169,7 +169,7 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
         return threadVOList;
     }
     /**
-     * removeThreadById 方法。
+     * 校验作者后删除帖子。
      */
 
     @Override
@@ -189,7 +189,7 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
         return this.removeByIdLogical(threadId) ? null : "删除失败";
     }
     /**
-     * permRemoveThreadById 方法。
+     * 管理员直接删除帖子。
      */
 
     public String permRemoveThreadById(Integer threadId) {
@@ -204,7 +204,7 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
         return this.removeByIdLogical(threadId) ? null : "删除失败";
     }
     /**
-     * setAnnouncementByThreadId 方法。
+     * 将帖子设置为主题公告。
      */
 
     @Override
@@ -223,7 +223,7 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
         return this.updateById(thread) ? null : "修改失败";
     }
     /**
-     * removeAnnouncementByThreadId 方法。
+     * 取消帖子公告状态。
      */
 
     @Override
@@ -242,7 +242,7 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
         return this.updateById(thread) ? null : "修改失败";
     }
     /**
-     * getAnnouncementThreads 方法。
+     * 获取主题下的公告帖子列表。
      */
 
     @Override
@@ -262,7 +262,7 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
         return announcementVOList;
     }
     /**
-     * insertThread 方法。
+     * 创建帖子并同步写入索引与统计。
      */
 
     @Override
@@ -280,7 +280,7 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
         return this.save(threadd) ? null : "添加失败";
     }
     /**
-     * updateThreadTag 方法。
+     * 更新帖子标签信息。
      */
 
     @Override
@@ -304,7 +304,7 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
         return this.updateById(threadd) ? null : "修改失败";
     }
     /**
-     * removeThreadTag 方法。
+     * 删除帖子上的标签。
      */
 
     @Override
@@ -315,7 +315,7 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
         return this.baseMapper.removeThreadTag(threadId, topicId) ? null : "修改失败";
     }
     /**
-     * updateThreadStat 方法。
+     * 刷新帖子统计信息。
      */
 
     @Override
@@ -324,7 +324,7 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
         this.baseMapper.updateLikeCount();
     }
     /**
-     * updateViewCount 方法。
+     * 增加帖子的浏览次数。
      */
 
     @Override
@@ -341,7 +341,7 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
         return null;
     }
     /**
-     * toThreadDocs 方法。
+     * 将帖子实体列表转换为搜索文档列表。
      */
 
     @Override
@@ -358,7 +358,7 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
         return threadDocs;
     }
     /**
-     * existsThreadById 方法。
+     * 判断帖子是否存在。
      */
 
     private boolean existsThreadById(Integer threadId) {
@@ -366,7 +366,7 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
         return threadd != null && !threadd.getIsDeleted();
     }
     /**
-     * removeByIdLogical 方法。
+     * 将帖子标记为逻辑删除。
      */
 
     private boolean removeByIdLogical(Serializable Id) {

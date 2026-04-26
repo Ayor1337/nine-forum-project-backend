@@ -37,7 +37,7 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
 
     private final TopicStatMapper topicStatMapper;
     /**
-     * getTopicNameById 方法。
+     * 根据主题 ID 查询主题名称，用于缓存和面包屑展示。
      */
 
     @Override
@@ -50,7 +50,7 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
         return topic.getTitle();
     }
     /**
-     * getTopicListByThemeId 方法。
+     * 获取某个主题下的话题列表，并补充统计信息。
      */
 
     @Override
@@ -80,7 +80,7 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
             @CacheEvict(value = "themeTopicList", key = "'all'")
     })
     /**
-     * insertTopic 方法。
+     * 创建新话题，上传封面并初始化话题统计。
      */
     public String insertTopic(TopicDTO topicDTO) {
         if (topicDTO == null || topicDTO.getTitle().equals("待输入标题")) {
@@ -111,7 +111,7 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
             @CacheEvict(value = "themeTopicList", key = "'all'")
     })
     /**
-     * updateTopic 方法。
+     * 更新话题信息，必要时同步更新封面。
      */
     public String updateTopic(TopicDTO topicDTO) {
         if (topicDTO == null || topicDTO.getTitle().equals("待输入标题")) {
@@ -139,7 +139,7 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
              @CacheEvict(value = "themeTopicList", key = "'all'")
      })
     /**
-     * deleteTopic 方法。
+     * 删除话题，并同步删除该话题下的帖子。
      */
     public String deleteTopic(Integer topicId) {
         Topic topic = this.getById(topicId);
@@ -151,7 +151,7 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
         return this.removeByIdLogical(topicId) ? null : "删除失败, 未知异常";
     }
     /**
-     * deleteTopicLogical 方法。
+     * 逻辑删除话题，并同步删除该话题下的帖子。
      */
 
 
@@ -166,7 +166,7 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
         return this.removeByIdLogical(topicId) ? null : "删除失败, 未知异常";
     }
     /**
-     * removeByIdLogical 方法。
+     * 将帖子标记为逻辑删除。
      */
 
     private boolean removeByIdLogical(Serializable topicId) {

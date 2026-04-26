@@ -31,7 +31,7 @@ public class LikeThreadServiceImpl extends ServiceImpl<LikeThreadMapper, LikeThr
 
     private final QuillUtils quillUtils;
     /**
-     * insertLikeThreadId 方法。
+     * 为指定帖子记录一次点赞。
      */
 
     @Override
@@ -50,7 +50,7 @@ public class LikeThreadServiceImpl extends ServiceImpl<LikeThreadMapper, LikeThr
         return this.save(likeThread) ? null : "点赞失败";
     }
     /**
-     * removeLikeThreadId 方法。
+     * 删除指定帖子上的点赞记录。
      */
 
     @Override
@@ -67,7 +67,7 @@ public class LikeThreadServiceImpl extends ServiceImpl<LikeThreadMapper, LikeThr
         return this.removeById(likeThread) ? null : "取消点赞失败";
     }
     /**
-     * getLikesByAccountId 方法。
+     * 分页获取用户点赞过的帖子列表。
      */
 
     @Override
@@ -95,7 +95,7 @@ public class LikeThreadServiceImpl extends ServiceImpl<LikeThreadMapper, LikeThr
         return new PageEntity<>(likePage.getTotal(), threadVOS);
     }
     /**
-     * getLikeCountByThreadId 方法。
+     * 获取指定帖子的点赞数。
      */
 
     @Override
@@ -104,7 +104,7 @@ public class LikeThreadServiceImpl extends ServiceImpl<LikeThreadMapper, LikeThr
         return likeCountByThreadId == null ? 0 : likeCountByThreadId;
     }
     /**
-     * isLikedByAccountId 方法。
+     * 判断用户是否点赞了指定帖子。
      */
 
     @Override

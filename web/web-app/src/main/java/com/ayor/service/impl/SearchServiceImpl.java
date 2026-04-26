@@ -43,14 +43,14 @@ public class SearchServiceImpl implements SearchService {
 
     static final List<String> ORDER = List.of("asc", "desc", "rel");
     /**
-     * buildKey 方法。
+     * 构造 Redis 中使用的 key。
      */
 
     private String buildKey(Integer userId) {
         return "search:history:" + userId;
     }
     /**
-     * searchThreads 方法。
+     * 在 Elasticsearch 中搜索帖子并返回分页结果。
      */
 
     @Override
@@ -151,7 +151,7 @@ public class SearchServiceImpl implements SearchService {
         return new PageEntity<>(threads.getTotalHits(), list);
     }
     /**
-     * getSearchHistory 方法。
+     * 获取指定用户的搜索历史。
      */
 
     @Override
@@ -160,7 +160,7 @@ public class SearchServiceImpl implements SearchService {
                 .reverseRange(buildKey(userId), 0, 5);
     }
     /**
-     * insertSearchHistory 方法。
+     * 将搜索关键字写入用户搜索历史。
      */
 
     private void insertSearchHistory(String keyword, Integer userId) {
@@ -170,7 +170,7 @@ public class SearchServiceImpl implements SearchService {
     	redisTemplate.opsForZSet().add(buildKey(userId), keyword, System.currentTimeMillis());
     }
     /**
-     * removeSearchHistory 方法。
+     * 删除用户的指定搜索历史记录。
      */
 
     @Override
@@ -182,7 +182,7 @@ public class SearchServiceImpl implements SearchService {
         return "删除失败";
     }
     /**
-     * removeSearchHistory 方法。
+     * 删除用户的指定搜索历史记录。
      */
 
     @Override
@@ -191,7 +191,7 @@ public class SearchServiceImpl implements SearchService {
         return removed ? null : "删除失败";
     }
     /**
-     * getHotKeywords 方法。
+     * 统计并返回热门搜索词。
      */
 
     @Override

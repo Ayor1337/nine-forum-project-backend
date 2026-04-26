@@ -25,7 +25,7 @@ public class BroadcastServiceImpl implements BroadcastService {
 
     private final SystemMessageMapper systemMessageMapper;
     /**
-     * userSystemBroadcast 方法。
+     * 向所有订阅者广播系统消息。
      */
 
     @Override
@@ -50,7 +50,7 @@ public class BroadcastServiceImpl implements BroadcastService {
         }
     }
     /**
-     * userViolationBroadcast 方法。
+     * 向指定用户广播违规通知。
      */
 
     @Override
