@@ -19,7 +19,7 @@ public class TopicStatServiceImpl extends ServiceImpl<TopicStatMapper, TopicStat
 
     private final CacheManager cacheManager;
     /**
-     * updateTopicStat 方法。
+     * 刷新主题统计信息。
      */
 
     @Override

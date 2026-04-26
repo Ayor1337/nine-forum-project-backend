@@ -14,7 +14,7 @@ public class ChatUnreadServiceImpl implements ChatUnreadService {
 
     private final StringRedisTemplate template;
     /**
-     * buildKey 方法。
+     * 构造 Redis 中使用的 key。
      */
 
 
@@ -22,14 +22,14 @@ public class ChatUnreadServiceImpl implements ChatUnreadService {
         return "chat:unread:" + fromUserId + ":" + conversationId;
     }
     /**
-     * existValue 方法。
+     * 判断指定 Redis key 是否存在。
      */
 
     private boolean existValue(String key) {
         return template.hasKey(key);
     }
     /**
-     * getUnread 方法。
+     * 获取指定用户的未读数量。
      */
 
     @Override
@@ -40,7 +40,7 @@ public class ChatUnreadServiceImpl implements ChatUnreadService {
         return Long.parseLong(value);
     }
     /**
-     * newUnread 方法。
+     * 初始化指定用户的未读数量。
      */
 
     public void newUnread(Integer conversationId, Integer fromUserId) {
@@ -48,7 +48,7 @@ public class ChatUnreadServiceImpl implements ChatUnreadService {
         template.opsForValue().set(key, "1");
     }
     /**
-     * clearUnread 方法。
+     * 清空指定会话的未读数量，并同步更新总未读数。
      */
 
     @Override
@@ -65,7 +65,7 @@ public class ChatUnreadServiceImpl implements ChatUnreadService {
         return 0L;
     }
     /**
-     * incrUnread 方法。
+     * 将指定用户的未读数量加一。
      */
 
     public long incrUnread(Integer conversationId, Integer fromUserId) {
@@ -74,7 +74,7 @@ public class ChatUnreadServiceImpl implements ChatUnreadService {
         return increment == null ? 0 : increment;
     }
     /**
-     * decrUnread 方法。
+     * 将指定用户的未读数量减一。
      */
 
     public void decrUnread(Integer conversationId, Integer fromUserId) {
@@ -82,7 +82,7 @@ public class ChatUnreadServiceImpl implements ChatUnreadService {
         template.opsForValue().decrement(key);
     }
     /**
-     * addUnread 方法。
+     * 按指定值增加未读数量，并返回最新结果。
      */
 
 

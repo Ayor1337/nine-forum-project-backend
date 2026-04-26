@@ -20,7 +20,7 @@ public class AccountStatServiceImpl extends ServiceImpl<AccountStatMapper, Accou
 
     private final AccountStatMapper accountStatMapper;
     /**
-     * getAccountStatByUsername 方法。
+     * 根据用户 ID 获取账号统计信息。
      */
 
     @Override
@@ -38,7 +38,7 @@ public class AccountStatServiceImpl extends ServiceImpl<AccountStatMapper, Accou
         return accountStatVO;
     }
     /**
-     * updateAccountStat 方法。
+     * 刷新所有用户的统计数据。
      */
 
 

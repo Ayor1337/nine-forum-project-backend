@@ -45,7 +45,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
 
     private final STOMPUtils stompUtils;
     /**
-     * getPostsByThreadId 方法。
+     * 获取指定帖子下的评论列表。
      */
 
 
@@ -76,7 +76,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
             subscribeDest = "/notif/reply",
             type = UnreadMessageType.REPLY_MESSAGE)
     /**
-     * insertPost 方法。
+     * 新增评论并处理相关通知与索引。
      */
     public String insertPost(PostDTO postDTO, Integer userId) {
         if (postDTO.getContent() == null) {
@@ -109,7 +109,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         return "发布失败, 未知异常";
     }
     /**
-     * removePostAuthorizeAccountId 方法。
+     * 校验作者身份后删除评论。
      */
 
     @Override
@@ -124,7 +124,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         return this.removeByIdLogic(post.getPostId()) ? null : "删除失败, 未知异常";
     }
     /**
-     * removePostPermission 方法。
+     * 管理员直接删除评论。
      */
 
     @Override
@@ -144,7 +144,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
             doRead = true
     )
     /**
-     * listReplyMessage 方法。
+     * 分页获取回复消息列表。
      */
     public PageEntity<ReplyMessageVO> listReplyMessage(Integer pageNum, Integer pageSize, Integer accountId) {
         if (accountId == null) return new PageEntity<>(0L, Collections.emptyList());
@@ -175,7 +175,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         return new PageEntity<>(page.getTotal(), vos);
     }
     /**
-     * toThreadDoc 方法。
+     * 将评论实体转换为搜索索引文档。
      */
 
 
@@ -202,7 +202,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         return threadDocs;
     }
     /**
-     * toVOList 方法。
+     * 将评论实体列表转换为回复视图对象列表。
      */
 
     private List<ReplyMessageVO> toVOList(List<Post> posts) {
@@ -214,7 +214,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         return vos;
     }
     /**
-     * toVO 方法。
+     * 将单条评论实体转换为回复视图对象。
      */
 
     @NotNull
@@ -230,7 +230,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         return vo;
     }
     /**
-     * removeByIdLogic 方法。
+     * 将评论标记为已删除。
      */
 
 

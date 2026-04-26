@@ -30,7 +30,7 @@ public class ConversationServiceImpl extends ServiceImpl<ConversationMapper, Con
 
     private final ChatUnreadService chatUnreadService;
     /**
-     * getConversationByAccountId 方法。
+     * 获取当前用户与指定用户之间的会话信息。
      */
 
     @Override
@@ -82,7 +82,7 @@ public class ConversationServiceImpl extends ServiceImpl<ConversationMapper, Con
         return conversationVO;
     }
     /**
-     * hiddenConversation 方法。
+     * 隐藏当前用户的会话。
      */
 
     @Override
@@ -118,7 +118,7 @@ public class ConversationServiceImpl extends ServiceImpl<ConversationMapper, Con
         return "无权限";
     }
     /**
-     * createNewConversation 方法。
+     * 创建新的私聊会话。
      */
 
     @Override
@@ -150,7 +150,7 @@ public class ConversationServiceImpl extends ServiceImpl<ConversationMapper, Con
         return save(conversation) ? null : "创建失败";
     }
     /**
-     * getConversationList 方法。
+     * 获取当前用户的会话列表。
      */
 
     @Override
@@ -193,7 +193,7 @@ public class ConversationServiceImpl extends ServiceImpl<ConversationMapper, Con
         return conversationVOs;
     }
     /**
-     * getUnreadList 方法。
+     * 获取当前用户的未读会话摘要。
      */
 
     @Override
@@ -225,7 +225,7 @@ public class ConversationServiceImpl extends ServiceImpl<ConversationMapper, Con
         return chatUnreadList;
     }
     /**
-     * clearUnread 方法。
+     * 清空指定会话的未读数量，并同步更新总未读数。
      */
 
     @Override
@@ -241,7 +241,7 @@ public class ConversationServiceImpl extends ServiceImpl<ConversationMapper, Con
         return null;
     }
     /**
-     * getUserInfoVO 方法。
+     * 将用户实体转换为会话展示所需的用户信息。
      */
 
 

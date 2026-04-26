@@ -49,7 +49,7 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
 
     private final JWTUtils jwtUtils;
     /**
-     * loadUserByUsername 方法。
+     * 根据用户名加载 Spring Security 登录信息。
      */
 
     @Override
@@ -67,7 +67,7 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
                 .build();
     }
     /**
-     * getUserInfo 方法。
+     * 获取用户资料和权限信息。
      */
 
     @Override
@@ -85,7 +85,7 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         return userInfoVO;
     }
     /**
-     * updateUserAvatar 方法。
+     * 更新用户头像并同步到对象存储。
      */
 
     @Override
@@ -104,7 +104,7 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         return this.baseMapper.updateById(account) > 0 ? null : "更新失败, 未知异常";
     }
     /**
-     * updateUserBanner 方法。
+     * 更新用户横幅图并同步到对象存储。
      */
 
     @Override
@@ -123,7 +123,7 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         return this.baseMapper.updateById(account) > 0 ? null : "更新失败, 未知异常";
     }
     /**
-     * insertNewAccount 方法。
+     * 校验邮箱验证 token 后创建新账户。
      */
 
     @Override
@@ -171,14 +171,14 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
     }
 
     /**
-     * existsUserById 方法。
+     * 判断指定用户 ID 是否存在。
      */
 
     private boolean existsUserById(Integer accountId) {
         return this.baseMapper.exists(Wrappers.<Account>lambdaQuery().eq(Account::getAccountId, accountId));
     }
     /**
-     * existsUserByUsername 方法。
+     * 判断指定用户名是否已存在。
      */
 
     private boolean existsUserByUsername(String username) {

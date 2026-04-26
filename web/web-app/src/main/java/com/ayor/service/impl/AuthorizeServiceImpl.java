@@ -21,7 +21,7 @@ public class AuthorizeServiceImpl implements AuthorizeService {
 
     private final SimpMessagingTemplate messagingTemplate;
     /**
-     * createAuthorizeToken 方法。
+     * 生成用于注册验证的邮箱 token。
      */
 
     @Override
@@ -32,7 +32,7 @@ public class AuthorizeServiceImpl implements AuthorizeService {
         return decodedJWT.getId();
     }
     /**
-     * validateAuthorizeToken 方法。
+     * 校验注册邮箱的验证 token。
      */
 
     @Override

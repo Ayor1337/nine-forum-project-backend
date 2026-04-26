@@ -17,7 +17,7 @@ public class MessageUnreadServiceImpl implements MessageUnreadService {
 
     private final StringRedisTemplate template;
     /**
-     * buildKey 方法。
+     * 构造 Redis 中使用的 key。
      */
 
     private String buildKey(Integer userId, UnreadMessageType type) {
@@ -27,14 +27,14 @@ public class MessageUnreadServiceImpl implements MessageUnreadService {
                 userId;
     }
     /**
-     * existValue 方法。
+     * 判断指定 Redis key 是否存在。
      */
 
     private boolean existValue(String key) {
         return template.hasKey(key);
     }
     /**
-     * getUnread 方法。
+     * 获取指定用户的未读数量。
      */
 
     @Override
@@ -45,7 +45,7 @@ public class MessageUnreadServiceImpl implements MessageUnreadService {
         return Long.parseLong(value);
     }
     /**
-     * getUnread 方法。
+     * 获取指定用户的未读数量。
      */
 
     @Override
@@ -63,7 +63,7 @@ public class MessageUnreadServiceImpl implements MessageUnreadService {
         return Long.parseLong(value);
     }
     /**
-     * getAllUnread 方法。
+     * 汇总当前用户的全部未读消息数量。
      */
 
     public Long getAllUnread(Integer userId) {
@@ -74,7 +74,7 @@ public class MessageUnreadServiceImpl implements MessageUnreadService {
         return unreadCount;
     }
     /**
-     * getUnreadVO 方法。
+     * 构造指定类型未读消息的展示对象。
      */
 
     @Override
@@ -84,7 +84,7 @@ public class MessageUnreadServiceImpl implements MessageUnreadService {
                 .build();
     }
     /**
-     * getUnreadVO 方法。
+     * 构造指定类型未读消息的展示对象。
      */
 
     @Override
@@ -94,7 +94,7 @@ public class MessageUnreadServiceImpl implements MessageUnreadService {
                 .build();
     }
     /**
-     * getUnreadVO 方法。
+     * 构造当前用户全部未读消息的展示对象。
      */
 
     @Override
@@ -104,7 +104,7 @@ public class MessageUnreadServiceImpl implements MessageUnreadService {
                 .build();
     }
     /**
-     * newUnread 方法。
+     * 初始化指定用户的未读数量。
      */
 
     public void newUnread(Integer userId, UnreadMessageType type, Long value) {
@@ -112,7 +112,7 @@ public class MessageUnreadServiceImpl implements MessageUnreadService {
         template.opsForValue().set(key, value.toString());
     }
     /**
-     * clearUnread 方法。
+     * 清空指定会话的未读数量，并同步更新总未读数。
      */
 
     @Override
@@ -136,7 +136,7 @@ public class MessageUnreadServiceImpl implements MessageUnreadService {
         return remaining == null ? 0L : Long.parseLong(remaining);
     }
     /**
-     * clearUnread 方法。
+     * 清空指定会话的未读数量，并同步更新总未读数。
      */
 
     @Override
@@ -145,7 +145,7 @@ public class MessageUnreadServiceImpl implements MessageUnreadService {
         return 0L;
     }
     /**
-     * incrUnread 方法。
+     * 将指定用户的未读数量加一。
      */
 
     public long incrUnread(Integer userId, UnreadMessageType type, Long value) {
@@ -154,7 +154,7 @@ public class MessageUnreadServiceImpl implements MessageUnreadService {
         return increment == null ? 0 : increment;
     }
     /**
-     * decrUnread 方法。
+     * 将指定用户的未读数量减一。
      */
 
     public void decrUnread(Integer userId, UnreadMessageType type, Long value) {
@@ -162,7 +162,7 @@ public class MessageUnreadServiceImpl implements MessageUnreadService {
         template.opsForValue().decrement(key, value);
     }
     /**
-     * addUnread 方法。
+     * 按指定值增加未读数量，并返回最新结果。
      */
 
 

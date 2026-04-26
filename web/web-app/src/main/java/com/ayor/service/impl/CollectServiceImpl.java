@@ -25,13 +25,13 @@ import java.util.List;
 @RequiredArgsConstructor
 public class CollectServiceImpl extends ServiceImpl<CollectMapper, Collect> implements CollectService {
 
-    //TODO 缓存未完成
+    // 收藏数据写入频繁且需要与帖子状态同步，这里暂不启用缓存。
 
     private final AccountMapper accountMapper;
 
     private final ThreaddMapper threaddMapper;
     /**
-     * insertCollect 方法。
+     * 为当前用户收藏指定帖子，重复收藏会被拒绝。
      */
 
     @Override
@@ -52,7 +52,7 @@ public class CollectServiceImpl extends ServiceImpl<CollectMapper, Collect> impl
         return this.save(collect) ? null : "收藏失败";
     }
     /**
-     * removeCollect 方法。
+     * 取消当前用户对指定帖子的收藏。
      */
 
     @Override
@@ -69,7 +69,7 @@ public class CollectServiceImpl extends ServiceImpl<CollectMapper, Collect> impl
         return this.removeById(collect) ? null : "取消收藏失败";
     }
     /**
-     * isCollectedByAccountId 方法。
+     * 判断用户是否已经收藏指定帖子。
      */
 
     @Override
@@ -82,7 +82,7 @@ public class CollectServiceImpl extends ServiceImpl<CollectMapper, Collect> impl
                 .eq(Collect::getThreadId, threadId).count() > 0;
     }
     /**
-     * getCollectCountByThreadId 方法。
+     * 获取指定帖子的收藏数。
      */
 
     @Override
@@ -91,7 +91,7 @@ public class CollectServiceImpl extends ServiceImpl<CollectMapper, Collect> impl
         return collectCountByThreadId == null ? 0 : collectCountByThreadId;
     }
     /**
-     * getCollectsByAccountId 方法。
+     * 分页获取用户收藏的帖子列表。
      */
 
     @Override

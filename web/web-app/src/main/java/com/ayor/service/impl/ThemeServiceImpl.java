@@ -30,7 +30,7 @@ public class ThemeServiceImpl extends ServiceImpl<ThemeMapper, Theme> implements
 
     private final TopicMapper topicMapper;
     /**
-     * getThemeList 方法。
+     * 获取全部主题列表。
      */
 
     @Override
@@ -58,7 +58,7 @@ public class ThemeServiceImpl extends ServiceImpl<ThemeMapper, Theme> implements
             @CacheEvict(value = "themeTopicList", key = "'all'")
     })
     /**
-     * insertTheme 方法。
+     * 新增主题并写入数据库。
      */
     public String insertTheme(ThemeDTO themeDTO) {
         if (themeDTO == null) {
@@ -69,7 +69,7 @@ public class ThemeServiceImpl extends ServiceImpl<ThemeMapper, Theme> implements
         return themeMapper.insert(theme) > 0 ? null : "添加失败, 未知异常";
     }
     /**
-     * getThemeTopicList 方法。
+     * 获取主题及其关联话题的聚合数据。
      */
 
     @Override

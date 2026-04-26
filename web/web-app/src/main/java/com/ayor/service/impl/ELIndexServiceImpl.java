@@ -27,7 +27,7 @@ public class ELIndexServiceImpl implements ESIndexService {
 
     private final PostService postService;
     /**
-     * initIndex 方法。
+     * 初始化 Elasticsearch 索引。
      */
 
 
@@ -41,7 +41,7 @@ public class ELIndexServiceImpl implements ESIndexService {
         }
     }
     /**
-     * initThreadIndex 方法。
+     * 初始化帖子索引。
      */
 
     private void initThreadIndex() {
@@ -66,7 +66,7 @@ public class ELIndexServiceImpl implements ESIndexService {
         }
     }
     /**
-     * initPostIndex 方法。
+     * 初始化评论索引。
      */
 
     private void initPostIndex() {

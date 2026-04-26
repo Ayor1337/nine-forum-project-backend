@@ -31,7 +31,7 @@ public class SystemMessageServiceImpl extends ServiceImpl<SystemMessageMapper, S
             doRead = true
     )
     /**
-     * listSystemMessage 方法。
+     * 分页获取用户的系统消息，并在读取后清空对应未读数。
      */
     public PageEntity<SystemMessageVO> listSystemMessage(Integer pageNum, Integer pageSize, Integer accountId) {
         if (accountId == null) {
@@ -49,7 +49,7 @@ public class SystemMessageServiceImpl extends ServiceImpl<SystemMessageMapper, S
         return new PageEntity<>(page.getTotal(), toVOList(page.getRecords()));
     }
     /**
-     * toVOList 方法。
+     * 将系统消息实体列表转换为视图对象列表。
      */
 
 
