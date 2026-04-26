@@ -3,10 +3,10 @@ package com.ayor.service.impl;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.ayor.entity.Base64Upload;
 import com.ayor.entity.app.dto.AccountDTO;
+import com.ayor.entity.app.dto.AccountProfileDTO;
 import com.ayor.entity.app.vo.UserInfoVO;
 import com.ayor.entity.app.vo.UserPermissionVO;
 import com.ayor.entity.pojo.Account;
-import com.ayor.entity.pojo.AccountStat;
 import com.ayor.mapper.AccountMapper;
 import com.ayor.mapper.AccountStatMapper;
 import com.ayor.mapper.PermissionMapper;
@@ -28,6 +28,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Date;
+import java.util.Objects;
 
 @Service
 @Transactional
@@ -149,6 +150,26 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         }
         return "添加失败, 未知异常";
     }
+
+    /**
+     * 更新用户个人资料
+     */
+    @Override
+    public String updateUserProfile(Integer userId, AccountProfileDTO profileDTO) {
+        if (Objects.isNull(profileDTO)) {
+            return "上传的用户信息为空";
+        }
+
+        Account accountById = this.accountMapper.getAccountById(userId);
+
+        if (accountById == null) {
+            return "用户不存在";
+        }
+        BeanUtils.copyProperties(profileDTO, accountById);
+
+        return this.updateById(accountById) ? null : "修改失败";
+    }
+
     /**
      * existsUserById 方法。
      */
