@@ -42,7 +42,7 @@ public class EmailListener {
 
             SimpleMailMessage sendMessage = switch (emailVerifyMessage.getType()) {
                 case REGISTER ->
-                    createMessage("还原来到 Nine 论坛", "请点击以下链接进行验证：" + "http://localhost:9966/api/auth/verify?email=" + email + "&token=" + token, email);
+                    createMessage("还原来到 Nine 论坛", "请点击以下链接进行验证：" + "http://localhost:9966/api/auth/register-verifications?email=" + email + "&token=" + token, email);
             };
             if (message ==  null)
                 return;

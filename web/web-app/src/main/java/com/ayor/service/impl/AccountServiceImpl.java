@@ -4,6 +4,7 @@ import com.auth0.jwt.interfaces.DecodedJWT;
 import com.ayor.entity.Base64Upload;
 import com.ayor.entity.app.dto.AccountDTO;
 import com.ayor.entity.app.dto.AccountProfileDTO;
+import com.ayor.entity.app.dto.PasswordChangeDTO;
 import com.ayor.entity.app.vo.UserInfoVO;
 import com.ayor.entity.app.vo.UserPermissionVO;
 import com.ayor.entity.pojo.Account;
@@ -48,6 +49,9 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
     private final AccountStatMapper accountStatMapper;
 
     private final JWTUtils jwtUtils;
+
+    private final PasswordEncoder encoder;
+
     /**
      * 根据用户名加载 Spring Security 登录信息。
      */
@@ -155,12 +159,17 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
      * 更新用户个人资料
      */
     @Override
-    public String updateUserProfile(Integer userId, AccountProfileDTO profileDTO) {
+    @CacheEvict(value = "userInfo", key = "#accountId")
+    public String updateUserProfile(Integer accountId, AccountProfileDTO profileDTO) {
         if (Objects.isNull(profileDTO)) {
             return "上传的用户信息为空";
         }
 
-        Account accountById = this.accountMapper.getAccountById(userId);
+        Account accountById = this.accountMapper.getAccountById(accountId);
+
+        if (profileDTO.getAvatar() != null) {
+            this.updateUserAvatar(accountId, profileDTO.getAvatar());
+        }
 
         if (accountById == null) {
             return "用户不存在";
@@ -168,6 +177,41 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         BeanUtils.copyProperties(profileDTO, accountById);
 
         return this.updateById(accountById) ? null : "修改失败";
+    }
+
+    /**
+     * 更新用户密码
+     * */
+    @Override
+    public String updatePasswordWithOld(String token, PasswordChangeDTO pwDto) {
+        Integer accountId = jwtUtils.toId(jwtUtils.resolveJwt(token));
+
+        if (Objects.isNull(pwDto)) {
+            return "密码不可为空";
+        }
+        Account account = this.accountMapper.getAccountById(accountId);
+
+        if (Objects.isNull(account)) {
+            return "当前用户不存在";
+        }
+
+        if (!encoder.matches(pwDto.getOldPassword(), account.getPassword())) {
+            return "当前密码有误";
+        }
+
+        if (encoder.matches(pwDto.getNewPassword(), account.getPassword())) {
+            return "新的密码不能和旧的密码相同";
+        }
+
+        account.setPassword(encoder.encode(pwDto.getNewPassword()));
+
+        if (this.updateById(account)) {
+            jwtUtils.invalidateJWT(token);
+            return null;
+        } else {
+            return "更新密码失败";
+        }
+
     }
 
     /**

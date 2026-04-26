@@ -149,7 +149,7 @@ Query 参数：
 | GET | `/api/users/{user_id}` | 获取指定用户信息 | `Result<UserInfoVO>` |
 | PUT | `/api/users/me/avatar` | 更新当前用户头像 | `Result<Void>` |
 | PUT | `/api/users/me/banner` | 更新当前用户横幅图 | `Result<Void>` |
-| PUT | `api/users/me/profile` | 更新当前用户个人资料 | `Result<Void>` |
+| PUT | `/api/users/me/profile` | 更新当前用户个人资料 | `Result<Void>` |
 | GET | `/api/users/me/stats` | 获取当前用户统计 | `Result<AccountStatVO>` |
 
 头像和横幅请求体 `Base64Upload`：
@@ -158,6 +158,14 @@ Query 参数：
 | --- | --- | --- |
 | `base64` | String | 是 |
 | `fileName` | String | 是 |
+
+个人资料请求体 `AccountProfileDTO`：
+
+| 字段 | 类型 | 必填 | 约束 |
+| --- | --- | --- | --- |
+| `nickname` | String | 否 | 长度 3-20 |
+| `bio` | String | 否 | 长度 6-50 |
+| `avatar` | `Base64Upload` | 否 | 传入时同步更新头像 |
 
 ## 主题、话题、标签
 
