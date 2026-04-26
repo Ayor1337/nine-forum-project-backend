@@ -149,6 +149,7 @@ Query 参数：
 | GET | `/api/users/{user_id}` | 获取指定用户信息 | `Result<UserInfoVO>` |
 | PUT | `/api/users/me/avatar` | 更新当前用户头像 | `Result<Void>` |
 | PUT | `/api/users/me/banner` | 更新当前用户横幅图 | `Result<Void>` |
+| PUT | `api/users/me/profile` | 更新当前用户个人资料 | `Result<Void>` |
 | GET | `/api/users/me/stats` | 获取当前用户统计 | `Result<AccountStatVO>` |
 
 头像和横幅请求体 `Base64Upload`：

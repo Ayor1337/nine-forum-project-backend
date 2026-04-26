@@ -1,10 +1,12 @@
 package com.ayor.controller;
 
 import com.ayor.entity.Base64Upload;
+import com.ayor.entity.app.dto.AccountProfileDTO;
 import com.ayor.entity.app.vo.UserInfoVO;
 import com.ayor.result.Result;
 import com.ayor.service.AccountService;
 import com.ayor.util.SecurityUtils;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -42,6 +44,16 @@ public class UserController {
         Integer userId = security.getSecurityUserId();
         return Result.messageHandler(() -> accountService.updateUserAvatar(userId, dto));
     }
+
+    /**
+     * 更新用户个人资料
+     */
+    @PutMapping("/me/profile")
+    public Result<Void> updateProfile(@RequestBody @Valid AccountProfileDTO dto) {
+        Integer userId = security.getSecurityUserId();
+        return Result.messageHandler(() -> accountService.updateUserProfile(userId, dto));
+    }
+
     /**
      * 更新当前用户横幅图。
      */
