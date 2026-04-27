@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/chatboard/history")
+@RequestMapping("/api/chatboard_histories")
 @RequiredArgsConstructor
 public class ChatboardHistoryController {
 
@@ -26,8 +26,8 @@ public class ChatboardHistoryController {
         return Result.dataMessageHandler(() -> chatboardHistoryService.getHistories(topicId, pageNum, pageSize), "获取聊天记录失败");
     }
 
-    @DeleteMapping("/{history_id}")
-    public Result<Void> deleteHistory(@PathVariable("history_id") Integer historyId) {
+    @DeleteMapping("/{historyId}")
+    public Result<Void> deleteHistory(@PathVariable("historyId") Integer historyId) {
         return Result.messageHandler(() -> chatboardHistoryService.deleteHistory(historyId));
     }
 }

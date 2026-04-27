@@ -17,14 +17,14 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/role")
+@RequestMapping("/api/roles")
 @RequiredArgsConstructor
 public class RoleController {
 
     private final RoleService roleService;
 
 
-    @GetMapping("/list")
+    @GetMapping
     public Result<List<RoleVO>> getRoles() {
         return Result.dataMessageHandler(roleService::getRoles, "获取角色列表失败");
     }
@@ -34,13 +34,14 @@ public class RoleController {
         return Result.messageHandler(() -> roleService.createRole(roleDTO));
     }
 
-    @PutMapping
-    public Result<Void> updateRole(@RequestBody RoleDTO roleDTO) {
+    @PutMapping("/{roleId}")
+    public Result<Void> updateRole(@PathVariable("roleId") Integer roleId, @RequestBody RoleDTO roleDTO) {
+        roleDTO.setRoleId(roleId);
         return Result.messageHandler(() -> roleService.updateRole(roleDTO));
     }
 
-    @DeleteMapping("/{role_id}")
-    public Result<Void> deleteRole(@PathVariable("role_id") Integer roleId) {
+    @DeleteMapping("/{roleId}")
+    public Result<Void> deleteRole(@PathVariable("roleId") Integer roleId) {
         return Result.messageHandler(() -> roleService.deleteRole(roleId));
     }
 
