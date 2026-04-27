@@ -78,13 +78,12 @@ public class ConversationMessageServiceImpl extends ServiceImpl<ConversationMess
 
     }
 
-
-    @Override
-    @ChatNotif(conversationId = "#conversationId",
-            type = NotificationType.RECEIVED_MSG, userId = "#accountId")
     /**
      * 分页获取会话消息列表。
      */
+    @Override
+    @ChatNotif(conversationId = "#conversationId",
+            type = NotificationType.RECEIVED_MSG, userId = "#accountId")
     public PageEntity<ConversationMessageVO> getConversationMessageList(Integer conversationId, Integer accountId, Integer pageNum) {
         Page<ConversationMessage> page = this.lambdaQuery()
                 .eq(ConversationMessage::getConversationId, conversationId)
