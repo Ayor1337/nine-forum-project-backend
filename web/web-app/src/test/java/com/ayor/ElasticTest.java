@@ -5,7 +5,6 @@ import com.ayor.dao.ThreaddRepository;
 import com.ayor.entity.pojo.Threadd;
 import com.ayor.service.ESIndexService;
 import com.ayor.service.ThreaddService;
-import com.ayor.util.QuillUtils;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.elasticsearch.client.RestClient;
@@ -34,10 +33,6 @@ public class ElasticTest {
 
     @Resource
     private ESIndexService esIndexService;
-
-    @Resource
-    private QuillUtils quillUtils;
-
 
     @Test
     public void createIndex() {

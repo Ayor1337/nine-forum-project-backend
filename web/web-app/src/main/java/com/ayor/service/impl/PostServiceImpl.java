@@ -14,8 +14,8 @@ import com.ayor.mapper.PostMapper;
 import com.ayor.mapper.ThreaddMapper;
 import com.ayor.service.PostService;
 import com.ayor.type.UnreadMessageType;
-import com.ayor.util.QuillUtils;
 import com.ayor.util.STOMPUtils;
+import com.ayor.util.TipTapUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
@@ -37,7 +37,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
 
     private final AccountMapper accountMapper;
 
-    private final QuillUtils quillUtils;
+    private final TipTapUtils tipTapUtils;
 
     private final ThreaddMapper threaddMapper;
 
@@ -92,7 +92,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         }
         Integer topicId = threaddMapper.getTopicIdByThreadId(postDTO.getThreadId());
         post.setAccountId(userId)   ;
-        post.setContent(quillUtils.quillDeltaConvertBase64ToURL(postDTO.getContent(), "posts/" + post.getThreadId() + "/"));
+        post.setContent(tipTapUtils.convertBase64ImagesToUrl(postDTO.getContent(), "posts/" + post.getThreadId() + "/"));
         post.setCreateTime(new Date());
         post.setTopicId(topicId);
         if (this.save(post)) {
@@ -192,7 +192,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
             Threadd thread = threadMap.get(post.getThreadId());
             ThreadDoc threadDoc = new ThreadDoc();
             BeanUtils.copyProperties(thread, threadDoc);
-            threadDoc.setContent(quillUtils.quillStringToString(post.getContent()));
+            threadDoc.setContent(tipTapUtils.extractText(post.getContent()));
             threadDoc.setCreateTime(post.getCreateTime());
             threadDoc.setUpdateTime(post.getUpdateTime());
             threadDoc.setId("POST-" + post.getPostId());
@@ -223,7 +223,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         vo.setPostId(post.getPostId());
         vo.setThreadId(post.getThreadId());
         vo.setThreadTitle(threaddMapper.getThreadTitleById(post.getThreadId()));
-        vo.setContent(quillUtils.quillDeltaFilterNonImage(post.getContent()));
+        vo.setContent(tipTapUtils.filterNonImage(post.getContent()));
         vo.setTopicId(threaddMapper.getTopicIdByThreadId(post.getThreadId()));
         vo.setCreateTime(post.getCreateTime());
         vo.setNickname(accountMapper.getAccountById(post.getAccountId()).getNickname());
