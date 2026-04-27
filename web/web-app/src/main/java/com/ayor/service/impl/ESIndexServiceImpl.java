@@ -17,7 +17,7 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class ELIndexServiceImpl implements ESIndexService {
+public class ESIndexServiceImpl implements ESIndexService {
 
     private final ThreaddRepository threaddRepository;
 
@@ -28,14 +28,13 @@ public class ELIndexServiceImpl implements ESIndexService {
      * 初始化 Elasticsearch 索引。
      */
 
-
     @Override
     public void initIndex() {
         try {
             initThreadIndex();
             initPostIndex();
         } catch (Exception e) {
-            throw new RuntimeException("索引初始化失败: " + e.getMessage());
+            throw new RuntimeException("Elastic | 索引初始化失败: " + e.getMessage());
         }
     }
     /**
@@ -58,9 +57,9 @@ public class ELIndexServiceImpl implements ESIndexService {
                 threaddRepository.saveAll(threaddService.toThreadDocs(records));
                 pageNum++;
             }
-            log.info("Thread 索引初始化成功");
+            log.info("Elastic | Thread 索引初始化成功");
         } catch (Exception e) {
-            throw new RuntimeException("Thread 索引初始化失败: " + e.getMessage());
+            throw new RuntimeException("Elastic | Thread 索引初始化失败: " + e.getMessage());
         }
     }
     /**
@@ -84,9 +83,9 @@ public class ELIndexServiceImpl implements ESIndexService {
                 threaddRepository.saveAll(postService.toThreadDoc(records));
                 pageNum++;
             }
-            log.info("Post 索引初始化成功");
+            log.info("Elastic | Post 索引初始化成功");
         } catch (Exception e) {
-            throw new RuntimeException("Post 索引初始化失败: " + e.getMessage());
+            throw new RuntimeException("Elastic | Post 索引初始化失败: " + e.getMessage());
         }
     }
 
