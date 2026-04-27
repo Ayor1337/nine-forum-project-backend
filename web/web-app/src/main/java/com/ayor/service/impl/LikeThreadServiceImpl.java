@@ -9,7 +9,7 @@ import com.ayor.mapper.AccountMapper;
 import com.ayor.mapper.LikeThreadMapper;
 import com.ayor.mapper.ThreaddMapper;
 import com.ayor.service.LikeThreadService;
-import com.ayor.util.QuillUtils;
+import com.ayor.util.TipTapUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
@@ -29,7 +29,7 @@ public class LikeThreadServiceImpl extends ServiceImpl<LikeThreadMapper, LikeThr
 
     private final ThreaddMapper threaddMapper;
 
-    private final QuillUtils quillUtils;
+    private final TipTapUtils tipTapUtils;
     /**
      * 为指定帖子记录一次点赞。
      */
@@ -88,7 +88,7 @@ public class LikeThreadServiceImpl extends ServiceImpl<LikeThreadMapper, LikeThr
         for (Threadd thread : threads) {
             ThreadVO threadVO = new ThreadVO();
             BeanUtils.copyProperties(thread, threadVO);
-            threadVO.setContent(quillUtils.quillDeltaFilterNonImage(thread.getContent()));
+            threadVO.setContent(tipTapUtils.filterNonImage(thread.getContent()));
             threadVOS.add(threadVO);
         }
 
