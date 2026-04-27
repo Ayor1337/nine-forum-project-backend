@@ -17,13 +17,13 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/thread")
+@RequestMapping("/api/threads")
 @RequiredArgsConstructor
 public class ThreadController {
 
     private final ThreaddService threaddService;
 
-    @GetMapping("get_threads")
+    @GetMapping
     public Result<PageEntity<ThreadTableVO>> getThreads(@RequestParam("page_num") Integer pageNum,
                                                         @RequestParam(value = "page_size", defaultValue = "10") Integer pageSize) {
         return Result.dataMessageHandler(() -> threaddService.getThreads(pageNum, pageSize), "获取帖子列表失败");
@@ -34,13 +34,14 @@ public class ThreadController {
         return Result.messageHandler(() -> threaddService.createThread(threadDTO));
     }
 
-    @PutMapping
-    public Result<Void> updateThread(@RequestBody ThreadDTO threadDTO) {
+    @PutMapping("/{threadId}")
+    public Result<Void> updateThread(@PathVariable("threadId") Integer threadId, @RequestBody ThreadDTO threadDTO) {
+        threadDTO.setThreadId(threadId);
         return Result.messageHandler(() -> threaddService.updateThread(threadDTO));
     }
 
-    @DeleteMapping("/{thread_id}")
-    public Result<Void> deleteThread(@PathVariable("thread_id") Integer threadId) {
+    @DeleteMapping("/{threadId}")
+    public Result<Void> deleteThread(@PathVariable("threadId") Integer threadId) {
         return Result.messageHandler(() -> threaddService.deleteThread(threadId));
     }
 

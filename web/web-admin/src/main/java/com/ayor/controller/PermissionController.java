@@ -17,13 +17,13 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/permission")
+@RequestMapping("/api/permissions")
 @RequiredArgsConstructor
 public class PermissionController {
 
     private final PermissionService permissionService;
 
-    @GetMapping("/list")
+    @GetMapping
     public Result<List<Permission>> listPermissions(@RequestParam(value = "role_id", required = false) Integer roleId) {
         return Result.dataMessageHandler(() -> permissionService.listPermissions(roleId), "获取权限列表失败");
     }
@@ -33,15 +33,15 @@ public class PermissionController {
         return Result.messageHandler(() -> permissionService.createPermission(permission));
     }
 
-    @PutMapping("/{permission_id}")
-    public Result<Void> updatePermission(@PathVariable("permission_id") Integer permissionId,
+    @PutMapping("/{permissionId}")
+    public Result<Void> updatePermission(@PathVariable("permissionId") Integer permissionId,
                                          @RequestBody Permission permission) {
         permission.setPermissionId(permissionId);
         return Result.messageHandler(() -> permissionService.updatePermission(permission));
     }
 
-    @DeleteMapping("/{permission_id}")
-    public Result<Void> deletePermission(@PathVariable("permission_id") Integer permissionId) {
+    @DeleteMapping("/{permissionId}")
+    public Result<Void> deletePermission(@PathVariable("permissionId") Integer permissionId) {
         return Result.messageHandler(() -> permissionService.deletePermission(permissionId));
     }
 }

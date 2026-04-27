@@ -13,21 +13,21 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/topic_chat")
+@RequestMapping("/api/topic_chats")
 @RequiredArgsConstructor
 public class TopicChatController {
 
     private final TopicChatService topicChatService;
 
-    @GetMapping("/list")
+    @GetMapping
     public Result<PageEntity<TopicChat>> listTopicChats(@RequestParam("page_num") Integer pageNum,
                                                         @RequestParam(value = "page_size", defaultValue = "10") Integer pageSize,
                                                         @RequestParam(value = "topic_id", required = false) Integer topicId) {
         return Result.dataMessageHandler(() -> topicChatService.getTopicChats(topicId, pageNum, pageSize), "获取话题聊天记录失败");
     }
 
-    @DeleteMapping("/{topic_chat_id}")
-    public Result<Void> deleteTopicChat(@PathVariable("topic_chat_id") Integer topicChatId) {
+    @DeleteMapping("/{topicChatId}")
+    public Result<Void> deleteTopicChat(@PathVariable("topicChatId") Integer topicChatId) {
         return Result.messageHandler(() -> topicChatService.deleteTopicChat(topicChatId));
     }
 }

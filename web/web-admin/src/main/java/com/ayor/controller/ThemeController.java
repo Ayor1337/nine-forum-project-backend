@@ -17,13 +17,13 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/theme")
+@RequestMapping("/api/themes")
 @RequiredArgsConstructor
 public class ThemeController {
 
     private final ThemeService themeService;
 
-    @GetMapping("/get_themes")
+    @GetMapping
     public Result<PageEntity<ThemeVO>> getThemes(@RequestParam(name = "page_num") Integer pageNum,
                                                  @RequestParam(name = "page_size", defaultValue = "10") Integer pageSize) {
         return Result.dataMessageHandler(() -> themeService.getThemes(pageNum, pageSize), "获取失败");
@@ -34,13 +34,14 @@ public class ThemeController {
         return Result.messageHandler(() -> themeService.createTheme(themeDTO));
     }
 
-    @PutMapping
-    public Result<Void> updateTheme(@RequestBody ThemeDTO themeDTO) {
+    @PutMapping("/{themeId}")
+    public Result<Void> updateTheme(@PathVariable("themeId") Integer themeId, @RequestBody ThemeDTO themeDTO) {
+        themeDTO.setThemeId(themeId);
         return Result.messageHandler(() -> themeService.updateTheme(themeDTO));
     }
 
-    @DeleteMapping("/{theme_id}")
-    public Result<Void> deleteTheme(@PathVariable("theme_id") Integer themeId) {
+    @DeleteMapping("/{themeId}")
+    public Result<Void> deleteTheme(@PathVariable("themeId") Integer themeId) {
         return Result.messageHandler(() -> themeService.deleteTheme(themeId));
     }
 

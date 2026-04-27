@@ -15,25 +15,21 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
-
 @RestController
-@RequestMapping("/api/tag")
+@RequestMapping("/api/tags")
 @RequiredArgsConstructor
 public class TagController {
 
     private final TagService tagService;
 
-    @GetMapping("/list")
-    public Result<List<Tag>> listTags(@RequestParam(value = "topic_id", required = false) Integer topicId) {
+    @GetMapping
+    public Result<?> listTags(@RequestParam(value = "topic_id", required = false) Integer topicId,
+                              @RequestParam(value = "page_num", required = false) Integer pageNum,
+                              @RequestParam(value = "page_size", defaultValue = "10") Integer pageSize) {
+        if (pageNum != null) {
+            return Result.dataMessageHandler(() -> tagService.pageTags(pageNum, pageSize, topicId), "分页查询标签失败");
+        }
         return Result.dataMessageHandler(() -> tagService.listTags(topicId), "获取标签列表失败");
-    }
-
-    @GetMapping("/page")
-    public Result<PageEntity<Tag>> pageTags(@RequestParam("page_num") Integer pageNum,
-                                            @RequestParam(value = "page_size", defaultValue = "10") Integer pageSize,
-                                            @RequestParam(value = "topic_id", required = false) Integer topicId) {
-        return Result.dataMessageHandler(() -> tagService.pageTags(pageNum, pageSize, topicId), "分页查询标签失败");
     }
 
     @PostMapping
@@ -41,14 +37,14 @@ public class TagController {
         return Result.messageHandler(() -> tagService.createTag(tag));
     }
 
-    @PutMapping("/{tag_id}")
-    public Result<Void> updateTag(@PathVariable("tag_id") Integer tagId, @RequestBody Tag tag) {
+    @PutMapping("/{tagId}")
+    public Result<Void> updateTag(@PathVariable("tagId") Integer tagId, @RequestBody Tag tag) {
         tag.setTagId(tagId);
         return Result.messageHandler(() -> tagService.updateTag(tag));
     }
 
-    @DeleteMapping("/{tag_id}")
-    public Result<Void> deleteTag(@PathVariable("tag_id") Integer tagId) {
+    @DeleteMapping("/{tagId}")
+    public Result<Void> deleteTag(@PathVariable("tagId") Integer tagId) {
         return Result.messageHandler(() -> tagService.deleteTag(tagId));
     }
 }

@@ -10,13 +10,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/broadcast")
+@RequestMapping("/api/user_broadcasts")
 @RequiredArgsConstructor
 public class BroadcastController {
 
     private final RabbitTemplate rabbitTemplate;
 
-    @PostMapping("/user")
+    @PostMapping
     public Result<Void> test(@RequestBody UserSystemMessage<String> message) {
         rabbitTemplate.convertAndSend("broadcast.direct", "broadcast", message);
         return Result.ok();

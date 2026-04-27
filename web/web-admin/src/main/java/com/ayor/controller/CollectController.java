@@ -13,13 +13,13 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/collect")
+@RequestMapping("/api/collects")
 @RequiredArgsConstructor
 public class CollectController {
 
     private final CollectService collectService;
 
-    @GetMapping("/list")
+    @GetMapping
     public Result<PageEntity<Collect>> listCollects(@RequestParam("page_num") Integer pageNum,
                                                     @RequestParam(value = "page_size", defaultValue = "10") Integer pageSize,
                                                     @RequestParam(value = "thread_id", required = false) Integer threadId,
@@ -27,8 +27,8 @@ public class CollectController {
         return Result.dataMessageHandler(() -> collectService.getCollects(pageNum, pageSize, threadId, accountId), "获取收藏记录失败");
     }
 
-    @DeleteMapping("/{collect_id}")
-    public Result<Void> deleteCollect(@PathVariable("collect_id") Integer collectId) {
+    @DeleteMapping("/{collectId}")
+    public Result<Void> deleteCollect(@PathVariable("collectId") Integer collectId) {
         return Result.messageHandler(() -> collectService.deleteCollect(collectId));
     }
 }
