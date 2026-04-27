@@ -23,23 +23,35 @@ public class ThemeController {
 
     private final ThemeService themeService;
 
+    /**
+     * 分页查询主题列表。
+     */
     @GetMapping
     public Result<PageEntity<ThemeVO>> getThemes(@RequestParam(name = "page_num") Integer pageNum,
                                                  @RequestParam(name = "page_size", defaultValue = "10") Integer pageSize) {
         return Result.dataMessageHandler(() -> themeService.getThemes(pageNum, pageSize), "获取失败");
     }
 
+    /**
+     * 创建主题。
+     */
     @PostMapping
     public Result<Void> createTheme(@RequestBody ThemeDTO themeDTO) {
         return Result.messageHandler(() -> themeService.createTheme(themeDTO));
     }
 
+    /**
+     * 更新指定主题。
+     */
     @PutMapping("/{themeId}")
     public Result<Void> updateTheme(@PathVariable("themeId") Integer themeId, @RequestBody ThemeDTO themeDTO) {
         themeDTO.setThemeId(themeId);
         return Result.messageHandler(() -> themeService.updateTheme(themeDTO));
     }
 
+    /**
+     * 删除指定主题。
+     */
     @DeleteMapping("/{themeId}")
     public Result<Void> deleteTheme(@PathVariable("themeId") Integer themeId) {
         return Result.messageHandler(() -> themeService.deleteTheme(themeId));

@@ -43,6 +43,9 @@ public class SecurityConfiguration {
     private JWTAuthorizeFilter jwtAuthorizeFilter;
 
 
+    /**
+     * 构建管理端的安全过滤链，挂载登录、登出、异常处理和 JWT 授权过滤器。
+     */
     @Bean
     SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         return http
@@ -73,6 +76,9 @@ public class SecurityConfiguration {
                 .build();
     }
 
+    /**
+     * 登录成功后签发 JWT，并把账号基础信息一起返回给前端。
+     */
     public void onAuthenticationSuccess(HttpServletRequest req,
                                         HttpServletResponse resp,
                                         Authentication  auth) throws IOException {
@@ -88,6 +94,9 @@ public class SecurityConfiguration {
         resp.getWriter().write(Result.ok(authorizeVO).toJSONString());
     }
 
+    /**
+     * 登录失败时返回统一的认证错误响应。
+     */
     public void onAuthenticationFailure(HttpServletRequest req,
                                         HttpServletResponse resp,
                                         AuthenticationException exception) throws IOException, ServletException {
@@ -96,6 +105,9 @@ public class SecurityConfiguration {
         resp.getWriter().write(Result.fail(401, exception.getMessage()).toJSONString());
     }
 
+    /**
+     * 退出登录时失效当前 JWT，并返回退出结果。
+     */
     public void onLogoutSuccess(HttpServletRequest req,
                                 HttpServletResponse resp,
                                 Authentication auth) throws IOException, ServletException {
@@ -111,6 +123,9 @@ public class SecurityConfiguration {
         }
     }
 
+    /**
+     * 权限不足时返回统一错误响应。
+     */
     public void onAccessDeny(HttpServletRequest req,
                              HttpServletResponse resp,
                              AccessDeniedException e) throws IOException, ServletException {
@@ -119,6 +134,9 @@ public class SecurityConfiguration {
         resp.getWriter().write(Result.fail(403, "权限不足, 请联系管理员").toJSONString());
     }
 
+    /**
+     * 未认证时返回统一错误响应。
+     */
     public void onUnauthorized(HttpServletRequest req,
                                HttpServletResponse resp,
                                AuthenticationException e) throws IOException {

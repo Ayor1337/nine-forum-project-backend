@@ -15,6 +15,9 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class TopicStatServiceImpl extends ServiceImpl<TopicStatMapper, TopicStat> implements TopicStatService {
 
+    /**
+     * 分页查询话题统计数据，可按话题 ID 过滤。
+     */
     @Override
     public PageEntity<TopicStat> getTopicStats(Integer pageNum, Integer pageSize, Integer topicId) {
         Page<TopicStat> page = this.lambdaQuery()
@@ -23,6 +26,9 @@ public class TopicStatServiceImpl extends ServiceImpl<TopicStatMapper, TopicStat
         return new PageEntity<>(page.getTotal(), page.getRecords());
     }
 
+    /**
+     * 更新话题统计记录中已填写的字段。
+     */
     @Override
     public String updateTopicStat(Integer statId, TopicStat topicStat) {
         if (statId == null) {

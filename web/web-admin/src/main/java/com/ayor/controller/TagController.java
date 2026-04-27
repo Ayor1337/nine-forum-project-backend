@@ -22,6 +22,9 @@ public class TagController {
 
     private final TagService tagService;
 
+    /**
+     * 查询标签列表，支持按话题过滤；传入分页参数时返回分页结果。
+     */
     @GetMapping
     public Result<?> listTags(@RequestParam(value = "topic_id", required = false) Integer topicId,
                               @RequestParam(value = "page_num", required = false) Integer pageNum,
@@ -32,17 +35,26 @@ public class TagController {
         return Result.dataMessageHandler(() -> tagService.listTags(topicId), "获取标签列表失败");
     }
 
+    /**
+     * 创建标签。
+     */
     @PostMapping
     public Result<Void> createTag(@RequestBody Tag tag) {
         return Result.messageHandler(() -> tagService.createTag(tag));
     }
 
+    /**
+     * 更新指定标签。
+     */
     @PutMapping("/{tagId}")
     public Result<Void> updateTag(@PathVariable("tagId") Integer tagId, @RequestBody Tag tag) {
         tag.setTagId(tagId);
         return Result.messageHandler(() -> tagService.updateTag(tag));
     }
 
+    /**
+     * 删除指定标签。
+     */
     @DeleteMapping("/{tagId}")
     public Result<Void> deleteTag(@PathVariable("tagId") Integer tagId) {
         return Result.messageHandler(() -> tagService.deleteTag(tagId));

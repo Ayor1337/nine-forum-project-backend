@@ -19,6 +19,9 @@ public class TopicChatController {
 
     private final TopicChatService topicChatService;
 
+    /**
+     * 分页查询话题聊天记录。
+     */
     @GetMapping
     public Result<PageEntity<TopicChat>> listTopicChats(@RequestParam("page_num") Integer pageNum,
                                                         @RequestParam(value = "page_size", defaultValue = "10") Integer pageSize,
@@ -26,6 +29,9 @@ public class TopicChatController {
         return Result.dataMessageHandler(() -> topicChatService.getTopicChats(topicId, pageNum, pageSize), "获取话题聊天记录失败");
     }
 
+    /**
+     * 删除指定话题聊天记录。
+     */
     @DeleteMapping("/{topicChatId}")
     public Result<Void> deleteTopicChat(@PathVariable("topicChatId") Integer topicChatId) {
         return Result.messageHandler(() -> topicChatService.deleteTopicChat(topicChatId));

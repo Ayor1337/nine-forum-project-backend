@@ -20,6 +20,9 @@ public class TopicStatController {
 
     private final TopicStatService topicStatService;
 
+    /**
+     * 分页查询话题统计记录，可按话题过滤。
+     */
     @GetMapping
     public Result<PageEntity<TopicStat>> listTopicStats(@RequestParam("page_num") Integer pageNum,
                                                         @RequestParam(value = "page_size", defaultValue = "10") Integer pageSize,
@@ -27,6 +30,9 @@ public class TopicStatController {
         return Result.dataMessageHandler(() -> topicStatService.getTopicStats(pageNum, pageSize, topicId), "获取话题统计失败");
     }
 
+    /**
+     * 更新指定话题统计记录。
+     */
     @PutMapping("/{statId}")
     public Result<Void> updateTopicStat(@PathVariable("statId") Integer statId,
                                         @RequestBody TopicStat topicStat) {

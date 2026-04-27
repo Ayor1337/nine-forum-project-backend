@@ -18,6 +18,9 @@ import java.util.Date;
 @RequiredArgsConstructor
 public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements PostService {
 
+    /**
+     * 分页查询某个帖子的回帖，自动排除已删除记录。
+     */
     @Override
     public PageEntity<Post> getPostsByThreadId(Integer threadId, Integer pageNum, Integer pageSize) {
         if (threadId == null) {
@@ -30,6 +33,9 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         return new PageEntity<>(page.getTotal(), page.getRecords());
     }
 
+    /**
+     * 分页查询某个用户发布的回帖，自动排除已删除记录。
+     */
     @Override
     public PageEntity<Post> getPostsByAccountId(Integer accountId, Integer pageNum, Integer pageSize) {
         if (accountId == null) {
@@ -42,6 +48,9 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         return new PageEntity<>(page.getTotal(), page.getRecords());
     }
 
+    /**
+     * 根据回帖 ID 读取单条回帖内容。
+     */
     @Override
     public Post getPostById(Integer postId) {
         if (postId == null) {
@@ -50,6 +59,9 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         return this.getById(postId);
     }
 
+    /**
+     * 创建回帖时补齐时间字段并初始化删除标记。
+     */
     @Override
     public String createPost(Post post) {
         if (post == null || post.getThreadId() == null) {
@@ -67,6 +79,9 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         return this.save(post) ? null : "创建回帖失败";
     }
 
+    /**
+     * 更新回帖内容，只覆盖管理端实际传入的字段。
+     */
     @Override
     public String updatePost(Post post) {
         if (post == null || post.getPostId() == null) {
@@ -83,6 +98,9 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         return this.updateById(exist) ? null : "更新回帖失败";
     }
 
+    /**
+     * 逻辑删除回帖。
+     */
     @Override
     public String deletePost(Integer postId) {
         if (postId == null) {

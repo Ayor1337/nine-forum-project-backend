@@ -15,6 +15,9 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class CollectServiceImpl extends ServiceImpl<CollectMapper, Collect> implements CollectService {
 
+    /**
+     * 分页查询收藏记录，可按帖子和账号组合过滤。
+     */
     @Override
     public PageEntity<Collect> getCollects(Integer pageNum, Integer pageSize, Integer threadId, Integer accountId) {
         Page<Collect> page = this.lambdaQuery()
@@ -24,6 +27,9 @@ public class CollectServiceImpl extends ServiceImpl<CollectMapper, Collect> impl
         return new PageEntity<>(page.getTotal(), page.getRecords());
     }
 
+    /**
+     * 删除指定收藏记录。
+     */
     @Override
     public String deleteCollect(Integer collectId) {
         if (collectId == null) {

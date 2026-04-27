@@ -26,6 +26,9 @@ public class AccountController {
 
     private final AccountService accountService;
 
+    /**
+     * 分页查询后台用户，支持按关键字、状态和角色过滤。
+     */
     @GetMapping
     public Result<PageEntity<AccountVO>> getAccounts(@RequestParam(value = "query", required = false) String query,
                                                      @RequestParam(value = "page_num", defaultValue = "1") Integer pageNum,
@@ -38,22 +41,34 @@ public class AccountController {
         return Result.dataMessageHandler(() -> accountService.getAccounts(query, pageNum, pageSize, status), "获取用户列表失败");
     }
 
+    /**
+     * 读取单个用户的详细信息。
+     */
     @GetMapping("/{accountId}")
     public Result<AccountVO> getAccountById(@PathVariable("accountId") Integer accountId) {
         return Result.dataMessageHandler(() -> accountService.getAccountById(accountId), "获取用户失败");
     }
 
+    /**
+     * 获取用户下拉选项，供表单联动选择使用。
+     */
     @GetMapping("/options")
     public Result<List<AccountVO>> listUsers(@RequestParam(name = "query", required = false) String query) {
         return Result.dataMessageHandler(() -> accountService.getAccountsAsSelectOptions(query), "获取用户列表失败");
     }
 
+    /**
+     * 对指定用户执行违规处理。
+     */
     @PostMapping("/{accountId}/violations")
     public Result<Void> violationProfile(@PathVariable("accountId") Integer accountId,
                                          @RequestParam(name = "type") String type) {
         return Result.messageHandler(() -> accountService.violationProfile(accountId, type));
     }
 
+    /**
+     * 更新指定用户的后台资料。
+     */
     @PutMapping("/{accountId}")
     public Result<Void> updateAccount(@PathVariable("accountId") Integer accountId,
                                       @RequestBody @Valid AccountDTO accountDTO) {
@@ -61,6 +76,9 @@ public class AccountController {
         return Result.messageHandler(() -> accountService.updateAccount(accountDTO));
     }
 
+    /**
+     * 删除指定用户。
+     */
     @DeleteMapping("/{accountId}")
     public Result<Void> deleteAccount(@PathVariable("accountId") Integer accountId) {
         return Result.messageHandler(() -> accountService.deleteAccount(accountId));

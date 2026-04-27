@@ -13,6 +13,9 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 public class TopicChatServiceImpl extends ServiceImpl<TopicChatMapper, TopicChat> implements TopicChatService {
 
+    /**
+     * 分页查询话题聊天记录，可按话题过滤。
+     */
     @Override
     public PageEntity<TopicChat> getTopicChats(Integer topicId, Integer pageNum, Integer pageSize) {
         Page<TopicChat> page = this.lambdaQuery()
@@ -21,6 +24,9 @@ public class TopicChatServiceImpl extends ServiceImpl<TopicChatMapper, TopicChat
         return new PageEntity<>(page.getTotal(), page.getRecords());
     }
 
+    /**
+     * 删除指定的话题聊天记录。
+     */
     @Override
     public String deleteTopicChat(Integer topicChatId) {
         if (topicChatId == null) {

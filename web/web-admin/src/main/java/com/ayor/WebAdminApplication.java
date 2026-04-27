@@ -9,6 +9,9 @@ import org.springframework.cache.annotation.EnableCaching;
 @MapperScan("com.ayor.mapper")
 @EnableCaching
 public class WebAdminApplication {
+    /**
+     * 启动 Web Admin 应用。
+     */
     public static void main(String[] args) {
         SpringApplication.run(WebAdminApplication.class, args);
     }

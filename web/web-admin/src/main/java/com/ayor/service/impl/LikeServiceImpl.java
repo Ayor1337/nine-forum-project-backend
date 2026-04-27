@@ -14,6 +14,9 @@ import org.springframework.transaction.annotation.Transactional;
 public class LikeServiceImpl extends ServiceImpl<LikeMapper, LikeThread> implements LikeService {
 
 
+    /**
+     * 分页查询点赞记录，可按帖子和账号组合过滤。
+     */
     @Override
     public PageEntity<LikeThread> getLikes(Integer pageNum, Integer pageSize, Integer threadId, Integer accountId) {
         Page<LikeThread> page = this.lambdaQuery()
@@ -23,6 +26,9 @@ public class LikeServiceImpl extends ServiceImpl<LikeMapper, LikeThread> impleme
         return new PageEntity<>(page.getTotal(), page.getRecords());
     }
 
+    /**
+     * 删除指定点赞记录。
+     */
     @Override
     public String deleteLike(Integer likeId) {
         if (likeId == null) {

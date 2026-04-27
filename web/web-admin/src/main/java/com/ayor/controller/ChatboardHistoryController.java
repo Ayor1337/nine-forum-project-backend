@@ -19,6 +19,9 @@ public class ChatboardHistoryController {
 
     private final ChatboardHistoryService chatboardHistoryService;
 
+    /**
+     * 分页查询聊天板历史记录，可按话题过滤。
+     */
     @GetMapping
     public Result<PageEntity<ChatboardHistory>> listHistories(@RequestParam("page_num") Integer pageNum,
                                                               @RequestParam(value = "page_size", defaultValue = "10") Integer pageSize,
@@ -26,6 +29,9 @@ public class ChatboardHistoryController {
         return Result.dataMessageHandler(() -> chatboardHistoryService.getHistories(topicId, pageNum, pageSize), "获取聊天记录失败");
     }
 
+    /**
+     * 删除指定聊天板历史记录。
+     */
     @DeleteMapping("/{historyId}")
     public Result<Void> deleteHistory(@PathVariable("historyId") Integer historyId) {
         return Result.messageHandler(() -> chatboardHistoryService.deleteHistory(historyId));

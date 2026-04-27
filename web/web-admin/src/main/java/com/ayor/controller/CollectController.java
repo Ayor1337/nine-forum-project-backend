@@ -19,6 +19,9 @@ public class CollectController {
 
     private final CollectService collectService;
 
+    /**
+     * 分页查询收藏记录，可按帖子或用户过滤。
+     */
     @GetMapping
     public Result<PageEntity<Collect>> listCollects(@RequestParam("page_num") Integer pageNum,
                                                     @RequestParam(value = "page_size", defaultValue = "10") Integer pageSize,
@@ -27,6 +30,9 @@ public class CollectController {
         return Result.dataMessageHandler(() -> collectService.getCollects(pageNum, pageSize, threadId, accountId), "获取收藏记录失败");
     }
 
+    /**
+     * 删除指定收藏记录。
+     */
     @DeleteMapping("/{collectId}")
     public Result<Void> deleteCollect(@PathVariable("collectId") Integer collectId) {
         return Result.messageHandler(() -> collectService.deleteCollect(collectId));

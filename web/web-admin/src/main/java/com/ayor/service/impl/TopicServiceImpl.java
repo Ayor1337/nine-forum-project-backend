@@ -24,6 +24,9 @@ import java.util.List;
 public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements TopicService {
 
 
+    /**
+     * 分页查询全部话题，并转换为管理端展示对象。
+     */
     @Override
     public PageEntity<TopicVO> getTopics(Integer pageNum, Integer pageSize) {
         if (pageNum == null || pageNum < 1)
@@ -32,6 +35,9 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
         return new PageEntity<>(page.getTotal(), toVOList(page.getRecords()));
     }
 
+    /**
+     * 按主题分页查询话题，用于主题下的话题管理页面。
+     */
     @Override
     public PageEntity<TopicVO> getTopicsByThemeId(Integer themeId, Integer pageNum, Integer pageSize) {
         if (pageNum == null || pageNum < 1 || themeId == null)
@@ -42,6 +48,9 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
         return new PageEntity<>(page.getTotal(), toVOList(page.getRecords()));
     }
 
+    /**
+     * 获取话题下拉选项，最多返回最近创建的 10 条匹配结果。
+     */
     @Override
     public List<TopicVO> getTopicsAsOptions(String query) {
         List<Topic> topics = this.lambdaQuery()
@@ -52,6 +61,9 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
         return toVOList(topics);
     }
 
+    /**
+     * 创建话题时补齐创建时间并初始化删除标记。
+     */
     @Override
     public String createTopic(TopicDTO topicDTO) {
         if (topicDTO == null || !StringUtils.hasText(topicDTO.getTitle())) {
@@ -66,6 +78,9 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
         return this.save(topic) ? null : "创建话题失败";
     }
 
+    /**
+     * 更新话题信息，保留原始创建时间。
+     */
     @Override
     public String updateTopic(TopicDTO topicDTO) {
         if (topicDTO == null || topicDTO.getTopicId() == null) {
@@ -83,6 +98,9 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
         return this.updateById(topic) ? null : "更新话题失败";
     }
 
+    /**
+     * 逻辑删除话题。
+     */
     @Override
     public String deleteTopic(Integer topicId) {
         if (topicId == null) {
@@ -96,6 +114,9 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
         return this.updateById(topic) ? null : "删除话题失败";
     }
 
+    /**
+     * 将话题实体列表转换成管理端展示对象列表。
+     */
     private List<TopicVO> toVOList(List<Topic> topicList) {
         List<TopicVO> topicVOList = new ArrayList<>();
         topicList.forEach(topic -> {

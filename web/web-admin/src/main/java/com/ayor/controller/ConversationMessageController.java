@@ -17,6 +17,9 @@ public class ConversationMessageController {
 
     private final ConversationMessageService conversationMessageService;
 
+    /**
+     * 分页查询某个会话下的消息。
+     */
     @GetMapping("/api/conversations/{conversationId}/messages")
     public Result<PageEntity<ConversationMessage>> listMessages(@PathVariable("conversationId") Integer conversationId,
                                                                 @RequestParam("page_num") Integer pageNum,
@@ -24,6 +27,9 @@ public class ConversationMessageController {
         return Result.dataMessageHandler(() -> conversationMessageService.getMessages(conversationId, pageNum, pageSize), "获取会话消息失败");
     }
 
+    /**
+     * 删除指定消息。
+     */
     @DeleteMapping("/api/conversation_messages/{messageId}")
     public Result<Void> deleteMessage(@PathVariable("messageId") Integer messageId) {
         return Result.messageHandler(() -> conversationMessageService.deleteMessage(messageId));

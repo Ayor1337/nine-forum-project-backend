@@ -15,6 +15,9 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class ChatboardHistoryServiceImpl extends ServiceImpl<ChatboardHistoryMapper, ChatboardHistory> implements ChatboardHistoryService {
 
+    /**
+     * 分页查询聊天板历史记录，可按话题过滤。
+     */
     @Override
     public PageEntity<ChatboardHistory> getHistories(Integer topicId, Integer pageNum, Integer pageSize) {
         Page<ChatboardHistory> page = this.lambdaQuery()
@@ -23,6 +26,9 @@ public class ChatboardHistoryServiceImpl extends ServiceImpl<ChatboardHistoryMap
         return new PageEntity<>(page.getTotal(), page.getRecords());
     }
 
+    /**
+     * 物理删除指定聊天板历史记录。
+     */
     @Override
     public String deleteHistory(Integer historyId) {
         if (historyId == null) {

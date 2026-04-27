@@ -20,6 +20,9 @@ public class AccountStatController {
 
     private final AccountStatService accountStatService;
 
+    /**
+     * 分页查询用户统计记录，可按用户过滤。
+     */
     @GetMapping
     public Result<PageEntity<AccountStat>> listAccountStats(@RequestParam("page_num") Integer pageNum,
                                                             @RequestParam(value = "page_size", defaultValue = "10") Integer pageSize,
@@ -27,6 +30,9 @@ public class AccountStatController {
         return Result.dataMessageHandler(() -> accountStatService.getAccountStats(pageNum, pageSize, accountId), "获取用户统计失败");
     }
 
+    /**
+     * 更新指定用户统计记录。
+     */
     @PutMapping("/{statId}")
     public Result<Void> updateAccountStat(@PathVariable("statId") Integer statId,
                                           @RequestBody AccountStat accountStat) {
