@@ -239,20 +239,41 @@ Query 参数：
 
 `GET /api/users/{user_id}/threads` 使用 `page` 与 `page_size`。
 
+帖子与回复的 `content` 使用 TipTap JSON 字符串，不再使用 Quill Delta。后端保存时会递归查找 TipTap 图片节点 `{"type":"image","attrs":{"src":"..."}}`：如果 `src` 是 `data:image/...;base64,...`，会上传到对象存储并替换为 URL；如果已经是 URL，则原样保留。
+
 `ThreadDTO`：
 
 | 字段 | 类型 | 必填 | 约束 |
 | --- | --- | --- | --- |
 | `title` | String | 是 | 长度 1-50 |
-| `content` | String | 是 | - |
+| `content` | String | 是 | TipTap JSON 字符串 |
 | `topicId` | Integer | 是 | 话题 ID |
+
+发布帖子请求示例：
+
+```json
+{
+  "title": "TipTap 示例",
+  "topicId": 1,
+  "content": "{\"type\":\"doc\",\"content\":[{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"hello world\"}]},{\"type\":\"image\",\"attrs\":{\"src\":\"data:image/png;base64,AAAA\"}}]}"
+}
+```
 
 `PostDTO`：
 
 | 字段 | 类型 | 必填 | 说明 |
 | --- | --- | --- | --- |
-| `content` | String | 是 | 回复内容 |
+| `content` | String | 是 | TipTap JSON 字符串 |
 | `threadId` | Integer | 否 | 由路径 `{thread_id}` 覆盖 |
+
+发布回复请求示例：
+
+```json
+{
+  "content": "{\"type\":\"doc\",\"content\":[{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"这是一条回复\"}]},{\"type\":\"image\",\"attrs\":{\"src\":\"https://cdn.example.com/a.png\"}}]}",
+  "threadId": 1
+}
+```
 
 ## 版主管理接口
 
