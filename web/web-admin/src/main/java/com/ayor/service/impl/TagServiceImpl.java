@@ -17,13 +17,19 @@ import java.util.List;
 @Transactional
 public class TagServiceImpl extends ServiceImpl<TagMapper, Tag> implements TagService {
 
+    /**
+     * 列出某个话题下的全部标签；话题 ID 为空时返回全部标签。
+     */
     @Override
     public List<Tag> listTags(Integer topicId) {
         return this.lambdaQuery()
                 .eq(topicId != null, Tag::getTopicId, topicId)
-                .list();
+        .list();
     }
 
+    /**
+     * 分页查询标签，并支持按话题过滤。
+     */
     @Override
     public PageEntity<Tag> pageTags(Integer pageNum, Integer pageSize, Integer topicId) {
         Page<Tag> page = this.lambdaQuery()
@@ -32,6 +38,9 @@ public class TagServiceImpl extends ServiceImpl<TagMapper, Tag> implements TagSe
         return new PageEntity<>(page.getTotal(), page.getRecords());
     }
 
+    /**
+     * 创建标签时补齐创建时间并校验所属话题是否存在。
+     */
     @Override
     public String createTag(Tag tag) {
         if (tag == null || !StringUtils.hasText(tag.getTag())) {
@@ -46,6 +55,9 @@ public class TagServiceImpl extends ServiceImpl<TagMapper, Tag> implements TagSe
         return this.save(tag) ? null : "创建标签失败";
     }
 
+    /**
+     * 更新标签名称或所属话题。
+     */
     @Override
     public String updateTag(Tag tag) {
         if (tag == null || tag.getTagId() == null) {
@@ -64,6 +76,9 @@ public class TagServiceImpl extends ServiceImpl<TagMapper, Tag> implements TagSe
         return this.updateById(exist) ? null : "更新标签失败";
     }
 
+    /**
+     * 删除指定标签。
+     */
     @Override
     public String deleteTag(Integer tagId) {
         if (tagId == null) {

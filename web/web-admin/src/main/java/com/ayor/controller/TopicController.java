@@ -23,6 +23,9 @@ public class TopicController {
 
     private final TopicService topicService;
 
+    /**
+     * 分页查询话题列表。
+     */
     @GetMapping
     public Result<PageEntity<TopicVO>> getTopics(@RequestParam("page_num") Integer pageNum,
                                                  @RequestParam(value = "page_size", defaultValue = "10") Integer pageSize,
@@ -33,23 +36,35 @@ public class TopicController {
         return Result.dataMessageHandler(() -> topicService.getTopics(pageNum, pageSize), "获取话题列表失败");
     }
 
+    /**
+     * 获取话题下拉选项。
+     */
     @GetMapping("/options")
     public Result<PageEntity<TopicVO>> getTopicsAsOptions(@RequestParam("page_num") Integer pageNum,
                                                  @RequestParam(value = "page_size", defaultValue = "10") Integer pageSize) {
         return Result.dataMessageHandler(() -> topicService.getTopics(pageNum, pageSize), "获取话题列表失败");
     }
 
+    /**
+     * 创建话题。
+     */
     @PostMapping
     public Result<Void> createTopic(@RequestBody TopicDTO topicDTO) {
         return Result.messageHandler(() -> topicService.createTopic(topicDTO));
     }
 
+    /**
+     * 更新指定话题。
+     */
     @PutMapping("/{topicId}")
     public Result<Void> updateTopic(@PathVariable("topicId") Integer topicId, @RequestBody TopicDTO topicDTO) {
         topicDTO.setTopicId(topicId);
         return Result.messageHandler(() -> topicService.updateTopic(topicDTO));
     }
 
+    /**
+     * 删除指定话题。
+     */
     @DeleteMapping("/{topicId}")
     public Result<Void> deleteTopic(@PathVariable("topicId") Integer topicId) {
         return Result.messageHandler(() -> topicService.deleteTopic(topicId));

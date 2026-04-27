@@ -36,6 +36,9 @@ public class JWTAuthorizeFilter extends OncePerRequestFilter {
     @Resource
     private RoleMapper roleMapper;
 
+    /**
+     * 从请求头或 Cookie 中恢复 JWT，并把账号、角色和权限写回 Spring Security 上下文。
+     */
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,

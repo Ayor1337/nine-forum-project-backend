@@ -15,6 +15,9 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class AccountStatServiceImpl extends ServiceImpl<AccountStatMapper, AccountStat> implements AccountStatService {
 
+    /**
+     * 分页查询用户统计记录，可按账号 ID 过滤。
+     */
     @Override
     public PageEntity<AccountStat> getAccountStats(Integer pageNum, Integer pageSize, Integer accountId) {
         Page<AccountStat> page = this.lambdaQuery()
@@ -23,6 +26,9 @@ public class AccountStatServiceImpl extends ServiceImpl<AccountStatMapper, Accou
         return new PageEntity<>(page.getTotal(), page.getRecords());
     }
 
+    /**
+     * 仅更新管理端传入的非空统计字段，避免把未填写项覆盖掉原值。
+     */
     @Override
     public String updateAccountStat(Integer statId, AccountStat accountStat) {
         if (statId == null) {

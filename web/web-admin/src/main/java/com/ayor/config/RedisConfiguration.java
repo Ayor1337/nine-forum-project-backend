@@ -17,6 +17,9 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 @Slf4j
 public class RedisConfiguration {
 
+    /**
+     * 创建默认 Redis 连接工厂，供业务 RedisTemplate 使用。
+     */
     @Bean("defaultRedisConnectionFactory")
     public RedisConnectionFactory defaultRedisConnectionFactory (RedisProperties redisProperties) {
         RedisStandaloneConfiguration config = new RedisStandaloneConfiguration();
@@ -33,11 +36,17 @@ public class RedisConfiguration {
         return new LettuceConnectionFactory(config);
     }
 
+    /**
+     * 创建字符串类型的 RedisTemplate。
+     */
     @Bean("redisTemplate")
     public StringRedisTemplate stringRedisTemplate (@Qualifier("defaultRedisConnectionFactory") RedisConnectionFactory redisConnectionFactory) {
         return new StringRedisTemplate(redisConnectionFactory);
     }
 
+    /**
+     * 创建缓存专用 Redis 连接工厂，使用独立数据库避免和业务数据互相影响。
+     */
     @Bean("cacheRedisConnectionFactory")
     public RedisConnectionFactory cacheRedisConnectionFactory(RedisProperties redisProperties) {
         RedisStandaloneConfiguration config = new RedisStandaloneConfiguration();
@@ -55,6 +64,9 @@ public class RedisConfiguration {
         return new LettuceConnectionFactory(config);
     }
 
+    /**
+     * 创建 RedisCacheManager，供 Spring Cache 使用。
+     */
     @Bean
     public RedisCacheManager cacheManager(@Qualifier("cacheRedisConnectionFactory") RedisConnectionFactory redisConnectionFactory) {
         return RedisCacheManager.builder(redisConnectionFactory)

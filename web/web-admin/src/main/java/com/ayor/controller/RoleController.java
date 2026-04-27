@@ -24,22 +24,34 @@ public class RoleController {
     private final RoleService roleService;
 
 
+    /**
+     * 查询全部角色及其关联话题。
+     */
     @GetMapping
     public Result<List<RoleVO>> getRoles() {
         return Result.dataMessageHandler(roleService::getRoles, "获取角色列表失败");
     }
 
+    /**
+     * 创建角色。
+     */
     @PostMapping
     public Result<Void> createRole(@RequestBody RoleDTO roleDTO) {
         return Result.messageHandler(() -> roleService.createRole(roleDTO));
     }
 
+    /**
+     * 更新指定角色。
+     */
     @PutMapping("/{roleId}")
     public Result<Void> updateRole(@PathVariable("roleId") Integer roleId, @RequestBody RoleDTO roleDTO) {
         roleDTO.setRoleId(roleId);
         return Result.messageHandler(() -> roleService.updateRole(roleDTO));
     }
 
+    /**
+     * 删除指定角色。
+     */
     @DeleteMapping("/{roleId}")
     public Result<Void> deleteRole(@PathVariable("roleId") Integer roleId) {
         return Result.messageHandler(() -> roleService.deleteRole(roleId));

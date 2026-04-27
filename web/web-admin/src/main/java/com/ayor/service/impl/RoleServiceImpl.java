@@ -23,6 +23,9 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
 
     private final TopicMapper topicMapper;
 
+    /**
+     * 查询全部角色，并补充其绑定的话题名称，供管理端展示使用。
+     */
     @Override
     public List<RoleVO> getRoles() {
         List<Role> roles = this.lambdaQuery().list();
@@ -36,6 +39,9 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
         return roleVos;
     }
 
+    /**
+     * 创建新角色，并保存其关联的话题配置。
+     */
     @Override
     public String createRole(RoleDTO roleDTO) {
         if (roleDTO == null || !StringUtils.hasText(roleDTO.getRoleName())) {
@@ -46,6 +52,9 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
         return this.save(role) ? null : "创建角色失败";
     }
 
+    /**
+     * 更新角色信息，保持角色主键不变。
+     */
     @Override
     public String updateRole(RoleDTO roleDTO) {
         if (roleDTO == null || roleDTO.getRoleId() == null) {
@@ -59,6 +68,9 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
         return this.updateById(role) ? null : "更新角色失败";
     }
 
+    /**
+     * 删除指定角色。
+     */
     @Override
     public String deleteRole(Integer roleId) {
         if (roleId == null) {
