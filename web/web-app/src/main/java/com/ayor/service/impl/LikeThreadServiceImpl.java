@@ -96,6 +96,9 @@ public class LikeThreadServiceImpl extends ServiceImpl<LikeThreadMapper, LikeThr
         List<LikeThread> likeThreads = likePage.getRecords();
         List<Integer> threadIds = new ArrayList<>();
         likeThreads.forEach(like -> threadIds.add(like.getThreadId()));
+        if (threadIds.isEmpty()) {
+            return new PageEntity<>(likePage.getTotal(), new ArrayList<>());
+        }
         List<Threadd> threads = threaddMapper.selectByIds(threadIds);
         List<ThreadVO> threadVOS = new ArrayList<>();
         for (Threadd thread : threads) {

@@ -117,6 +117,9 @@ public class CollectServiceImpl extends ServiceImpl<CollectMapper, Collect> impl
                 .page(page).getRecords();
         List<Integer> threadIds = new ArrayList<>();
         collects.forEach(collect -> threadIds.add(collect.getThreadId()));
+        if (threadIds.isEmpty()) {
+            return new PageEntity<>(page.getTotal(), new ArrayList<>());
+        }
         List<Threadd> threads = threaddMapper.selectByIds(threadIds);
         List<ThreadVO> threadVOS = new ArrayList<>();
         threads.forEach(thread -> {
