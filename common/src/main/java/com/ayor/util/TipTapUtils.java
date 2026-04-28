@@ -33,7 +33,7 @@ public class TipTapUtils {
      */
     public String filterNonImage(String content) {
         JSONObject root = parseDoc(content);
-        removeImageNodes(root);
+        convertImageNodes(root);
         return JSON.toJSONString(root);
     }
 
@@ -92,22 +92,28 @@ public class TipTapUtils {
         }
     }
 
-    private void removeImageNodes(JSONObject node) {
+    private void convertImageNodes(JSONObject node) {
         JSONArray content = node.getJSONArray("content");
         if (content == null) {
             return;
         }
-        Iterator<Object> iterator = content.iterator();
-        while (iterator.hasNext()) {
-            Object child = iterator.next();
+
+        for (int i = 0; i < content.size(); i++) {
+            Object child = content.get(i);
+
             if (!(child instanceof JSONObject childNode)) {
                 continue;
             }
+
             if (isImageNode(childNode)) {
-                iterator.remove();
+                JSONObject textNode = new JSONObject();
+                textNode.put("type", "text");
+                textNode.put("text", "[图片]");
+                content.set(i, textNode);
                 continue;
             }
-            removeImageNodes(childNode);
+
+            convertImageNodes(childNode);
         }
     }
 
