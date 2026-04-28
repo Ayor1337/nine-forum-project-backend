@@ -16,15 +16,6 @@ public interface AccountMapper extends BaseMapper<Account> {
     @Select("select * from account where account_id = #{id}")
     Account getAccountById(Integer id);
 
-    @Select("select username from account where account_id = #{id}")
-    String getUsernameById(Integer id);
-
-    @Select("select nickname from account where account_id = #{id}")
-    String getNicknameById(Integer id);
-
-    @Select("select account_id from account where username = #{username}")
-    Integer getAccountIdByUsername(String username);
-
     @Select("select avatar_url from account where account_id = #{accountId}")
     String getAvatarUrlById(Integer accountId);
 
@@ -34,13 +25,5 @@ public interface AccountMapper extends BaseMapper<Account> {
      * @param accountIds 用户ID列表
      * @return 用户实体列表
      */
-    @Select({
-            "<script>",
-            "select * from account where account_id in",
-            "<foreach item='id' collection='accountIds' open='(' separator=',' close=')'>",
-            "#{id}",
-            "</foreach>",
-            "</script>"
-    })
     List<Account> getAccountsByIds(@Param("accountIds") List<Integer> accountIds);
 }
