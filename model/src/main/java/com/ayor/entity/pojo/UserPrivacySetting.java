@@ -9,6 +9,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.io.Serial;
+import java.io.Serializable;
 import java.util.Date;
 
 /**
@@ -19,7 +21,10 @@ import java.util.Date;
 @NoArgsConstructor
 @AllArgsConstructor
 @TableName("user_privacy_setting")
-public class UserPrivacySetting {
+public class UserPrivacySetting implements Serializable {
+
+    @Serial
+    private static final long serialVersionUID = 1L;
 
     @TableId
     private Integer accountId;
