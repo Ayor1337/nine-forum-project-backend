@@ -146,10 +146,18 @@ Query 参数：
 | 方法 | 路径 | 说明 | 响应 |
 | --- | --- | --- | --- |
 | GET | `/api/users/me` | 获取当前用户信息 | `Result<UserInfoVO>` |
-| GET | `/api/users/{user_id}` | 获取指定用户信息 | `Result<UserInfoVO>` |
+| GET | `/api/users/{user_id}` | 获取指定用户信息，受隐私设置约束 | `Result<UserInfoVO>` |
+| GET | `/api/users/{user_id}/followers` | 获取用户粉丝列表，受隐私设置约束 | `Result<PageEntity<UserInfoVO>>` |
+| GET | `/api/users/{user_id}/followings` | 获取用户关注列表，受隐私设置约束 | `Result<PageEntity<UserInfoVO>>` |
+| POST | `/api/users/{user_id}/follow` | 关注指定用户 | `Result<Void>` |
+| DELETE | `/api/users/{user_id}/follow` | 取消关注指定用户 | `Result<Void>` |
+| POST | `/api/users/{user_id}/block` | 拉黑指定用户 | `Result<Void>` |
+| DELETE | `/api/users/{user_id}/block` | 取消拉黑指定用户 | `Result<Void>` |
 | PUT | `/api/users/me/avatar` | 更新当前用户头像 | `Result<Void>` |
 | PUT | `/api/users/me/banner` | 更新当前用户横幅图 | `Result<Void>` |
 | PUT | `/api/users/me/profile` | 更新当前用户个人资料 | `Result<Void>` |
+| GET | `/api/users/me/privacy` | 获取当前用户隐私设置 | `Result<UserPrivacySettingVO>` |
+| PUT | `/api/users/me/privacy` | 更新当前用户隐私设置 | `Result<Void>` |
 | POST | `/api/users/me/password` | 通过旧密码更新当前账号密码 | `Result<Void>` |
 | GET | `/api/users/me/stats` | 获取当前用户统计 | `Result<AccountStatVO>` |
 
@@ -174,6 +182,17 @@ Query 参数：
 | --- | --- | --- | --- |
 | `oldPassword` | String | 是 | 当前密码 |
 | `newPassword` | String | 否 | 长度 6-16，仅字母、数字、下划线 |
+
+隐私设置请求体 `UserPrivacySettingDTO`：
+
+| 字段 | 类型 | 必填 | 可选值 |
+| --- | --- | --- | --- |
+| `profileVisibility` | String | 是 | `PUBLIC` `FOLLOWER_ONLY` `MUTUAL_FOLLOW_ONLY` `PRIVATE` |
+| `likedThreadsVisibility` | String | 是 | `PUBLIC` `FOLLOWER_ONLY` `MUTUAL_FOLLOW_ONLY` `PRIVATE` |
+| `collectedThreadsVisibility` | String | 是 | `PUBLIC` `FOLLOWER_ONLY` `MUTUAL_FOLLOW_ONLY` `PRIVATE` |
+| `followListVisibility` | String | 是 | `PUBLIC` `FOLLOWER_ONLY` `MUTUAL_FOLLOW_ONLY` `PRIVATE` |
+| `followerListVisibility` | String | 是 | `PUBLIC` `FOLLOWER_ONLY` `MUTUAL_FOLLOW_ONLY` `PRIVATE` |
+| `dmPermission` | String | 是 | `EVERYONE` `FOLLOWER_ONLY` `MUTUAL_FOLLOW_ONLY` `NOBODY` |
 
 ## 主题、话题、标签
 
@@ -300,12 +319,12 @@ Query 参数：
 | DELETE | `/api/threads/{thread_id}/likes` | 取消点赞 | 登录 | `Result<Void>` |
 | GET | `/api/threads/{thread_id}/likes/me` | 当前用户是否点赞 | 登录 | `Result<Boolean>` |
 | GET | `/api/threads/{thread_id}/likes/count` | 帖子点赞数 | 公开 | `Result<Integer>` |
-| GET | `/api/users/{user_id}/liked-threads` | 用户点赞过的帖子 | 公开 | `Result<PageEntity<ThreadVO>>` |
+| GET | `/api/users/{user_id}/liked-threads` | 用户点赞过的帖子，公开路由但受隐私设置约束 | 公开 | `Result<PageEntity<ThreadVO>>` |
 | POST | `/api/threads/{thread_id}/collections` | 收藏帖子 | 登录 | `Result<Void>` |
 | DELETE | `/api/threads/{thread_id}/collections` | 取消收藏 | 登录 | `Result<Void>` |
 | GET | `/api/threads/{thread_id}/collections/me` | 当前用户是否收藏 | 登录 | `Result<Boolean>` |
 | GET | `/api/threads/{thread_id}/collections/count` | 帖子收藏数 | 公开 | `Result<Integer>` |
-| GET | `/api/users/{user_id}/collected-threads` | 用户收藏的帖子 | 公开 | `Result<PageEntity<ThreadVO>>` |
+| GET | `/api/users/{user_id}/collected-threads` | 用户收藏的帖子，公开路由但受隐私设置约束 | 公开 | `Result<PageEntity<ThreadVO>>` |
 
 列表 Query：`page`、`page_size`，均必填。
 
@@ -341,7 +360,7 @@ Query 参数：
 | 方法 | 路径 | 说明 | 响应 |
 | --- | --- | --- | --- |
 | GET | `/api/conversations` | 获取当前用户会话列表 | `Result<List<ConversationVO>>` |
-| POST | `/api/conversations` | 按用户名创建会话 | `Result<Void>` |
+| POST | `/api/conversations` | 按用户名创建会话，受对方私信权限与拉黑状态约束 | `Result<Void>` |
 | GET | `/api/conversations/with-user/{account_id}` | 按目标账号获取会话 | `Result<ConversationVO>` |
 | DELETE | `/api/conversations/{conversation_id}` | 隐藏会话 | `Result<Void>` |
 | GET | `/api/conversations/{conversation_id}/messages` | 获取会话消息 | `Result<PageEntity<ConversationMessageVO>>` |

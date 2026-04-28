@@ -40,12 +40,14 @@ public interface LikeThreadService extends IService<LikeThread> {
 
     /**
      * 获取用户的点赞帖子列表(分页)
+     *
+     * @param viewerId 当前查看者用户ID
      * @param accountId 用户ID
      * @param currentPage 当前页码,从1开始
      * @param pageSize 每页记录数
      * @return 分页结果,包含用户点赞的帖子视图对象列表
      */
-    PageEntity<ThreadVO> getLikesByAccountId(Integer accountId, Integer currentPage, Integer pageSize);
+    PageEntity<ThreadVO> getLikesByAccountId(Integer viewerId, Integer accountId, Integer currentPage, Integer pageSize);
 
     /**
      * 获取帖子的点赞数量

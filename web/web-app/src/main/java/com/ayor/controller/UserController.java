@@ -1,11 +1,16 @@
 package com.ayor.controller;
 
 import com.ayor.entity.Base64Upload;
+import com.ayor.entity.PageEntity;
 import com.ayor.entity.app.dto.AccountProfileDTO;
 import com.ayor.entity.app.dto.PasswordChangeDTO;
+import com.ayor.entity.app.dto.UserPrivacySettingDTO;
 import com.ayor.entity.app.vo.UserInfoVO;
+import com.ayor.entity.app.vo.UserPrivacySettingVO;
 import com.ayor.result.Result;
 import com.ayor.service.AccountService;
+import com.ayor.service.UserPrivacySettingService;
+import com.ayor.service.UserRelationService;
 import com.ayor.util.SecurityUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -20,27 +25,70 @@ public class UserController {
     private final AccountService accountService;
 
     private final SecurityUtils security;
+
+    private final UserPrivacySettingService userPrivacySettingService;
+
+    private final UserRelationService userRelationService;
     /**
      * 获取当前登录用户的资料。
+     *
+     * @return 当前登录用户资料
      */
-
     @GetMapping("/me")
     public Result<UserInfoVO> getUserInfo() {
         Integer userId = security.getSecurityUserId();
         return Result.dataMessageHandler(() -> accountService.getUserInfo(userId), "获取用户信息失败,用户可能不存在");
     }
+
     /**
      * 根据用户 ID 获取公开资料。
+     *
+     * @param userId 目标用户ID
+     * @return 公开用户资料
      */
-
     @GetMapping("/{user_id}")
     public Result<UserInfoVO> getUserInfoByUserId(@PathVariable("user_id") Integer userId) {
-        return Result.dataMessageHandler(() -> accountService.getUserInfo(userId), "获取用户信息失败,用户可能不存在");
+        Integer viewerId = security.getSecurityUserId();
+        return Result.dataMessageHandler(() -> accountService.getPublicUserInfo(viewerId, userId), "获取用户信息失败,用户可能不存在");
+    }
+
+    /**
+     * 获取指定用户的粉丝列表。
+     *
+     * @param userId 目标用户ID
+     * @param page 当前页码
+     * @param pageSize 每页记录数
+     * @return 粉丝列表分页结果
+     */
+    @GetMapping("/{user_id}/followers")
+    public Result<PageEntity<UserInfoVO>> getFollowers(@PathVariable("user_id") Integer userId,
+                                                       @RequestParam("page") Integer page,
+                                                       @RequestParam("page_size") Integer pageSize) {
+        Integer viewerId = security.getSecurityUserId();
+        return Result.dataMessageHandler(() -> accountService.getFollowers(viewerId, userId, page, pageSize), "获取粉丝列表失败");
+    }
+
+    /**
+     * 获取指定用户的关注列表。
+     *
+     * @param userId 目标用户ID
+     * @param page 当前页码
+     * @param pageSize 每页记录数
+     * @return 关注列表分页结果
+     */
+    @GetMapping("/{user_id}/followings")
+    public Result<PageEntity<UserInfoVO>> getFollowings(@PathVariable("user_id") Integer userId,
+                                                        @RequestParam("page") Integer page,
+                                                        @RequestParam("page_size") Integer pageSize) {
+        Integer viewerId = security.getSecurityUserId();
+        return Result.dataMessageHandler(() -> accountService.getFollowings(viewerId, userId, page, pageSize), "获取关注列表失败");
     }
     /**
      * 更新当前用户头像。
+     *
+     * @param dto 头像上传数据
+     * @return 操作结果
      */
-
     @PutMapping("/me/avatar")
     public Result<Void> updateAvatar(@RequestBody Base64Upload dto) {
         Integer userId = security.getSecurityUserId();
@@ -48,7 +96,10 @@ public class UserController {
     }
 
     /**
-     * 更新用户个人资料
+     * 更新用户个人资料。
+     *
+     * @param dto 个人资料请求体
+     * @return 操作结果
      */
     @PutMapping("/me/profile")
     public Result<Void> updateProfile(@RequestBody @Valid AccountProfileDTO dto) {
@@ -57,9 +108,82 @@ public class UserController {
     }
 
     /**
-     * 更新当前用户横幅图。
+     * 获取当前登录用户的隐私设置。
+     *
+     * @return 当前用户隐私设置
      */
+    @GetMapping("/me/privacy")
+    public Result<UserPrivacySettingVO> getPrivacySetting() {
+        Integer userId = security.getSecurityUserId();
+        return Result.dataMessageHandler(() -> userPrivacySettingService.getPrivacySetting(userId), "获取隐私设置失败");
+    }
 
+    /**
+     * 更新当前登录用户的隐私设置。
+     *
+     * @param dto 隐私设置请求体
+     * @return 操作结果
+     */
+    @PutMapping("/me/privacy")
+    public Result<Void> updatePrivacySetting(@RequestBody @Valid UserPrivacySettingDTO dto) {
+        Integer userId = security.getSecurityUserId();
+        return Result.messageHandler(() -> userPrivacySettingService.updatePrivacySetting(userId, dto));
+    }
+
+    /**
+     * 关注指定用户。
+     *
+     * @param userId 被关注用户ID
+     * @return 操作结果
+     */
+    @PostMapping("/{user_id}/follow")
+    public Result<Void> follow(@PathVariable("user_id") Integer userId) {
+        Integer currentUserId = security.getSecurityUserId();
+        return Result.messageHandler(() -> userRelationService.follow(currentUserId, userId));
+    }
+
+    /**
+     * 取消关注指定用户。
+     *
+     * @param userId 被取消关注用户ID
+     * @return 操作结果
+     */
+    @DeleteMapping("/{user_id}/follow")
+    public Result<Void> unfollow(@PathVariable("user_id") Integer userId) {
+        Integer currentUserId = security.getSecurityUserId();
+        return Result.messageHandler(() -> userRelationService.unfollow(currentUserId, userId));
+    }
+
+    /**
+     * 拉黑指定用户。
+     *
+     * @param userId 被拉黑用户ID
+     * @return 操作结果
+     */
+    @PostMapping("/{user_id}/block")
+    public Result<Void> block(@PathVariable("user_id") Integer userId) {
+        Integer currentUserId = security.getSecurityUserId();
+        return Result.messageHandler(() -> userRelationService.block(currentUserId, userId));
+    }
+
+    /**
+     * 取消拉黑指定用户。
+     *
+     * @param userId 被取消拉黑用户ID
+     * @return 操作结果
+     */
+    @DeleteMapping("/{user_id}/block")
+    public Result<Void> unblock(@PathVariable("user_id") Integer userId) {
+        Integer currentUserId = security.getSecurityUserId();
+        return Result.messageHandler(() -> userRelationService.unblock(currentUserId, userId));
+    }
+
+    /**
+     * 更新当前用户横幅图。
+     *
+     * @param dto 横幅图上传数据
+     * @return 操作结果
+     */
     @PutMapping("/me/banner")
     public Result<Void> updateBanner(@RequestBody Base64Upload dto) {
         Integer userId = security.getSecurityUserId();
@@ -67,7 +191,11 @@ public class UserController {
     }
 
     /**
-     * 通过旧密码更新当前账号密码
+     * 通过旧密码更新当前账号密码。
+     *
+     * @param dto 密码修改请求体
+     * @param request 当前请求
+     * @return 操作结果
      */
     @PostMapping("/me/password")
     public Result<Void> updatePassword(@RequestBody PasswordChangeDTO dto,

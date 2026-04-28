@@ -52,14 +52,19 @@ public class LikeController {
         return Result.dataMessageHandler(() -> likeThreadService.getLikeCountByThreadId(threadId), "获取失败");
     }
     /**
-     * 获取当前用户的点赞列表。
+     * 获取指定用户的点赞列表，受隐私设置约束。
+     *
+     * @param userId 目标用户ID
+     * @param pageNum 当前页码
+     * @param pageSize 每页记录数
+     * @return 点赞列表分页结果
      */
-
     @GetMapping("/users/{user_id}/liked-threads")
     public Result<PageEntity<ThreadVO>> getLikes(@PathVariable(name = "user_id") Integer userId,
                                                  @RequestParam(name = "page") Integer pageNum,
                                                  @RequestParam(name = "page_size") Integer pageSize) {
-        return Result.dataMessageHandler(() -> likeThreadService.getLikesByAccountId(userId, pageNum, pageSize), "获取失败");
+        Integer viewerId = security.getSecurityUserId();
+        return Result.dataMessageHandler(() -> likeThreadService.getLikesByAccountId(viewerId, userId, pageNum, pageSize), "获取失败");
     }
 
 

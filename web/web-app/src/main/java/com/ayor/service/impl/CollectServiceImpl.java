@@ -9,11 +9,13 @@ import com.ayor.mapper.AccountMapper;
 import com.ayor.mapper.CollectMapper;
 import com.ayor.mapper.ThreaddMapper;
 import com.ayor.service.CollectService;
+import com.ayor.service.PrivacyPolicyService;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,12 +32,15 @@ public class CollectServiceImpl extends ServiceImpl<CollectMapper, Collect> impl
     private final AccountMapper accountMapper;
 
     private final ThreaddMapper threaddMapper;
+
+    private final PrivacyPolicyService privacyPolicyService;
     /**
      * 为当前用户收藏指定帖子，重复收藏会被拒绝。
      */
 
     @Override
     public String insertCollect(Integer accountId, Integer threadId) {
+        // TODO 为什么不能查看，但是可以收藏呢？这权限管理写的牛魔，傻逼 gpt 5.4
         if (accountId == null || threadId == null) {
             return "参数错误";
         }
@@ -92,10 +97,21 @@ public class CollectServiceImpl extends ServiceImpl<CollectMapper, Collect> impl
     }
     /**
      * 分页获取用户收藏的帖子列表。
+     *
+     * @param viewerId 当前查看者用户ID
+     * @param accountId 用户ID
+     * @param pageNum 页码,从1开始
+     * @param pageSize 每页记录数
+     * @return 分页结果,包含用户收藏的帖子视图对象列表
      */
-
     @Override
-    public PageEntity<ThreadVO> getCollectsByAccountId(Integer accountId, Integer pageNum, Integer pageSize) {
+    public PageEntity<ThreadVO> getCollectsByAccountId(Integer viewerId, Integer accountId, Integer pageNum, Integer pageSize) {
+        if (accountMapper.getAccountById(accountId) == null) {
+            return null;
+        }
+        if (!privacyPolicyService.canViewCollectedThreads(viewerId, accountId)) {
+            throw new AccessDeniedException("无权限查看收藏列表");
+        }
         Page<Collect> page = new Page<>(pageNum, pageSize);
         List<Collect> collects = this.lambdaQuery().eq(Collect::getAccountId, accountId)
                 .page(page).getRecords();

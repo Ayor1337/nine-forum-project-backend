@@ -9,11 +9,13 @@ import com.ayor.mapper.AccountMapper;
 import com.ayor.mapper.ConversationMapper;
 import com.ayor.service.ChatUnreadService;
 import com.ayor.service.ConversationService;
+import com.ayor.service.PrivacyPolicyService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,6 +31,8 @@ public class ConversationServiceImpl extends ServiceImpl<ConversationMapper, Con
     private final AccountMapper accountMapper;
 
     private final ChatUnreadService chatUnreadService;
+
+    private final PrivacyPolicyService privacyPolicyService;
     /**
      * 获取当前用户与指定用户之间的会话信息。
      */
@@ -131,6 +135,9 @@ public class ConversationServiceImpl extends ServiceImpl<ConversationMapper, Con
         Account toAccount = accountMapper.getAccountByUsername(toUsername);
         if (toAccount == null) {
             return "接收用户不存在";
+        }
+        if (!privacyPolicyService.canStartConversation(accountId, toAccount.getAccountId())) {
+            throw new AccessDeniedException("对方不允许私信");
         }
         boolean isConversationExists = this.lambdaQuery()
                 .eq(Conversation::getAlphaAccountId, fromAccount.getAccountId())
@@ -243,8 +250,6 @@ public class ConversationServiceImpl extends ServiceImpl<ConversationMapper, Con
     /**
      * 将用户实体转换为会话展示所需的用户信息。
      */
-
-
     private UserInfoVO getUserInfoVO(Account account) {
         if (account == null) {
             return null;

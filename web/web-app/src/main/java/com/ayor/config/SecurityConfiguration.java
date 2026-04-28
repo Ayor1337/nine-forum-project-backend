@@ -48,6 +48,8 @@ public class SecurityConfiguration {
     };
     private static final String[] PUBLIC_GET_ENDPOINTS = {
             "/api/users/{user_id}",
+            "/api/users/{user_id}/followers",
+            "/api/users/{user_id}/followings",
             "/api/themes",
             "/api/themes/topics",
             "/api/themes/{theme_id}/topics",
