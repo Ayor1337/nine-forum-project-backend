@@ -275,4 +275,35 @@ CREATE TABLE IF NOT EXISTS `db_topic_stat`  (
 -- Records of db_topic_stat
 -- ----------------------------
 
+-- ----------------------------
+-- V1 privacy and relation tables used by the current Spring Boot runtime
+-- ----------------------------
+CREATE TABLE IF NOT EXISTS `user_relation` (
+    `relation_id` bigint NOT NULL AUTO_INCREMENT,
+    `from_account_id` int NOT NULL,
+    `to_account_id` int NOT NULL,
+    `relation_type` varchar(32) NOT NULL,
+    `status` varchar(16) NOT NULL DEFAULT 'ACTIVE',
+    `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`relation_id`) USING BTREE,
+    UNIQUE KEY `uk_user_relation_pair_type` (`from_account_id`, `to_account_id`, `relation_type`),
+    KEY `idx_user_relation_from_type_status` (`from_account_id`, `relation_type`, `status`),
+    KEY `idx_user_relation_to_type_status` (`to_account_id`, `relation_type`, `status`),
+    CONSTRAINT `chk_user_relation_no_self` CHECK (`from_account_id` <> `to_account_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+CREATE TABLE IF NOT EXISTS `user_privacy_setting` (
+    `account_id` int NOT NULL,
+    `profile_visibility` varchar(32) NOT NULL DEFAULT 'PUBLIC',
+    `liked_threads_visibility` varchar(32) NOT NULL DEFAULT 'PUBLIC',
+    `collected_threads_visibility` varchar(32) NOT NULL DEFAULT 'PRIVATE',
+    `follow_list_visibility` varchar(32) NOT NULL DEFAULT 'PUBLIC',
+    `follower_list_visibility` varchar(32) NOT NULL DEFAULT 'PUBLIC',
+    `dm_permission` varchar(32) NOT NULL DEFAULT 'EVERYONE',
+    `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`account_id`) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
 SET FOREIGN_KEY_CHECKS = 1;
