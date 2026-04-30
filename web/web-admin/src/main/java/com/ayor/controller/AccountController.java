@@ -5,7 +5,6 @@ import com.ayor.entity.admin.dto.AccountDTO;
 import com.ayor.entity.admin.vo.AccountVO;
 import com.ayor.result.Result;
 import com.ayor.service.AccountService;
-import com.ayor.type.UserViolationType;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -21,52 +20,67 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/account")
+@RequestMapping("/api/accounts")
 @RequiredArgsConstructor
 public class AccountController {
 
     private final AccountService accountService;
 
-    @GetMapping("/list")
+    /**
+     * 分页查询后台用户，支持按关键字、状态和角色过滤。
+     */
+    @GetMapping
     public Result<PageEntity<AccountVO>> getAccounts(@RequestParam(value = "query", required = false) String query,
-                                          @RequestParam(value = "page_num", defaultValue = "1") Integer pageNum,
-                                          @RequestParam(value = "page_size", defaultValue = "10") Integer pageSize,
-                                          @RequestParam(value = "status", required = false) Integer status) {
-        return Result.dataMessageHandler(() ->  accountService.getAccounts(query, pageNum, pageSize, status), "获取用户列表失败");
+                                                     @RequestParam(value = "page_num", defaultValue = "1") Integer pageNum,
+                                                     @RequestParam(value = "page_size", defaultValue = "10") Integer pageSize,
+                                                     @RequestParam(value = "status", required = false) Integer status,
+                                                     @RequestParam(value = "role_id", required = false) Integer roleId) {
+        if (roleId != null) {
+            return Result.dataMessageHandler(() -> accountService.getAccountsByRoleId(pageNum, pageSize, roleId), "获取用户失败");
+        }
+        return Result.dataMessageHandler(() -> accountService.getAccounts(query, pageNum, pageSize, status), "获取用户列表失败");
     }
 
-    @GetMapping("/get_account_by_id")
-    public Result<AccountVO> getAccountById(@RequestParam("account_id") Integer accountId) {
+    /**
+     * 读取单个用户的详细信息。
+     */
+    @GetMapping("/{accountId}")
+    public Result<AccountVO> getAccountById(@PathVariable("accountId") Integer accountId) {
         return Result.dataMessageHandler(() -> accountService.getAccountById(accountId), "获取用户失败");
     }
 
-    @GetMapping("/get_account_by_role_id")
-    public Result<PageEntity<AccountVO>> getAccountByRoleId(@RequestParam("page_num") Integer pageNum,
-                                                            @RequestParam(value = "page_size", defaultValue = "10") Integer pageSize,
-                                                            @RequestParam("role_id") Integer roleId) {
-        return Result.dataMessageHandler(() -> accountService.getAccountsByRoleId(pageNum, pageSize, roleId), "获取用户失败");
-    }
-
-    @GetMapping("/list_user_options")
+    /**
+     * 获取用户下拉选项，供表单联动选择使用。
+     */
+    @GetMapping("/options")
     public Result<List<AccountVO>> listUsers(@RequestParam(name = "query", required = false) String query) {
         return Result.dataMessageHandler(() -> accountService.getAccountsAsSelectOptions(query), "获取用户列表失败");
     }
 
-    @PostMapping("/submit_violation")
-    public Result<Void> violationProfile(@RequestParam(name = "accountId") Integer accountId,
+    /**
+     * 对指定用户执行违规处理。
+     */
+    @PostMapping("/{accountId}/violations")
+    public Result<Void> violationProfile(@PathVariable("accountId") Integer accountId,
                                          @RequestParam(name = "type") String type) {
         return Result.messageHandler(() -> accountService.violationProfile(accountId, type));
     }
 
-
-    @PutMapping("/update")
-    public Result<Void> updateAccount(@RequestBody @Valid AccountDTO accountDTO) {
+    /**
+     * 更新指定用户的后台资料。
+     */
+    @PutMapping("/{accountId}")
+    public Result<Void> updateAccount(@PathVariable("accountId") Integer accountId,
+                                      @RequestBody @Valid AccountDTO accountDTO) {
+        accountDTO.setAccountId(accountId);
         return Result.messageHandler(() -> accountService.updateAccount(accountDTO));
     }
 
-    @DeleteMapping("/{account_id}")
-    public Result<Void> deleteAccount(@PathVariable("account_id") Integer accountId) {
+    /**
+     * 删除指定用户。
+     */
+    @DeleteMapping("/{accountId}")
+    public Result<Void> deleteAccount(@PathVariable("accountId") Integer accountId) {
         return Result.messageHandler(() -> accountService.deleteAccount(accountId));
     }
-
 }

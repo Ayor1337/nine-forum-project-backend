@@ -23,6 +23,9 @@ import java.util.List;
 public class ThemeServiceImpl extends ServiceImpl<ThemeMapper, Theme> implements ThemeService {
 
 
+    /**
+     * 分页查询主题列表，并转换为管理端展示对象。
+     */
     @Override
     public PageEntity<ThemeVO> getThemes(Integer pageNum, Integer pageSize) {
         if (pageNum == null || pageNum < 1) {
@@ -32,6 +35,9 @@ public class ThemeServiceImpl extends ServiceImpl<ThemeMapper, Theme> implements
         return new PageEntity<>(page.getTotal(), toVOList(page.getRecords()));
     }
 
+    /**
+     * 创建主题时初始化删除标记。
+     */
     @Override
     public String createTheme(ThemeDTO themeDTO) {
         if (themeDTO == null || !StringUtils.hasText(themeDTO.getTitle())) {
@@ -43,6 +49,9 @@ public class ThemeServiceImpl extends ServiceImpl<ThemeMapper, Theme> implements
         return this.save(theme) ? null : "创建主题失败";
     }
 
+    /**
+     * 更新主题信息，保留原始记录主键。
+     */
     @Override
     public String updateTheme(ThemeDTO themeDTO) {
         if (themeDTO == null || themeDTO.getThemeId() == null) {
@@ -56,6 +65,9 @@ public class ThemeServiceImpl extends ServiceImpl<ThemeMapper, Theme> implements
         return this.updateById(theme) ? null : "更新主题失败";
     }
 
+    /**
+     * 逻辑删除主题。
+     */
     @Override
     public String deleteTheme(Integer themeId) {
         if (themeId == null) {
@@ -69,6 +81,9 @@ public class ThemeServiceImpl extends ServiceImpl<ThemeMapper, Theme> implements
         return this.updateById(theme) ? null : "删除主题失败";
     }
 
+    /**
+     * 将主题实体列表转换为管理端视图对象列表。
+     */
     private List<ThemeVO> toVOList (List<Theme> themeList) {
         List<ThemeVO> themeVOList = new ArrayList<>();
         for (Theme theme : themeList) {

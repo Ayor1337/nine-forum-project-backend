@@ -29,6 +29,9 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
 
     private final TopicMapper topicMapper;
 
+    /**
+     * 分页查询帖子列表，并补充发帖人和话题名称。
+     */
     @Override
     public PageEntity<ThreadTableVO> getThreads(Integer pageNum, Integer pageSize) {
         if (pageNum == null || pageNum < 1) {
@@ -38,6 +41,9 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
         return new PageEntity<>(page.getTotal(), toVOList(page.getRecords()));
     }
 
+    /**
+     * 创建帖子时补齐时间和删除标记。
+     */
     @Override
     public String createThread(ThreadDTO threadDTO) {
         if (threadDTO == null || !StringUtils.hasText(threadDTO.getTitle())) {
@@ -54,6 +60,9 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
         return this.save(threadd) ? null : "创建帖子失败";
     }
 
+    /**
+     * 更新帖子信息，保留原始创建时间。
+     */
     @Override
     public String updateThread(ThreadDTO threadDTO) {
         if (threadDTO == null || threadDTO.getThreadId() == null) {
@@ -72,6 +81,9 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
         return this.updateById(threadd) ? null : "更新帖子失败";
     }
 
+    /**
+     * 逻辑删除帖子。
+     */
     @Override
     public String deleteThread(Integer threadId) {
         if (threadId == null) {
@@ -85,6 +97,9 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
         return this.updateById(threadd) ? null : "删除帖子失败";
     }
 
+    /**
+     * 把帖子实体转换成管理端表格对象，并补充关联名称。
+     */
     private List<ThreadTableVO> toVOList (List<Threadd> threads) {
         List<ThreadTableVO> threadTableVOList = new ArrayList<>();
         threads.forEach(threadd -> {

@@ -13,13 +13,16 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/conversation")
+@RequestMapping("/api/conversations")
 @RequiredArgsConstructor
 public class ConversationController {
 
     private final ConversationService conversationService;
 
-    @GetMapping("/list")
+    /**
+     * 分页查询会话列表，可按双方账号过滤。
+     */
+    @GetMapping
     public Result<PageEntity<Conversation>> listConversations(@RequestParam("page_num") Integer pageNum,
                                                               @RequestParam(value = "page_size", defaultValue = "10") Integer pageSize,
                                                               @RequestParam(value = "alpha_account_id", required = false) Integer alphaAccountId,
@@ -27,8 +30,11 @@ public class ConversationController {
         return Result.dataMessageHandler(() -> conversationService.getConversations(pageNum, pageSize, alphaAccountId, betaAccountId), "获取会话失败");
     }
 
-    @DeleteMapping("/{conversation_id}")
-    public Result<Void> deleteConversation(@PathVariable("conversation_id") Integer conversationId) {
+    /**
+     * 删除指定会话。
+     */
+    @DeleteMapping("/{conversationId}")
+    public Result<Void> deleteConversation(@PathVariable("conversationId") Integer conversationId) {
         return Result.messageHandler(() -> conversationService.deleteConversation(conversationId));
     }
 }

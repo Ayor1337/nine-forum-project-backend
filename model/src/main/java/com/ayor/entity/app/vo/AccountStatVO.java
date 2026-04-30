@@ -27,6 +27,10 @@ public class AccountStatVO implements Serializable {
 
     private Integer collectedCount;
 
+    private Integer followingCount;
+
+    private Integer followerCount;
+
     private Integer accountId;
 
 }

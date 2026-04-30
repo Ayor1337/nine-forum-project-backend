@@ -35,13 +35,13 @@ public class ConversationMessageServiceImpl extends ServiceImpl<ConversationMess
     private final SimpMessagingTemplate simpMessagingTemplate;
 
 
+    /**
+     * 发送会话消息并触发通知。
+     */
     @Override
     @ChatNotif(conversationId = "#conversationMessage.conversationId",
             type = NotificationType.SEND_MSG,
             userId = "#accountId")
-    /**
-     * 发送会话消息并触发通知。
-     */
     public String sendMessage(ConversationMessageDTO conversationMessage, Integer accountId) {
         Account account = accountMapper.getAccountById(accountId);
         if(account == null) {
@@ -78,13 +78,12 @@ public class ConversationMessageServiceImpl extends ServiceImpl<ConversationMess
 
     }
 
-
-    @Override
-    @ChatNotif(conversationId = "#conversationId",
-            type = NotificationType.RECEIVED_MSG, userId = "#accountId")
     /**
      * 分页获取会话消息列表。
      */
+    @Override
+    @ChatNotif(conversationId = "#conversationId",
+            type = NotificationType.RECEIVED_MSG, userId = "#accountId")
     public PageEntity<ConversationMessageVO> getConversationMessageList(Integer conversationId, Integer accountId, Integer pageNum) {
         Page<ConversationMessage> page = this.lambdaQuery()
                 .eq(ConversationMessage::getConversationId, conversationId)

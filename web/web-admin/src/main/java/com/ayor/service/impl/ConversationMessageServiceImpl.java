@@ -17,6 +17,9 @@ import org.springframework.transaction.annotation.Transactional;
 public class ConversationMessageServiceImpl extends ServiceImpl<ConversationMessageMapper, ConversationMessage> implements ConversationMessageService {
 
 
+    /**
+     * 分页查询某个会话下的消息记录。
+     */
     @Override
     public PageEntity<ConversationMessage> getMessages(Integer conversationId, Integer pageNum, Integer pageSize) {
         if (conversationId == null) {
@@ -28,6 +31,9 @@ public class ConversationMessageServiceImpl extends ServiceImpl<ConversationMess
         return new PageEntity<>(page.getTotal(), page.getRecords());
     }
 
+    /**
+     * 将消息标记为已删除，而不是直接物理移除。
+     */
     @Override
     public String deleteMessage(Integer messageId) {
         if (messageId == null) {

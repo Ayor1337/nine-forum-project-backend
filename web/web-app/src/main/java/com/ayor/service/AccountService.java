@@ -1,9 +1,11 @@
 package com.ayor.service;
 
 import com.ayor.entity.Base64Upload;
+import com.ayor.entity.PageEntity;
 import com.ayor.entity.app.dto.AccountDTO;
 import com.ayor.entity.app.dto.AccountProfileDTO;
 import com.ayor.entity.app.dto.PasswordChangeDTO;
+import com.ayor.entity.app.vo.AccountInfoVO;
 import com.ayor.entity.app.vo.UserInfoVO;
 import com.ayor.entity.pojo.Account;
 import com.baomidou.mybatisplus.extension.service.IService;
@@ -39,6 +41,41 @@ public interface AccountService extends UserDetailsService, IService<Account> {
      * @return 用户信息视图对象,包含基本资料、统计数据(帖子数、关注数等)
      */
     UserInfoVO getUserInfo(Integer accountId);
+
+    /**
+     * 获取对外可见的用户资料。
+     *
+     * @param viewerId 当前查看者用户ID
+     * @param accountId 目标用户ID
+     * @return 公开用户资料
+     */
+    UserInfoVO getPublicUserInfo(Integer viewerId, Integer accountId);
+
+    AccountInfoVO getMyAccountInfo(Integer accountId);
+
+    AccountInfoVO getPublicAccountInfo(Integer viewerId, Integer accountId);
+
+    /**
+     * 获取指定用户的粉丝列表。
+     *
+     * @param viewerId 当前查看者用户ID
+     * @param accountId 目标用户ID
+     * @param pageNum 页码,从1开始
+     * @param pageSize 每页记录数
+     * @return 分页结果,包含用户粉丝列表
+     */
+    PageEntity<UserInfoVO> getFollowers(Integer viewerId, Integer accountId, Integer pageNum, Integer pageSize);
+
+    /**
+     * 获取指定用户的关注列表。
+     *
+     * @param viewerId 当前查看者用户ID
+     * @param accountId 目标用户ID
+     * @param pageNum 页码,从1开始
+     * @param pageSize 每页记录数
+     * @return 分页结果,包含用户关注列表
+     */
+    PageEntity<UserInfoVO> getFollowings(Integer viewerId, Integer accountId, Integer pageNum, Integer pageSize);
 
     /**
      * 更新用户头像

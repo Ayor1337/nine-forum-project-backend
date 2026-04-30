@@ -37,6 +37,10 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
 
     private static final List<String> allowedRoles = List.of("OWNER");
 
+    /**
+     * 按用户名加载后台登录所需的认证信息，并校验该账号是否具备进入管理端的角色。
+     * <p>账号不存在或角色不在允许列表中时，直接抛出 {@link UsernameNotFoundException}。</p>
+     */
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         Account account = this.baseMapper.getAccountByName(username);
@@ -55,6 +59,9 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
                 .build();
     }
 
+    /**
+     * 获取后台用户下拉选项，默认返回最近创建的 10 个账号。
+     */
     @Override
     public List<AccountVO> getAccountsAsSelectOptions() {
         List<Account> accounts = this.lambdaQuery()
@@ -72,6 +79,9 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         return accountVos;
     }
 
+    /**
+     * 按关键字筛选后台用户下拉选项，关键字为空时退回默认列表。
+     */
     @Override
     public List<AccountVO> getAccountsAsSelectOptions(String query) {
         if (!StringUtils.hasText(query)) {
@@ -93,6 +103,9 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         return accountVos;
     }
 
+    /**
+     * 根据账号 ID 读取单个用户的展示信息。
+     */
     @Override
     public AccountVO getAccountById(Integer accountId) {
         if (accountId == null) {
@@ -104,6 +117,9 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         return accountVO;
     }
 
+    /**
+     * 按角色分页查询用户，供角色关联用户管理页面使用。
+     */
     @Override
     public PageEntity<AccountVO> getAccountsByRoleId(Integer pageNum, Integer pageSize, Integer roleId) {
         Page<Account> page = this.lambdaQuery()
@@ -112,12 +128,18 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         return new PageEntity<>(page.getTotal(), toVoList(page.getRecords()));
     }
 
+    /**
+     * 分页查询全部用户，不附加额外过滤条件。
+     */
     @Override
     public PageEntity<AccountVO> getAccounts(Integer pageNum, Integer pageSize) {
         Page<Account> page = this.lambdaQuery().page(new Page<>(pageNum, pageSize));
         return new PageEntity<>(page.getTotal(), toVoList(page.getRecords()));
     }
 
+    /**
+     * 按状态分页查询用户；状态为空时退回到全部用户查询。
+     */
     @Override
     public PageEntity<AccountVO> getAccounts(Integer pageNum, Integer pageSize, Integer status) {
         if (status == null) {
@@ -129,6 +151,10 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         return new PageEntity<>(page.getTotal(), toVoList(page.getRecords()));
     }
 
+    /**
+     * 按关键字和状态联合分页查询用户。
+     * <p>关键字为空时仅按状态过滤；状态为空时仅按关键字过滤。</p>
+     */
     @Override
     public PageEntity<AccountVO> getAccounts(String query, Integer pageNum, Integer pageSize, Integer status) {
         if (query == null) {
@@ -142,6 +168,10 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
     }
 
 
+    /**
+     * 对指定用户执行违规处理，并同步发送广播消息给前台或其他消费者。
+     * <p>支持昵称、头像、横幅三类处理；处理前会先刷新用户缓存。</p>
+     */
     @Override
     @CacheEvict(value = "userInfo", key = "#accountId")
     public String violationProfile(Integer accountId, String type) {
@@ -200,6 +230,9 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         return null;
     }
 
+    /**
+     * 按管理端提交的表单更新用户资料。
+     */
     @Override
     public String updateAccount(AccountDTO accountDTO) {
         if (accountDTO == null || accountDTO.getAccountId() == null) {
@@ -214,6 +247,9 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         return this.updateById(account) ? null : "更新用户失败";
     }
 
+    /**
+     * 逻辑删除用户，将删除标记置为 true。
+     */
     @Override
     public String deleteAccount(Integer accountId) {
         if (accountId == null) {
@@ -227,6 +263,9 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         return this.updateById(account) ? null : "删除用户失败";
     }
 
+    /**
+     * 将用户实体转换成管理端列表对象。
+     */
     private List<AccountVO> toVoList(List<Account> accounts) {
         List<AccountVO> accountVos = new ArrayList<>();
         for (Account account : accounts) {
@@ -238,6 +277,9 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         return accountVos;
     }
 
+    /**
+     * 判断指定账号是否存在，供违规处理等流程复用。
+     */
     private boolean existsUserById(Integer accountId) {
         return this.baseMapper.exists(Wrappers.<Account>lambdaQuery().eq(Account::getAccountId, accountId));
     }

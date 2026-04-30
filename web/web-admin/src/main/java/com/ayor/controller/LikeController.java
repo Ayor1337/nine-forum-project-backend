@@ -13,13 +13,16 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/like")
+@RequestMapping("/api/likes")
 @RequiredArgsConstructor
 public class LikeController {
 
     private final LikeService likeService;
 
-    @GetMapping("/list")
+    /**
+     * 分页查询点赞记录，可按帖子或用户过滤。
+     */
+    @GetMapping
     public Result<PageEntity<LikeThread>> listLikes(@RequestParam("page_num") Integer pageNum,
                                                     @RequestParam(value = "page_size", defaultValue = "10") Integer pageSize,
                                                     @RequestParam(value = "thread_id", required = false) Integer threadId,
@@ -27,8 +30,11 @@ public class LikeController {
         return Result.dataMessageHandler(() -> likeService.getLikes(pageNum, pageSize, threadId, accountId), "获取点赞记录失败");
     }
 
-    @DeleteMapping("/{like_id}")
-    public Result<Void> deleteLike(@PathVariable("like_id") Integer likeId) {
+    /**
+     * 删除指定点赞记录。
+     */
+    @DeleteMapping("/{likeId}")
+    public Result<Void> deleteLike(@PathVariable("likeId") Integer likeId) {
         return Result.messageHandler(() -> likeService.deleteLike(likeId));
     }
 }

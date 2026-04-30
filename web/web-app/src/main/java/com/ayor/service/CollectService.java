@@ -55,10 +55,12 @@ public interface CollectService extends IService<Collect> {
 
     /**
      * 获取用户的收藏帖子列表(分页)
+     *
+     * @param viewerId 当前查看者用户ID
      * @param accountId 用户ID
      * @param pageNum 页码,从1开始
      * @param pageSize 每页记录数
      * @return 分页结果,包含用户收藏的帖子视图对象列表
      */
-    PageEntity<ThreadVO> getCollectsByAccountId(Integer accountId, Integer pageNum, Integer pageSize);
+    PageEntity<ThreadVO> getCollectsByAccountId(Integer viewerId, Integer accountId, Integer pageNum, Integer pageSize);
 }

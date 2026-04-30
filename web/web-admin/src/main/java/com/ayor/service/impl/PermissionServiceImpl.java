@@ -14,13 +14,19 @@ import java.util.List;
 @Transactional
 public class PermissionServiceImpl extends ServiceImpl<PermissionMapper, Permission> implements PermissionService {
 
+    /**
+     * 查询角色下的权限列表；未指定角色时返回全部权限。
+     */
     @Override
     public List<Permission> listPermissions(Integer roleId) {
         return this.lambdaQuery()
                 .eq(roleId != null, Permission::getRoleId, roleId)
-                .list();
+        .list();
     }
 
+    /**
+     * 创建一条角色权限绑定记录。
+     */
     @Override
     public String createPermission(Permission permission) {
         if (permission == null || permission.getRoleId() == null) {
@@ -32,6 +38,9 @@ public class PermissionServiceImpl extends ServiceImpl<PermissionMapper, Permiss
         return this.save(permission) ? null : "创建权限失败";
     }
 
+    /**
+     * 更新权限记录中非空的字段。
+     */
     @Override
     public String updatePermission(Permission permission) {
         if (permission == null || permission.getPermissionId() == null) {
@@ -50,6 +59,9 @@ public class PermissionServiceImpl extends ServiceImpl<PermissionMapper, Permiss
         return this.updateById(exist) ? null : "更新权限失败";
     }
 
+    /**
+     * 删除指定权限记录。
+     */
     @Override
     public String deletePermission(Integer permissionId) {
         if (permissionId == null) {

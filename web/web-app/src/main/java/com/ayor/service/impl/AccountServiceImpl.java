@@ -2,18 +2,26 @@ package com.ayor.service.impl;
 
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.ayor.entity.Base64Upload;
+import com.ayor.entity.PageEntity;
 import com.ayor.entity.app.dto.AccountDTO;
 import com.ayor.entity.app.dto.AccountProfileDTO;
 import com.ayor.entity.app.dto.PasswordChangeDTO;
+import com.ayor.entity.app.vo.AccountInfoVO;
 import com.ayor.entity.app.vo.UserInfoVO;
 import com.ayor.entity.app.vo.UserPermissionVO;
 import com.ayor.entity.pojo.Account;
+import com.ayor.entity.pojo.AccountInfo;
+import com.ayor.mapper.AccountInfoMapper;
 import com.ayor.mapper.AccountMapper;
 import com.ayor.mapper.AccountStatMapper;
 import com.ayor.mapper.PermissionMapper;
 import com.ayor.mapper.RoleMapper;
 import com.ayor.minio.MinioService;
+import com.ayor.service.AccountInfoService;
 import com.ayor.service.AccountService;
+import com.ayor.service.PrivacyPolicyService;
+import com.ayor.service.UserPrivacySettingService;
+import com.ayor.service.UserRelationService;
 import com.ayor.util.JWTUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -21,6 +29,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -28,6 +37,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Date;
 import java.util.Objects;
 
@@ -37,6 +48,8 @@ import java.util.Objects;
 public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> implements AccountService  {
 
     private final AccountMapper accountMapper;
+
+    private final AccountInfoMapper accountInfoMapper;
 
     private final PermissionMapper permissionMapper;
 
@@ -51,6 +64,14 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
     private final JWTUtils jwtUtils;
 
     private final PasswordEncoder encoder;
+
+    private final UserRelationService userRelationService;
+
+    private final PrivacyPolicyService privacyPolicyService;
+
+    private final UserPrivacySettingService userPrivacySettingService;
+
+    private final AccountInfoService accountInfoService;
 
     /**
      * 根据用户名加载 Spring Security 登录信息。
@@ -83,10 +104,84 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         }
         UserInfoVO userInfoVO = new UserInfoVO();
         BeanUtils.copyProperties(account, userInfoVO);
+        fillBio(userInfoVO, accountId);
         UserPermissionVO userPermissionVO = permissionMapper.getUserPermissionVO(accountId);
         userInfoVO.setPermission(userPermissionVO);
 
         return userInfoVO;
+    }
+
+    /**
+     * 获取指定用户的公开资料并检查查看权限。
+     *
+     * @param viewerId 当前查看者用户ID
+     * @param accountId 目标用户ID
+     * @return 公开用户资料
+     */
+    @Override
+    public UserInfoVO getPublicUserInfo(Integer viewerId, Integer accountId) {
+        Account account = this.getById(accountId);
+        if (account == null) {
+            return null;
+        }
+        if (!privacyPolicyService.canViewProfile(viewerId, accountId)) {
+            throw new AccessDeniedException("无权限查看该用户资料");
+        }
+        UserInfoVO userInfoVO = new UserInfoVO();
+        BeanUtils.copyProperties(account, userInfoVO);
+        fillBio(userInfoVO, accountId);
+        userInfoVO.setPermission(null);
+        return userInfoVO;
+    }
+
+    @Override
+    public AccountInfoVO getMyAccountInfo(Integer accountId) {
+        return accountInfoService.getMyAccountInfo(accountId);
+    }
+
+    @Override
+    public AccountInfoVO getPublicAccountInfo(Integer viewerId, Integer accountId) {
+        return accountInfoService.getPublicAccountInfo(viewerId, accountId);
+    }
+
+    /**
+     * 获取指定用户的粉丝列表并应用隐私校验。
+     *
+     * @param viewerId 当前查看者用户ID
+     * @param accountId 目标用户ID
+     * @param pageNum 页码,从1开始
+     * @param pageSize 每页记录数
+     * @return 分页结果,包含用户粉丝列表
+     */
+    @Override
+    public PageEntity<UserInfoVO> getFollowers(Integer viewerId, Integer accountId, Integer pageNum, Integer pageSize) {
+        if (this.getById(accountId) == null) {
+            return null;
+        }
+        if (!privacyPolicyService.canViewFollowerList(viewerId, accountId)) {
+            throw new AccessDeniedException("无权限查看粉丝列表");
+        }
+        return userRelationService.getFollowers(accountId, pageNum, pageSize);
+    }
+
+    /**
+     * 获取指定用户的关注列表并应用隐私校验。
+     *
+     * @param viewerId 当前查看者用户ID
+     * @param accountId 目标用户ID
+     * @param pageNum 页码,从1开始
+     * @param pageSize 每页记录数
+     * @return 分页结果,包含用户关注列表
+     */
+    @Override
+    public PageEntity<UserInfoVO> getFollowings(Integer viewerId, Integer accountId, Integer pageNum, Integer pageSize) {
+        if (this.getById(accountId) == null) {
+            return null;
+        }
+        if (!privacyPolicyService.canViewFollowingList(viewerId, accountId)) {
+            throw new AccessDeniedException("无权限查看关注列表");
+        }
+        return userRelationService.getFollowings(accountId, pageNum, pageSize);
     }
     /**
      * 更新用户头像并同步到对象存储。
@@ -150,7 +245,9 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         account.setRoleId(3);
         account.setPassword(encodePwd);
         if (this.save(account)) {
-             return accountStatMapper.insertNewAccountStat(account.getAccountId()) ? null : "添加统计数据失败";
+            accountInfoService.initDefaultIfAbsent(account.getAccountId());
+            userPrivacySettingService.initDefaultIfAbsent(account.getAccountId());
+            return accountStatMapper.insertNewAccountStat(account.getAccountId()) ? null : "添加统计数据失败";
         }
         return "添加失败, 未知异常";
     }
@@ -174,9 +271,28 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         if (accountById == null) {
             return "用户不存在";
         }
-        BeanUtils.copyProperties(profileDTO, accountById);
+        if (!isValidWebsite(profileDTO.getWebsite())) {
+            return "个人网站格式有误";
+        }
 
-        return this.updateById(accountById) ? null : "修改失败";
+        if (profileDTO.getNickname() != null) {
+            accountById.setNickname(profileDTO.getNickname());
+        }
+
+        AccountInfo accountInfo = accountInfoService.initDefaultIfAbsent(accountId);
+        if (accountInfo == null) {
+            return "用户不存在";
+        }
+        accountInfo.setBio(profileDTO.getBio());
+        accountInfo.setLocation(profileDTO.getLocation());
+        accountInfo.setBirthday(profileDTO.getBirthday());
+        accountInfo.setWebsite(profileDTO.getWebsite());
+        accountInfo.setUpdateTime(new Date());
+
+        if (!this.updateById(accountById)) {
+            return "修改失败";
+        }
+        return accountInfoMapper.updateById(accountInfo) > 0 ? null : "修改失败";
     }
 
     /**
@@ -217,15 +333,31 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
     /**
      * 判断指定用户 ID 是否存在。
      */
-
     private boolean existsUserById(Integer accountId) {
         return this.baseMapper.exists(Wrappers.<Account>lambdaQuery().eq(Account::getAccountId, accountId));
     }
+
     /**
      * 判断指定用户名是否已存在。
      */
-
     private boolean existsUserByUsername(String username) {
         return this.baseMapper.exists(Wrappers.<Account>lambdaQuery().eq(Account::getUsername, username));
+    }
+
+    private void fillBio(UserInfoVO userInfoVO, Integer accountId) {
+        AccountInfo accountInfo = accountInfoMapper.selectById(accountId);
+        userInfoVO.setBio(accountInfo == null ? null : accountInfo.getBio());
+    }
+
+    private boolean isValidWebsite(String website) {
+        if (website == null || website.isBlank()) {
+            return true;
+        }
+        try {
+            URI uri = new URI(website);
+            return uri.getScheme() != null && uri.getHost() != null;
+        } catch (URISyntaxException e) {
+            return false;
+        }
     }
 }

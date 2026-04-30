@@ -52,14 +52,19 @@ public class    CollectController {
         return Result.dataMessageHandler(() -> collectService.getCollectCountByThreadId(threadId), "获取失败");
     }
     /**
-     * 获取当前用户的收藏列表。
+     * 获取指定用户的收藏列表，受隐私设置约束。
+     *
+     * @param userId 目标用户ID
+     * @param pageNum 当前页码
+     * @param pageSize 每页记录数
+     * @return 收藏列表分页结果
      */
-
     @GetMapping("/users/{user_id}/collected-threads")
     public Result<PageEntity<ThreadVO>> getCollects(@PathVariable(name = "user_id") Integer userId,
                                                     @RequestParam(name = "page") Integer pageNum,
                                                     @RequestParam(name = "page_size") Integer pageSize) {
-        return Result.dataMessageHandler(() -> collectService.getCollectsByAccountId(userId, pageNum, pageSize), "获取失败");
+        Integer viewerId = security.getSecurityUserId();
+        return Result.dataMessageHandler(() -> collectService.getCollectsByAccountId(viewerId, userId, pageNum, pageSize), "获取失败");
     }
 
 

@@ -10,13 +10,16 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/broadcast")
+@RequestMapping("/api/user_broadcasts")
 @RequiredArgsConstructor
 public class BroadcastController {
 
     private final RabbitTemplate rabbitTemplate;
 
-    @PostMapping("/user")
+    /**
+     * 通过广播交换机发送一条系统消息，用于联调消息投递链路。
+     */
+    @PostMapping
     public Result<Void> test(@RequestBody UserSystemMessage<String> message) {
         rabbitTemplate.convertAndSend("broadcast.direct", "broadcast", message);
         return Result.ok();

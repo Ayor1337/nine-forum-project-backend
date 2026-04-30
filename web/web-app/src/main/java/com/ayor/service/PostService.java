@@ -24,7 +24,7 @@ import java.util.List;
  * 技术特性:
  * - 发布评论时触发WebSocket消息推送
  * - 支持@提及用户功能
- * - 评论内容支持富文本(Quill格式)
+ * - 评论内容支持富文本(TipTap JSON 格式)
  *
  * @see Post 评论实体
  * @see PostVO 评论视图对象
