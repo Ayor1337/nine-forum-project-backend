@@ -127,6 +127,8 @@ Query 参数：
 
 响应：`Result<PageEntity<AccountStat>>`
 
+`AccountStat` 返回/更新字段补充包含：`threadCount`、`postCount`、`replyCount`、`likedCount`、`collectedCount`、`followingCount`、`followerCount`、`accountId`
+
 ### PUT `/api/account_stats/{statId}`
 
 响应：`Result<Void>`
