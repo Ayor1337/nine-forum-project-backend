@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ayor.mapper.UserRelationMapper">
+
+    <select id="findRelation" resultType="com.ayor.entity.pojo.UserRelation">
+        SELECT *
+        FROM user_relation
+        WHERE from_account_id = #{fromAccountId}
+          AND to_account_id = #{toAccountId}
+          AND relation_type = #{relationType}
+        LIMIT 1
+    </select>
+
+    <select id="existsRelation" resultType="boolean">
+        SELECT EXISTS(
+            SELECT 1
+            FROM user_relation
+            WHERE from_account_id = #{fromAccountId}
+              AND to_account_id = #{toAccountId}
+              AND relation_type = #{relationType}
+              AND status = #{status}
+        )
+    </select>
+
+    <select id="existsBlockedEitherDirection" resultType="boolean">
+        SELECT EXISTS(
+            SELECT 1
+            FROM user_relation
+            WHERE relation_type = 'BLOCK'
+              AND status = 'ACTIVE'
+              AND (
+                (from_account_id = #{firstAccountId} AND to_account_id = #{secondAccountId})
+                OR
+                (from_account_id = #{secondAccountId} AND to_account_id = #{firstAccountId})
+              )
+        )
+    </select>
+
+</mapper>

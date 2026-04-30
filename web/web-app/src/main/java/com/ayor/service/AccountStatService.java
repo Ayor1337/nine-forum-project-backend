@@ -25,7 +25,7 @@ public interface AccountStatService extends IService<AccountStat> {
      * @param accountId 用户ID
      * @return 用户统计视图对象,包含帖子数、评论数、粉丝数等统计信息
      */
-    AccountStatVO getAccountStatByUsername(Integer accountId);
+    AccountStatVO getAccountStatByUserId(Integer accountId);
 
     /**
      * 更新所有用户的统计数据(定时任务调用)

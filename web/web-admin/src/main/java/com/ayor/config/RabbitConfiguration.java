@@ -11,6 +11,9 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class RabbitConfiguration {
 
+    /**
+     * 定义广播消息使用的直连交换机。
+     */
     @Bean("broadcast_exchange")
     public Exchange broadcastExchange() {
         return ExchangeBuilder
@@ -18,6 +21,9 @@ public class RabbitConfiguration {
                 .build();
     }
 
+    /**
+     * 定义广播消息队列。
+     */
     @Bean("broadcast_queue")
     public Queue broadcastQueue() {
         return QueueBuilder
@@ -25,6 +31,9 @@ public class RabbitConfiguration {
                 .build();
     }
 
+    /**
+     * 绑定广播队列和交换机，使指定 routing key 的消息能够进入队列。
+     */
     @Bean
     public Binding broadcastBinding(@Qualifier("broadcast_queue") Queue queue,
                                     @Qualifier("broadcast_exchange") Exchange exchange) {
@@ -35,6 +44,9 @@ public class RabbitConfiguration {
                 .noargs();
     }
 
+    /**
+     * 使用 Jackson 将 RabbitMQ 消息体序列化为 JSON。
+     */
     @Bean
     public MessageConverter converter(ObjectMapper objectMapper) {
         return new Jackson2JsonMessageConverter(objectMapper);

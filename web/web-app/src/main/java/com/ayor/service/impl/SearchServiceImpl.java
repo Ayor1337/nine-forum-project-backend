@@ -72,13 +72,13 @@ public class SearchServiceImpl implements SearchService {
         }
 
         BoolQuery.Builder boolQuery = new BoolQuery.Builder();
-        boolQuery.must(m -> m.
+        boolQuery.should(m -> m.
                         match(t -> t
                                 .field("title")
                                 .query(keyword)
                         )
                 )
-                .must(m -> m
+                .should(m -> m
                         .match(t -> t
                                 .field("content")
                                 .query(keyword)

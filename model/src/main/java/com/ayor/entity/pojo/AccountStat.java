@@ -25,6 +25,10 @@ public class AccountStat {
 
     private Integer collectedCount;
 
+    private Integer followingCount;
+
+    private Integer followerCount;
+
     private Integer accountId;
 
 }

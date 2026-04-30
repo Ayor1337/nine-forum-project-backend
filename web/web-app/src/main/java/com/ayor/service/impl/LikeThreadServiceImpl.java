@@ -9,11 +9,13 @@ import com.ayor.mapper.AccountMapper;
 import com.ayor.mapper.LikeThreadMapper;
 import com.ayor.mapper.ThreaddMapper;
 import com.ayor.service.LikeThreadService;
-import com.ayor.util.QuillUtils;
+import com.ayor.service.PrivacyPolicyService;
+import com.ayor.util.TipTapUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,7 +31,9 @@ public class LikeThreadServiceImpl extends ServiceImpl<LikeThreadMapper, LikeThr
 
     private final ThreaddMapper threaddMapper;
 
-    private final QuillUtils quillUtils;
+    private final TipTapUtils tipTapUtils;
+
+    private final PrivacyPolicyService privacyPolicyService;
     /**
      * 为指定帖子记录一次点赞。
      */
@@ -68,27 +72,39 @@ public class LikeThreadServiceImpl extends ServiceImpl<LikeThreadMapper, LikeThr
     }
     /**
      * 分页获取用户点赞过的帖子列表。
+     *
+     * @param viewerId 当前查看者用户ID
+     * @param accountId 用户ID
+     * @param currentPage 当前页码,从1开始
+     * @param pageSize 每页记录数
+     * @return 分页结果,包含用户点赞的帖子视图对象列表
      */
-
     @Override
-    public PageEntity<ThreadVO> getLikesByAccountId(Integer accountId,
+    public PageEntity<ThreadVO> getLikesByAccountId(Integer viewerId,
+                                                    Integer accountId,
                                                     Integer currentPage,
                                                     Integer pageSize) {
-        Page<LikeThread> page = new Page<>(currentPage, pageSize);
         Account account = accountMapper.getAccountById(accountId);
         if (account == null) {
             return null;
         }
+        if (!privacyPolicyService.canViewLikedThreads(viewerId, accountId)) {
+            throw new AccessDeniedException("无权限查看点赞列表");
+        }
+        Page<LikeThread> page = new Page<>(currentPage, pageSize);
         Page<LikeThread> likePage = this.lambdaQuery().eq(LikeThread::getAccountId, accountId).page(page);
         List<LikeThread> likeThreads = likePage.getRecords();
         List<Integer> threadIds = new ArrayList<>();
         likeThreads.forEach(like -> threadIds.add(like.getThreadId()));
+        if (threadIds.isEmpty()) {
+            return new PageEntity<>(likePage.getTotal(), new ArrayList<>());
+        }
         List<Threadd> threads = threaddMapper.selectByIds(threadIds);
         List<ThreadVO> threadVOS = new ArrayList<>();
         for (Threadd thread : threads) {
             ThreadVO threadVO = new ThreadVO();
             BeanUtils.copyProperties(thread, threadVO);
-            threadVO.setContent(quillUtils.quillDeltaFilterNonImage(thread.getContent()));
+            threadVO.setContent(tipTapUtils.filterNonImage(thread.getContent()));
             threadVOS.add(threadVO);
         }
 

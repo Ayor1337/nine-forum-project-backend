@@ -24,7 +24,7 @@ public class AccountStatServiceImpl extends ServiceImpl<AccountStatMapper, Accou
      */
 
     @Override
-    public AccountStatVO getAccountStatByUsername(Integer accountId) {
+    public AccountStatVO getAccountStatByUserId(Integer accountId) {
         if (accountId == null) {
             return null;
         }
@@ -46,6 +46,8 @@ public class AccountStatServiceImpl extends ServiceImpl<AccountStatMapper, Accou
     public void updateAccountStat() {
         accountStatMapper.updateThreadCount();
         accountStatMapper.updatePostCount();
+        accountStatMapper.updateFollowingCount();
+        accountStatMapper.updateFollowerCount();
     }
 
 }

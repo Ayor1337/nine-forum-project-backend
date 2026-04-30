@@ -17,43 +17,56 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/topic")
+@RequestMapping("/api/topics")
 @RequiredArgsConstructor
 public class TopicController {
 
     private final TopicService topicService;
 
-    @GetMapping("/get_topics_by_theme_id")
-    public Result<PageEntity<TopicVO>> getTopicsByTheme(@RequestParam("theme_id") Integer themeId,
-                                                @RequestParam("page_num") Integer pageNum,
-                                                @RequestParam(value = "page_size", defaultValue = "10") Integer pageSize) {
-        return Result.dataMessageHandler(() -> topicService.getTopicsByThemeId(themeId, pageNum, pageSize), "获取话题列表失败");
-    }
-
-    @GetMapping("/list")
+    /**
+     * 分页查询话题列表。
+     */
+    @GetMapping
     public Result<PageEntity<TopicVO>> getTopics(@RequestParam("page_num") Integer pageNum,
-                                                 @RequestParam(value = "page_size", defaultValue = "10") Integer pageSize) {
+                                                 @RequestParam(value = "page_size", defaultValue = "10") Integer pageSize,
+                                                 @RequestParam(value = "theme_id", required = false) Integer themeId) {
+        if (themeId != null) {
+            return Result.dataMessageHandler(() -> topicService.getTopicsByThemeId(themeId, pageNum, pageSize), "获取话题列表失败");
+        }
         return Result.dataMessageHandler(() -> topicService.getTopics(pageNum, pageSize), "获取话题列表失败");
     }
 
-    @GetMapping("/list_options")
+    /**
+     * 获取话题下拉选项。
+     */
+    @GetMapping("/options")
     public Result<PageEntity<TopicVO>> getTopicsAsOptions(@RequestParam("page_num") Integer pageNum,
                                                  @RequestParam(value = "page_size", defaultValue = "10") Integer pageSize) {
         return Result.dataMessageHandler(() -> topicService.getTopics(pageNum, pageSize), "获取话题列表失败");
     }
 
+    /**
+     * 创建话题。
+     */
     @PostMapping
     public Result<Void> createTopic(@RequestBody TopicDTO topicDTO) {
         return Result.messageHandler(() -> topicService.createTopic(topicDTO));
     }
 
-    @PutMapping
-    public Result<Void> updateTopic(@RequestBody TopicDTO topicDTO) {
+    /**
+     * 更新指定话题。
+     */
+    @PutMapping("/{topicId}")
+    public Result<Void> updateTopic(@PathVariable("topicId") Integer topicId, @RequestBody TopicDTO topicDTO) {
+        topicDTO.setTopicId(topicId);
         return Result.messageHandler(() -> topicService.updateTopic(topicDTO));
     }
 
-    @DeleteMapping("/{topic_id}")
-    public Result<Void> deleteTopic(@PathVariable("topic_id") Integer topicId) {
+    /**
+     * 删除指定话题。
+     */
+    @DeleteMapping("/{topicId}")
+    public Result<Void> deleteTopic(@PathVariable("topicId") Integer topicId) {
         return Result.messageHandler(() -> topicService.deleteTopic(topicId));
     }
 

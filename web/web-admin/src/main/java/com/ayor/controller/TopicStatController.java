@@ -14,21 +14,27 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/topic_stat")
+@RequestMapping("/api/topic_stats")
 @RequiredArgsConstructor
 public class TopicStatController {
 
     private final TopicStatService topicStatService;
 
-    @GetMapping("/list")
+    /**
+     * 分页查询话题统计记录，可按话题过滤。
+     */
+    @GetMapping
     public Result<PageEntity<TopicStat>> listTopicStats(@RequestParam("page_num") Integer pageNum,
                                                         @RequestParam(value = "page_size", defaultValue = "10") Integer pageSize,
                                                         @RequestParam(value = "topic_id", required = false) Integer topicId) {
         return Result.dataMessageHandler(() -> topicStatService.getTopicStats(pageNum, pageSize, topicId), "获取话题统计失败");
     }
 
-    @PutMapping("/{stat_id}")
-    public Result<Void> updateTopicStat(@PathVariable("stat_id") Integer statId,
+    /**
+     * 更新指定话题统计记录。
+     */
+    @PutMapping("/{statId}")
+    public Result<Void> updateTopicStat(@PathVariable("statId") Integer statId,
                                         @RequestBody TopicStat topicStat) {
         return Result.messageHandler(() -> topicStatService.updateTopicStat(statId, topicStat));
     }

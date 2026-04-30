@@ -11,12 +11,13 @@ import java.util.List;
 @Configuration
 public class CorsConfig {
 
+    /**
+     * 定义管理端跨域规则，只放行本地前端来源并允许携带凭证。
+     */
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration cfg = new CorsConfiguration();
-        cfg.setAllowedOrigins(List.of("http://10.111.45.135:81",
-                                        "http://localhost:14000",
-                                        "http://localhost:10072"));
+        cfg.setAllowedOrigins(List.of("http://localhost:10072"));
         cfg.setAllowCredentials(true); // 若需要 Cookie
         cfg.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         cfg.setAllowedHeaders(List.of("*")); // 或精准列出

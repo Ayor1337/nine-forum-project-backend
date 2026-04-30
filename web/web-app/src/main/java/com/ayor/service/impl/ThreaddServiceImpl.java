@@ -12,7 +12,7 @@ import com.ayor.entity.pojo.Tag;
 import com.ayor.entity.pojo.Threadd;
 import com.ayor.mapper.*;
 import com.ayor.service.ThreaddService;
-import com.ayor.util.QuillUtils;
+import com.ayor.util.TipTapUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
@@ -43,7 +43,7 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
 
     private final PostMapper postMapper;
 
-    private final QuillUtils quillUtils;
+    private final TipTapUtils tipTapUtils;
 
     private final TagMapper tagMapper;
     /**
@@ -158,8 +158,8 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
 
                 threadVO.setTag(tagVO);
                 threadVO.setAccountName(account.getNickname());
-                threadVO.setContent(quillUtils.quillDeltaFilterNonImage(threadd.getContent()));
-                threadVO.setImageUrls(quillUtils.quillDeltaFilterImage(threadd.getContent()));
+                threadVO.setContent(tipTapUtils.filterNonImage(threadd.getContent()));
+                threadVO.setImageUrls(tipTapUtils.extractImageUrls(threadd.getContent()));
                 threadVO.setAvatarUrl(account.getAvatarUrl());
                 threadVO.setAccountId(account.getAccountId());
 
@@ -272,7 +272,7 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
         }
         Threadd threadd = new Threadd();
         BeanUtils.copyProperties(threadDTO, threadd);
-        threadd.setContent(quillUtils.quillDeltaConvertBase64ToURL(threadDTO.getContent(), "threads/" + threadd.getTopicId() + "/"));
+        threadd.setContent(tipTapUtils.convertBase64ImagesToUrl(threadDTO.getContent(), "threads/" + threadd.getTopicId() + "/"));
         threadd.setAccountId(accountId);
         threadd.setCreateTime(new Date());
 
@@ -350,7 +350,7 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
         threads.forEach(thread -> {
             ThreadDoc threadDoc = new ThreadDoc();
             BeanUtils.copyProperties(thread, threadDoc);
-            threadDoc.setContent(quillUtils.quillStringToString(thread.getContent()));
+            threadDoc.setContent(tipTapUtils.extractText(thread.getContent()));
             threadDoc.setId("THREAD_"+thread.getThreadId());
             threadDoc.setIsThreadTopic(true);
             threadDocs.add(threadDoc);

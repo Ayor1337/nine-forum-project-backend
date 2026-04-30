@@ -7,6 +7,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.Date;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -18,6 +20,14 @@ public class AccountProfileDTO {
 
     @Size(min = 6, max = 50)
     private String bio;
+
+    @Size(max = 100)
+    private String location;
+
+    private Date birthday;
+
+    @Size(max = 255)
+    private String website;
 
     private Base64Upload avatar;
 

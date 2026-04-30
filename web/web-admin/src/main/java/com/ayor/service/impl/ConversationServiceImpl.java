@@ -15,6 +15,9 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class ConversationServiceImpl extends ServiceImpl<ConversationMapper, Conversation> implements ConversationService {
 
+    /**
+     * 分页查询私信会话，可按双方账号 ID 组合过滤。
+     */
     @Override
     public PageEntity<Conversation> getConversations(Integer pageNum, Integer pageSize, Integer alphaAccountId, Integer betaAccountId) {
         Page<Conversation> page = this.lambdaQuery()
@@ -24,6 +27,9 @@ public class ConversationServiceImpl extends ServiceImpl<ConversationMapper, Con
         return new PageEntity<>(page.getTotal(), page.getRecords());
     }
 
+    /**
+     * 将会话标记为已删除。
+     */
     @Override
     public String deleteConversation(Integer conversationId) {
         if (conversationId == null) {
