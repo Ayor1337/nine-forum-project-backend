@@ -40,10 +40,13 @@ CREATE TABLE IF NOT EXISTS `db_account`  (
 -- ----------------------------
 CREATE TABLE IF NOT EXISTS `db_account_stat`  (
                                     `user_stat_id` int NOT NULL,
+                                    `thread_count` int NULL DEFAULT NULL,
                                     `post_count` int NULL DEFAULT NULL,
                                     `reply_count` int NULL DEFAULT NULL,
                                     `liked_count` int NULL DEFAULT NULL,
                                     `collected_count` int NULL DEFAULT NULL,
+                                    `following_count` int NULL DEFAULT NULL,
+                                    `follower_count` int NULL DEFAULT NULL,
                                     `account_id` int NULL DEFAULT NULL,
                                     PRIMARY KEY (`user_stat_id`) USING BTREE,
                                     INDEX `account_id`(`account_id` ASC) USING BTREE,

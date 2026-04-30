@@ -53,6 +53,7 @@
 
 公开资源接口：
 - `GET /api/users/{user_id}`
+- `GET /api/users/{user_id}/stats`
 - `GET /api/themes`
 - `GET /api/themes/topics`
 - `GET /api/themes/{theme_id}/topics`
@@ -161,7 +162,21 @@ Query 参数：
 | GET | `/api/users/me/privacy` | 获取当前用户隐私设置 | `Result<UserPrivacySettingVO>` |
 | PUT | `/api/users/me/privacy` | 更新当前用户隐私设置 | `Result<Void>` |
 | POST | `/api/users/me/password` | 通过旧密码更新当前账号密码 | `Result<Void>` |
-| GET | `/api/users/me/stats` | 获取当前用户统计 | `Result<AccountStatVO>` |
+| GET | `/api/users/{user_id}/stats` | 获取指定用户统计 | `Result<AccountStatVO>` |
+
+`AccountStatVO`：
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `accountStatId` | Integer | 统计记录 ID |
+| `threadCount` | Integer | 帖子主题数 |
+| `postCount` | Integer | 发帖/回帖总数 |
+| `replyCount` | Integer | 回复数 |
+| `likedCount` | Integer | 获赞数 |
+| `collectedCount` | Integer | 被收藏数 |
+| `followingCount` | Integer | 关注数 |
+| `followerCount` | Integer | 粉丝数 |
+| `accountId` | Integer | 用户 ID |
 
 头像和横幅请求体 `Base64Upload`：
 
@@ -437,7 +452,7 @@ Query 参数：
 | `GET /api/user/info/by_user_id` | `GET /api/users/{user_id}` |
 | `PUT /api/user/update_avatar` | `PUT /api/users/me/avatar` |
 | `PUT /api/user/update_banner` | `PUT /api/users/me/banner` |
-| `GET/POST /api/stat/info` | `GET /api/users/me/stats` |
+| `GET/POST /api/stat/info` | `GET /api/users/{user_id}/stats` |
 | `GET /api/theme/info/list` | `GET /api/themes` |
 | `GET /api/theme/info/list_themes_contains_topics` | `GET /api/themes/topics` |
 | `PUT /api/theme/insert` | `POST /api/themes` |

@@ -53,6 +53,12 @@ public class AccountStatServiceImpl extends ServiceImpl<AccountStatMapper, Accou
         if (accountStat.getCollectedCount() != null) {
             exist.setCollectedCount(accountStat.getCollectedCount());
         }
+        if (accountStat.getFollowingCount() != null) {
+            exist.setFollowingCount(accountStat.getFollowingCount());
+        }
+        if (accountStat.getFollowerCount() != null) {
+            exist.setFollowerCount(accountStat.getFollowerCount());
+        }
         if (accountStat.getAccountId() != null) {
             exist.setAccountId(accountStat.getAccountId());
         }

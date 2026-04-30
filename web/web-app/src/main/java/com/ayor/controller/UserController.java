@@ -5,11 +5,13 @@ import com.ayor.entity.PageEntity;
 import com.ayor.entity.app.dto.AccountProfileDTO;
 import com.ayor.entity.app.dto.PasswordChangeDTO;
 import com.ayor.entity.app.dto.UserPrivacySettingDTO;
+import com.ayor.entity.app.vo.AccountStatVO;
 import com.ayor.entity.app.vo.AccountInfoVO;
 import com.ayor.entity.app.vo.UserInfoVO;
 import com.ayor.entity.app.vo.UserPrivacySettingVO;
 import com.ayor.result.Result;
 import com.ayor.service.AccountService;
+import com.ayor.service.AccountStatService;
 import com.ayor.service.UserPrivacySettingService;
 import com.ayor.service.UserRelationService;
 import com.ayor.util.SecurityUtils;
@@ -24,6 +26,8 @@ import org.springframework.web.bind.annotation.*;
 public class UserController {
 
     private final AccountService accountService;
+
+    private final AccountStatService accountStatService;
 
     private final SecurityUtils security;
 
@@ -51,6 +55,17 @@ public class UserController {
     public Result<UserInfoVO> getUserInfoByUserId(@PathVariable("user_id") Integer userId) {
         Integer viewerId = security.getSecurityUserId();
         return Result.dataMessageHandler(() -> accountService.getPublicUserInfo(viewerId, userId), "获取用户信息失败,用户可能不存在");
+    }
+
+    /**
+     * 根据用户 ID 获取统计概览。
+     *
+     * @param userId 目标用户ID
+     * @return 用户统计数据，包含帖子、主题等聚合信息
+     */
+    @GetMapping("/{user_id}/stats")
+    public Result<AccountStatVO> getAccountStatInfo(@PathVariable("user_id") Integer userId) {
+        return Result.dataMessageHandler(() -> accountStatService.getAccountStatByUserId(userId), "获取用户统计信息失败");
     }
 
     /**
