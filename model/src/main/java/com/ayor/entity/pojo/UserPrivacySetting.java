@@ -39,6 +39,8 @@ public class UserPrivacySetting implements Serializable {
 
     private VisibilityScope followerListVisibility;
 
+    private VisibilityScope birthdayVisibility;
+
     private DmPermission dmPermission;
 
     private Date createTime;

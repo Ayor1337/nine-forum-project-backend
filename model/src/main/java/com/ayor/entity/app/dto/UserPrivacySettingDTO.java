@@ -33,5 +33,8 @@ public class UserPrivacySettingDTO {
     private VisibilityScope followerListVisibility;
 
     @NotNull
+    private VisibilityScope birthdayVisibility;
+
+    @NotNull
     private DmPermission dmPermission;
 }

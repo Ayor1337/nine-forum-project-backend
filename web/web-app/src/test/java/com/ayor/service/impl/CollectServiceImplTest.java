@@ -48,7 +48,7 @@ class CollectServiceImplTest {
                 threaddMapper,
                 privacyPolicyService
         );
-        when(accountMapper.getAccountById(2)).thenReturn(new Account(2, null, null, null, null, null, null, null, null, null, null, false, null));
+        when(accountMapper.getAccountById(2)).thenReturn(new Account(2, null, null, null, null, null, null, null, null, null, false, null));
         when(privacyPolicyService.canViewCollectedThreads(null, 2)).thenReturn(true);
         when(collectMapper.selectPage(any(Page.class), any(Wrapper.class))).thenAnswer(invocation -> {
             Page<Collect> page = invocation.getArgument(0);

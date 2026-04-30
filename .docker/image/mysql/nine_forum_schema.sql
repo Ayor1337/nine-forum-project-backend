@@ -26,7 +26,6 @@ CREATE TABLE IF NOT EXISTS `db_account`  (
                                `password` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '密码',
                                `nickname` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '用户昵称',
                                `avatar_url` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '头像URL',
-                               `bio` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '座右铭',
                                `status` tinyint NOT NULL COMMENT '账号状态',
                                `create_time` datetime NULL DEFAULT NULL COMMENT '账号创建时间',
                                `update_time` datetime NULL DEFAULT NULL COMMENT '账号更新时间',
@@ -293,6 +292,25 @@ CREATE TABLE IF NOT EXISTS `user_relation` (
     CONSTRAINT `chk_user_relation_no_self` CHECK (`from_account_id` <> `to_account_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
+CREATE TABLE IF NOT EXISTS `account_info` (
+    `account_id` int NOT NULL,
+    `bio` varchar(255) DEFAULT NULL,
+    `location` varchar(100) DEFAULT NULL,
+    `birthday` date DEFAULT NULL,
+    `website` varchar(255) DEFAULT NULL,
+    `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`account_id`) USING BTREE,
+    CONSTRAINT `account_info_ibfk_1` FOREIGN KEY (`account_id`) REFERENCES `db_account` (`account_id`) ON DELETE RESTRICT ON UPDATE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- Existing deployments can backfill legacy bio data with:
+-- INSERT INTO account_info (account_id, bio, create_time, update_time)
+-- SELECT account_id, bio, NOW(), NOW()
+-- FROM db_account
+-- WHERE bio IS NOT NULL
+-- ON DUPLICATE KEY UPDATE bio = VALUES(bio), update_time = VALUES(update_time);
+
 CREATE TABLE IF NOT EXISTS `user_privacy_setting` (
     `account_id` int NOT NULL,
     `profile_visibility` varchar(32) NOT NULL DEFAULT 'PUBLIC',
@@ -300,6 +318,7 @@ CREATE TABLE IF NOT EXISTS `user_privacy_setting` (
     `collected_threads_visibility` varchar(32) NOT NULL DEFAULT 'PRIVATE',
     `follow_list_visibility` varchar(32) NOT NULL DEFAULT 'PUBLIC',
     `follower_list_visibility` varchar(32) NOT NULL DEFAULT 'PUBLIC',
+    `birthday_visibility` varchar(32) NOT NULL DEFAULT 'PRIVATE',
     `dm_permission` varchar(32) NOT NULL DEFAULT 'EVERYONE',
     `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,

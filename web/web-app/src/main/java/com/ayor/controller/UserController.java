@@ -5,6 +5,7 @@ import com.ayor.entity.PageEntity;
 import com.ayor.entity.app.dto.AccountProfileDTO;
 import com.ayor.entity.app.dto.PasswordChangeDTO;
 import com.ayor.entity.app.dto.UserPrivacySettingDTO;
+import com.ayor.entity.app.vo.AccountInfoVO;
 import com.ayor.entity.app.vo.UserInfoVO;
 import com.ayor.entity.app.vo.UserPrivacySettingVO;
 import com.ayor.result.Result;
@@ -105,6 +106,18 @@ public class UserController {
     public Result<Void> updateProfile(@RequestBody @Valid AccountProfileDTO dto) {
         Integer userId = security.getSecurityUserId();
         return Result.messageHandler(() -> accountService.updateUserProfile(userId, dto));
+    }
+
+    @GetMapping("/me/account-info")
+    public Result<AccountInfoVO> getMyAccountInfo() {
+        Integer userId = security.getSecurityUserId();
+        return Result.dataMessageHandler(() -> accountService.getMyAccountInfo(userId), "获取用户扩展资料失败");
+    }
+
+    @GetMapping("/{user_id}/account-info")
+    public Result<AccountInfoVO> getPublicAccountInfo(@PathVariable("user_id") Integer userId) {
+        Integer viewerId = security.getSecurityUserId();
+        return Result.dataMessageHandler(() -> accountService.getPublicAccountInfo(viewerId, userId), "获取用户扩展资料失败");
     }
 
     /**
