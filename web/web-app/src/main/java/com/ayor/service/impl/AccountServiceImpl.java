@@ -6,14 +6,18 @@ import com.ayor.entity.PageEntity;
 import com.ayor.entity.app.dto.AccountDTO;
 import com.ayor.entity.app.dto.AccountProfileDTO;
 import com.ayor.entity.app.dto.PasswordChangeDTO;
+import com.ayor.entity.app.vo.AccountInfoVO;
 import com.ayor.entity.app.vo.UserInfoVO;
 import com.ayor.entity.app.vo.UserPermissionVO;
 import com.ayor.entity.pojo.Account;
+import com.ayor.entity.pojo.AccountInfo;
+import com.ayor.mapper.AccountInfoMapper;
 import com.ayor.mapper.AccountMapper;
 import com.ayor.mapper.AccountStatMapper;
 import com.ayor.mapper.PermissionMapper;
 import com.ayor.mapper.RoleMapper;
 import com.ayor.minio.MinioService;
+import com.ayor.service.AccountInfoService;
 import com.ayor.service.AccountService;
 import com.ayor.service.PrivacyPolicyService;
 import com.ayor.service.UserPrivacySettingService;
@@ -33,6 +37,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Date;
 import java.util.Objects;
 
@@ -42,6 +48,8 @@ import java.util.Objects;
 public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> implements AccountService  {
 
     private final AccountMapper accountMapper;
+
+    private final AccountInfoMapper accountInfoMapper;
 
     private final PermissionMapper permissionMapper;
 
@@ -62,6 +70,8 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
     private final PrivacyPolicyService privacyPolicyService;
 
     private final UserPrivacySettingService userPrivacySettingService;
+
+    private final AccountInfoService accountInfoService;
 
     /**
      * 根据用户名加载 Spring Security 登录信息。
@@ -94,6 +104,7 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         }
         UserInfoVO userInfoVO = new UserInfoVO();
         BeanUtils.copyProperties(account, userInfoVO);
+        fillBio(userInfoVO, accountId);
         UserPermissionVO userPermissionVO = permissionMapper.getUserPermissionVO(accountId);
         userInfoVO.setPermission(userPermissionVO);
 
@@ -118,8 +129,19 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         }
         UserInfoVO userInfoVO = new UserInfoVO();
         BeanUtils.copyProperties(account, userInfoVO);
+        fillBio(userInfoVO, accountId);
         userInfoVO.setPermission(null);
         return userInfoVO;
+    }
+
+    @Override
+    public AccountInfoVO getMyAccountInfo(Integer accountId) {
+        return accountInfoService.getMyAccountInfo(accountId);
+    }
+
+    @Override
+    public AccountInfoVO getPublicAccountInfo(Integer viewerId, Integer accountId) {
+        return accountInfoService.getPublicAccountInfo(viewerId, accountId);
     }
 
     /**
@@ -223,6 +245,7 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         account.setRoleId(3);
         account.setPassword(encodePwd);
         if (this.save(account)) {
+            accountInfoService.initDefaultIfAbsent(account.getAccountId());
             userPrivacySettingService.initDefaultIfAbsent(account.getAccountId());
             return accountStatMapper.insertNewAccountStat(account.getAccountId()) ? null : "添加统计数据失败";
         }
@@ -248,9 +271,28 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         if (accountById == null) {
             return "用户不存在";
         }
-        BeanUtils.copyProperties(profileDTO, accountById);
+        if (!isValidWebsite(profileDTO.getWebsite())) {
+            return "个人网站格式有误";
+        }
 
-        return this.updateById(accountById) ? null : "修改失败";
+        if (profileDTO.getNickname() != null) {
+            accountById.setNickname(profileDTO.getNickname());
+        }
+
+        AccountInfo accountInfo = accountInfoService.initDefaultIfAbsent(accountId);
+        if (accountInfo == null) {
+            return "用户不存在";
+        }
+        accountInfo.setBio(profileDTO.getBio());
+        accountInfo.setLocation(profileDTO.getLocation());
+        accountInfo.setBirthday(profileDTO.getBirthday());
+        accountInfo.setWebsite(profileDTO.getWebsite());
+        accountInfo.setUpdateTime(new Date());
+
+        if (!this.updateById(accountById)) {
+            return "修改失败";
+        }
+        return accountInfoMapper.updateById(accountInfo) > 0 ? null : "修改失败";
     }
 
     /**
@@ -300,5 +342,22 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
      */
     private boolean existsUserByUsername(String username) {
         return this.baseMapper.exists(Wrappers.<Account>lambdaQuery().eq(Account::getUsername, username));
+    }
+
+    private void fillBio(UserInfoVO userInfoVO, Integer accountId) {
+        AccountInfo accountInfo = accountInfoMapper.selectById(accountId);
+        userInfoVO.setBio(accountInfo == null ? null : accountInfo.getBio());
+    }
+
+    private boolean isValidWebsite(String website) {
+        if (website == null || website.isBlank()) {
+            return true;
+        }
+        try {
+            URI uri = new URI(website);
+            return uri.getScheme() != null && uri.getHost() != null;
+        } catch (URISyntaxException e) {
+            return false;
+        }
     }
 }

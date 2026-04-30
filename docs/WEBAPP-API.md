@@ -156,6 +156,8 @@ Query 参数：
 | PUT | `/api/users/me/avatar` | 更新当前用户头像 | `Result<Void>` |
 | PUT | `/api/users/me/banner` | 更新当前用户横幅图 | `Result<Void>` |
 | PUT | `/api/users/me/profile` | 更新当前用户个人资料 | `Result<Void>` |
+| GET | `/api/users/me/account-info` | 获取当前用户扩展资料 | `Result<AccountInfoVO>` |
+| GET | `/api/users/{user_id}/account-info` | 获取指定用户扩展资料，生日受隐私设置约束 | `Result<AccountInfoVO>` |
 | GET | `/api/users/me/privacy` | 获取当前用户隐私设置 | `Result<UserPrivacySettingVO>` |
 | PUT | `/api/users/me/privacy` | 更新当前用户隐私设置 | `Result<Void>` |
 | POST | `/api/users/me/password` | 通过旧密码更新当前账号密码 | `Result<Void>` |
@@ -174,7 +176,20 @@ Query 参数：
 | --- | --- | --- | --- |
 | `nickname` | String | 否 | 长度 3-20 |
 | `bio` | String | 否 | 长度 6-50 |
+| `location` | String | 否 | 最大 100 字符 |
+| `birthday` | Date | 否 | 生日 |
+| `website` | String | 否 | 最大 255 字符，需为合法 URL |
 | `avatar` | `Base64Upload` | 否 | 传入时同步更新头像 |
+
+`AccountInfoVO`：
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `accountId` | Integer | 用户 ID |
+| `bio` | String | 个性签名 |
+| `location` | String | 所在地 |
+| `birthday` | Date | 生日，公开接口按隐私设置决定是否返回 |
+| `website` | String | 个人网站 |
 
 密码修改请求体 `PasswordChangeDTO`：
 
@@ -192,6 +207,7 @@ Query 参数：
 | `collectedThreadsVisibility` | String | 是 | `PUBLIC` `FOLLOWER_ONLY` `MUTUAL_FOLLOW_ONLY` `PRIVATE` |
 | `followListVisibility` | String | 是 | `PUBLIC` `FOLLOWER_ONLY` `MUTUAL_FOLLOW_ONLY` `PRIVATE` |
 | `followerListVisibility` | String | 是 | `PUBLIC` `FOLLOWER_ONLY` `MUTUAL_FOLLOW_ONLY` `PRIVATE` |
+| `birthdayVisibility` | String | 是 | `PUBLIC` `FOLLOWER_ONLY` `MUTUAL_FOLLOW_ONLY` `PRIVATE` |
 | `dmPermission` | String | 是 | `EVERYONE` `FOLLOWER_ONLY` `MUTUAL_FOLLOW_ONLY` `NOBODY` |
 
 ## 主题、话题、标签

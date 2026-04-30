@@ -26,8 +26,6 @@ public class Account {
 
     private String bannerUrl;
 
-    private String bio;
-
     private Integer status;
 
     private Date createTime;

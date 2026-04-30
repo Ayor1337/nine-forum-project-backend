@@ -70,6 +70,7 @@ public class UserPrivacySettingServiceImpl extends ServiceImpl<UserPrivacySettin
                 .collectedThreadsVisibility(VisibilityScope.PRIVATE)
                 .followListVisibility(VisibilityScope.PUBLIC)
                 .followerListVisibility(VisibilityScope.PUBLIC)
+                .birthdayVisibility(VisibilityScope.PRIVATE)
                 .dmPermission(DmPermission.EVERYONE)
                 .createTime(new Date())
                 .updateTime(new Date())

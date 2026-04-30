@@ -3,8 +3,10 @@ package com.ayor.service.impl;
 import com.ayor.entity.app.vo.ConversationVO;
 import com.ayor.entity.app.vo.UserInfoVO;
 import com.ayor.entity.pojo.Account;
+import com.ayor.entity.pojo.AccountInfo;
 import com.ayor.entity.pojo.Conversation;
 import com.ayor.entity.stomp.ChatUnread;
+import com.ayor.mapper.AccountInfoMapper;
 import com.ayor.mapper.AccountMapper;
 import com.ayor.mapper.ConversationMapper;
 import com.ayor.service.ChatUnreadService;
@@ -29,6 +31,8 @@ import java.util.List;
 public class ConversationServiceImpl extends ServiceImpl<ConversationMapper, Conversation> implements ConversationService {
 
     private final AccountMapper accountMapper;
+
+    private final AccountInfoMapper accountInfoMapper;
 
     private final ChatUnreadService chatUnreadService;
 
@@ -256,6 +260,8 @@ public class ConversationServiceImpl extends ServiceImpl<ConversationMapper, Con
         }
         UserInfoVO userInfoVO = new UserInfoVO();
         BeanUtils.copyProperties(account, userInfoVO);
+        AccountInfo accountInfo = accountInfoMapper.selectById(account.getAccountId());
+        userInfoVO.setBio(accountInfo == null ? null : accountInfo.getBio());
         return userInfoVO;
     }
 

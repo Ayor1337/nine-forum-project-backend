@@ -98,6 +98,6 @@ class UserRelationServiceImplTest {
     }
 
     private void mockExistingAccount(Integer accountId) {
-        when(accountMapper.getAccountById(accountId)).thenReturn(new Account(accountId, null, null, null, null, null, null, null, null, null, null, false, null));
+        when(accountMapper.getAccountById(accountId)).thenReturn(new Account(accountId, null, null, null, null, null, null, null, null, null, false, null));
     }
 }

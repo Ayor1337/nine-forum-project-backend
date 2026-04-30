@@ -34,5 +34,7 @@ public class UserPrivacySettingVO implements Serializable {
 
     private VisibilityScope followerListVisibility;
 
+    private VisibilityScope birthdayVisibility;
+
     private DmPermission dmPermission;
 }

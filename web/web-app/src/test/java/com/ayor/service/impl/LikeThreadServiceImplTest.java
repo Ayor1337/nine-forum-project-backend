@@ -53,7 +53,7 @@ class LikeThreadServiceImplTest {
                 tipTapUtils,
                 privacyPolicyService
         );
-        when(accountMapper.getAccountById(2)).thenReturn(new Account(2, null, null, null, null, null, null, null, null, null, null, false, null));
+        when(accountMapper.getAccountById(2)).thenReturn(new Account(2, null, null, null, null, null, null, null, null, null, false, null));
         when(privacyPolicyService.canViewLikedThreads(null, 2)).thenReturn(true);
         when(likeThreadMapper.selectPage(any(Page.class), any(Wrapper.class))).thenAnswer(invocation -> {
             Page<LikeThread> page = invocation.getArgument(0);
