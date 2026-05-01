@@ -1,8 +1,8 @@
 package com.ayor.service;
 
 import com.ayor.entity.PageEntity;
-import com.ayor.entity.admin.dto.ThemeDTO;
-import com.ayor.entity.admin.vo.ThemeVO;
+import com.ayor.entity.dto.ThemeDTO;
+import com.ayor.entity.vo.ThemeVO;
 import com.ayor.entity.pojo.Theme;
 import com.baomidou.mybatisplus.extension.service.IService;
 

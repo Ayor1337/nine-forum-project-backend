@@ -1,10 +1,10 @@
 package com.ayor.controller;
 
 import com.ayor.entity.PageEntity;
-import com.ayor.entity.app.dto.TagUpdateDTO;
-import com.ayor.entity.app.dto.ThreadDTO;
-import com.ayor.entity.app.vo.AnnouncementVO;
-import com.ayor.entity.app.vo.ThreadVO;
+import com.ayor.entity.dto.TagUpdateDTO;
+import com.ayor.entity.dto.ThreadDTO;
+import com.ayor.entity.vo.AnnouncementVO;
+import com.ayor.entity.vo.ThreadVO;
 import com.ayor.result.Result;
 import com.ayor.service.ThreaddService;
 import com.ayor.util.SecurityUtils;

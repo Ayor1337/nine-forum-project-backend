@@ -2,8 +2,8 @@ package com.ayor.service.impl;
 
 import com.ayor.aspect.chat.ChatNotif;
 import com.ayor.entity.PageEntity;
-import com.ayor.entity.app.dto.ConversationMessageDTO;
-import com.ayor.entity.app.vo.ConversationMessageVO;
+import com.ayor.entity.dto.ConversationMessageDTO;
+import com.ayor.entity.vo.ConversationMessageVO;
 import com.ayor.entity.pojo.Account;
 import com.ayor.entity.pojo.ConversationMessage;
 import com.ayor.mapper.AccountMapper;

@@ -1,8 +1,8 @@
 package com.ayor.service;
 
 import com.ayor.entity.PageEntity;
-import com.ayor.entity.admin.dto.ThreadDTO;
-import com.ayor.entity.admin.vo.ThreadTableVO;
+import com.ayor.entity.dto.ThreadDTO;
+import com.ayor.entity.vo.ThreadTableVO;
 import com.ayor.entity.pojo.Threadd;
 import com.baomidou.mybatisplus.extension.service.IService;
 

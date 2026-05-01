@@ -1,7 +1,7 @@
 package com.ayor.controller;
 
 import com.ayor.entity.PageEntity;
-import com.ayor.entity.app.vo.ThreadVO;
+import com.ayor.entity.vo.ThreadVO;
 import com.ayor.result.Result;
 import com.ayor.service.LikeThreadService;
 import com.ayor.util.SecurityUtils;

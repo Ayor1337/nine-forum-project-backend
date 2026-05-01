@@ -1,7 +1,7 @@
 package com.ayor.service.impl;
 
-import com.ayor.entity.admin.dto.RoleDTO;
-import com.ayor.entity.admin.vo.RoleVO;
+import com.ayor.entity.dto.RoleDTO;
+import com.ayor.entity.vo.RoleVO;
 import com.ayor.entity.pojo.Role;
 import com.ayor.mapper.RoleMapper;
 import com.ayor.mapper.TopicMapper;

@@ -1,6 +1,6 @@
 package com.ayor.service.impl;
 
-import com.ayor.entity.app.dto.AccountProfileDTO;
+import com.ayor.entity.dto.AccountProfileDTO;
 import com.ayor.entity.pojo.Account;
 import com.ayor.entity.pojo.AccountInfo;
 import com.ayor.mapper.AccountInfoMapper;

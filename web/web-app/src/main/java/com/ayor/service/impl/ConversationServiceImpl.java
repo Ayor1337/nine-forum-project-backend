@@ -1,7 +1,7 @@
 package com.ayor.service.impl;
 
-import com.ayor.entity.app.vo.ConversationVO;
-import com.ayor.entity.app.vo.UserInfoVO;
+import com.ayor.entity.vo.ConversationVO;
+import com.ayor.entity.vo.UserInfoVO;
 import com.ayor.entity.pojo.Account;
 import com.ayor.entity.pojo.AccountInfo;
 import com.ayor.entity.pojo.Conversation;

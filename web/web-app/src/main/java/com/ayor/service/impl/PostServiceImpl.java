@@ -2,10 +2,10 @@ package com.ayor.service.impl;
 
 import com.ayor.aspect.unread.MessageUnreadNotif;
 import com.ayor.entity.PageEntity;
-import com.ayor.entity.app.document.ThreadDoc;
-import com.ayor.entity.app.dto.PostDTO;
-import com.ayor.entity.app.vo.PostVO;
-import com.ayor.entity.app.vo.ReplyMessageVO;
+import com.ayor.entity.document.ThreadDoc;
+import com.ayor.entity.dto.PostDTO;
+import com.ayor.entity.vo.PostVO;
+import com.ayor.entity.vo.ReplyMessageVO;
 import com.ayor.entity.pojo.Account;
 import com.ayor.entity.pojo.Post;
 import com.ayor.entity.pojo.Threadd;

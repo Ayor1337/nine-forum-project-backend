@@ -1,7 +1,7 @@
 package com.ayor.service.impl;
 
-import com.ayor.entity.app.dto.TagDTO;
-import com.ayor.entity.app.vo.TagVO;
+import com.ayor.entity.dto.TagDTO;
+import com.ayor.entity.vo.TagVO;
 import com.ayor.entity.pojo.Tag;
 import com.ayor.mapper.TagMapper;
 import com.ayor.service.TagService;

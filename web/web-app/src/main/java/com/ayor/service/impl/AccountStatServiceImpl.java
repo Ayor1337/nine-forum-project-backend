@@ -1,6 +1,6 @@
 package com.ayor.service.impl;
 
-import com.ayor.entity.app.vo.AccountStatVO;
+import com.ayor.entity.vo.AccountStatVO;
 import com.ayor.entity.pojo.AccountStat;
 import com.ayor.mapper.AccountMapper;
 import com.ayor.mapper.AccountStatMapper;

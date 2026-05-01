@@ -1,8 +1,8 @@
 package com.ayor.service.impl;
 
 import com.ayor.entity.PageEntity;
-import com.ayor.entity.admin.dto.ThreadDTO;
-import com.ayor.entity.admin.vo.ThreadTableVO;
+import com.ayor.entity.dto.ThreadDTO;
+import com.ayor.entity.vo.ThreadTableVO;
 import com.ayor.entity.pojo.Threadd;
 import com.ayor.mapper.AccountMapper;
 import com.ayor.mapper.ThreaddMapper;

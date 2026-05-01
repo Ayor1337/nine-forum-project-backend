@@ -1,8 +1,8 @@
 package com.ayor.controller;
 
 import com.ayor.entity.PageEntity;
-import com.ayor.entity.admin.dto.AccountDTO;
-import com.ayor.entity.admin.vo.AccountVO;
+import com.ayor.entity.dto.AccountDTO;
+import com.ayor.entity.vo.AccountVO;
 import com.ayor.result.Result;
 import com.ayor.service.AccountService;
 import jakarta.validation.Valid;

@@ -1,6 +1,6 @@
 package com.ayor.service;
 
-import com.ayor.entity.app.vo.ConversationVO;
+import com.ayor.entity.vo.ConversationVO;
 import com.ayor.entity.pojo.Conversation;
 import com.ayor.entity.stomp.ChatUnread;
 import com.baomidou.mybatisplus.extension.service.IService;

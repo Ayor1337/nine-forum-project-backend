@@ -4,7 +4,7 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.ayor.mapper.PermissionMapper">
 
-    <select id="getUserPermissionVO" resultType="com.ayor.entity.app.vo.UserPermissionVO">
+    <select id="getUserPermissionVO" resultType="com.ayor.entity.vo.UserPermissionVO">
         SELECT
             account_id,
             role_name,

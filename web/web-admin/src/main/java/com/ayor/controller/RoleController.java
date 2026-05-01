@@ -1,7 +1,7 @@
 package com.ayor.controller;
 
-import com.ayor.entity.admin.dto.RoleDTO;
-import com.ayor.entity.admin.vo.RoleVO;
+import com.ayor.entity.dto.RoleDTO;
+import com.ayor.entity.vo.RoleVO;
 import com.ayor.result.Result;
 import com.ayor.service.RoleService;
 import lombok.RequiredArgsConstructor;

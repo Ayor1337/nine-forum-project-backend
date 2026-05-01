@@ -1,6 +1,6 @@
 package com.ayor.mapper;
 
-import com.ayor.entity.app.vo.UserPermissionVO;
+import com.ayor.entity.vo.UserPermissionVO;
 import com.ayor.entity.pojo.Permission;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Select;

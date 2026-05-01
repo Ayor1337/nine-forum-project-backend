@@ -1,7 +1,7 @@
 package com.ayor.controller;
 
-import com.ayor.entity.app.dto.AccountDTO;
-import com.ayor.entity.app.dto.RegDTO;
+import com.ayor.entity.dto.AccountDTO;
+import com.ayor.entity.dto.RegDTO;
 import com.ayor.result.Result;
 import com.ayor.service.AccountService;
 import com.ayor.service.AuthorizeService;

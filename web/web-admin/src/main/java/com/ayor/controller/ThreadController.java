@@ -1,8 +1,8 @@
 package com.ayor.controller;
 
 import com.ayor.entity.PageEntity;
-import com.ayor.entity.admin.dto.ThreadDTO;
-import com.ayor.entity.admin.vo.ThreadTableVO;
+import com.ayor.entity.dto.ThreadDTO;
+import com.ayor.entity.vo.ThreadTableVO;
 import com.ayor.result.Result;
 import com.ayor.service.ThreaddService;
 import lombok.RequiredArgsConstructor;
