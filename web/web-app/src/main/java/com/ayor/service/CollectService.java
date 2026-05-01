@@ -1,7 +1,7 @@
 package com.ayor.service;
 
 import com.ayor.entity.PageEntity;
-import com.ayor.entity.app.vo.ThreadVO;
+import com.ayor.entity.vo.ThreadVO;
 import com.ayor.entity.pojo.Collect;
 import com.baomidou.mybatisplus.extension.service.IService;
 

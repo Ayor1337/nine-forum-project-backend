@@ -1,9 +1,9 @@
 package com.ayor.service.impl;
 
-import com.ayor.entity.app.dto.ThemeDTO;
-import com.ayor.entity.app.vo.ThemeTopicVO;
-import com.ayor.entity.app.vo.ThemeVO;
-import com.ayor.entity.app.vo.TopicVO;
+import com.ayor.entity.dto.ThemeDTO;
+import com.ayor.entity.vo.ThemeTopicVO;
+import com.ayor.entity.vo.ThemeVO;
+import com.ayor.entity.vo.TopicVO;
 import com.ayor.entity.pojo.Theme;
 import com.ayor.entity.pojo.Topic;
 import com.ayor.mapper.ThemeMapper;

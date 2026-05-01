@@ -1,7 +1,7 @@
 package com.ayor.service.impl;
 
 import com.ayor.entity.PageEntity;
-import com.ayor.entity.app.vo.ThreadVO;
+import com.ayor.entity.vo.ThreadVO;
 import com.ayor.entity.pojo.Account;
 import com.ayor.entity.pojo.Collect;
 import com.ayor.entity.pojo.Threadd;

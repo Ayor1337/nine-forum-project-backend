@@ -1,6 +1,6 @@
 package com.ayor.service.impl;
 
-import com.ayor.entity.app.vo.AccountInfoVO;
+import com.ayor.entity.vo.AccountInfoVO;
 import com.ayor.entity.pojo.Account;
 import com.ayor.entity.pojo.AccountInfo;
 import com.ayor.entity.pojo.UserPrivacySetting;

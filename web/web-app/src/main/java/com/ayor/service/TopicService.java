@@ -1,7 +1,7 @@
 package com.ayor.service;
 
-import com.ayor.entity.app.dto.TopicDTO;
-import com.ayor.entity.app.vo.TopicVO;
+import com.ayor.entity.dto.TopicDTO;
+import com.ayor.entity.vo.TopicVO;
 import com.ayor.entity.pojo.Topic;
 import com.baomidou.mybatisplus.extension.service.IService;
 

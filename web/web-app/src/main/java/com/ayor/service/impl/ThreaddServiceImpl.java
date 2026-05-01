@@ -1,12 +1,12 @@
 package com.ayor.service.impl;
 
 import com.ayor.entity.PageEntity;
-import com.ayor.entity.app.document.ThreadDoc;
-import com.ayor.entity.app.dto.TagUpdateDTO;
-import com.ayor.entity.app.dto.ThreadDTO;
-import com.ayor.entity.app.vo.AnnouncementVO;
-import com.ayor.entity.app.vo.TagVO;
-import com.ayor.entity.app.vo.ThreadVO;
+import com.ayor.entity.document.ThreadDoc;
+import com.ayor.entity.dto.TagUpdateDTO;
+import com.ayor.entity.dto.ThreadDTO;
+import com.ayor.entity.vo.AnnouncementVO;
+import com.ayor.entity.vo.TagVO;
+import com.ayor.entity.vo.ThreadVO;
 import com.ayor.entity.pojo.Account;
 import com.ayor.entity.pojo.Tag;
 import com.ayor.entity.pojo.Threadd;

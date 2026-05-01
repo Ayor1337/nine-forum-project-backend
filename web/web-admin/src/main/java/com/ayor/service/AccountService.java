@@ -1,8 +1,8 @@
 package com.ayor.service;
 
 import com.ayor.entity.PageEntity;
-import com.ayor.entity.admin.dto.AccountDTO;
-import com.ayor.entity.admin.vo.AccountVO;
+import com.ayor.entity.dto.AccountDTO;
+import com.ayor.entity.vo.AccountVO;
 import com.ayor.entity.pojo.Account;
 import com.ayor.type.UserViolationType;
 import com.baomidou.mybatisplus.extension.service.IService;

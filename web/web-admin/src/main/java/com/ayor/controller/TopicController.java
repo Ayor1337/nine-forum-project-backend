@@ -1,8 +1,8 @@
 package com.ayor.controller;
 
 import com.ayor.entity.PageEntity;
-import com.ayor.entity.admin.dto.TopicDTO;
-import com.ayor.entity.admin.vo.TopicVO;
+import com.ayor.entity.dto.TopicDTO;
+import com.ayor.entity.vo.TopicVO;
 import com.ayor.result.Result;
 import com.ayor.service.TopicService;
 import lombok.RequiredArgsConstructor;

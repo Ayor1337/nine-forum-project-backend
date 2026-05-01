@@ -1,6 +1,6 @@
 package com.ayor.config;
 
-import com.ayor.entity.app.vo.AuthorizeVO;
+import com.ayor.entity.vo.AuthorizeVO;
 import com.ayor.entity.pojo.Account;
 import com.ayor.filter.JWTAuthorizeFilter;
 import com.ayor.mapper.AccountMapper;

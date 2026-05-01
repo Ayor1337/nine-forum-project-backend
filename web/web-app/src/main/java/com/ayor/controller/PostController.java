@@ -1,9 +1,9 @@
 package com.ayor.controller;
 
 import com.ayor.entity.PageEntity;
-import com.ayor.entity.app.dto.PostDTO;
-import com.ayor.entity.app.vo.PostVO;
-import com.ayor.entity.app.vo.ReplyMessageVO;
+import com.ayor.entity.dto.PostDTO;
+import com.ayor.entity.vo.PostVO;
+import com.ayor.entity.vo.ReplyMessageVO;
 import com.ayor.result.Result;
 import com.ayor.service.PostService;
 import com.ayor.util.SecurityUtils;
