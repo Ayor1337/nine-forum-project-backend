@@ -234,6 +234,7 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
      * 按管理端提交的表单更新用户资料。
      */
     @Override
+    @CacheEvict(value = "userInfo", key = "#accountDTO.accountId", condition = "#accountDTO != null && #accountDTO.accountId != null")
     public String updateAccount(AccountDTO accountDTO) {
         if (accountDTO == null || accountDTO.getAccountId() == null) {
             return "用户不存在";
@@ -251,6 +252,7 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
      * 逻辑删除用户，将删除标记置为 true。
      */
     @Override
+    @CacheEvict(value = "userInfo", key = "#accountId", condition = "#accountId != null")
     public String deleteAccount(Integer accountId) {
         if (accountId == null) {
             return "用户不存在";

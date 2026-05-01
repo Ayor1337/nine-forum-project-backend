@@ -10,6 +10,8 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -23,6 +25,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements TopicService {
 
+    private final CacheManager cacheManager;
 
     /**
      * 分页查询全部话题，并转换为管理端展示对象。
@@ -75,7 +78,11 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
             topic.setCreateTime(new Date());
         }
         topic.setIsDeleted(false);
-        return this.save(topic) ? null : "创建话题失败";
+        if (!this.save(topic)) {
+            return "创建话题失败";
+        }
+        evictTopicCaches(null, null, topic.getThemeId());
+        return null;
     }
 
     /**
@@ -91,11 +98,16 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
             return "话题不存在";
         }
         Date originalCreateTime = topic.getCreateTime();
+        Integer originalThemeId = topic.getThemeId();
         BeanUtils.copyProperties(topicDTO, topic);
         if (topicDTO.getCreateTime() == null) {
             topic.setCreateTime(originalCreateTime);
         }
-        return this.updateById(topic) ? null : "更新话题失败";
+        if (!this.updateById(topic)) {
+            return "更新话题失败";
+        }
+        evictTopicCaches(topic.getTopicId(), originalThemeId, topic.getThemeId());
+        return null;
     }
 
     /**
@@ -111,7 +123,11 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
             return "话题不存在";
         }
         topic.setIsDeleted(true);
-        return this.updateById(topic) ? null : "删除话题失败";
+        if (!this.updateById(topic)) {
+            return "删除话题失败";
+        }
+        evictTopicCaches(topicId, topic.getThemeId(), null);
+        return null;
     }
 
     /**
@@ -125,6 +141,30 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
             topicVOList.add(topicVO);
         });
         return topicVOList;
+    }
+
+    /**
+     * 后台改动话题后同步清理前台读取缓存，避免列表和主题聚合数据脏读。
+     */
+    private void evictTopicCaches(Integer topicId, Integer originalThemeId, Integer currentThemeId) {
+        if (topicId != null) {
+            evict("topicName", topicId);
+        }
+        if (originalThemeId != null) {
+            evict("topicList", originalThemeId);
+        }
+        if (currentThemeId != null) {
+            evict("topicList", currentThemeId);
+        }
+        evict("themeTopicList", "all");
+        evict("themeList", "all");
+    }
+
+    private void evict(String cacheName, Object key) {
+        Cache cache = cacheManager.getCache(cacheName);
+        if (cache != null) {
+            cache.evict(key);
+        }
     }
 
 }
