@@ -35,6 +35,13 @@ public interface ThemeService extends IService<Theme> {
     PageEntity<ThemeVO> getThemes(Integer pageNum, Integer pageSize);
 
     /**
+     * 根据主题ID获取主题详情
+     * @param themeId 主题ID
+     * @return 主题详情,不存在时返回null
+     */
+    ThemeVO getThemeById(Integer themeId);
+
+    /**
      * 创建新主题
      * @param themeDTO 主题数据传输对象,包含主题名称、描述等信息
      * @return 操作结果消息;成功返回null,失败返回错误描述

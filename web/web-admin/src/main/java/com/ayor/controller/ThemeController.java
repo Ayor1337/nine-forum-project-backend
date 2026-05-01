@@ -33,6 +33,14 @@ public class ThemeController {
     }
 
     /**
+     * 查询指定主题。
+     */
+    @GetMapping("/{themeId}")
+    public Result<ThemeVO> getTheme(@PathVariable("themeId") Integer themeId) {
+        return Result.dataMessageHandler(() -> themeService.getThemeById(themeId), "主题不存在");
+    }
+
+    /**
      * 创建主题。
      */
     @PostMapping

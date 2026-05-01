@@ -36,6 +36,18 @@ public class ThemeServiceImpl extends ServiceImpl<ThemeMapper, Theme> implements
     }
 
     /**
+     * 按ID查询主题详情，管理端允许查看已软删除主题。
+     */
+    @Override
+    public ThemeVO getThemeById(Integer themeId) {
+        if (themeId == null) {
+            return null;
+        }
+        Theme theme = this.getById(themeId);
+        return toVO(theme);
+    }
+
+    /**
      * 创建主题时初始化删除标记。
      */
     @Override
@@ -87,11 +99,21 @@ public class ThemeServiceImpl extends ServiceImpl<ThemeMapper, Theme> implements
     private List<ThemeVO> toVOList (List<Theme> themeList) {
         List<ThemeVO> themeVOList = new ArrayList<>();
         for (Theme theme : themeList) {
-            ThemeVO themeVO = new ThemeVO();
-            BeanUtils.copyProperties(theme, themeVO);
-            themeVOList.add(themeVO);
+            themeVOList.add(toVO(theme));
         }
         return themeVOList;
+    }
+
+    /**
+     * 将主题实体转换为管理端视图对象。
+     */
+    private ThemeVO toVO(Theme theme) {
+        if (theme == null) {
+            return null;
+        }
+        ThemeVO themeVO = new ThemeVO();
+        BeanUtils.copyProperties(theme, themeVO);
+        return themeVO;
     }
 
 }
