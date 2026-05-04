@@ -92,13 +92,6 @@ public interface AccountService extends UserDetailsService, IService<Account> {
     PageEntity<AccountVO> getAccounts(String query, Integer pageNum, Integer pageSize, Integer status);
 
     /**
-     * 创建后台用户
-     * @param account 用户实体
-     * @return 操作结果消息
-     */
-    String createAccount(Account account);
-
-    /**
      * 标记用户违规并触发处理流程(管理员功能)
      *
      * 用于处理用户违规行为,系统会记录违规信息并通过RabbitMQ发送消息
