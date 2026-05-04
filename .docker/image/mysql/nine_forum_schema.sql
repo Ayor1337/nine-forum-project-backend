@@ -185,6 +185,34 @@ CREATE TABLE IF NOT EXISTS `db_reply`  (
 -- ----------------------------
 
 -- ----------------------------
+-- Table structure for db_report
+-- ----------------------------
+CREATE TABLE IF NOT EXISTS `db_report`  (
+                             `report_id` int NOT NULL AUTO_INCREMENT COMMENT '举报ID',
+                             `reporter_account_id` int NOT NULL COMMENT '举报人账号ID',
+                             `reported_account_id` int NOT NULL COMMENT '被举报人账号ID',
+                             `target_type` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '举报对象类型',
+                             `target_id` int NOT NULL COMMENT '举报对象ID',
+                             `report_type` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '举报类型代码',
+                             `description` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '举报描述',
+                             `status` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '举报状态',
+                             `handler_account_id` int NULL DEFAULT NULL COMMENT '处理管理员账号ID',
+                             `handle_note` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '处理备注',
+                             `handled_at` datetime NULL DEFAULT NULL COMMENT '处理时间',
+                             `reported_username_snapshot` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '被举报用户名快照',
+                             `target_summary_snapshot` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '被举报对象摘要快照',
+                             `create_time` datetime NULL DEFAULT NULL COMMENT '创建时间',
+                             `update_time` datetime NULL DEFAULT NULL COMMENT '更新时间',
+                             PRIMARY KEY (`report_id`) USING BTREE,
+                             INDEX `idx_report_target`(`target_type` ASC, `target_id` ASC) USING BTREE,
+                             INDEX `idx_report_reporter`(`reporter_account_id` ASC) USING BTREE,
+                             INDEX `idx_report_reported`(`reported_account_id` ASC) USING BTREE,
+                             INDEX `idx_report_status`(`status` ASC) USING BTREE,
+                             CONSTRAINT `db_report_ibfk_1` FOREIGN KEY (`reporter_account_id`) REFERENCES `db_account` (`account_id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
+                             CONSTRAINT `db_report_ibfk_2` FOREIGN KEY (`reported_account_id`) REFERENCES `db_account` (`account_id`) ON DELETE RESTRICT ON UPDATE RESTRICT
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = DYNAMIC;
+
+-- ----------------------------
 -- Table structure for db_role
 -- ----------------------------
 CREATE TABLE IF NOT EXISTS `db_role`  (

@@ -1,11 +1,13 @@
 package com.ayor.controller;
 
 import com.ayor.entity.PageEntity;
+simport com.ayor.entity.dto.ContentReportDTO;
 import com.ayor.entity.dto.TagUpdateDTO;
 import com.ayor.entity.dto.ThreadDTO;
 import com.ayor.entity.vo.AnnouncementVO;
 import com.ayor.entity.vo.ThreadVO;
 import com.ayor.result.Result;
+import com.ayor.service.ReportService;
 import com.ayor.service.ThreaddService;
 import com.ayor.util.SecurityUtils;
 import jakarta.validation.Valid;
@@ -23,6 +25,8 @@ public class ThreadController {
     private final ThreaddService threaddService;
 
     private final SecurityUtils security;
+
+    private final ReportService reportService;
     /**
      * 获取指定主题下的帖子列表。
      */
@@ -78,6 +82,13 @@ public class ThreadController {
     public Result<Void> removeThreadById(@PathVariable(name = "thread_id") Integer threadId) {
         Integer userId = security.getSecurityUserId();
         return Result.messageHandler(() -> threaddService.removeThreadById(threadId, userId));
+    }
+
+    @PostMapping("/threads/{thread_id}/reports")
+    public Result<Void> createThreadReport(@PathVariable(name = "thread_id") Integer threadId,
+                                           @RequestBody @Valid ContentReportDTO dto) {
+        Integer userId = security.getSecurityUserId();
+        return Result.messageHandler(() -> reportService.createThreadReport(userId, threadId, dto));
     }
 
     @PreAuthorize("hasRole('ROLE_OWNER') " +

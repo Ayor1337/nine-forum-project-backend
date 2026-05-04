@@ -4,6 +4,7 @@ import com.ayor.entity.Base64Upload;
 import com.ayor.entity.PageEntity;
 import com.ayor.entity.dto.AccountProfileDTO;
 import com.ayor.entity.dto.PasswordChangeDTO;
+import com.ayor.entity.dto.UserReportDTO;
 import com.ayor.entity.dto.UserPrivacySettingDTO;
 import com.ayor.entity.vo.AccountStatVO;
 import com.ayor.entity.vo.AccountInfoVO;
@@ -12,6 +13,7 @@ import com.ayor.entity.vo.UserPrivacySettingVO;
 import com.ayor.result.Result;
 import com.ayor.service.AccountService;
 import com.ayor.service.AccountStatService;
+import com.ayor.service.ReportService;
 import com.ayor.service.UserPrivacySettingService;
 import com.ayor.service.UserRelationService;
 import com.ayor.util.SecurityUtils;
@@ -34,6 +36,8 @@ public class UserController {
     private final UserPrivacySettingService userPrivacySettingService;
 
     private final UserRelationService userRelationService;
+
+    private final ReportService reportService;
     /**
      * 获取当前登录用户的资料。
      *
@@ -204,6 +208,13 @@ public class UserController {
     public Result<Void> unblock(@PathVariable("user_id") Integer userId) {
         Integer currentUserId = security.getSecurityUserId();
         return Result.messageHandler(() -> userRelationService.unblock(currentUserId, userId));
+    }
+
+    @PostMapping("/{user_id}/reports")
+    public Result<Void> createUserReport(@PathVariable("user_id") Integer userId,
+                                         @RequestBody @Valid UserReportDTO dto) {
+        Integer currentUserId = security.getSecurityUserId();
+        return Result.messageHandler(() -> reportService.createUserReport(currentUserId, userId, dto));
     }
 
     /**

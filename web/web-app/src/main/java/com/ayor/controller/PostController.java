@@ -1,12 +1,15 @@
 package com.ayor.controller;
 
 import com.ayor.entity.PageEntity;
+import com.ayor.entity.dto.ContentReportDTO;
 import com.ayor.entity.dto.PostDTO;
 import com.ayor.entity.vo.PostVO;
 import com.ayor.entity.vo.ReplyMessageVO;
 import com.ayor.result.Result;
 import com.ayor.service.PostService;
+import com.ayor.service.ReportService;
 import com.ayor.util.SecurityUtils;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
@@ -22,6 +25,8 @@ public class PostController {
     private final PostService postService;
 
     private final SecurityUtils security;
+
+    private final ReportService reportService;
     /**
      * 获取帖子下的评论列表。
      */
@@ -49,6 +54,13 @@ public class PostController {
     public Result<Void> deletePost(@PathVariable(name = "post_id") Integer postId) {
         Integer userId = security.getSecurityUserId();
         return Result.messageHandler(() -> postService.removePostAuthorizeAccountId(postId, userId));
+    }
+
+    @PostMapping("/posts/{post_id}/reports")
+    public Result<Void> createPostReport(@PathVariable(name = "post_id") Integer postId,
+                                         @RequestBody @Valid ContentReportDTO dto) {
+        Integer userId = security.getSecurityUserId();
+        return Result.messageHandler(() -> reportService.createPostReport(userId, postId, dto));
     }
     /**
      * 管理员删除评论。
