@@ -29,8 +29,9 @@ public class ThreadController {
      */
     @GetMapping
     public Result<PageEntity<ThreadTableVO>> getThreads(@RequestParam("page_num") Integer pageNum,
-                                                        @RequestParam(value = "page_size", defaultValue = "10") Integer pageSize) {
-        return Result.dataMessageHandler(() -> threaddService.getThreads(pageNum, pageSize), "获取帖子列表失败");
+                                                        @RequestParam(value = "page_size", defaultValue = "10") Integer pageSize,
+                                                        @RequestParam(value = "topic_id", required = false) Integer topicId) {
+        return Result.dataMessageHandler(() -> threaddService.getThreads(topicId, pageNum, pageSize), "获取帖子列表失败");
     }
 
     /**

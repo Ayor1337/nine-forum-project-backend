@@ -1,10 +1,13 @@
 package com.ayor.service.impl;
 
 import com.ayor.entity.PageEntity;
+import com.ayor.entity.Base64Upload;
 import com.ayor.entity.dto.TopicDTO;
 import com.ayor.entity.vo.TopicVO;
 import com.ayor.entity.pojo.Topic;
 import com.ayor.mapper.TopicMapper;
+import com.ayor.mapper.TopicStatMapper;
+import com.ayor.minio.MinioService;
 import com.ayor.service.TopicService;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -14,6 +17,8 @@ import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
@@ -26,6 +31,10 @@ import java.util.List;
 public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements TopicService {
 
     private final CacheManager cacheManager;
+
+    private final MinioService minioService;
+
+    private final TopicStatMapper topicStatMapper;
 
     /**
      * 分页查询全部话题，并转换为管理端展示对象。
@@ -86,12 +95,22 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
         }
         Topic topic = new Topic();
         BeanUtils.copyProperties(topicDTO, topic);
+        String imageError = applyCoverUrl(topicDTO, topic);
+        if (imageError != null) {
+            return imageError;
+        }
         if (topic.getCreateTime() == null) {
             topic.setCreateTime(new Date());
         }
         topic.setIsDeleted(false);
         if (!this.save(topic)) {
             return "创建话题失败";
+        }
+        if (topicStatMapper != null && topicStatMapper.initializeNewTopicStat(topic.getTopicId()) <= 0) {
+            if (TransactionSynchronizationManager.isActualTransactionActive()) {
+                TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            }
+            return "初始化话题统计失败";
         }
         evictTopicCaches(null, null, topic.getThemeId());
         return null;
@@ -112,6 +131,10 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
         Date originalCreateTime = topic.getCreateTime();
         Integer originalThemeId = topic.getThemeId();
         BeanUtils.copyProperties(topicDTO, topic);
+        String imageError = applyCoverUrl(topicDTO, topic);
+        if (imageError != null) {
+            return imageError;
+        }
         if (topicDTO.getCreateTime() == null) {
             topic.setCreateTime(originalCreateTime);
         }
@@ -176,6 +199,22 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
         Cache cache = cacheManager.getCache(cacheName);
         if (cache != null) {
             cache.evict(key);
+        }
+    }
+
+    private String applyCoverUrl(TopicDTO topicDTO, Topic topic) {
+        if (!StringUtils.hasText(topicDTO.getCoverUrl())) {
+            return null;
+        }
+        if (!topicDTO.getCoverUrl().startsWith("data:image/")) {
+            topic.setCoverUrl(topicDTO.getCoverUrl());
+            return null;
+        }
+        try {
+            topic.setCoverUrl(minioService.uploadBase64(new Base64Upload(topicDTO.getCoverUrl(), "cover.png"), "topic/"));
+            return null;
+        } catch (Exception e) {
+            return "图片上传失败";
         }
     }
 

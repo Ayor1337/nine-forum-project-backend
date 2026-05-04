@@ -1,5 +1,6 @@
 package com.ayor.service.impl;
 
+import com.ayor.entity.PageEntity;
 import com.ayor.entity.pojo.Tag;
 import com.ayor.entity.pojo.Threadd;
 import com.ayor.entity.vo.ThreadTableVO;
@@ -31,6 +32,22 @@ class ThreadServiceImplTest {
         assertNotNull(result);
         assertEquals(9, result.getThreadId());
         assertEquals("帖子", result.getTitle());
+    }
+
+    @Test
+    void shouldFallbackToAllThreadsWhenTopicIdIsNull() {
+        ThreaddServiceImpl service = new ThreaddServiceImpl(null, null, null) {
+            @Override
+            public PageEntity<ThreadTableVO> getThreads(Integer pageNum, Integer pageSize) {
+                return new PageEntity<>(1L, List.of(new ThreadTableVO()));
+            }
+        };
+
+        PageEntity<ThreadTableVO> result = service.getThreads(null, 1, 10);
+
+        assertNotNull(result);
+        assertEquals(1L, result.getTotalSize());
+        assertEquals(1, result.getData().size());
     }
 
     @Test

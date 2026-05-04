@@ -34,6 +34,15 @@ public interface ThreaddService extends IService<Threadd> {
     PageEntity<ThreadTableVO> getThreads(Integer pageNum, Integer pageSize);
 
     /**
+     * 按话题筛选帖子列表(分页)
+     * @param topicId 话题ID
+     * @param pageNum 页码,从1开始
+     * @param pageSize 每页记录数
+     * @return 分页结果,包含帖子表格视图对象列表
+     */
+    PageEntity<ThreadTableVO> getThreads(Integer topicId, Integer pageNum, Integer pageSize);
+
+    /**
      * 获取单个帖子详情
      * @param threadId 帖子ID
      * @return 帖子详情
