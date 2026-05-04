@@ -52,6 +52,31 @@ public class RabbitConfiguration {
                 .noargs();
     }
 
+    @Bean("report_exchange")
+    public Exchange reportExchange() {
+        return ExchangeBuilder
+                .directExchange("report.direct")
+                .durable(true)
+                .build();
+    }
+
+    @Bean("report_queue")
+    public Queue reportQueue() {
+        return QueueBuilder
+                .durable("report.queue")
+                .build();
+    }
+
+    @Bean("report_binding")
+    public Binding reportBinding(@Qualifier("report_queue") Queue queue,
+                                 @Qualifier("report_exchange") Exchange exchange) {
+        return BindingBuilder
+                .bind(queue)
+                .to(exchange)
+                .with("report.created")
+                .noargs();
+    }
+
     /**
      * 创建 JSON 消息转换器。
      *
