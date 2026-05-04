@@ -2,6 +2,7 @@ package com.ayor.controller;
 
 import com.ayor.entity.PageEntity;
 import com.ayor.entity.dto.ThreadDTO;
+import com.ayor.entity.pojo.Threadd;
 import com.ayor.entity.vo.ThreadTableVO;
 import com.ayor.result.Result;
 import com.ayor.service.ThreaddService;
@@ -30,6 +31,14 @@ public class ThreadController {
     public Result<PageEntity<ThreadTableVO>> getThreads(@RequestParam("page_num") Integer pageNum,
                                                         @RequestParam(value = "page_size", defaultValue = "10") Integer pageSize) {
         return Result.dataMessageHandler(() -> threaddService.getThreads(pageNum, pageSize), "获取帖子列表失败");
+    }
+
+    /**
+     * 查询单个帖子详情。
+     */
+    @GetMapping("/{threadId}")
+    public Result<Threadd> getThread(@PathVariable("threadId") Integer threadId) {
+        return Result.dataMessageHandler(() -> threaddService.getThreadById(threadId), "获取帖子失败");
     }
 
     /**

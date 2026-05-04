@@ -2,6 +2,7 @@ package com.ayor.service;
 
 import com.ayor.entity.PageEntity;
 import com.ayor.entity.pojo.ConversationMessage;
+import com.ayor.entity.vo.ConversationMessageVO;
 import com.baomidou.mybatisplus.extension.service.IService;
 
 /**
@@ -29,7 +30,28 @@ public interface ConversationMessageService extends IService<ConversationMessage
      * @param pageSize 每页记录数
      * @return 分页结果,包含指定对话的所有消息
      */
-    PageEntity<ConversationMessage> getMessages(Integer conversationId, Integer pageNum, Integer pageSize);
+    PageEntity<ConversationMessageVO> getMessages(Integer conversationId, Integer pageNum, Integer pageSize);
+
+    /**
+     * 获取单条会话消息
+     * @param messageId 消息ID
+     * @return 会话消息
+     */
+    ConversationMessageVO getMessageById(Integer messageId);
+
+    /**
+     * 创建会话消息
+     * @param message 会话消息
+     * @return 操作结果消息
+     */
+    String createMessage(ConversationMessage message);
+
+    /**
+     * 更新会话消息
+     * @param message 会话消息
+     * @return 操作结果消息
+     */
+    String updateMessage(ConversationMessage message);
 
     /**
      * 删除消息记录(物理删除)

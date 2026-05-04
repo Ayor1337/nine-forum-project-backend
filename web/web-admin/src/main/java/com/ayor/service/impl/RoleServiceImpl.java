@@ -39,6 +39,21 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
         return roleVos;
     }
 
+    @Override
+    public RoleVO getRoleById(Integer roleId) {
+        if (roleId == null) {
+            return null;
+        }
+        Role role = this.getById(roleId);
+        if (role == null) {
+            return null;
+        }
+        RoleVO roleVO = new RoleVO();
+        BeanUtils.copyProperties(role, roleVO);
+        roleVO.setTopicName(topicMapper.getTopicNameById(role.getTopicId()));
+        return roleVO;
+    }
+
     /**
      * 创建新角色，并保存其关联的话题配置。
      */

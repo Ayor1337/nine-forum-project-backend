@@ -2,6 +2,7 @@ package com.ayor.service;
 
 import com.ayor.entity.PageEntity;
 import com.ayor.entity.pojo.TopicChat;
+import com.ayor.entity.vo.TopicChatVO;
 import com.baomidou.mybatisplus.extension.service.IService;
 
 /**
@@ -29,7 +30,28 @@ public interface TopicChatService extends IService<TopicChat> {
      * @param pageSize 每页记录数
      * @return 分页结果,包含指定分类的聊天记录
      */
-    PageEntity<TopicChat> getTopicChats(Integer topicId, Integer pageNum, Integer pageSize);
+    PageEntity<TopicChatVO> getTopicChats(Integer topicId, Integer pageNum, Integer pageSize);
+
+    /**
+     * 获取单条话题聊天记录
+     * @param topicChatId 聊天记录ID
+     * @return 话题聊天记录
+     */
+    TopicChatVO getTopicChatById(Integer topicChatId);
+
+    /**
+     * 创建话题聊天记录
+     * @param topicChat 话题聊天记录
+     * @return 操作结果消息
+     */
+    String createTopicChat(TopicChat topicChat);
+
+    /**
+     * 更新话题聊天记录
+     * @param topicChat 话题聊天记录
+     * @return 操作结果消息
+     */
+    String updateTopicChat(TopicChat topicChat);
 
     /**
      * 删除聊天记录(物理删除)

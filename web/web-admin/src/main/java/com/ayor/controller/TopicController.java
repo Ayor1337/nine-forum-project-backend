@@ -16,6 +16,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/topics")
 @RequiredArgsConstructor
@@ -40,9 +42,16 @@ public class TopicController {
      * 获取话题下拉选项。
      */
     @GetMapping("/options")
-    public Result<PageEntity<TopicVO>> getTopicsAsOptions(@RequestParam("page_num") Integer pageNum,
-                                                 @RequestParam(value = "page_size", defaultValue = "10") Integer pageSize) {
-        return Result.dataMessageHandler(() -> topicService.getTopics(pageNum, pageSize), "获取话题列表失败");
+    public Result<List<TopicVO>> getTopicsAsOptions(@RequestParam(value = "query", required = false) String query) {
+        return Result.dataMessageHandler(() -> topicService.getTopicsAsOptions(query), "获取话题列表失败");
+    }
+
+    /**
+     * 查询单个话题详情。
+     */
+    @GetMapping("/{topicId}")
+    public Result<TopicVO> getTopic(@PathVariable("topicId") Integer topicId) {
+        return Result.dataMessageHandler(() -> topicService.getTopicById(topicId), "获取话题失败");
     }
 
     /**

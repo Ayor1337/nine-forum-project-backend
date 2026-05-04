@@ -2,6 +2,7 @@ package com.ayor.controller;
 
 import com.ayor.entity.PageEntity;
 import com.ayor.entity.dto.AccountDTO;
+import com.ayor.entity.pojo.Account;
 import com.ayor.entity.vo.AccountVO;
 import com.ayor.result.Result;
 import com.ayor.service.AccountService;
@@ -47,6 +48,14 @@ public class AccountController {
     @GetMapping("/{accountId}")
     public Result<AccountVO> getAccountById(@PathVariable("accountId") Integer accountId) {
         return Result.dataMessageHandler(() -> accountService.getAccountById(accountId), "获取用户失败");
+    }
+
+    /**
+     * 创建后台用户。
+     */
+    @PostMapping
+    public Result<Void> createAccount(@RequestBody Account account) {
+        return Result.messageHandler(() -> accountService.createAccount(account));
     }
 
     /**
