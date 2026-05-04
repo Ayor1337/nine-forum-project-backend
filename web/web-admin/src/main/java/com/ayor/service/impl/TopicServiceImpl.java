@@ -51,6 +51,18 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
         return new PageEntity<>(page.getTotal(), toVOList(page.getRecords()));
     }
 
+    @Override
+    public TopicVO getTopicById(Integer topicId) {
+        if (topicId == null) {
+            return null;
+        }
+        Topic topic = this.getById(topicId);
+        if (topic == null) {
+            return null;
+        }
+        return toVOList(List.of(topic)).get(0);
+    }
+
     /**
      * 获取话题下拉选项，最多返回最近创建的 10 条匹配结果。
      */

@@ -33,6 +33,13 @@ public interface RoleService extends IService<Role> {
     List<RoleVO> getRoles();
 
     /**
+     * 获取单个角色详情
+     * @param roleId 角色ID
+     * @return 角色详情
+     */
+    RoleVO getRoleById(Integer roleId);
+
+    /**
      * 创建新角色
      * @param roleDTO 角色数据传输对象,包含角色名称、权限等信息
      * @return 操作结果消息;成功返回null,失败返回错误描述

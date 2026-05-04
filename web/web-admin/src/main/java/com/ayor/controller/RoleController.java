@@ -33,6 +33,14 @@ public class RoleController {
     }
 
     /**
+     * 查询单个角色详情。
+     */
+    @GetMapping("/{roleId}")
+    public Result<RoleVO> getRole(@PathVariable("roleId") Integer roleId) {
+        return Result.dataMessageHandler(() -> roleService.getRoleById(roleId), "获取角色失败");
+    }
+
+    /**
      * 创建角色。
      */
     @PostMapping

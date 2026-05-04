@@ -2,6 +2,7 @@ package com.ayor.service.impl;
 
 import com.ayor.entity.dto.TopicDTO;
 import com.ayor.entity.pojo.Topic;
+import com.ayor.entity.vo.TopicVO;
 import org.junit.jupiter.api.Test;
 import org.springframework.cache.concurrent.ConcurrentMapCacheManager;
 
@@ -11,6 +12,23 @@ import java.util.Date;
 import static org.junit.jupiter.api.Assertions.*;
 
 class TopicServiceImplTest {
+
+    @Test
+    void shouldReturnTopicVoWhenTopicExists() {
+        TopicServiceImpl service = new TopicServiceImpl(new ConcurrentMapCacheManager()) {
+            @Override
+            public Topic getById(Serializable id) {
+                return new Topic(5, "Java", "cover", "desc", new Date(), 2, false);
+            }
+        };
+
+        TopicVO result = service.getTopicById(5);
+
+        assertNotNull(result);
+        assertEquals(5, result.getTopicId());
+        assertEquals("Java", result.getTitle());
+        assertEquals("cover", result.getCoverUrl());
+    }
 
     @Test
     void shouldEvictRelatedCachesAfterCreatingTopic() {

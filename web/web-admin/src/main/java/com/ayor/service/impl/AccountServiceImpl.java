@@ -167,6 +167,32 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         return new PageEntity<>(page.getTotal(), toVoList(page.getRecords()));
     }
 
+    /**
+     * 创建后台用户并初始化时间字段。
+     */
+    @Override
+    @CacheEvict(value = "userInfo", key = "#account.accountId", condition = "#account != null && #account.accountId != null")
+    public String createAccount(Account account) {
+        if (account == null || !StringUtils.hasText(account.getUsername())) {
+            return "用户名不能为空";
+        }
+        if (!StringUtils.hasText(account.getPassword())) {
+            return "密码不能为空";
+        }
+        Date now = new Date();
+        if (account.getCreateTime() == null) {
+            account.setCreateTime(now);
+        }
+        account.setUpdateTime(now);
+        if (!account.isDeleted()) {
+            account.setDeleted(false);
+        }
+        if (account.getStatus() == null) {
+            account.setStatus(0);
+        }
+        return this.save(account) ? null : "创建用户失败";
+    }
+
 
     /**
      * 对指定用户执行违规处理，并同步发送广播消息给前台或其他消费者。

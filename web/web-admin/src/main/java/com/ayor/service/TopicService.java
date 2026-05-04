@@ -47,6 +47,13 @@ public interface TopicService extends IService<Topic> {
     PageEntity<TopicVO> getTopicsByThemeId(Integer themeId, Integer pageNum, Integer pageSize);
 
     /**
+     * 获取单个分类详情
+     * @param topicId 分类ID
+     * @return 分类详情
+     */
+    TopicVO getTopicById(Integer topicId);
+
+    /**
      * 按关键词搜索分类作为下拉选项
      * @param query 搜索关键词,支持分类名称模糊匹配
      * @return 匹配的分类视图对象列表,用于下拉选择器

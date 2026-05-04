@@ -34,6 +34,13 @@ public interface ThreaddService extends IService<Threadd> {
     PageEntity<ThreadTableVO> getThreads(Integer pageNum, Integer pageSize);
 
     /**
+     * 获取单个帖子详情
+     * @param threadId 帖子ID
+     * @return 帖子详情
+     */
+    Threadd getThreadById(Integer threadId);
+
+    /**
      * 创建新帖子(管理员操作)
      * @param threadDTO 帖子数据传输对象,包含标题、内容、分类等信息
      * @return 操作结果消息;成功返回null,失败返回错误描述

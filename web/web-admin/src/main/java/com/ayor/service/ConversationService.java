@@ -2,6 +2,7 @@ package com.ayor.service;
 
 import com.ayor.entity.PageEntity;
 import com.ayor.entity.pojo.Conversation;
+import com.ayor.entity.vo.ConversationVO;
 import com.baomidou.mybatisplus.extension.service.IService;
 
 /**
@@ -30,7 +31,28 @@ public interface ConversationService extends IService<Conversation> {
      * @param betaAccountId 参与者B的用户ID过滤条件;为null时不过滤
      * @return 分页结果,包含匹配条件的对话记录
      */
-    PageEntity<Conversation> getConversations(Integer pageNum, Integer pageSize, Integer alphaAccountId, Integer betaAccountId);
+    PageEntity<ConversationVO> getConversations(Integer pageNum, Integer pageSize, Integer alphaAccountId, Integer betaAccountId);
+
+    /**
+     * 获取单个会话详情
+     * @param conversationId 会话ID
+     * @return 会话详情
+     */
+    ConversationVO getConversationById(Integer conversationId);
+
+    /**
+     * 创建会话
+     * @param conversation 会话实体
+     * @return 操作结果消息
+     */
+    String createConversation(Conversation conversation);
+
+    /**
+     * 更新会话
+     * @param conversation 会话实体
+     * @return 操作结果消息
+     */
+    String updateConversation(Conversation conversation);
 
     /**
      * 删除对话记录(物理删除)
