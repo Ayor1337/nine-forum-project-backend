@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS `db_account`  (
                                `password` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '密码',
                                `nickname` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '用户昵称',
                                `avatar_url` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '头像URL',
-                               `status` tinyint NOT NULL COMMENT '账号状态',
+                               `status` tinyint NOT NULL COMMENT '账号状态: 1=ACTIVE, 2=MUTED, 3=BANNED',
                                `create_time` datetime NULL DEFAULT NULL COMMENT '账号创建时间',
                                `update_time` datetime NULL DEFAULT NULL COMMENT '账号更新时间',
                                `role_id` int NULL DEFAULT NULL COMMENT '权限等级',

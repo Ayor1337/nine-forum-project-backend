@@ -11,8 +11,8 @@ public interface RoleMapper extends BaseMapper<Role> {
 
     @Select("select role_name " +
             "from role " +
-            "inner join account on db_role.role_id = db_account.role_id " +
-            "where db_account.username = #{username}")
+            "inner join account on role.role_id = account.role_id " +
+            "where account.username = #{username}")
     String getRoleNameByUsername(String username);
 
     @Select("select topic_id " +

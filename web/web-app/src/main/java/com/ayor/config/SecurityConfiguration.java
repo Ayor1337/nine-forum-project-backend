@@ -3,6 +3,7 @@ package com.ayor.config;
 import com.ayor.entity.vo.AuthorizeVO;
 import com.ayor.entity.pojo.Account;
 import com.ayor.filter.JWTAuthorizeFilter;
+import com.ayor.filter.MuteActionFilter;
 import com.ayor.mapper.AccountMapper;
 import com.ayor.result.Result;
 import com.ayor.result.ResultCodeEnum;
@@ -86,6 +87,9 @@ public class SecurityConfiguration {
     @Resource
     private JWTAuthorizeFilter jwtAuthorizeFilter;
 
+    @Resource
+    private MuteActionFilter muteActionFilter;
+
 
     /**
      * 构造 Spring Security 过滤链。
@@ -121,6 +125,7 @@ public class SecurityConfiguration {
                     conf.authenticationEntryPoint(this::onUnauthorized);
                 })
                 .addFilterBefore(jwtAuthorizeFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(muteActionFilter, JWTAuthorizeFilter.class)
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(Customizer.withDefaults())
                 .build();

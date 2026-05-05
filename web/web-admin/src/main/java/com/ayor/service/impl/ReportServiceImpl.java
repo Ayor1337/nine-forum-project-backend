@@ -8,6 +8,9 @@ import com.ayor.entity.pojo.Report;
 import com.ayor.entity.stomp.ReportStompMessage;
 import com.ayor.entity.vo.ReportVO;
 import com.ayor.mapper.ReportMapper;
+import com.ayor.service.AccountService;
+import com.ayor.type.AccountAction;
+import com.ayor.type.AccountStatus;
 import com.ayor.service.ReportService;
 import com.ayor.type.ReportStatus;
 import com.ayor.type.ReportTargetType;
@@ -35,6 +38,8 @@ public class ReportServiceImpl extends ServiceImpl<ReportMapper, Report> impleme
     private final RabbitTemplate rabbitTemplate;
 
     private final SimpMessagingTemplate messagingTemplate;
+
+    private final AccountService accountService;
 
     @Override
     public void createFromMessage(ReportCreatedMessage message) {
@@ -103,12 +108,19 @@ public class ReportServiceImpl extends ServiceImpl<ReportMapper, Report> impleme
         if (dto.getStatus() == ReportStatus.PENDING) {
             return "不支持回退到待处理";
         }
+        AccountAction accountAction = dto.getAccountAction() == null ? AccountAction.NONE : dto.getAccountAction();
         if (report.getHandlerAccountId() != null && !report.getHandlerAccountId().equals(handlerAccountId)) {
             return "该举报已由其他管理员接手";
         }
         if ((dto.getStatus() == ReportStatus.RESOLVED || dto.getStatus() == ReportStatus.REJECTED)
                 && !StringUtils.hasText(dto.getHandleNote())) {
             return "处理备注不能为空";
+        }
+        if (dto.getStatus() == ReportStatus.REJECTED && accountAction != AccountAction.NONE) {
+            return "驳回举报时不能执行账号处罚";
+        }
+        if (dto.getStatus() != ReportStatus.RESOLVED && accountAction != AccountAction.NONE) {
+            return "当前处理状态不支持账号处罚";
         }
 
         report.setHandlerAccountId(handlerAccountId);
@@ -123,10 +135,27 @@ public class ReportServiceImpl extends ServiceImpl<ReportMapper, Report> impleme
         if (!this.updateById(report)) {
             return "举报处理失败";
         }
+        String statusError = applyAccountAction(report, accountAction, report.getHandleNote());
+        if (statusError != null) {
+            return statusError;
+        }
         if (dto.getStatus() == ReportStatus.RESOLVED || dto.getStatus() == ReportStatus.REJECTED) {
             notifyReporter(report);
         }
         return null;
+    }
+
+    private String applyAccountAction(Report report, AccountAction accountAction, String reason) {
+        if (accountAction == null || accountAction == AccountAction.NONE) {
+            return null;
+        }
+        if (report.getReportedAccountId() == null) {
+            return "被举报账号不存在";
+        }
+        if (accountAction == AccountAction.MUTE) {
+            return accountService.updateAccountStatus(report.getReportedAccountId(), AccountStatus.MUTED, reason);
+        }
+        return accountService.updateAccountStatus(report.getReportedAccountId(), AccountStatus.BANNED, reason);
     }
 
     private void notifyReporter(Report report) {

@@ -50,8 +50,6 @@ public class SecurityConfiguration {
     SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         return http
                 .authorizeHttpRequests(auth -> {
-                    auth.requestMatchers("/api/auth/**").permitAll();
-                    auth.requestMatchers("/api/*/info/**").permitAll();
                     auth.anyRequest().permitAll();
                 })
                 .formLogin(auth -> {
