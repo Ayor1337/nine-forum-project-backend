@@ -2,6 +2,7 @@ package com.ayor.service.impl;
 
 import com.ayor.entity.PageEntity;
 import com.ayor.entity.dto.AccountDTO;
+import com.ayor.entity.message.UserSystemMessage;
 import com.ayor.entity.vo.AccountVO;
 import com.ayor.entity.message.UserViolationMessage;
 import com.ayor.entity.message.UserViolationMessageTemplate;
@@ -9,6 +10,7 @@ import com.ayor.entity.pojo.Account;
 import com.ayor.mapper.AccountMapper;
 import com.ayor.mapper.RoleMapper;
 import com.ayor.service.AccountService;
+import com.ayor.type.AccountStatus;
 import com.ayor.type.UserViolationType;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -47,6 +49,7 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         if (account == null) {
             throw new UsernameNotFoundException("用户不存在");
         }
+        System.out.println(username);
         String roleName = roleMapper.getRoleNameById(account.getRoleId());
         if (!allowedRoles.contains(roleName)) {
             throw new UsernameNotFoundException("用户权限不足");
@@ -229,6 +232,51 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         return null;
     }
 
+    @Override
+    @CacheEvict(value = "userInfo", key = "#accountId", condition = "#accountId != null")
+    public String updateAccountStatus(Integer accountId, AccountStatus status, String reason) {
+        if (accountId == null) {
+            return "用户不存在";
+        }
+        if (status == null || status == AccountStatus.ACTIVE) {
+            return "账号状态不合法";
+        }
+        Account account = this.getById(accountId);
+        if (account == null) {
+            return "用户不存在";
+        }
+        account.setStatus(status.getCode());
+        account.setUpdateTime(new Date());
+        if (!this.updateById(account)) {
+            return "更新用户状态失败";
+        }
+        sendStatusNotification(accountId, status, reason);
+        return null;
+    }
+
+    @Override
+    @CacheEvict(value = "userInfo", key = "#accountId", condition = "#accountId != null")
+    public String restoreAccount(Integer accountId) {
+        if (accountId == null) {
+            return "用户不存在";
+        }
+        Account account = this.getById(accountId);
+        if (account == null) {
+            return "用户不存在";
+        }
+        if (AccountStatus.fromCode(account.getStatus()) == AccountStatus.ACTIVE) {
+            return null;
+        }
+        account.setStatus(AccountStatus.ACTIVE.getCode());
+        account.setUpdateTime(new Date());
+        if (!this.updateById(account)) {
+            return "恢复用户状态失败";
+        }
+        rabbitTemplate.convertAndSend("broadcast.direct", "broadcast",
+                new UserSystemMessage<>("您的账号状态已恢复正常。", "账号状态恢复", accountId));
+        return null;
+    }
+
     /**
      * 按管理端提交的表单更新用户资料。
      */
@@ -283,6 +331,16 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
      */
     private boolean existsUserById(Integer accountId) {
         return this.baseMapper.exists(Wrappers.<Account>lambdaQuery().eq(Account::getAccountId, accountId));
+    }
+
+    private void sendStatusNotification(Integer accountId, AccountStatus status, String reason) {
+        String action = status == AccountStatus.MUTED ? "禁言" : "封禁";
+        StringBuilder content = new StringBuilder("您的账号已被").append(action).append("。");
+        if (StringUtils.hasText(reason)) {
+            content.append("处理备注：").append(reason.trim()).append("。");
+        }
+        rabbitTemplate.convertAndSend("broadcast.direct", "broadcast",
+                new UserSystemMessage<>(content.toString(), "账号状态变更", accountId));
     }
 
 }

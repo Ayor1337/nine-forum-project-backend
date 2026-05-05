@@ -76,6 +76,11 @@ public class AccountController {
         return Result.messageHandler(() -> accountService.updateAccount(accountDTO));
     }
 
+    @PutMapping("/{accountId}/restore")
+    public Result<Void> restoreAccount(@PathVariable("accountId") Integer accountId) {
+        return Result.messageHandler(() -> accountService.restoreAccount(accountId));
+    }
+
     /**
      * 删除指定用户。
      */

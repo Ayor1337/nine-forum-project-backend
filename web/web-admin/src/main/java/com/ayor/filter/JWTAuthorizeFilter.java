@@ -59,19 +59,20 @@ public class JWTAuthorizeFilter extends OncePerRequestFilter {
         DecodedJWT jwt = jwtUtil.resolveJwt(authorization);
         if(jwt != null) {
             UserDetails user = jwtUtil.toUser(jwt);
+            String username = jwt.getClaim("name").asString();
             // 获取用户权限
-            String roleNameByUsername = roleMapper.getRoleNameByUsername(user.getUsername());
+            String roleNameByUsername = roleMapper.getRoleNameByUsername(username);
 
             // 创建新的授权信息
             List<GrantedAuthority> authorities = new ArrayList<>();
             authorities.add(new SimpleGrantedAuthority("ROLE_" + roleNameByUsername));
 
-            List<String> permissions = permissionMapper.getPermissionsByUsername(user.getUsername());
+            List<String> permissions = permissionMapper.getPermissionsByUsername(username);
             for (String permission : permissions) {
                 authorities.add(new SimpleGrantedAuthority("PERM_" +  permission));
             }
 
-            Integer topicId = roleMapper.getTopicIdByUsername(user.getUsername());
+            Integer topicId = roleMapper.getTopicIdByUsername(username);
 
             if (topicId != null) {
                 authorities.add(new SimpleGrantedAuthority("TOPIC_" + topicId));

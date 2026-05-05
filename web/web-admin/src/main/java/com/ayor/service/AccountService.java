@@ -4,6 +4,7 @@ import com.ayor.entity.PageEntity;
 import com.ayor.entity.dto.AccountDTO;
 import com.ayor.entity.vo.AccountVO;
 import com.ayor.entity.pojo.Account;
+import com.ayor.type.AccountStatus;
 import com.ayor.type.UserViolationType;
 import com.baomidou.mybatisplus.extension.service.IService;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -112,6 +113,10 @@ public interface AccountService extends UserDetailsService, IService<Account> {
      * @note 违规记录会持久化到 system_message 表
      */
     String violationProfile(Integer accountId, String type);
+
+    String updateAccountStatus(Integer accountId, AccountStatus status, String reason);
+
+    String restoreAccount(Integer accountId);
 
     /**
      * 更新用户信息

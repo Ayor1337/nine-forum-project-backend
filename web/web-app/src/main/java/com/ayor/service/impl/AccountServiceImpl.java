@@ -21,6 +21,7 @@ import com.ayor.service.AccountInfoService;
 import com.ayor.service.AccountService;
 import com.ayor.service.PrivacyPolicyService;
 import com.ayor.service.UserPrivacySettingService;
+import com.ayor.type.AccountStatus;
 import com.ayor.service.UserRelationService;
 import com.ayor.util.JWTUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
@@ -82,6 +83,9 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         Account account = accountMapper.getAccountByUsername(username);
         if (account == null) {
             throw new UsernameNotFoundException("用户不存在");
+        }
+        if (AccountStatus.fromCode(account.getStatus()) == AccountStatus.BANNED) {
+            throw new UsernameNotFoundException("账号已被封禁");
         }
         String roleName = roleMapper.getRoleNameById(account.getRoleId());
 
@@ -241,7 +245,7 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         account.setEmail(decodedJWT.getClaim("email").asString());
         account.setCreateTime(new Date());
         String encodePwd = passwordEncoder.encode(account.getPassword());
-        account.setStatus(1);
+        account.setStatus(AccountStatus.ACTIVE.getCode());
         account.setRoleId(3);
         account.setPassword(encodePwd);
         if (this.save(account)) {

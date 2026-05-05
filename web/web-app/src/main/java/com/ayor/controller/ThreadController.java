@@ -1,7 +1,7 @@
 package com.ayor.controller;
 
 import com.ayor.entity.PageEntity;
-simport com.ayor.entity.dto.ContentReportDTO;
+import com.ayor.entity.dto.ContentReportDTO;
 import com.ayor.entity.dto.TagUpdateDTO;
 import com.ayor.entity.dto.ThreadDTO;
 import com.ayor.entity.vo.AnnouncementVO;
