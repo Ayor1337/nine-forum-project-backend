@@ -356,4 +356,22 @@ CREATE TABLE IF NOT EXISTS `user_privacy_setting` (
     PRIMARY KEY (`account_id`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
+CREATE TABLE IF NOT EXISTS `mention_message` (
+    `mention_message_id` int NOT NULL AUTO_INCREMENT,
+    `account_id` int NOT NULL,
+    `from_account_id` int NOT NULL,
+    `source_type` varchar(16) NOT NULL,
+    `source_id` int NOT NULL,
+    `thread_id` int NOT NULL,
+    `path` varchar(255) NOT NULL,
+    `content_summary` varchar(255) NOT NULL DEFAULT '',
+    `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`mention_message_id`) USING BTREE,
+    KEY `idx_mention_message_account_time` (`account_id`, `create_time`),
+    KEY `idx_mention_message_from_account` (`from_account_id`),
+    KEY `idx_mention_message_source` (`source_type`, `source_id`),
+    CONSTRAINT `mention_message_ibfk_1` FOREIGN KEY (`account_id`) REFERENCES `account` (`account_id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
+    CONSTRAINT `mention_message_ibfk_2` FOREIGN KEY (`from_account_id`) REFERENCES `account` (`account_id`) ON DELETE RESTRICT ON UPDATE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
 SET FOREIGN_KEY_CHECKS = 1;

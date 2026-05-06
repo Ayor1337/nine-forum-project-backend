@@ -12,6 +12,7 @@ import com.ayor.entity.pojo.Threadd;
 import com.ayor.mapper.AccountMapper;
 import com.ayor.mapper.PostMapper;
 import com.ayor.mapper.ThreaddMapper;
+import com.ayor.service.MentionMessageService;
 import com.ayor.service.PostService;
 import com.ayor.type.UnreadMessageType;
 import com.ayor.util.STOMPUtils;
@@ -44,6 +45,8 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
     private final SimpMessagingTemplate messagingTemplate;
 
     private final STOMPUtils stompUtils;
+
+    private final MentionMessageService mentionMessageService;
     /**
      * 获取指定帖子下的评论列表。
      */
@@ -104,6 +107,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
                         toVO(post)
                 );
             }
+            mentionMessageService.createPostMentionMessages(post.getContent(), userId, post.getPostId(), post.getThreadId());
             return null;
         }
         return "发布失败, 未知异常";

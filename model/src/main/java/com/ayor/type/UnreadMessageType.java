@@ -7,6 +7,8 @@ public enum UnreadMessageType {
 
     REPLY_MESSAGE("reply"),
 
+    MENTION_MESSAGE("mention"),
+
     SYSTEM_MESSAGE("system"),
 
     USER_MESSAGE("user");
