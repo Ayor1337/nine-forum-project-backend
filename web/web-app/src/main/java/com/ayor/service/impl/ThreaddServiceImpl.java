@@ -11,6 +11,7 @@ import com.ayor.entity.pojo.Account;
 import com.ayor.entity.pojo.Tag;
 import com.ayor.entity.pojo.Threadd;
 import com.ayor.mapper.*;
+import com.ayor.service.MentionMessageService;
 import com.ayor.service.ThreaddService;
 import com.ayor.util.TipTapUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -46,6 +47,8 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
     private final TipTapUtils tipTapUtils;
 
     private final TagMapper tagMapper;
+
+    private final MentionMessageService mentionMessageService;
     /**
      * 获取指定主题下的帖子列表或分页结果。
      */
@@ -276,8 +279,11 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
         threadd.setAccountId(accountId);
         threadd.setCreateTime(new Date());
 
-
-        return this.save(threadd) ? null : "添加失败";
+        if (this.save(threadd)) {
+            mentionMessageService.createThreadMentionMessages(threadd.getContent(), accountId, threadd.getThreadId());
+            return null;
+        }
+        return "添加失败";
     }
     /**
      * 更新帖子标签信息。

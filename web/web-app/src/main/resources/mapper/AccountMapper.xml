@@ -13,4 +13,48 @@
         </foreach>
     </select>
 
+    <select id="searchUsersForMention" resultType="com.ayor.entity.vo.UserSearchVO">
+        SELECT a.account_id,
+               a.username,
+               a.nickname,
+               a.avatar_url
+        FROM account a
+                 LEFT JOIN user_relation following
+                           ON following.from_account_id = #{currentUserId}
+                               AND following.to_account_id = a.account_id
+                               AND following.relation_type = 'FOLLOW'
+                               AND following.status = 'ACTIVE'
+                 LEFT JOIN user_relation follower
+                           ON follower.from_account_id = a.account_id
+                               AND follower.to_account_id = #{currentUserId}
+                               AND follower.relation_type = 'FOLLOW'
+                               AND follower.status = 'ACTIVE'
+        WHERE a.account_id != #{currentUserId}
+          AND a.status != 3
+          AND (a.is_deleted = 0 OR a.is_deleted IS NULL)
+          AND a.username LIKE CONCAT('%', #{keyword}, '%')
+          AND NOT EXISTS(
+                SELECT 1
+                FROM user_relation blocked
+                WHERE blocked.relation_type = 'BLOCK'
+                  AND blocked.status = 'ACTIVE'
+                  AND (
+                    (blocked.from_account_id = #{currentUserId} AND blocked.to_account_id = a.account_id)
+                    OR
+                    (blocked.from_account_id = a.account_id AND blocked.to_account_id = #{currentUserId})
+                  )
+            )
+        ORDER BY CASE
+                     WHEN following.relation_id IS NOT NULL THEN 0
+                     WHEN follower.relation_id IS NOT NULL THEN 1
+                     ELSE 2
+                 END,
+                 CASE
+                     WHEN a.username LIKE CONCAT(#{keyword}, '%') THEN 0
+                     ELSE 1
+                 END,
+                 a.username ASC
+        LIMIT 5
+    </select>
+
 </mapper>
