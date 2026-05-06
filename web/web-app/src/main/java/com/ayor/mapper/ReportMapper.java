@@ -8,7 +8,7 @@ import org.apache.ibatis.annotations.Select;
 public interface ReportMapper extends BaseMapper<Report> {
 
     @Select("""
-            select * from db_report
+            select * from report
             where reporter_account_id = #{reporterAccountId}
               and target_type = #{targetType}
               and target_id = #{targetId}

@@ -10,7 +10,7 @@ import lombok.Data;
 import java.util.Date;
 
 @Data
-@TableName("db_report")
+@TableName("report")
 public class Report {
 
     @TableId(type = IdType.AUTO)
