@@ -140,6 +140,9 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         return this.removeByIdLogic(post.getPostId()) ? null : "删除失败, 未知异常";
     }
 
+    /**
+     * 分页获取回复消息列表。
+     */
     @Override
     @MessageUnreadNotif(
             accountId = "#accountId",
@@ -147,9 +150,6 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
             type = UnreadMessageType.REPLY_MESSAGE,
             doRead = true
     )
-    /**
-     * 分页获取回复消息列表。
-     */
     public PageEntity<ReplyMessageVO> listReplyMessage(Integer pageNum, Integer pageSize, Integer accountId) {
         if (accountId == null) return new PageEntity<>(0L, Collections.emptyList());
         if (pageNum == null || pageNum < 1) pageNum = 1;

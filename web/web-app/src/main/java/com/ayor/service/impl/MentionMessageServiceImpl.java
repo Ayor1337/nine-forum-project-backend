@@ -26,9 +26,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 /**
  * 提及消息服务实现。
@@ -131,18 +133,18 @@ public class MentionMessageServiceImpl extends ServiceImpl<MentionMessageMapper,
             return;
         }
 
-        Map<Integer, String> uniqueMentions = new LinkedHashMap<>();
+        Set<Integer> uniqueMentionAccountIds = new LinkedHashSet<>();
         for (TipTapUtils.MentionTarget mentionTarget : tipTapUtils.extractMentions(content)) {
-            if (mentionTarget.accountId() == null || mentionTarget.username() == null || mentionTarget.username().isBlank()) {
+            if (mentionTarget.accountId() == null) {
                 continue;
             }
-            uniqueMentions.putIfAbsent(mentionTarget.accountId(), mentionTarget.username().trim());
+            uniqueMentionAccountIds.add(mentionTarget.accountId());
         }
-        if (uniqueMentions.isEmpty()) {
+        if (uniqueMentionAccountIds.isEmpty()) {
             return;
         }
 
-        List<Account> targetAccounts = accountMapper.getAccountsByIds(new ArrayList<>(uniqueMentions.keySet()));
+        List<Account> targetAccounts = accountMapper.getAccountsByIds(new ArrayList<>(uniqueMentionAccountIds));
         Map<Integer, Account> targetAccountMap = new LinkedHashMap<>();
         for (Account targetAccount : targetAccounts) {
             targetAccountMap.put(targetAccount.getAccountId(), targetAccount);
@@ -150,16 +152,12 @@ public class MentionMessageServiceImpl extends ServiceImpl<MentionMessageMapper,
 
         String summary = buildSummary(content);
         Date now = new Date();
-        for (Map.Entry<Integer, String> entry : uniqueMentions.entrySet()) {
-            Integer targetAccountId = entry.getKey();
+        for (Integer targetAccountId : uniqueMentionAccountIds) {
             if (targetAccountId.equals(fromAccountId)) {
                 continue;
             }
             Account targetAccount = targetAccountMap.get(targetAccountId);
             if (!isMentionableAccount(targetAccount)) {
-                continue;
-            }
-            if (!Objects.equals(targetAccount.getUsername(), entry.getValue())) {
                 continue;
             }
             if (userRelationService.isBlockedEitherDirection(fromAccountId, targetAccountId)) {
