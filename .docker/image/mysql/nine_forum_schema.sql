@@ -228,6 +228,31 @@ CREATE TABLE IF NOT EXISTS `theme`  (
 ) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
+-- Table structure for passkey_credential
+-- ----------------------------
+CREATE TABLE IF NOT EXISTS `passkey_credential` (
+    `id` bigint NOT NULL AUTO_INCREMENT,
+    `account_id` int NOT NULL,
+    `credential_id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+    `user_handle` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+    `attestation_object` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL,
+    `client_data_json` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL,
+    `signature_count` bigint NOT NULL DEFAULT 0,
+    `transports` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL,
+    `backup_eligible` tinyint NULL DEFAULT 0,
+    `backup_state` tinyint NULL DEFAULT 0,
+    `uv_initialized` tinyint NULL DEFAULT 0,
+    `label` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL,
+    `last_used_at` datetime NULL DEFAULT NULL,
+    `create_time` datetime NULL DEFAULT NULL,
+    `update_time` datetime NULL DEFAULT NULL,
+    PRIMARY KEY (`id`) USING BTREE,
+    UNIQUE INDEX `uk_passkey_credential_id` (`credential_id`) USING BTREE,
+    INDEX `idx_passkey_account_id` (`account_id`) USING BTREE,
+    CONSTRAINT `fk_passkey_credential_account` FOREIGN KEY (`account_id`) REFERENCES `account` (`account_id`) ON DELETE CASCADE ON UPDATE RESTRICT
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = DYNAMIC;
+
+-- ----------------------------
 -- Table structure for thread
 -- ----------------------------
 CREATE TABLE IF NOT EXISTS `thread`  (

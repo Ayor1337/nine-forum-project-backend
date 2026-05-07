@@ -100,6 +100,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         post.setTopicId(topicId);
         if (this.save(post)) {
             Integer accountId = threaddMapper.getAccountIdByThreadIdInteger(post.getThreadId());
+            // TODO 自己在自己的帖子下面回复不要通知
             if (stompUtils.isUserSubscribed(accountId.toString(), "/notif/reply")) {
                 messagingTemplate.convertAndSendToUser(
                         threaddMapper.getAccountIdByThreadIdInteger(postDTO.getThreadId()).toString(),

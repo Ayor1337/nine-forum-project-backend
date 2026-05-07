@@ -7,12 +7,12 @@ import com.ayor.filter.MuteActionFilter;
 import com.ayor.mapper.AccountMapper;
 import com.ayor.result.Result;
 import com.ayor.result.ResultCodeEnum;
+import com.ayor.util.AuthorizeResponseFactory;
 import com.ayor.util.JWTUtils;
 import jakarta.annotation.Resource;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.beans.BeanUtils;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -40,7 +40,9 @@ public class SecurityConfiguration {
     private static final String[] PUBLIC_AUTH_ENDPOINTS = {
             "/api/auth/register-verifications",
             "/api/auth/registrations",
-            LOGIN_PATH
+            LOGIN_PATH,
+            "/api/passkeys/authentication/options",
+            "/api/passkeys/authentications"
     };
 
     private static final String[] AUTHENTICATED_USER_ENDPOINTS = {
@@ -90,6 +92,8 @@ public class SecurityConfiguration {
     @Resource
     private MuteActionFilter muteActionFilter;
 
+    @Resource
+    private AuthorizeResponseFactory authorizeResponseFactory;
 
     /**
      * 构造 Spring Security 过滤链。
@@ -146,11 +150,7 @@ public class SecurityConfiguration {
         resp.setContentType("application/json");
         User user = (User) auth.getPrincipal();
         Account account = accountMapper.getAccountByUsername(user.getUsername());
-        String token = jwtUtil.createJwt(user, account.getAccountId(), user.getUsername());
-        AuthorizeVO authorizeVO = new AuthorizeVO();
-        BeanUtils.copyProperties(account, authorizeVO);
-        authorizeVO.setToken(token);
-        authorizeVO.setExpire(jwtUtil.expiredTime());
+        AuthorizeVO authorizeVO = authorizeResponseFactory.create(account);
         resp.getWriter().write(Result.ok(authorizeVO).toJSONString());
     }
 

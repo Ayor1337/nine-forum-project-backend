@@ -18,6 +18,14 @@ spring:
     jwt:
       secret-key: kenkouniyokunai
       expire: 7
+    webauthn:
+      rp-id: localhost
+      rp-name: NineForum
+      allowed-origins:
+        - http://localhost:3000
+        - http://localhost:10071
+        - http://localhost:9966
+      challenge-expire-seconds: 300
   minio:
     endpoint: http://localhost:9000
     access-key: admin
