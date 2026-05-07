@@ -13,7 +13,9 @@ import com.ayor.entity.pojo.Threadd;
 import com.ayor.mapper.*;
 import com.ayor.service.MentionMessageService;
 import com.ayor.service.ThreaddService;
+import com.ayor.type.ThreadOrderType;
 import com.ayor.util.TipTapUtils;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
@@ -35,7 +37,7 @@ import java.util.concurrent.locks.ReentrantLock;
 @RequiredArgsConstructor
 public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> implements ThreaddService {
 
-    // 删除操作需要校验 topicId 与 threadId 的对应关系，避免误删其他主题的帖子。
+    // TODO 删除操作需要校验 topicId 与 threadId 的对应关系，避免误删其他主题的帖子。
 
 
     private final AccountMapper accountMapper;
@@ -69,18 +71,19 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
      */
 
     @Override
-    public PageEntity<ThreadVO> getThreadVOsByTopicId(Integer topicId, Integer pageNum, Integer pageSize) {
+    public PageEntity<ThreadVO> getThreadVOsByTopicId(Integer topicId, Integer tagId, String order, Integer pageNum, Integer pageSize) {
         if (topicId == null) {
             return null;
         }
         if (topicMapper.isTopicDelete(topicId)) {
             return null;
         }
-        Page<Threadd> threads = this.lambdaQuery()
+        LambdaQueryWrapper<Threadd> queryWrapper = new LambdaQueryWrapper<Threadd>()
                 .eq(Threadd::getTopicId, topicId)
                 .eq(Threadd::getIsDeleted, false)
-                .orderByDesc(Threadd::getCreateTime)
-                .page(Page.of(pageNum, pageSize));
+                .eq(tagId != null, Threadd::getTagId, tagId);
+        applyThreadOrder(queryWrapper, normalizeThreadOrder(order));
+        Page<Threadd> threads = this.page(Page.of(pageNum, pageSize), queryWrapper);
 
         return new PageEntity<>(threads.getTotal(), toVOs(threads.getRecords()));
     }
@@ -170,6 +173,28 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
             }
         });
         return threadVOList;
+    }
+
+    private ThreadOrderType normalizeThreadOrder(String order) {
+        return ThreadOrderType.fromValue(order);
+    }
+
+    private void applyThreadOrder(LambdaQueryWrapper<Threadd> queryWrapper, ThreadOrderType orderType) {
+        switch (orderType) {
+            case LATEST -> queryWrapper.orderByDesc(Threadd::getCreateTime);
+            case LIKES -> queryWrapper.orderByDesc(Threadd::getLikeCount)
+                    .orderByDesc(Threadd::getCreateTime);
+            case COLLECTS -> queryWrapper.orderByDesc(Threadd::getCollectCount)
+                    .orderByDesc(Threadd::getCreateTime);
+            case VIEWS -> queryWrapper.orderByDesc(Threadd::getViewCount)
+                    .orderByDesc(Threadd::getCreateTime);
+            case REPLIES -> queryWrapper.orderByDesc(Threadd::getPostCount)
+                    .orderByDesc(Threadd::getCreateTime);
+            case HOT -> queryWrapper.orderByDesc(Threadd::getLikeCount)
+                    .orderByDesc(Threadd::getPostCount)
+                    .orderByDesc(Threadd::getViewCount)
+                    .orderByDesc(Threadd::getCreateTime);
+        }
     }
     /**
      * 校验作者后删除帖子。

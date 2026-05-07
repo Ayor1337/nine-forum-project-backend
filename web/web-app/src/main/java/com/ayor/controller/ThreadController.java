@@ -34,9 +34,11 @@ public class ThreadController {
 
     @GetMapping("/topics/{topic_id}/threads")
     public Result<PageEntity<ThreadVO>> getThreadsByTopicId(@PathVariable("topic_id") Integer topicId,
+                                                          @RequestParam(value = "tag", required = false) Integer tag,
+                                                          @RequestParam(value = "order", defaultValue = "hot") String order,
                                                           @RequestParam("page_num")Integer pageNum,
                                                           @RequestParam(value = "page_size", defaultValue = "10") Integer pageSize) {
-        return Result.dataMessageHandler(() -> threaddService.getThreadVOsByTopicId(topicId, pageNum, pageSize), "获取失败");
+        return Result.dataMessageHandler(() -> threaddService.getThreadVOsByTopicId(topicId, tag, order, pageNum, pageSize), "获取失败");
     }
     /**
      * 获取指定用户发布的帖子列表。
