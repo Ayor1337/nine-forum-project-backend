@@ -46,11 +46,13 @@ public interface ThreaddService extends IService<Threadd> {
     /**
      * 按分类ID获取帖子列表(分页版本)
      * @param topicId 分类ID
+     * @param tagId 标签ID, 可选
+     * @param order 排序方式, 支持 hot/latest
      * @param pageNum 页码,从1开始
      * @param pageSize 每页记录数
      * @return 分页结果,包含ThreadVO列表和总记录数
      */
-    PageEntity<ThreadVO> getThreadVOsByTopicId(Integer topicId, Integer pageNum, Integer pageSize);
+    PageEntity<ThreadVO> getThreadVOsByTopicId(Integer topicId, Integer tagId, String order, Integer pageNum, Integer pageSize);
 
     /**
      * 获取帖子标题
