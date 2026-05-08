@@ -146,6 +146,67 @@ CREATE TABLE IF NOT EXISTS `post`  (
 ) ENGINE = InnoDB AUTO_INCREMENT = 2 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
+-- Table structure for image_asset
+-- ----------------------------
+CREATE TABLE IF NOT EXISTS `image_asset` (
+    `asset_id` int NOT NULL AUTO_INCREMENT,
+    `account_id` int NULL DEFAULT NULL COMMENT '上传者账号ID，可为空以兼容历史自动收编',
+    `url` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '平台内部图片地址',
+    `object_path` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '对象存储路径',
+    `original_ext` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+    `output_ext` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+    `mime_type` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+    `file_size` bigint NOT NULL,
+    `width` int NOT NULL,
+    `height` int NOT NULL,
+    `sha256` char(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+    `source_type` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+    `asset_type` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '资源语义类型: STICKER/IMAGE',
+    `visibility` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+    `status` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+    `favorite_count` int NOT NULL DEFAULT 0,
+    `use_count` int NOT NULL DEFAULT 0,
+    `create_time` datetime NULL DEFAULT NULL,
+    `update_time` datetime NULL DEFAULT NULL,
+    PRIMARY KEY (`asset_id`) USING BTREE,
+    UNIQUE INDEX `uk_image_asset_url` (`url`) USING BTREE,
+    INDEX `idx_image_asset_account_status` (`account_id`, `asset_type`, `status`) USING BTREE,
+    INDEX `idx_image_asset_asset_type` (`asset_type`) USING BTREE,
+    INDEX `idx_image_asset_status` (`status`) USING BTREE,
+    CONSTRAINT `fk_image_asset_account` FOREIGN KEY (`account_id`) REFERENCES `account` (`account_id`) ON DELETE SET NULL ON UPDATE RESTRICT
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = DYNAMIC;
+
+-- ----------------------------
+-- Table structure for image_asset_favorite
+-- ----------------------------
+CREATE TABLE IF NOT EXISTS `image_asset_favorite` (
+    `favorite_id` int NOT NULL AUTO_INCREMENT,
+    `account_id` int NOT NULL,
+    `asset_id` int NOT NULL,
+    `create_time` datetime NULL DEFAULT NULL,
+    PRIMARY KEY (`favorite_id`) USING BTREE,
+    UNIQUE INDEX `uk_image_asset_favorite` (`account_id`, `asset_id`) USING BTREE,
+    INDEX `idx_image_asset_favorite_asset` (`asset_id`) USING BTREE,
+    CONSTRAINT `fk_image_asset_favorite_account` FOREIGN KEY (`account_id`) REFERENCES `account` (`account_id`) ON DELETE CASCADE ON UPDATE RESTRICT,
+    CONSTRAINT `fk_image_asset_favorite_asset` FOREIGN KEY (`asset_id`) REFERENCES `image_asset` (`asset_id`) ON DELETE CASCADE ON UPDATE RESTRICT
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = DYNAMIC;
+
+-- ----------------------------
+-- Table structure for content_image_ref
+-- ----------------------------
+CREATE TABLE IF NOT EXISTS `content_image_ref` (
+    `ref_id` int NOT NULL AUTO_INCREMENT,
+    `asset_id` int NOT NULL,
+    `content_type` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+    `content_id` int NOT NULL,
+    `create_time` datetime NULL DEFAULT NULL,
+    PRIMARY KEY (`ref_id`) USING BTREE,
+    UNIQUE INDEX `uk_content_image_ref` (`asset_id`, `content_type`, `content_id`) USING BTREE,
+    INDEX `idx_content_image_ref_content` (`content_type`, `content_id`) USING BTREE,
+    CONSTRAINT `fk_content_image_ref_asset` FOREIGN KEY (`asset_id`) REFERENCES `image_asset` (`asset_id`) ON DELETE CASCADE ON UPDATE RESTRICT
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = DYNAMIC;
+
+-- ----------------------------
 -- Table structure for privacy
 -- ----------------------------
 CREATE TABLE IF NOT EXISTS `privacy`  (

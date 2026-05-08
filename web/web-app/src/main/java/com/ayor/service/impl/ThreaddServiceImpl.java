@@ -11,6 +11,7 @@ import com.ayor.entity.pojo.Account;
 import com.ayor.entity.pojo.Tag;
 import com.ayor.entity.pojo.Threadd;
 import com.ayor.mapper.*;
+import com.ayor.service.ImageAssetService;
 import com.ayor.service.MentionMessageService;
 import com.ayor.service.ThreaddService;
 import com.ayor.type.ThreadOrderType;
@@ -51,6 +52,8 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
     private final TagMapper tagMapper;
 
     private final MentionMessageService mentionMessageService;
+
+    private final ImageAssetService imageAssetService;
     /**
      * 获取指定主题下的帖子列表或分页结果。
      */
@@ -213,6 +216,8 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
         if (thread.getIsDeleted()) {
             return "帖子已删除";
         }
+        imageAssetService.clearContentRefs("THREAD", threadId);
+        postMapper.getPostsByThreadId(threadId).forEach(post -> imageAssetService.clearContentRefs("POST", post.getPostId()));
         postMapper.removePostsByThreadId(threadId);
         return this.removeByIdLogical(threadId) ? null : "删除失败";
     }
@@ -228,6 +233,8 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
         if (thread.getIsDeleted()) {
             return "帖子已删除";
         }
+        imageAssetService.clearContentRefs("THREAD", threadId);
+        postMapper.getPostsByThreadId(threadId).forEach(post -> imageAssetService.clearContentRefs("POST", post.getPostId()));
         postMapper.removePostsByThreadId(threadId);
         return this.removeByIdLogical(threadId) ? null : "删除失败";
     }
@@ -300,11 +307,16 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
         }
         Threadd threadd = new Threadd();
         BeanUtils.copyProperties(threadDTO, threadd);
-        threadd.setContent(tipTapUtils.convertBase64ImagesToUrl(threadDTO.getContent(), "threads/" + threadd.getTopicId() + "/"));
+        try {
+            threadd.setContent(tipTapUtils.convertBase64ImagesToUrl(threadDTO.getContent(), "threads/" + threadd.getTopicId() + "/"));
+        } catch (IllegalArgumentException exception) {
+            return exception.getMessage();
+        }
         threadd.setAccountId(accountId);
         threadd.setCreateTime(new Date());
 
         if (this.save(threadd)) {
+            imageAssetService.syncContentRefs("THREAD", threadd.getThreadId(), threadd.getContent(), accountId);
             mentionMessageService.createThreadMentionMessages(threadd.getContent(), accountId, threadd.getThreadId());
             return null;
         }

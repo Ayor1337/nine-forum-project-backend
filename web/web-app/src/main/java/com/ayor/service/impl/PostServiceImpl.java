@@ -12,6 +12,7 @@ import com.ayor.entity.pojo.Threadd;
 import com.ayor.mapper.AccountMapper;
 import com.ayor.mapper.PostMapper;
 import com.ayor.mapper.ThreaddMapper;
+import com.ayor.service.ImageAssetService;
 import com.ayor.service.MentionMessageService;
 import com.ayor.service.PostService;
 import com.ayor.type.UnreadMessageType;
@@ -47,6 +48,8 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
     private final STOMPUtils stompUtils;
 
     private final MentionMessageService mentionMessageService;
+
+    private final ImageAssetService imageAssetService;
     /**
      * 获取指定帖子下的评论列表。
      */
@@ -95,10 +98,15 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         }
         Integer topicId = threaddMapper.getTopicIdByThreadId(postDTO.getThreadId());
         post.setAccountId(userId)   ;
-        post.setContent(tipTapUtils.convertBase64ImagesToUrl(postDTO.getContent(), "posts/" + post.getThreadId() + "/"));
+        try {
+            post.setContent(tipTapUtils.convertBase64ImagesToUrl(postDTO.getContent(), "posts/" + postDTO.getThreadId() + "/"));
+        } catch (IllegalArgumentException exception) {
+            return exception.getMessage();
+        }
         post.setCreateTime(new Date());
         post.setTopicId(topicId);
         if (this.save(post)) {
+            imageAssetService.syncContentRefs("POST", post.getPostId(), post.getContent(), userId);
             Integer accountId = threaddMapper.getAccountIdByThreadIdInteger(post.getThreadId());
             // TODO 自己在自己的帖子下面回复不要通知
             if (stompUtils.isUserSubscribed(accountId.toString(), "/notif/reply")) {
@@ -126,6 +134,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         if (!post.getAccountId().equals(userId)) {
             return "没有权限";
         }
+        imageAssetService.clearContentRefs("POST", postId);
         return this.removeByIdLogic(post.getPostId()) ? null : "删除失败, 未知异常";
     }
     /**
@@ -138,6 +147,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         if (post == null) {
             return "帖子不存在";
         }
+        imageAssetService.clearContentRefs("POST", postId);
         return this.removeByIdLogic(post.getPostId()) ? null : "删除失败, 未知异常";
     }
 
