@@ -15,10 +15,10 @@ public class ImageAssetController {
 
     private final ImageAssetService imageAssetService;
 
-    @GetMapping
     /**
      * 分页查询图片资源。
      */
+    @GetMapping
     public Result<PageEntity<ImageAssetAdminVO>> getAssets(@RequestParam(value = "page_num", defaultValue = "1") Integer pageNum,
                                                            @RequestParam(value = "page_size", defaultValue = "20") Integer pageSize,
                                                            @RequestParam(value = "account_id", required = false) Integer accountId,
@@ -27,19 +27,19 @@ public class ImageAssetController {
         return Result.dataMessageHandler(() -> imageAssetService.getAssets(accountId, status, assetType, pageNum, pageSize), "获取图片资源列表失败");
     }
 
-    @PutMapping("/{assetId}/status")
     /**
      * 修改图片资源状态。
      */
+    @PutMapping("/{assetId}/status")
     public Result<Void> updateStatus(@PathVariable("assetId") Integer assetId,
                                      @RequestBody ImageAssetStatusUpdateDTO dto) {
         return Result.messageHandler(() -> imageAssetService.updateStatus(assetId, dto.getStatus()));
     }
 
-    @DeleteMapping("/{assetId}")
     /**
      * 强制删除图片资源。
      */
+    @DeleteMapping("/{assetId}")
     public Result<Void> forceDelete(@PathVariable("assetId") Integer assetId) {
         return Result.messageHandler(() -> imageAssetService.forceDelete(assetId));
     }
