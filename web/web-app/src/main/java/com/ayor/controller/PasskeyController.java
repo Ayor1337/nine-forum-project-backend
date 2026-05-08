@@ -15,12 +15,12 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 
-@RestController
-@RequestMapping("/api/passkeys")
-@RequiredArgsConstructor
 /**
  * Passkey 相关接口。
  */
+@RestController
+@RequestMapping("/api/passkeys")
+@RequiredArgsConstructor
 public class PasskeyController {
 
     private final PasskeyService passkeyService;
