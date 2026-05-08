@@ -164,7 +164,7 @@ CREATE TABLE IF NOT EXISTS `image_asset` (
     `asset_type` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '资源语义类型: STICKER/IMAGE',
     `visibility` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
     `status` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-    `favorite_count` int NOT NULL DEFAULT 0,
+    `favorite_count` int NOT NULL DEFAULT 0 COMMENT '已添加该表情包的用户数',
     `use_count` int NOT NULL DEFAULT 0,
     `create_time` datetime NULL DEFAULT NULL,
     `update_time` datetime NULL DEFAULT NULL,
@@ -177,7 +177,7 @@ CREATE TABLE IF NOT EXISTS `image_asset` (
 ) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
--- Table structure for image_asset_favorite
+-- Table structure for image_asset_favorite（用户表情包库关系）
 -- ----------------------------
 CREATE TABLE IF NOT EXISTS `image_asset_favorite` (
     `favorite_id` int NOT NULL AUTO_INCREMENT,
