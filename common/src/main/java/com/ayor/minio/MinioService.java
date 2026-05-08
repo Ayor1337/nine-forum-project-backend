@@ -8,8 +8,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.util.Base64;
+import java.util.Locale;
 import java.util.UUID;
 
 @Service
@@ -88,6 +90,110 @@ public class MinioService {
     }
 
     /**
+     * 上传已经处理好的图片字节到对象存储。
+     *
+     * @param bytes 图片字节
+     * @param objectName 对象名
+     * @param contentType MIME 类型
+     * @return 平台内可访问地址
+     */
+    public String uploadObject(byte[] bytes, String objectName, String contentType) {
+        try (InputStream stream = new ByteArrayInputStream(bytes)) {
+            minioClient.putObject(
+                    PutObjectArgs.builder()
+                            .bucket(bucketName)
+                            .object(objectName)
+                            .stream(stream, bytes.length, -1)
+                            .contentType(contentType)
+                            .build()
+            );
+            return buildObjectUrl(objectName);
+        } catch (Exception exception) {
+            throw new IllegalStateException("上传图片到对象存储失败", exception);
+        }
+    }
+
+    /**
+     * 读取对象存储中的图片字节。
+     *
+     * @param rawUrl 平台内图片地址
+     * @return 图片字节
+     */
+    public byte[] getObjectBytes(String rawUrl) {
+        String objectName = extractObjectName(rawUrl);
+        try (InputStream stream = minioClient.getObject(
+                GetObjectArgs.builder()
+                        .bucket(bucketName)
+                        .object(objectName)
+                        .build()
+        );
+             ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
+            stream.transferTo(outputStream);
+            return outputStream.toByteArray();
+        } catch (Exception exception) {
+            throw new IllegalStateException("读取对象存储图片失败", exception);
+        }
+    }
+
+    /**
+     * 构造平台内对象地址。
+     *
+     * @param objectName 对象名
+     * @return 平台内地址
+     */
+    public String buildObjectUrl(String objectName) {
+        return String.format("%s/%s", bucketName, objectName);
+    }
+
+    /**
+     * 判断给定地址是否属于当前平台对象存储。
+     *
+     * @param rawUrl 待判断地址
+     * @return 是否属于平台
+     */
+    public boolean isOwnObjectUrl(String rawUrl) {
+        return normalizeUrl(rawUrl) != null;
+    }
+
+    /**
+     * 从平台地址中提取对象名。
+     *
+     * @param rawUrl 平台内图片地址
+     * @return 对象名
+     */
+    public String extractObjectName(String rawUrl) {
+        String normalizedUrl = normalizeUrl(rawUrl);
+        if (normalizedUrl == null) {
+            throw new IllegalArgumentException("图片地址不属于当前平台");
+        }
+        return normalizedUrl.substring(bucketName.length() + 1);
+    }
+
+    /**
+     * 将完整地址规范化为平台内标准形式。
+     *
+     * @param rawUrl 原始地址
+     * @return 标准化后的平台地址；不属于平台则返回 null
+     */
+    public String normalizeUrl(String rawUrl) {
+        if (rawUrl == null || rawUrl.isBlank()) {
+            return null;
+        }
+        String trimmed = rawUrl.trim();
+        String fullPrefix = endpoint.endsWith("/") ? endpoint + bucketName + "/" : endpoint + "/" + bucketName + "/";
+        if (trimmed.startsWith(fullPrefix)) {
+            return trimmed.substring(fullPrefix.length() - bucketName.length() - 1);
+        }
+        if (trimmed.startsWith(bucketName + "/")) {
+            return trimmed;
+        }
+        if (trimmed.startsWith("/" + bucketName + "/")) {
+            return trimmed.substring(1);
+        }
+        return null;
+    }
+
+    /**
      * 上传头像文件。
      *
      * @param dto 文件内容与文件名
@@ -163,6 +269,6 @@ public class MinioService {
      * @return 扩展名
      */
     private String getFileExtension(String fileName) {
-        return fileName.substring(fileName.lastIndexOf(".") + 1);
+        return fileName.substring(fileName.lastIndexOf(".") + 1).toLowerCase(Locale.ROOT);
     }
 }

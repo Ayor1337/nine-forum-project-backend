@@ -3,12 +3,14 @@ package com.ayor.service.impl;
 import com.ayor.entity.PageEntity;
 import com.ayor.entity.pojo.Account;
 import com.ayor.entity.pojo.Threadd;
+import com.ayor.entity.dto.ThreadDTO;
 import com.ayor.entity.vo.ThreadVO;
 import com.ayor.mapper.AccountMapper;
 import com.ayor.mapper.PostMapper;
 import com.ayor.mapper.TagMapper;
 import com.ayor.mapper.ThreaddMapper;
 import com.ayor.mapper.TopicMapper;
+import com.ayor.service.ImageAssetService;
 import com.ayor.service.MentionMessageService;
 import com.ayor.type.ThreadOrderType;
 import com.ayor.util.TipTapUtils;
@@ -28,6 +30,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -52,6 +56,9 @@ class ThreaddServiceImplTest {
 
     @Mock
     private MentionMessageService mentionMessageService;
+
+    @Mock
+    private ImageAssetService imageAssetService;
 
     @Test
     void shouldQueryThreadsByTopicIdWithTagIdAndHotOrder() {
@@ -108,6 +115,27 @@ class ThreaddServiceImplTest {
         verifyNoInteractions(topicMapper, threaddMapper);
     }
 
+    @Test
+    void shouldSyncImageRefsAfterSavingThread() {
+        ThreaddServiceImpl service = createService();
+        ThreadDTO dto = new ThreadDTO();
+        dto.setTitle("hello");
+        dto.setTopicId(2);
+        dto.setContent("{\"type\":\"doc\",\"content\":[]}");
+
+        doAnswer(invocation -> {
+            Threadd threadd = invocation.getArgument(0);
+            threadd.setThreadId(321);
+            return 1;
+        }).when(threaddMapper).insert(any(Threadd.class));
+
+        String result = service.insertThread(dto, 8);
+
+        assertNull(result);
+        verify(imageAssetService).syncContentRefs("THREAD", 321, "{\"type\":\"doc\",\"content\":[]}", 8);
+        verify(mentionMessageService).createThreadMentionMessages("{\"type\":\"doc\",\"content\":[]}", 8, 321);
+    }
+
     private Threadd createThread() {
         Threadd thread = new Threadd();
         thread.setThreadId(101);
@@ -128,7 +156,8 @@ class ThreaddServiceImplTest {
                 postMapper,
                 new TipTapUtils(),
                 tagMapper,
-                mentionMessageService
+                mentionMessageService,
+                imageAssetService
         );
         ReflectionTestUtils.setField(service, "baseMapper", threaddMapper);
         return service;
