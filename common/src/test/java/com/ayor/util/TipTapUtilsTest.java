@@ -1,11 +1,23 @@
 package com.ayor.util;
 
+import com.ayor.entity.Base64Upload;
+import com.ayor.image.StaticImageStorageService;
+import com.ayor.image.StoredStaticImage;
 import org.junit.jupiter.api.Test;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
+/**
+ * TipTapUtils 的单元测试。
+ */
 class TipTapUtilsTest {
 
     private final TipTapUtils tipTapUtils = new TipTapUtils();
@@ -76,5 +88,34 @@ class TipTapUtilsTest {
         String text = tipTapUtils.extractText(content);
 
         assertEquals("hi @bob", text);
+    }
+
+    @Test
+    void shouldPreserveGifExtensionWhenConvertingBase64Images() {
+        StaticImageStorageService storageService = mock(StaticImageStorageService.class);
+        ReflectionTestUtils.setField(tipTapUtils, "staticImageStorageService", storageService);
+        StoredStaticImage storedStaticImage = new StoredStaticImage();
+        storedStaticImage.setObjectName("posts/1/a.gif");
+        storedStaticImage.setUrl("nineforum/posts/1/a.gif");
+        when(storageService.storeImageBase64Image(any(Base64Upload.class), eq("posts/1/")))
+                .thenReturn(storedStaticImage);
+
+        String content = """
+                {
+                  "type": "doc",
+                  "content": [
+                    {
+                      "type": "image",
+                      "attrs": {
+                        "src": "data:image/gif;base64,R0lGODlhAQABAIAAAAUEBA=="
+                      }
+                    }
+                  ]
+                }
+                """;
+
+        tipTapUtils.convertBase64ImagesToUrl(content, "posts/1/");
+
+        verify(storageService).storeImageBase64Image(new Base64Upload("data:image/gif;base64,R0lGODlhAQABAIAAAAUEBA==", "image.gif"), "posts/1/");
     }
 }
