@@ -5,10 +5,10 @@ import lombok.Data;
 import java.util.Date;
 
 /**
- * 用户侧图片资源视图对象。
+ * 用户侧表情包视图对象。
  */
 @Data
-public class ImageAssetVO {
+public class StickerVO {
 
     private Integer assetId;
 
@@ -28,11 +28,11 @@ public class ImageAssetVO {
 
     private String status;
 
-    private Integer favoriteCount;
+    private Integer addedCount;
 
     private Integer useCount;
 
-    private Boolean favorited;
+    private Boolean added;
 
     private Boolean available;
 

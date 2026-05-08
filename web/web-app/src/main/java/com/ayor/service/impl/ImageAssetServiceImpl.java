@@ -5,7 +5,7 @@ import com.ayor.entity.PageEntity;
 import com.ayor.entity.pojo.ContentImageRef;
 import com.ayor.entity.pojo.ImageAsset;
 import com.ayor.entity.pojo.ImageAssetFavorite;
-import com.ayor.entity.vo.ImageAssetVO;
+import com.ayor.entity.vo.StickerVO;
 import com.ayor.image.ProcessedStaticImage;
 import com.ayor.image.StaticImageProcessor;
 import com.ayor.image.StaticImageStorageService;
@@ -20,8 +20,6 @@ import com.ayor.type.ImageAssetStatus;
 import com.ayor.type.ImageAssetType;
 import com.ayor.type.ImageAssetVisibility;
 import com.ayor.util.TipTapUtils;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
@@ -31,18 +29,16 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedHashSet;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
-@Service
-@Transactional
-@RequiredArgsConstructor
 /**
  * 表情包资源业务实现。
  */
+@Service
+@Transactional
+@RequiredArgsConstructor
 public class ImageAssetServiceImpl extends ServiceImpl<ImageAssetMapper, ImageAsset> implements ImageAssetService {
 
     private final ImageAssetFavoriteMapper imageAssetFavoriteMapper;
@@ -62,41 +58,29 @@ public class ImageAssetServiceImpl extends ServiceImpl<ImageAssetMapper, ImageAs
         if (accountId == null) {
             throw new IllegalArgumentException("用户不存在");
         }
-        StoredStaticImage storedImage = staticImageStorageService.storeStickerBase64Image(upload, "image-assets/" + accountId + "/");
+        StoredStaticImage storedImage = staticImageStorageService.storeStickerBase64Image(upload, "stickers/" + accountId + "/");
         ImageAsset asset = buildAsset(accountId, storedImage, ImageAssetSourceType.UPLOAD.name(), ImageAssetType.STICKER.name(), ImageAssetVisibility.PRIVATE.name());
         this.save(asset);
+        imageAssetFavoriteMapper.insert(new ImageAssetFavorite(null, accountId, asset.getAssetId(), new Date()));
+        refreshAddedCount(asset.getAssetId());
         return asset.getUrl();
     }
 
     @Override
-    public PageEntity<ImageAssetVO> getMine(Integer accountId, Integer pageNum, Integer pageSize) {
-        if (accountId == null) {
-            return new PageEntity<>(0L, List.of());
-        }
-        Page<ImageAsset> page = this.page(Page.of(normalizePage(pageNum), normalizeSize(pageSize)),
-                new LambdaQueryWrapper<ImageAsset>()
-                        .eq(ImageAsset::getAccountId, accountId)
-                        .eq(ImageAsset::getAssetType, ImageAssetType.STICKER.name())
-                        .eq(ImageAsset::getStatus, ImageAssetStatus.ACTIVE.name())
-                        .orderByDesc(ImageAsset::getCreateTime));
-        return new PageEntity<>(page.getTotal(), page.getRecords().stream().map(asset -> toVO(asset, false)).toList());
-    }
-
-    @Override
-    public PageEntity<ImageAssetVO> getFavorites(Integer accountId, Integer pageNum, Integer pageSize) {
+    public PageEntity<StickerVO> getStickers(Integer accountId, Integer pageNum, Integer pageSize) {
         if (accountId == null) {
             return new PageEntity<>(0L, List.of());
         }
         int normalizedPage = normalizePage(pageNum);
         int normalizedSize = normalizeSize(pageSize);
         long offset = (long) (normalizedPage - 1) * normalizedSize;
-        List<ImageAsset> assets = this.baseMapper.selectActiveFavorites(accountId, normalizedSize, offset);
-        Long total = this.baseMapper.countActiveFavorites(accountId);
+        List<ImageAsset> assets = this.baseMapper.selectActiveStickers(accountId, normalizedSize, offset);
+        Long total = this.baseMapper.countActiveStickers(accountId);
         return new PageEntity<>(total, assets.stream().map(asset -> toVO(asset, true)).toList());
     }
 
     @Override
-    public String favorite(Integer accountId, Integer assetId) {
+    public String addSticker(Integer accountId, Integer assetId) {
         if (accountId == null) {
             return "用户不存在";
         }
@@ -110,16 +94,16 @@ public class ImageAssetServiceImpl extends ServiceImpl<ImageAssetMapper, ImageAs
         if (!ImageAssetStatus.ACTIVE.name().equals(asset.getStatus())) {
             return "资源不可用";
         }
-        if (imageAssetFavoriteMapper.findByAccountIdAndAssetId(accountId, assetId) != null) {
+        if (imageAssetFavoriteMapper.findMembership(accountId, assetId) != null) {
             return null;
         }
         imageAssetFavoriteMapper.insert(new ImageAssetFavorite(null, accountId, assetId, new Date()));
-        refreshFavoriteCount(assetId);
+        refreshAddedCount(assetId);
         return null;
     }
 
     @Override
-    public String favoriteByUrl(Integer accountId, String url) {
+    public String addStickerByUrl(Integer accountId, String url) {
         if (accountId == null) {
             return "用户不存在";
         }
@@ -130,27 +114,31 @@ public class ImageAssetServiceImpl extends ServiceImpl<ImageAssetMapper, ImageAs
             return exception.getMessage();
         }
         if (asset == null) {
-            return "仅支持收藏平台内的图片";
+            return "仅支持添加平台内的图片";
         }
-        return favorite(accountId, asset.getAssetId());
+        return addSticker(accountId, asset.getAssetId());
     }
 
     @Override
-    public String unfavorite(Integer accountId, Integer assetId) {
+    public String removeSticker(Integer accountId, Integer assetId) {
         if (accountId == null) {
             return "用户不存在";
         }
-        ImageAssetFavorite favorite = imageAssetFavoriteMapper.findByAccountIdAndAssetId(accountId, assetId);
-        if (favorite == null) {
+        ImageAsset asset = this.getById(assetId);
+        if (asset == null || !ImageAssetType.STICKER.name().equals(asset.getAssetType())) {
             return null;
         }
-        imageAssetFavoriteMapper.deleteById(favorite.getFavoriteId());
-        refreshFavoriteCount(assetId);
+        ImageAssetFavorite membership = imageAssetFavoriteMapper.findMembership(accountId, assetId);
+        if (membership == null) {
+            return null;
+        }
+        imageAssetFavoriteMapper.deleteById(membership.getFavoriteId());
+        refreshAddedCount(assetId);
         return null;
     }
 
     @Override
-    public String deleteMine(Integer accountId, Integer assetId) {
+    public String deleteStickerResource(Integer accountId, Integer assetId) {
         if (accountId == null) {
             return "用户不存在";
         }
@@ -164,10 +152,12 @@ public class ImageAssetServiceImpl extends ServiceImpl<ImageAssetMapper, ImageAs
         if (!ImageAssetType.STICKER.name().equals(asset.getAssetType())) {
             return "只能删除自己的表情包资源";
         }
-        refreshFavoriteCount(assetId);
+        ImageAssetFavorite ownerMembership = imageAssetFavoriteMapper.findMembership(accountId, assetId);
+        refreshAddedCount(assetId);
         refreshUseCount(assetId);
         ImageAsset latestAsset = this.getById(assetId);
-        if (latestAsset.getFavoriteCount() == 0 && latestAsset.getUseCount() == 0) {
+        int selfMembershipCount = ownerMembership == null ? 0 : 1;
+        if (latestAsset.getFavoriteCount() <= selfMembershipCount && latestAsset.getUseCount() == 0) {
             deleteObjectIfNecessary(latestAsset);
             this.removeById(assetId);
             return null;
@@ -178,7 +168,7 @@ public class ImageAssetServiceImpl extends ServiceImpl<ImageAssetMapper, ImageAs
     }
 
     @Override
-    public ImageAssetVO getDetail(Integer accountId, Integer assetId) {
+    public StickerVO getDetail(Integer accountId, Integer assetId) {
         ImageAsset asset = this.getById(assetId);
         if (asset == null) {
             return null;
@@ -186,9 +176,9 @@ public class ImageAssetServiceImpl extends ServiceImpl<ImageAssetMapper, ImageAs
         if (!ImageAssetType.STICKER.name().equals(asset.getAssetType())) {
             return null;
         }
-        boolean favorited = accountId != null
-                && imageAssetFavoriteMapper.findByAccountIdAndAssetId(accountId, assetId) != null;
-        return toVO(asset, favorited);
+        boolean added = accountId != null
+                && imageAssetFavoriteMapper.findMembership(accountId, assetId) != null;
+        return toVO(asset, added);
     }
 
     @Override
@@ -257,7 +247,7 @@ public class ImageAssetServiceImpl extends ServiceImpl<ImageAssetMapper, ImageAs
         String dataUrl = "data:" + sourceImage.getMimeType() + ";base64," + java.util.Base64.getEncoder().encodeToString(bytes);
         StoredStaticImage stickerImage = staticImageStorageService.storeStickerBase64Image(
                 new Base64Upload(dataUrl, "sticker." + sourceImage.getOriginalExt()),
-                "image-assets/" + accountId + "/"
+                "stickers/" + accountId + "/"
         );
         ImageAsset asset = buildAsset(accountId, stickerImage, ImageAssetSourceType.CONTENT.name(), ImageAssetType.STICKER.name(), ImageAssetVisibility.PRIVATE.name());
         this.save(asset);
@@ -294,16 +284,17 @@ public class ImageAssetServiceImpl extends ServiceImpl<ImageAssetMapper, ImageAs
         return asset;
     }
 
-    private ImageAssetVO toVO(ImageAsset asset, boolean favorited) {
-        ImageAssetVO vo = new ImageAssetVO();
+    private StickerVO toVO(ImageAsset asset, boolean added) {
+        StickerVO vo = new StickerVO();
         BeanUtils.copyProperties(asset, vo);
-        vo.setFavorited(favorited);
+        vo.setAddedCount(asset.getFavoriteCount());
+        vo.setAdded(added);
         vo.setAvailable(ImageAssetStatus.ACTIVE.name().equals(asset.getStatus()));
         return vo;
     }
 
-    private void refreshFavoriteCount(Integer assetId) {
-        this.baseMapper.refreshFavoriteCount(assetId);
+    private void refreshAddedCount(Integer assetId) {
+        this.baseMapper.refreshAddedCount(assetId);
     }
 
     private void refreshUseCount(Integer assetId) {

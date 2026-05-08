@@ -22,14 +22,14 @@ public interface ImageAssetMapper extends BaseMapper<ImageAsset> {
             order by iaf.create_time desc
             limit #{limit} offset #{offset}
             """)
-    List<ImageAsset> selectActiveFavorites(Integer accountId, long limit, long offset);
+    List<ImageAsset> selectActiveStickers(Integer accountId, long limit, long offset);
 
     @Select("""
             select count(*) from image_asset ia
             inner join image_asset_favorite iaf on iaf.asset_id = ia.asset_id
             where iaf.account_id = #{accountId} and ia.status = 'ACTIVE' and ia.asset_type = 'STICKER'
             """)
-    Long countActiveFavorites(Integer accountId);
+    Long countActiveStickers(Integer accountId);
 
     @Update("""
             update image_asset
@@ -39,7 +39,7 @@ public interface ImageAssetMapper extends BaseMapper<ImageAsset> {
             update_time = now()
             where asset_id = #{assetId}
             """)
-    void refreshFavoriteCount(Integer assetId);
+    void refreshAddedCount(Integer assetId);
 
     @Update("""
             update image_asset

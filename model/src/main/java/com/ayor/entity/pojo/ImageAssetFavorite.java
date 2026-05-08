@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 import java.util.Date;
 
 /**
- * 图片资源收藏关系实体。
+ * 用户已添加表情包关系实体。
  */
 @Data
 @NoArgsConstructor

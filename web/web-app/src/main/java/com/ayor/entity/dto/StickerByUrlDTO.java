@@ -4,10 +4,10 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
 /**
- * 按图片 URL 收藏表情包的请求体。
+ * 根据平台图片地址添加表情包的请求体。
  */
 @Data
-public class ImageAssetFavoriteByUrlDTO {
+public class StickerByUrlDTO {
 
     @NotBlank(message = "图片地址不能为空")
     private String url;
