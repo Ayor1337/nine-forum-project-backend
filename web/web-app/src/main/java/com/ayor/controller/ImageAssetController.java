@@ -24,9 +24,9 @@ public class ImageAssetController {
 
     @PostMapping
     /**
-     * 上传表情包资源。
+     * 上传表情包资源并返回资源地址。
      */
-    public Result<ImageAssetVO> upload(@RequestBody Base64Upload upload) {
+    public Result<String> upload(@RequestBody Base64Upload upload) {
         Integer accountId = securityUtils.getSecurityUserId();
         try {
             return Result.ok(imageAssetService.upload(accountId, upload));

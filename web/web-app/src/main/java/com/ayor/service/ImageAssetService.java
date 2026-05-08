@@ -10,9 +10,9 @@ import com.ayor.entity.vo.ImageAssetVO;
 public interface ImageAssetService {
 
     /**
-     * 上传表情包资源。
+     * 上传表情包资源并返回资源地址。
      */
-    ImageAssetVO upload(Integer accountId, Base64Upload upload);
+    String upload(Integer accountId, Base64Upload upload);
 
     /**
      * 查询当前用户上传的表情包资源。

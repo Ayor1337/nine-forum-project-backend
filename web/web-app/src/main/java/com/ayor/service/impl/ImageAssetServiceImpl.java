@@ -58,14 +58,14 @@ public class ImageAssetServiceImpl extends ServiceImpl<ImageAssetMapper, ImageAs
     private final TipTapUtils tipTapUtils;
 
     @Override
-    public ImageAssetVO upload(Integer accountId, Base64Upload upload) {
+    public String upload(Integer accountId, Base64Upload upload) {
         if (accountId == null) {
             throw new IllegalArgumentException("用户不存在");
         }
         StoredStaticImage storedImage = staticImageStorageService.storeStickerBase64Image(upload, "image-assets/" + accountId + "/");
         ImageAsset asset = buildAsset(accountId, storedImage, ImageAssetSourceType.UPLOAD.name(), ImageAssetType.STICKER.name(), ImageAssetVisibility.PRIVATE.name());
         this.save(asset);
-        return toVO(asset, false);
+        return asset.getUrl();
     }
 
     @Override
