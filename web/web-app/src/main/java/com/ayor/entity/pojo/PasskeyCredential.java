@@ -4,15 +4,21 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.util.Date;
 
-@Data
-@TableName("passkey_credential")
 /**
  * Passkey 凭证数据库实体。
  */
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@TableName("passkey_credential")
 public class PasskeyCredential {
 
     @TableId(type = IdType.AUTO)
