@@ -25,6 +25,8 @@ public class StickerController {
 
     private final SecurityUtils securityUtils;
 
+    // TODO CODEX NMLGB 写的什么几把
+
     /**
      * 上传表情包并自动加入当前用户的表情包库。
      */
