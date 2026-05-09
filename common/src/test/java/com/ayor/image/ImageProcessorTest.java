@@ -16,15 +16,15 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /**
  * StaticImageProcessor 的单元测试。
  */
-class StaticImageProcessorTest {
+class ImageProcessorTest {
 
-    private final StaticImageProcessor processor = new StaticImageProcessor();
+    private final ImageProcessor processor = new ImageProcessor();
 
     @Test
     void shouldConvertEmojiPngToWebpAndLimitLongEdgeTo512() throws Exception {
         Base64Upload upload = new Base64Upload(toBase64DataUrl("png", 1200, 600), "sample.png");
 
-        ProcessedStaticImage image = processor.processSticker(upload);
+        ProcessedImage image = processor.processSticker(upload);
 
         assertEquals("png", image.getOriginalExt());
         assertEquals("webp", image.getOutputExt());
@@ -48,7 +48,7 @@ class StaticImageProcessorTest {
     void shouldKeepContentGifAsOriginalFormat() throws Exception {
         Base64Upload upload = new Base64Upload(toBase64DataUrl("gif", 120, 80), "sample.gif");
 
-        ProcessedStaticImage image = processor.processImage(upload);
+        ProcessedImage image = processor.processImage(upload);
 
         assertEquals("gif", image.getOriginalExt());
         assertEquals("gif", image.getOutputExt());

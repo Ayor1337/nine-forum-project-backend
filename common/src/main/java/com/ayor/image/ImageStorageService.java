@@ -12,9 +12,9 @@ import java.util.UUID;
  */
 @Service
 @RequiredArgsConstructor
-public class StaticImageStorageService {
+public class ImageStorageService {
 
-    private final StaticImageProcessor staticImageProcessor;
+    private final ImageProcessor imageProcessor;
 
     private final MinioService minioService;
 
@@ -25,11 +25,11 @@ public class StaticImageStorageService {
      * @param path 对象前缀
      * @return 已上传图片结果
      */
-    public StoredStaticImage storeStickerBase64Image(Base64Upload upload, String path) {
-        ProcessedStaticImage processedImage = staticImageProcessor.processSticker(upload);
+    public StoredImage storeStickerBase64Image(Base64Upload upload, String path) {
+        ProcessedImage processedImage = imageProcessor.processSticker(upload);
         String objectName = buildObjectName(path, processedImage.getOutputExt());
         String url = minioService.uploadObject(processedImage.getBytes(), objectName, processedImage.getMimeType());
-        return new StoredStaticImage(processedImage, objectName, url);
+        return new StoredImage(processedImage, objectName, url);
     }
 
     /**
@@ -39,11 +39,11 @@ public class StaticImageStorageService {
      * @param path 对象前缀
      * @return 已上传图片结果
      */
-    public StoredStaticImage storeImageBase64Image(Base64Upload upload, String path) {
-        ProcessedStaticImage processedImage = staticImageProcessor.processImage(upload);
+    public StoredImage storeImageBase64Image(Base64Upload upload, String path) {
+        ProcessedImage processedImage = imageProcessor.processImage(upload);
         String objectName = buildObjectName(path, processedImage.getOutputExt());
         String url = minioService.uploadObject(processedImage.getBytes(), objectName, processedImage.getMimeType());
-        return new StoredStaticImage(processedImage, objectName, url);
+        return new StoredImage(processedImage, objectName, url);
     }
 
     private String buildObjectName(String path, String extension) {

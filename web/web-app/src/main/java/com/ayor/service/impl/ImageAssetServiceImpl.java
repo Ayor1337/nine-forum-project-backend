@@ -6,10 +6,10 @@ import com.ayor.entity.pojo.ContentImageRef;
 import com.ayor.entity.pojo.ImageAsset;
 import com.ayor.entity.pojo.ImageAssetFavorite;
 import com.ayor.entity.vo.StickerVO;
-import com.ayor.image.ProcessedStaticImage;
-import com.ayor.image.StaticImageProcessor;
-import com.ayor.image.StaticImageStorageService;
-import com.ayor.image.StoredStaticImage;
+import com.ayor.image.ProcessedImage;
+import com.ayor.image.ImageProcessor;
+import com.ayor.image.ImageStorageService;
+import com.ayor.image.StoredImage;
 import com.ayor.mapper.ContentImageRefMapper;
 import com.ayor.mapper.ImageAssetFavoriteMapper;
 import com.ayor.mapper.ImageAssetMapper;
@@ -45,9 +45,9 @@ public class ImageAssetServiceImpl extends ServiceImpl<ImageAssetMapper, ImageAs
 
     private final ContentImageRefMapper contentImageRefMapper;
 
-    private final StaticImageStorageService staticImageStorageService;
+    private final ImageStorageService imageStorageService;
 
-    private final StaticImageProcessor staticImageProcessor;
+    private final ImageProcessor imageProcessor;
 
     private final MinioService minioService;
 
@@ -58,7 +58,7 @@ public class ImageAssetServiceImpl extends ServiceImpl<ImageAssetMapper, ImageAs
         if (accountId == null) {
             throw new IllegalArgumentException("用户不存在");
         }
-        StoredStaticImage storedImage = staticImageStorageService.storeStickerBase64Image(upload, "stickers/" + accountId + "/");
+        StoredImage storedImage = imageStorageService.storeStickerBase64Image(upload, "stickers/" + accountId + "/");
         ImageAsset asset = buildAsset(accountId, storedImage, ImageAssetSourceType.UPLOAD.name(), ImageAssetType.STICKER.name(), ImageAssetVisibility.PRIVATE.name());
         this.save(asset);
         imageAssetFavoriteMapper.insert(new ImageAssetFavorite(null, accountId, asset.getAssetId(), new Date()));
@@ -220,7 +220,7 @@ public class ImageAssetServiceImpl extends ServiceImpl<ImageAssetMapper, ImageAs
         }
 
         byte[] bytes = minioService.getObjectBytes(normalizedUrl);
-        ProcessedStaticImage image = staticImageProcessor.inspectStoredImage(bytes, normalizedUrl);
+        ProcessedImage image = imageProcessor.inspectStoredImage(bytes, normalizedUrl);
         ImageAsset asset = buildAsset(accountId, image, ImageAssetSourceType.CONTENT.name(), ImageAssetType.IMAGE.name(), ImageAssetVisibility.PUBLIC.name());
         asset.setUrl(normalizedUrl);
         asset.setObjectPath(minioService.extractObjectName(normalizedUrl));
@@ -239,13 +239,13 @@ public class ImageAssetServiceImpl extends ServiceImpl<ImageAssetMapper, ImageAs
         }
 
         byte[] bytes = minioService.getObjectBytes(normalizedUrl);
-        ProcessedStaticImage sourceImage = staticImageProcessor.inspectStoredImage(bytes, normalizedUrl);
+        ProcessedImage sourceImage = imageProcessor.inspectStoredImage(bytes, normalizedUrl);
         if ("gif".equalsIgnoreCase(sourceImage.getOriginalExt())) {
             throw new IllegalArgumentException("GIF 或其他动图暂不支持添加到表情");
         }
 
         String dataUrl = "data:" + sourceImage.getMimeType() + ";base64," + java.util.Base64.getEncoder().encodeToString(bytes);
-        StoredStaticImage stickerImage = staticImageStorageService.storeStickerBase64Image(
+        StoredImage stickerImage = imageStorageService.storeStickerBase64Image(
                 new Base64Upload(dataUrl, "sticker." + sourceImage.getOriginalExt()),
                 "stickers/" + accountId + "/"
         );
@@ -255,7 +255,7 @@ public class ImageAssetServiceImpl extends ServiceImpl<ImageAssetMapper, ImageAs
     }
 
     private ImageAsset buildAsset(Integer accountId,
-                                  ProcessedStaticImage image,
+                                  ProcessedImage image,
                                   String sourceType,
                                   String assetType,
                                   String visibility) {
@@ -277,7 +277,7 @@ public class ImageAssetServiceImpl extends ServiceImpl<ImageAssetMapper, ImageAs
         asset.setUseCount(0);
         asset.setCreateTime(now);
         asset.setUpdateTime(now);
-        if (image instanceof StoredStaticImage storedStaticImage) {
+        if (image instanceof StoredImage storedStaticImage) {
             asset.setUrl(storedStaticImage.getUrl());
             asset.setObjectPath(storedStaticImage.getObjectName());
         }

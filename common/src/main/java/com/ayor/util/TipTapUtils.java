@@ -5,12 +5,11 @@ import com.alibaba.fastjson2.JSONException;
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
 import com.ayor.entity.Base64Upload;
-import com.ayor.image.StaticImageStorageService;
+import com.ayor.image.ImageStorageService;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 
@@ -18,7 +17,7 @@ import java.util.Objects;
 public class TipTapUtils {
 
     @Resource
-    private StaticImageStorageService staticImageStorageService;
+    private ImageStorageService imageStorageService;
 
     /**
      * 将 TipTap JSON 中的 base64 图片上传到对象存储并替换为 URL。
@@ -100,7 +99,7 @@ public class TipTapUtils {
             String src = attrs == null ? null : attrs.getString("src");
             if (isBase64Image(src)) {
                 try {
-                    attrs.put("src", staticImageStorageService.storeImageBase64Image(new Base64Upload(src, "image." + extractImageExtension(src)), path).getUrl());
+                    attrs.put("src", imageStorageService.storeImageBase64Image(new Base64Upload(src, "image." + extractImageExtension(src)), path).getUrl());
                 } catch (IllegalArgumentException e) {
                     throw e;
                 } catch (Exception e) {
