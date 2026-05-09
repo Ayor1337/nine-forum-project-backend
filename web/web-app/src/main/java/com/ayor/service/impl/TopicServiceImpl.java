@@ -3,12 +3,12 @@ package com.ayor.service.impl;
 import com.ayor.entity.Base64Upload;
 import com.ayor.entity.dto.TopicDTO;
 import com.ayor.entity.vo.TopicVO;
+import com.ayor.image.ImageStorageService;
 import com.ayor.entity.pojo.Topic;
 import com.ayor.entity.pojo.TopicStat;
 import com.ayor.mapper.ThreaddMapper;
 import com.ayor.mapper.TopicMapper;
 import com.ayor.mapper.TopicStatMapper;
-import com.ayor.minio.MinioService;
 import com.ayor.service.TopicService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
@@ -33,9 +33,9 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
 
     private final ThreaddMapper threaddMapper;
 
-    private final MinioService minioService;
-
     private final TopicStatMapper topicStatMapper;
+
+    private final ImageStorageService imageStorageService;
     /**
      * 根据主题 ID 查询主题名称，用于缓存和面包屑展示。
      */
@@ -92,9 +92,8 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
         Topic topic = new Topic();
         Base64Upload cover = topicDTO.getCover();
         try {
-            String coverUrl = minioService.uploadBase64(cover, "topic/");
-            topic.setCoverUrl(coverUrl);
-        } catch (Exception e) {
+            topic.setCoverUrl(imageStorageService.storeImageBase64Image(cover, "topic/").getUrl());
+        } catch (RuntimeException e) {
             return "图片上传失败";
         }
         BeanUtils.copyProperties(topicDTO, topic);
@@ -123,9 +122,8 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
 
         if (!topicDTO.getCover().getBase64().startsWith("nineforum")) {
             try {
-                String coverUrl = minioService.uploadBase64(topicDTO.getCover(), "topic/");
-                topic.setCoverUrl(coverUrl);
-            } catch (Exception e) {
+                topic.setCoverUrl(imageStorageService.storeImageBase64Image(topicDTO.getCover(), "topic/").getUrl());
+            } catch (RuntimeException e) {
                 return "图片上传失败";
             }
         }
