@@ -107,9 +107,8 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         post.setTopicId(topicId);
         if (this.save(post)) {
             imageAssetService.syncContentRefs("POST", post.getPostId(), post.getContent(), userId);
-            Integer accountId = threaddMapper.getAccountIdByThreadIdInteger(post.getThreadId());
-            // TODO 自己在自己的帖子下面回复不要通知
-            if (stompUtils.isUserSubscribed(accountId.toString(), "/notif/reply")) {
+            Integer currentPostAccountId = threaddMapper.getAccountIdByThreadIdInteger(post.getThreadId());
+            if (stompUtils.isUserSubscribed(currentPostAccountId.toString(), "/notif/reply") && !currentPostAccountId.equals(userId)) {
                 messagingTemplate.convertAndSendToUser(
                         threaddMapper.getAccountIdByThreadIdInteger(postDTO.getThreadId()).toString(),
                         "/notif/reply",
@@ -183,6 +182,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
 
         Page<Post> page = this.lambdaQuery()
                 .in(Post::getThreadId, threadIds)
+                .notIn(Post::getAccountId, accountId)
                 .orderByDesc(Post::getCreateTime)
                 .page(Page.of(pageNum, pageSize));  // 注意：页码从 1 开始
 

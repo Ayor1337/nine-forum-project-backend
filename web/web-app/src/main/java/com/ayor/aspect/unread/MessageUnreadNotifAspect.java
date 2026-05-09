@@ -70,7 +70,7 @@ public class MessageUnreadNotifAspect {
         Integer accountId = resolve(messageUnreadNotif.accountId(), context, Integer.class);
         String subscribeDest = messageUnreadNotif.subscribeDest();
         if (accountId != 0) {
-            sendNotificationToUser(accountId, subscribeDest, messageUnreadNotif.type(), messageUnreadNotif.doRead());
+            sendUnreadNotificationToUser(accountId, subscribeDest, messageUnreadNotif.type(), messageUnreadNotif.doRead());
             return joinPoint.proceed();
         }
 
@@ -102,12 +102,13 @@ public class MessageUnreadNotifAspect {
     /**
      * 向指定用户发送未读消息通知。
      *
-     * @param accountId 账号 ID
+     * @param accountId 通知的对象
      * @param subscribeDest 订阅目的地
-     * @param type 未读消息类型
-     * @param doRead 是否已读
+     * @param type 消息类型
+     * @param doRead 是否是读取操作
      */
-    private void sendNotificationToUser(Integer accountId, String subscribeDest, UnreadMessageType type, boolean doRead) {
+    private void sendUnreadNotificationToUser(Integer accountId, String subscribeDest, UnreadMessageType type, boolean doRead) {
+        // 增加 / 清除未读消息数量
         if (doRead) {
             messageUnreadService.clearUnread(accountId, type);
         } else {
@@ -115,9 +116,12 @@ public class MessageUnreadNotifAspect {
                 messageUnreadService.addUnread(accountId, type, 1L);
             }
         }
+
+        // 当用户正在当前网页（订阅到了未读），则发送未读的消息
         if (stompUtils.isUserSubscribed(accountId.toString(), "/notif/unread")) {
             messagingTemplate.convertAndSendToUser(accountId.toString(), "/notif/unread", messageUnreadService.getUnreadVO(accountId));
         }
+        // 当用户订阅了某一种未读消息通知，则意味用户本身就在某一个网站里面，则不会发送新消息
         if (!stompUtils.isUserSubscribed(accountId.toString(), "/notif/unread/" + type)) {
             messagingTemplate.convertAndSendToUser(accountId.toString(), "/notif/unread/"+ type.getType(),
                     messageUnreadService.getUnreadVO(accountId, type));
