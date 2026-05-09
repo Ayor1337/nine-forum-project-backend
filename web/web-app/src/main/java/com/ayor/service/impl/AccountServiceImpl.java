@@ -9,6 +9,7 @@ import com.ayor.entity.dto.PasswordChangeDTO;
 import com.ayor.entity.vo.AccountInfoVO;
 import com.ayor.entity.vo.UserInfoVO;
 import com.ayor.entity.vo.UserPermissionVO;
+import com.ayor.image.ImageStorageService;
 import com.ayor.entity.pojo.Account;
 import com.ayor.entity.pojo.AccountInfo;
 import com.ayor.mapper.AccountInfoMapper;
@@ -16,7 +17,6 @@ import com.ayor.mapper.AccountMapper;
 import com.ayor.mapper.AccountStatMapper;
 import com.ayor.mapper.PermissionMapper;
 import com.ayor.mapper.RoleMapper;
-import com.ayor.minio.MinioService;
 import com.ayor.service.AccountInfoService;
 import com.ayor.service.AccountService;
 import com.ayor.service.PrivacyPolicyService;
@@ -56,8 +56,6 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
 
     private final RoleMapper roleMapper;
 
-    private final MinioService minioService;
-
     private final PasswordEncoder passwordEncoder;
 
     private final AccountStatMapper accountStatMapper;
@@ -73,6 +71,8 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
     private final UserPrivacySettingService userPrivacySettingService;
 
     private final AccountInfoService accountInfoService;
+
+    private final ImageStorageService imageStorageService;
 
     /**
      * 根据用户名加载 Spring Security 登录信息。
@@ -199,9 +199,8 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
             return "账户不存在";
         }
         try {
-            String avatarUrl = minioService.uploadBase64(dto, "avatar/");
-            account.setAvatarUrl(avatarUrl);
-        } catch (Exception e) {
+            account.setAvatarUrl(imageStorageService.storeImageBase64Image(dto, "avatar/").getUrl());
+        } catch (RuntimeException e) {
             return "资源服务器异常";
         }
         return this.baseMapper.updateById(account) > 0 ? null : "更新失败, 未知异常";
@@ -218,9 +217,8 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
             return "账户不存在";
         }
         try {
-            String bannerUrl = minioService.uploadBase64(dto, "banner/");
-            account.setBannerUrl(bannerUrl);
-        } catch (Exception e) {
+            account.setBannerUrl(imageStorageService.storeImageBase64Image(dto, "banner/").getUrl());
+        } catch (RuntimeException e) {
             return "资源服务器异常";
         }
         return this.baseMapper.updateById(account) > 0 ? null : "更新失败, 未知异常";
