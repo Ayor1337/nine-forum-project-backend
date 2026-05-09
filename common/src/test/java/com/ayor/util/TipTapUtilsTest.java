@@ -1,8 +1,8 @@
 package com.ayor.util;
 
 import com.ayor.entity.Base64Upload;
-import com.ayor.image.StaticImageStorageService;
-import com.ayor.image.StoredStaticImage;
+import com.ayor.image.ImageStorageService;
+import com.ayor.image.StoredImage;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -92,9 +92,9 @@ class TipTapUtilsTest {
 
     @Test
     void shouldPreserveGifExtensionWhenConvertingBase64Images() {
-        StaticImageStorageService storageService = mock(StaticImageStorageService.class);
+        ImageStorageService storageService = mock(ImageStorageService.class);
         ReflectionTestUtils.setField(tipTapUtils, "staticImageStorageService", storageService);
-        StoredStaticImage storedStaticImage = new StoredStaticImage();
+        StoredImage storedStaticImage = new StoredImage();
         storedStaticImage.setObjectName("posts/1/a.gif");
         storedStaticImage.setUrl("nineforum/posts/1/a.gif");
         when(storageService.storeImageBase64Image(any(Base64Upload.class), eq("posts/1/")))

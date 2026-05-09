@@ -10,13 +10,13 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
-public class StoredStaticImage extends ProcessedStaticImage {
+public class StoredImage extends ProcessedImage {
 
     private String objectName;
 
     private String url;
 
-    public StoredStaticImage(ProcessedStaticImage image, String objectName, String url) {
+    public StoredImage(ProcessedImage image, String objectName, String url) {
         super(
                 image.getBytes(),
                 image.getOriginalExt(),

@@ -5,9 +5,9 @@ import com.ayor.entity.PageEntity;
 import com.ayor.entity.pojo.ImageAsset;
 import com.ayor.entity.pojo.ImageAssetFavorite;
 import com.ayor.entity.vo.StickerVO;
-import com.ayor.image.StaticImageProcessor;
-import com.ayor.image.StaticImageStorageService;
-import com.ayor.image.StoredStaticImage;
+import com.ayor.image.ImageProcessor;
+import com.ayor.image.ImageStorageService;
+import com.ayor.image.StoredImage;
 import com.ayor.mapper.ContentImageRefMapper;
 import com.ayor.mapper.ImageAssetFavoriteMapper;
 import com.ayor.mapper.ImageAssetMapper;
@@ -50,10 +50,10 @@ class ImageAssetServiceImplTest {
     private ContentImageRefMapper contentImageRefMapper;
 
     @Mock
-    private StaticImageStorageService staticImageStorageService;
+    private ImageStorageService imageStorageService;
 
     @Mock
-    private StaticImageProcessor staticImageProcessor;
+    private ImageProcessor imageProcessor;
 
     @Mock
     private MinioService minioService;
@@ -62,9 +62,9 @@ class ImageAssetServiceImplTest {
     void shouldAddUploadedStickerToCurrentUsersLibrary() {
         ImageAssetServiceImpl service = spy(createService());
         Base64Upload upload = new Base64Upload("data:image/png;base64,abc", "cat.png");
-        StoredStaticImage storedImage = createStoredImage("https://cdn.example.com/stickers/7/cat.webp");
+        StoredImage storedImage = createStoredImage("https://cdn.example.com/stickers/7/cat.webp");
 
-        when(staticImageStorageService.storeStickerBase64Image(upload, "stickers/7/")).thenReturn(storedImage);
+        when(imageStorageService.storeStickerBase64Image(upload, "stickers/7/")).thenReturn(storedImage);
         doAnswer(invocation -> {
             ImageAsset asset = invocation.getArgument(0);
             asset.setAssetId(15);
@@ -150,8 +150,8 @@ class ImageAssetServiceImplTest {
         ImageAssetServiceImpl service = new ImageAssetServiceImpl(
                 imageAssetFavoriteMapper,
                 contentImageRefMapper,
-                staticImageStorageService,
-                staticImageProcessor,
+                imageStorageService,
+                imageProcessor,
                 minioService,
                 new TipTapUtils()
         );
@@ -159,8 +159,8 @@ class ImageAssetServiceImplTest {
         return service;
     }
 
-    private StoredStaticImage createStoredImage(String url) {
-        StoredStaticImage image = new StoredStaticImage();
+    private StoredImage createStoredImage(String url) {
+        StoredImage image = new StoredImage();
         image.setUrl(url);
         image.setObjectName("stickers/7/cat.webp");
         image.setOriginalExt("png");
