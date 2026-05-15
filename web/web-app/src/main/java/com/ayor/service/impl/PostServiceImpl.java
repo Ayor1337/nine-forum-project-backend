@@ -12,6 +12,7 @@ import com.ayor.entity.pojo.Threadd;
 import com.ayor.mapper.AccountMapper;
 import com.ayor.mapper.PostMapper;
 import com.ayor.mapper.ThreaddMapper;
+import com.ayor.service.AuthorizationService;
 import com.ayor.service.ImageAssetService;
 import com.ayor.service.MentionMessageService;
 import com.ayor.service.PostService;
@@ -50,6 +51,8 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
     private final MentionMessageService mentionMessageService;
 
     private final ImageAssetService imageAssetService;
+
+    private final AuthorizationService authorizationService;
     /**
      * 获取指定帖子下的评论列表。
      */
@@ -130,9 +133,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         if (post == null) {
             return "帖子不存在";
         }
-        if (!post.getAccountId().equals(userId)) {
-            return "没有权限";
-        }
+        authorizationService.assertCanDeletePost(userId, postId);
         imageAssetService.clearContentRefs("POST", postId);
         return this.removeByIdLogic(post.getPostId()) ? null : "删除失败, 未知异常";
     }

@@ -5,6 +5,7 @@ import com.ayor.entity.pojo.Post;
 import com.ayor.mapper.AccountMapper;
 import com.ayor.mapper.PostMapper;
 import com.ayor.mapper.ThreaddMapper;
+import com.ayor.service.AuthorizationService;
 import com.ayor.service.ImageAssetService;
 import com.ayor.service.MentionMessageService;
 import com.ayor.util.STOMPUtils;
@@ -48,6 +49,9 @@ class PostServiceImplTest {
     @Mock
     private ImageAssetService imageAssetService;
 
+    @Mock
+    private AuthorizationService authorizationService;
+
     @Test
     void shouldSyncImageRefsAfterSavingPost() {
         TipTapUtils tipTapUtils = new TipTapUtils();
@@ -59,7 +63,8 @@ class PostServiceImplTest {
                 messagingTemplate,
                 stompUtils,
                 mentionMessageService,
-                imageAssetService
+                imageAssetService,
+                authorizationService
         );
         ReflectionTestUtils.setField(service, "baseMapper", postMapper);
 

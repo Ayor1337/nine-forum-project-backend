@@ -10,6 +10,7 @@ import com.ayor.mapper.PostMapper;
 import com.ayor.mapper.TagMapper;
 import com.ayor.mapper.ThreaddMapper;
 import com.ayor.mapper.TopicMapper;
+import com.ayor.service.AuthorizationService;
 import com.ayor.service.ImageAssetService;
 import com.ayor.service.MentionMessageService;
 import com.ayor.type.ThreadOrderType;
@@ -59,6 +60,9 @@ class ThreaddServiceImplTest {
 
     @Mock
     private ImageAssetService imageAssetService;
+
+    @Mock
+    private AuthorizationService authorizationService;
 
     @Test
     void shouldQueryThreadsByTopicIdWithTagIdAndHotOrder() {
@@ -157,7 +161,8 @@ class ThreaddServiceImplTest {
                 new TipTapUtils(),
                 tagMapper,
                 mentionMessageService,
-                imageAssetService
+                imageAssetService,
+                authorizationService
         );
         ReflectionTestUtils.setField(service, "baseMapper", threaddMapper);
         return service;

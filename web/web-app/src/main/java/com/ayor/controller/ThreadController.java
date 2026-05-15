@@ -7,12 +7,12 @@ import com.ayor.entity.dto.ThreadDTO;
 import com.ayor.entity.vo.AnnouncementVO;
 import com.ayor.entity.vo.ThreadVO;
 import com.ayor.result.Result;
+import com.ayor.service.AuthorizationService;
 import com.ayor.service.ReportService;
 import com.ayor.service.ThreaddService;
 import com.ayor.util.SecurityUtils;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -27,6 +27,8 @@ public class ThreadController {
     private final SecurityUtils security;
 
     private final ReportService reportService;
+
+    private final AuthorizationService authorizationService;
     /**
      * 获取指定主题下的帖子列表。
      */
@@ -93,9 +95,6 @@ public class ThreadController {
         return Result.messageHandler(() -> reportService.createThreadReport(userId, threadId, dto));
     }
 
-    @PreAuthorize("hasRole('ROLE_OWNER') " +
-            "or hasAuthority('PERM_UPDATE_TAG')" +
-            "and hasAuthority('TOPIC_' + #topicId)")
     /**
      * 修改帖子标签。
      */
@@ -103,56 +102,49 @@ public class ThreadController {
     public Result<Void> updateTag(@PathVariable(name = "thread_id") Integer threadId,
                                   @RequestParam(name = "topic_id") Integer topicId,
                                   @RequestBody TagUpdateDTO tagUpdateDTO) {
+        authorizationService.assertCanUpdateThreadTag(security.getSecurityUserId(), threadId, topicId);
         tagUpdateDTO.setThreadId(threadId);
         tagUpdateDTO.setTopicId(topicId);
         return Result.messageHandler(() -> threaddService.updateThreadTag(tagUpdateDTO));
     }
 
-    @PreAuthorize("hasRole('ROLE_OWNER') " +
-            "or hasAuthority('PERM_UPDATE_TAG')" +
-            "and hasAuthority('TOPIC_' + #topicId)")
     /**
      * 删除帖子标签。
      */
     @DeleteMapping("/moderation/threads/{thread_id}/tag")
     public Result<Void> deleteThreadTag(@PathVariable(name = "thread_id") Integer threadId,
                                         @RequestParam(name = "topic_id") Integer topicId) {
+        authorizationService.assertCanUpdateThreadTag(security.getSecurityUserId(), threadId, topicId);
         return Result.messageHandler(() -> threaddService.removeThreadTag(threadId, topicId));
     }
 
-    @PreAuthorize("hasRole('ROLE_OWNER') " +
-            "or hasAuthority('PERM_UPDATE_TAG')" +
-            "and hasAuthority('TOPIC_' + #topicId)")
     /**
      * 将帖子设为主题公告。
      */
     @PutMapping("/topics/{topic_id}/announcements/{thread_id}")
     public Result<Void> setAnnouncement(@PathVariable(name = "topic_id") Integer topicId,
                                         @PathVariable(name = "thread_id") Integer threadId) {
+        authorizationService.assertCanSetAnnouncement(security.getSecurityUserId(), threadId, topicId);
         return Result.messageHandler(() -> threaddService.setAnnouncementByThreadId(threadId, topicId));
     }
 
-    @PreAuthorize("hasRole('ROLE_OWNER') " +
-            "or hasAuthority('PERM_UPDATE_TAG')" +
-            "and hasAuthority('TOPIC_' + #topicId)")
     /**
      * 取消帖子公告状态。
      */
     @DeleteMapping("/topics/{topic_id}/announcements/{thread_id}")
     public Result<Void> unsetAnnouncement(@PathVariable(name = "topic_id") Integer topicId,
                                           @PathVariable(name = "thread_id") Integer threadId) {
+        authorizationService.assertCanSetAnnouncement(security.getSecurityUserId(), threadId, topicId);
         return Result.messageHandler(() -> threaddService.removeAnnouncementByThreadId(threadId, topicId));
     }
 
-    @PreAuthorize("hasRole('ROLE_OWNER') " +
-            "or hasAuthority('PERM_sDELETE_THREAD')" +
-            "and hasAuthority('TOPIC_' + #topicId)")
     /**
      * 管理员删除帖子。
      */
     @DeleteMapping("/moderation/threads/{thread_id}")
     public Result<Void> removeThreadByIdPermission(@PathVariable(name = "thread_id") Integer threadId,
                                                    @RequestParam(name = "topic_id") Integer topicId) {
+        authorizationService.assertCanModerateDeleteThread(security.getSecurityUserId(), threadId, topicId);
         return Result.messageHandler(() -> threaddService.permRemoveThreadById(threadId));
     }
 

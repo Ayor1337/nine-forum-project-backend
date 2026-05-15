@@ -3,9 +3,10 @@ package com.ayor.controller;
 import com.ayor.entity.dto.TagDTO;
 import com.ayor.entity.vo.TagVO;
 import com.ayor.result.Result;
+import com.ayor.service.AuthorizationService;
 import com.ayor.service.TagService;
+import com.ayor.util.SecurityUtils;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -16,6 +17,10 @@ import java.util.List;
 public class TagController {
 
     private final TagService tagService;
+
+    private final AuthorizationService authorizationService;
+
+    private final SecurityUtils securityUtils;
     /**
      * 获取指定主题下的话题标签列表。
      *
@@ -29,9 +34,6 @@ public class TagController {
         return Result.dataMessageHandler(() -> tagService.listTagsByTopicId(topicId), "获取失败");
     }
 
-    @PreAuthorize("hasRole('ROLE_OWNER') " +
-            "or hasAuthority('PERM_INSERT_TAG')" +
-            "and hasAuthority('TOPIC_' + #topicId)")
     /**
      * 新增主题标签。
      *
@@ -42,6 +44,7 @@ public class TagController {
     @PostMapping
     public Result<Void> insertNewTag(@PathVariable(name = "topic_id") Integer topicId,
                                      @RequestBody TagDTO tagDTO) {
+        authorizationService.assertCanCreateTag(securityUtils.getSecurityUserId(), topicId);
         tagDTO.setTopicId(topicId);
         return Result.messageHandler(() -> tagService.insertNewTag(tagDTO));
     }

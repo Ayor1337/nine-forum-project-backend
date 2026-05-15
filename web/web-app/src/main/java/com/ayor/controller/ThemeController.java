@@ -4,9 +4,10 @@ import com.ayor.entity.dto.ThemeDTO;
 import com.ayor.entity.vo.ThemeTopicVO;
 import com.ayor.entity.vo.ThemeVO;
 import com.ayor.result.Result;
+import com.ayor.service.AuthorizationService;
 import com.ayor.service.ThemeService;
+import com.ayor.util.SecurityUtils;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,6 +19,10 @@ import java.util.List;
 public class ThemeController {
 
     private final ThemeService themeService;
+
+    private final AuthorizationService authorizationService;
+
+    private final SecurityUtils securityUtils;
     /**
      * 获取全部主题列表。
      */
@@ -38,9 +43,9 @@ public class ThemeController {
      * 新增主题。
      */
 
-    @PreAuthorize("hasAnyRole('ROLE_OWNER')")
     @PostMapping
     public Result<Void> insertTheme(@RequestBody @Validated ThemeDTO themeVO) {
+        authorizationService.assertCanManageTheme(securityUtils.getSecurityUserId());
         return Result.messageHandler(() -> themeService.insertTheme(themeVO));
     }
 
