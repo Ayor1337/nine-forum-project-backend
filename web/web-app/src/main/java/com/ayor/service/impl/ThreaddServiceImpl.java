@@ -11,6 +11,7 @@ import com.ayor.entity.pojo.Account;
 import com.ayor.entity.pojo.Tag;
 import com.ayor.entity.pojo.Threadd;
 import com.ayor.mapper.*;
+import com.ayor.service.AuthorizationService;
 import com.ayor.service.ImageAssetService;
 import com.ayor.service.MentionMessageService;
 import com.ayor.service.ThreaddService;
@@ -38,9 +39,6 @@ import java.util.concurrent.locks.ReentrantLock;
 @RequiredArgsConstructor
 public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> implements ThreaddService {
 
-    // TODO 删除操作需要校验 topicId 与 threadId 的对应关系，避免误删其他主题的帖子。
-
-
     private final AccountMapper accountMapper;
 
     private final TopicMapper topicMapper;
@@ -54,6 +52,8 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
     private final MentionMessageService mentionMessageService;
 
     private final ImageAssetService imageAssetService;
+
+    private final AuthorizationService authorizationService;
     /**
      * 获取指定主题下的帖子列表或分页结果。
      */
@@ -210,9 +210,7 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
         if (account == null) {
             return "用户不存在";
         }
-        if (!Objects.equals(account.getAccountId(), thread.getAccountId())) {
-            return "权限不足";
-        }
+        authorizationService.assertCanDeleteThread(accountId, threadId);
         if (thread.getIsDeleted()) {
             return "帖子已删除";
         }

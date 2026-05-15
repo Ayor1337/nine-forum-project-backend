@@ -97,7 +97,8 @@ public class ConversationController {
     @DeleteMapping("/{conversation_id}/unread-messages")
     public Result<Void> clearUnreadMessageCount(@PathVariable("conversation_id") Integer conversationId,
                                                 @RequestParam("from_user_id") Integer fromUserId) {
-        return Result.messageHandler(() -> conversationService.clearUnread(conversationId, fromUserId));
+        Integer userId = securityUtils.getSecurityUserId();
+        return Result.messageHandler(() -> conversationService.clearUnread(conversationId, userId, fromUserId));
     }
 
 

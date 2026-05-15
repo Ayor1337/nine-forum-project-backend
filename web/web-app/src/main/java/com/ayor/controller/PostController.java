@@ -6,12 +6,12 @@ import com.ayor.entity.dto.PostDTO;
 import com.ayor.entity.vo.PostVO;
 import com.ayor.entity.vo.ReplyMessageVO;
 import com.ayor.result.Result;
+import com.ayor.service.AuthorizationService;
 import com.ayor.service.PostService;
 import com.ayor.service.ReportService;
 import com.ayor.util.SecurityUtils;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -27,6 +27,8 @@ public class PostController {
     private final SecurityUtils security;
 
     private final ReportService reportService;
+
+    private final AuthorizationService authorizationService;
     /**
      * 获取帖子下的评论列表。
      */
@@ -66,9 +68,9 @@ public class PostController {
      * 管理员删除评论。
      */
 
-    @PreAuthorize("hasAuthority('ROLE_OWNER')")
     @DeleteMapping("/moderation/posts/{post_id}")
     public Result<Void> deletePostPermission(@PathVariable(name = "post_id") Integer postId) {
+        authorizationService.assertCanDeletePost(security.getSecurityUserId(), postId);
         return Result.messageHandler(() -> postService.removePostPermission(postId));
     }
     /**

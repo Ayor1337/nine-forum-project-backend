@@ -1,6 +1,7 @@
 package com.ayor.interceptor;
 
 import com.auth0.jwt.interfaces.DecodedJWT;
+import com.ayor.service.AuthorizationService;
 import com.ayor.util.JWTUtils;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
@@ -19,6 +20,8 @@ import org.springframework.stereotype.Component;
 import java.security.Principal;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Slf4j
 @Component
@@ -26,6 +29,10 @@ public class StompAuthInterceptor implements ChannelInterceptor {
 
     @Resource
     private JWTUtils jwtUtil;
+
+    @Resource
+    private AuthorizationService authorizationService;
+
     /**
      * Map.of 方法。
      */
@@ -35,6 +42,9 @@ public class StompAuthInterceptor implements ChannelInterceptor {
             "/chat", List.of("/transfer", "/notif"),
             "/system", List.of("/notif", "/verify")
     );
+
+    private static final Pattern CONVERSATION_DESTINATION =
+            Pattern.compile("^/user(?:/[^/]+)?/transfer/conversation/(\\d+)$|^/transfer/conversation/(\\d+)$");
 
     /**
      * 在 STOMP 连接、订阅和发送阶段执行鉴权。
@@ -106,7 +116,16 @@ public class StompAuthInterceptor implements ChannelInterceptor {
             return true;
         }
         if (destination.contains("/transfer")) {
-            return p instanceof UsernamePasswordAuthenticationToken;
+            Integer userId = resolveUserId(p);
+            if (userId == null) {
+                return false;
+            }
+            Integer conversationId = resolveConversationId(destination);
+            if (conversationId == null) {
+                return false;
+            }
+            authorizationService.assertCanAccessConversation(userId, conversationId);
+            return true;
         }
         if (destination.contains("/notif")) {
             return p instanceof UsernamePasswordAuthenticationToken;
@@ -126,7 +145,22 @@ public class StompAuthInterceptor implements ChannelInterceptor {
         if (destination == null) {
             return false;
         }
-        return matchEndpointDestination(accessor, destination);
+        if (!matchEndpointDestination(accessor, destination)) {
+            return false;
+        }
+        if (!destination.contains("/transfer")) {
+            return true;
+        }
+        Integer userId = resolveUserId(p);
+        if (userId == null) {
+            return false;
+        }
+        Integer conversationId = resolveConversationId(destination);
+        if (conversationId == null) {
+            return false;
+        }
+        authorizationService.assertCanAccessConversation(userId, conversationId);
+        return true;
     }
 
     /**
@@ -155,6 +189,28 @@ public class StompAuthInterceptor implements ChannelInterceptor {
             }
         }
         return false;
+    }
+
+    private Integer resolveUserId(Principal principal) {
+        if (!(principal instanceof UsernamePasswordAuthenticationToken authentication)) {
+            return null;
+        }
+        Object principalObject = authentication.getPrincipal();
+        if (principalObject instanceof UserDetails userDetails) {
+            return Integer.parseInt(userDetails.getUsername());
+        }
+        return null;
+    }
+
+    private Integer resolveConversationId(String destination) {
+        Matcher matcher = CONVERSATION_DESTINATION.matcher(destination);
+        if (!matcher.matches()) {
+            return null;
+        }
+        String directMatch = matcher.group(1);
+        String userMatch = matcher.group(2);
+        String value = directMatch != null ? directMatch : userMatch;
+        return value == null ? null : Integer.parseInt(value);
     }
 
 }

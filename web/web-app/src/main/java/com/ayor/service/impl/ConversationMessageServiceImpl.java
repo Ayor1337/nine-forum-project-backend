@@ -10,6 +10,7 @@ import com.ayor.mapper.AccountMapper;
 import com.ayor.mapper.ConversationMapper;
 import com.ayor.mapper.ConversationMessageMapper;
 import com.ayor.service.ConversationMessageService;
+import com.ayor.service.AuthorizationService;
 import com.ayor.type.NotificationType;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -34,6 +35,8 @@ public class ConversationMessageServiceImpl extends ServiceImpl<ConversationMess
 
     private final SimpMessagingTemplate simpMessagingTemplate;
 
+    private final AuthorizationService authorizationService;
+
 
     /**
      * 发送会话消息并触发通知。
@@ -43,6 +46,7 @@ public class ConversationMessageServiceImpl extends ServiceImpl<ConversationMess
             type = NotificationType.SEND_MSG,
             userId = "#accountId")
     public String sendMessage(ConversationMessageDTO conversationMessage, Integer accountId) {
+        authorizationService.assertCanAccessConversation(accountId, conversationMessage.getConversationId());
         Account account = accountMapper.getAccountById(accountId);
         if(account == null) {
             return "用户不存在";
@@ -85,6 +89,7 @@ public class ConversationMessageServiceImpl extends ServiceImpl<ConversationMess
     @ChatNotif(conversationId = "#conversationId",
             type = NotificationType.RECEIVED_MSG, userId = "#accountId")
     public PageEntity<ConversationMessageVO> getConversationMessageList(Integer conversationId, Integer accountId, Integer pageNum) {
+        authorizationService.assertCanAccessConversation(accountId, conversationId);
         Page<ConversationMessage> page = this.lambdaQuery()
                 .eq(ConversationMessage::getConversationId, conversationId)
                 .orderByDesc(ConversationMessage::getCreateTime)
