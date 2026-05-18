@@ -71,7 +71,8 @@ public class SecurityConfiguration {
             "/api/search/hot-keywords",
             "/api/topics/{topic_id}/chat-messages",
             "/api/topics/{topic_id}/breadcrumb",
-            "/api/threads/{thread_id}/breadcrumb"
+            "/api/threads/{thread_id}/breadcrumb",
+            "/api/page-broadcasts/active"
     };
 
     private static final String[] PUBLIC_PAGE_ENDPOINTS = {

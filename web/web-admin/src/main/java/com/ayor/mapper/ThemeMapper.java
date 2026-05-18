@@ -11,4 +11,7 @@ public interface ThemeMapper extends BaseMapper<Theme> {
     @Select("select * from theme")
     List<Theme> getThemeList();
 
+    @Select("select count(*) > 0 from theme where theme_id = #{themeId} and is_deleted = 0")
+    boolean existsById(Integer themeId);
+
 }
