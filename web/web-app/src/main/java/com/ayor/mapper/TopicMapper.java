@@ -20,6 +20,8 @@ public interface TopicMapper extends BaseMapper<Topic> {
     @Select("select count(*) from topic where theme_id = #{themeId}")
     Integer getCountByThemeId(Integer themeId);
 
+    @Select("select theme_id from topic where topic_id = #{topicId} and is_deleted = 0")
+    Integer getThemeIdByTopicId(Integer topicId);
 
 
 }
