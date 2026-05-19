@@ -52,6 +52,23 @@ class PageBroadcastQueryServiceImplTest {
         assertEquals(List.of("主页", "主题", "话题"), result.stream().map(PageBroadcastVO::getContent).toList());
     }
 
+    @Test
+    void shouldReturnBroadcastWithoutEndTimeAsActive() {
+        PageBroadcastQueryServiceImpl service = new PageBroadcastQueryServiceImpl(redisTemplate, topicMapper);
+        LocalDateTime now = LocalDateTime.now();
+
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+        when(redisTemplate.opsForSet()).thenReturn(setOperations);
+        when(setOperations.members("page_broadcast:scope:HOME")).thenReturn(java.util.Set.of("forever"));
+        when(valueOperations.get("page_broadcast:item:forever")).thenReturn("""
+                {"broadcastId":"forever","scopeType":"HOME","scopeId":null,"content":"长期","startTime":"%s","endTime":null}
+                """.formatted(now.minusMinutes(1)));
+
+        List<PageBroadcastVO> result = service.listActiveBroadcasts(PageBroadcastScopeType.HOME, null);
+
+        assertEquals(List.of("长期"), result.stream().map(PageBroadcastVO::getContent).toList());
+    }
+
     private String json(String id, String scopeType, Integer scopeId, LocalDateTime now) {
         return """
                 {"broadcastId":"%s","scopeType":"%s","scopeId":%s,"content":"%s","startTime":"%s","endTime":"%s"}

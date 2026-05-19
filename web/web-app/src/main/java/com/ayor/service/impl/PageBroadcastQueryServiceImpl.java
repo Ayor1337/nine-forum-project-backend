@@ -106,7 +106,7 @@ public class PageBroadcastQueryServiceImpl implements PageBroadcastQueryService 
         if (now.isBefore(vo.getStartTime())) {
             return PageBroadcastStatus.PENDING;
         }
-        if (!now.isBefore(vo.getEndTime())) {
+        if (vo.getEndTime() != null && !now.isBefore(vo.getEndTime())) {
             return PageBroadcastStatus.EXPIRED;
         }
         return PageBroadcastStatus.ACTIVE;
