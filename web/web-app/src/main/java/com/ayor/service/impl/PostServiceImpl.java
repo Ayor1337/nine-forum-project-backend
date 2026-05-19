@@ -165,27 +165,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         if (accountId == null) return new PageEntity<>(0L, Collections.emptyList());
         if (pageNum == null || pageNum < 1) pageNum = 1;
         if (pageSize == null || pageSize < 1) pageSize = 10;
-        List<Threadd> threads = threaddMapper.getThreadAroundWeekById(accountId);
-
-        if (threads == null || threads.isEmpty()) {
-            return new PageEntity<>(0L, Collections.emptyList());
-        }
-
-        List<Integer> threadIds = threads.stream()
-                .map(Threadd::getThreadId)
-                .filter(Objects::nonNull)
-                .distinct()
-                .toList();
-
-        if (threadIds.isEmpty()) {
-            return new PageEntity<>(0L, Collections.emptyList());
-        }
-
-        Page<Post> page = this.lambdaQuery()
-                .in(Post::getThreadId, threadIds)
-                .notIn(Post::getAccountId, accountId)
-                .orderByDesc(Post::getCreateTime)
-                .page(Page.of(pageNum, pageSize));  // 注意：页码从 1 开始
+        Page<Post> page = postMapper.listReplyMessages(Page.of(pageNum, pageSize), accountId);
 
         List<ReplyMessageVO> vos = toVOList(page.getRecords());
         return new PageEntity<>(page.getTotal(), vos);

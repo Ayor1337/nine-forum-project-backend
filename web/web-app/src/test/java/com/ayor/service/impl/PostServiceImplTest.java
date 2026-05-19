@@ -1,7 +1,10 @@
 package com.ayor.service.impl;
 
 import com.ayor.entity.dto.PostDTO;
+import com.ayor.entity.PageEntity;
+import com.ayor.entity.pojo.Account;
 import com.ayor.entity.pojo.Post;
+import com.ayor.entity.vo.ReplyMessageVO;
 import com.ayor.mapper.AccountMapper;
 import com.ayor.mapper.PostMapper;
 import com.ayor.mapper.ThreaddMapper;
@@ -17,7 +20,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+
+import java.util.Date;
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
@@ -86,5 +95,50 @@ class PostServiceImplTest {
         assertNull(result);
         verify(imageAssetService).syncContentRefs("POST", 123, "{\"type\":\"doc\",\"content\":[]}", 5);
         verify(messagingTemplate, never()).convertAndSendToUser(any(), any(), any());
+    }
+
+    @Test
+    void shouldListReplyMessagesWithPostQueryInsteadOfRecentThreads() {
+        TipTapUtils tipTapUtils = new TipTapUtils();
+        PostServiceImpl service = new PostServiceImpl(
+                postMapper,
+                accountMapper,
+                tipTapUtils,
+                threaddMapper,
+                messagingTemplate,
+                stompUtils,
+                mentionMessageService,
+                imageAssetService,
+                authorizationService
+        );
+
+        Post reply = new Post();
+        reply.setPostId(21);
+        reply.setThreadId(9);
+        reply.setAccountId(3);
+        reply.setTopicId(7);
+        reply.setContent("{\"type\":\"doc\",\"content\":[{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"latest reply\"}]}]}");
+        reply.setCreateTime(new Date());
+
+        Page<Post> page = Page.of(1, 10);
+        page.setRecords(List.of(reply));
+        page.setTotal(1);
+
+        Account account = new Account();
+        account.setNickname("reply-user");
+
+        when(postMapper.listReplyMessages(any(Page.class), eq(12))).thenReturn(page);
+        when(threaddMapper.getThreadTitleById(9)).thenReturn("old thread");
+        when(threaddMapper.getTopicIdByThreadId(9)).thenReturn(7);
+        when(accountMapper.getAccountById(3)).thenReturn(account);
+
+        PageEntity<ReplyMessageVO> result = service.listReplyMessage(1, 10, 12);
+
+        assertEquals(1L, result.getTotalSize());
+        assertEquals(1, result.getData().size());
+        assertEquals(21, result.getData().get(0).getPostId());
+        assertEquals("old thread", result.getData().get(0).getThreadTitle());
+        verify(postMapper).listReplyMessages(any(Page.class), eq(12));
+        verify(threaddMapper, never()).getThreadAroundWeekById(12);
     }
 }
