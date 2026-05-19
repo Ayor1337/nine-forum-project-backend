@@ -1,24 +1,23 @@
 package com.ayor.service.impl;
 
+import com.ayor.entity.cache.ConversationListCacheItem;
 import com.ayor.entity.vo.ConversationVO;
 import com.ayor.entity.vo.UserInfoVO;
 import com.ayor.entity.pojo.Account;
-import com.ayor.entity.pojo.AccountInfo;
 import com.ayor.entity.pojo.Conversation;
 import com.ayor.entity.stomp.ChatUnread;
-import com.ayor.mapper.AccountInfoMapper;
 import com.ayor.mapper.AccountMapper;
 import com.ayor.mapper.ConversationMapper;
+import com.ayor.service.AccountService;
 import com.ayor.service.ChatUnreadService;
 import com.ayor.service.ConversationService;
 import com.ayor.service.AuthorizationService;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,13 +32,15 @@ public class ConversationServiceImpl extends ServiceImpl<ConversationMapper, Con
 
     private static final String CONVERSATION_CACHE = "conversation";
 
-    private final AccountMapper accountMapper;
+    private static final String CONVERSATION_LIST_CACHE = "conversationList";
 
-    private final AccountInfoMapper accountInfoMapper;
+    private final AccountMapper accountMapper;
 
     private final ChatUnreadService chatUnreadService;
 
     private final AuthorizationService authorizationService;
+
+    private final AccountService accountService;
 
     private final CacheManager cacheManager;
 
@@ -134,6 +135,7 @@ public class ConversationServiceImpl extends ServiceImpl<ConversationMapper, Con
             }
             this.updateById(conversation);
             evictConversationCache(conversation);
+            evictConversationListCache(accountId);
             return null;
         }
         if (accountId.equals(conversation.getBetaAccountId())) {
@@ -145,6 +147,7 @@ public class ConversationServiceImpl extends ServiceImpl<ConversationMapper, Con
             }
             this.updateById(conversation);
             evictConversationCache(conversation);
+            evictConversationListCache(accountId);
             return null;
         }
         return null;
@@ -154,7 +157,6 @@ public class ConversationServiceImpl extends ServiceImpl<ConversationMapper, Con
      */
 
     @Override
-    @CacheEvict(value = "conversationList", key = "#accountId", condition = "#accountId != null")
     public String createNewConversation(Integer accountId, String toUsername) {
         Account fromAccount = accountMapper.getAccountById(accountId);
         if (fromAccount == null) {
@@ -178,6 +180,8 @@ public class ConversationServiceImpl extends ServiceImpl<ConversationMapper, Con
             return "创建失败";
         }
         evictConversationCache(conversation);
+        evictConversationListCache(fromAccount.getAccountId());
+        evictConversationListCache(toAccount.getAccountId());
         return null;
     }
     /**
@@ -185,42 +189,58 @@ public class ConversationServiceImpl extends ServiceImpl<ConversationMapper, Con
      */
 
     @Override
-    @Cacheable(value = "conversationList", key = "#accountId", condition = "#accountId != null", unless = "#result == null")
     public List<ConversationVO> getConversationList(Integer accountId) {
         Account account = accountMapper.getAccountById(accountId);
         if (account == null) {
             return null;
         }
-        List<ConversationVO> conversationVOs = new ArrayList<>();
-        List<Conversation> initiativeConversations = this.lambdaQuery()
+        List<ConversationListCacheItem> cacheItems = getConversationListCacheItems(account.getAccountId());
+        if (cacheItems == null) {
+            cacheItems = buildConversationListCacheItems(account);
+            putConversationListCache(account.getAccountId(), cacheItems);
+        }
+        return toConversationVOs(cacheItems);
+    }
+
+    private List<ConversationListCacheItem> buildConversationListCacheItems(Account account) {
+        List<ConversationListCacheItem> cacheItems = new ArrayList<>();
+        List<Conversation> initiativeConversations = this.baseMapper.selectList(Wrappers.<Conversation>lambdaQuery()
                 .eq(Conversation::getAlphaAccountId, account.getAccountId())
-                .list();
-        List<Conversation> reactiveConversations = this.lambdaQuery()
+        );
+        List<Conversation> reactiveConversations = this.baseMapper.selectList(Wrappers.<Conversation>lambdaQuery()
                 .eq(Conversation::getBetaAccountId, account.getAccountId())
-                .list();
+        );
 
         initiativeConversations.forEach(conversation -> {
             if (conversation.getHidden() != 1 && conversation.getHidden() != 3) {
-                Account accountById = accountMapper.getAccountById(conversation.getBetaAccountId());
-                ConversationVO conversationVO = ConversationVO.builder()
-                        .conversationId(conversation.getConversationId())
-                        .userInfo(getUserInfoVO(accountById))
-                        .updateTime(conversation.getUpdateTime())
-                        .build();
-                conversationVOs.add(conversationVO);
+                cacheItems.add(new ConversationListCacheItem(
+                        conversation.getConversationId(),
+                        conversation.getBetaAccountId(),
+                        conversation.getUpdateTime()
+                ));
             }
         });
         reactiveConversations.forEach(conversation -> {
             if (conversation.getHidden() != 2 && conversation.getHidden() != 3) {
-                Account accountById = accountMapper.getAccountById(conversation.getAlphaAccountId());
-                ConversationVO conversationVO = ConversationVO.builder()
-                        .conversationId(conversation.getConversationId())
-                        .userInfo(getUserInfoVO(accountById))
-                        .updateTime(conversation.getUpdateTime())
-                        .build();
-                conversationVOs.add(conversationVO);
+                cacheItems.add(new ConversationListCacheItem(
+                        conversation.getConversationId(),
+                        conversation.getAlphaAccountId(),
+                        conversation.getUpdateTime()
+                ));
             }
         });
+        return cacheItems;
+    }
+
+    private List<ConversationVO> toConversationVOs(List<ConversationListCacheItem> cacheItems) {
+        List<ConversationVO> conversationVOs = new ArrayList<>();
+        for (ConversationListCacheItem cacheItem : cacheItems) {
+            conversationVOs.add(ConversationVO.builder()
+                    .conversationId(cacheItem.getConversationId())
+                    .userInfo(getConversationUserInfo(cacheItem.getPartnerAccountId()))
+                    .updateTime(cacheItem.getUpdateTime())
+                    .build());
+        }
         return conversationVOs;
     }
     /**
@@ -268,18 +288,15 @@ public class ConversationServiceImpl extends ServiceImpl<ConversationMapper, Con
         chatUnreadService.clearUnread(conversationId, fromUserId);
         return null;
     }
-    /**
-     * 将用户实体转换为会话展示所需的用户信息。
-     */
-    private UserInfoVO getUserInfoVO(Account account) {
-        if (account == null) {
+    private UserInfoVO getConversationUserInfo(Integer accountId) {
+        UserInfoVO userInfo = accountService.getUserInfo(accountId);
+        if (userInfo == null) {
             return null;
         }
-        UserInfoVO userInfoVO = new UserInfoVO();
-        BeanUtils.copyProperties(account, userInfoVO);
-        AccountInfo accountInfo = accountInfoMapper.selectById(account.getAccountId());
-        userInfoVO.setBio(accountInfo == null ? null : accountInfo.getBio());
-        return userInfoVO;
+        UserInfoVO conversationUserInfo = new UserInfoVO();
+        BeanUtils.copyProperties(userInfo, conversationUserInfo);
+        conversationUserInfo.setPermission(null);
+        return conversationUserInfo;
     }
 
     private ConversationVO cacheConversation(String cacheKey, ConversationVO conversationVO) {
@@ -292,8 +309,47 @@ public class ConversationServiceImpl extends ServiceImpl<ConversationMapper, Con
         getConversationCache().evict(cacheKey);
     }
 
+    private List<ConversationListCacheItem> getConversationListCacheItems(Integer accountId) {
+        Cache cache = getConversationListCache();
+        if (cache == null) {
+            return null;
+        }
+        List<?> cachedItems = cache.get(accountId, List.class);
+        if (cachedItems == null) {
+            return null;
+        }
+        List<ConversationListCacheItem> cacheItems = new ArrayList<>();
+        for (Object cachedItem : cachedItems) {
+            if (cachedItem instanceof ConversationListCacheItem item) {
+                cacheItems.add(item);
+            } else {
+                cache.evict(accountId);
+                return null;
+            }
+        }
+        return cacheItems;
+    }
+
+    private void putConversationListCache(Integer accountId, List<ConversationListCacheItem> cacheItems) {
+        Cache cache = getConversationListCache();
+        if (cache != null) {
+            cache.put(accountId, cacheItems);
+        }
+    }
+
+    private void evictConversationListCache(Integer accountId) {
+        Cache cache = getConversationListCache();
+        if (cache != null && accountId != null) {
+            cache.evict(accountId);
+        }
+    }
+
     private Cache getConversationCache() {
         return cacheManager.getCache(CONVERSATION_CACHE);
+    }
+
+    private Cache getConversationListCache() {
+        return cacheManager.getCache(CONVERSATION_LIST_CACHE);
     }
 
 
