@@ -22,6 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -75,5 +76,28 @@ class PageBroadcastServiceImplTest {
         verify(rabbitTemplate).convertAndSend(eq("page-broadcast.direct"), eq("page-broadcast.changed"), captor.capture());
         assertEquals(PageBroadcastScopeType.TOPIC, captor.getValue().getScopeType());
         assertEquals(12, captor.getValue().getScopeId());
+    }
+
+    @Test
+    void shouldStoreBroadcastWithoutTimeLimitWhenStartAndEndTimeAreMissing() {
+        PageBroadcastServiceImpl service = new PageBroadcastServiceImpl(
+                redisTemplate,
+                rabbitTemplate,
+                themeMapper,
+                topicMapper
+        );
+        PageBroadcastDTO dto = new PageBroadcastDTO();
+        dto.setScopeType(PageBroadcastScopeType.HOME);
+        dto.setContent("长期提示");
+
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+        when(redisTemplate.opsForSet()).thenReturn(setOperations);
+
+        String result = service.createPageBroadcast(dto);
+
+        assertNull(result);
+        verify(valueOperations).set(anyString(), anyString());
+        verify(valueOperations, never()).set(anyString(), anyString(), eq(1L), eq(TimeUnit.MINUTES));
+        verify(setOperations).add(eq("page_broadcast:scope:HOME"), anyString());
     }
 }

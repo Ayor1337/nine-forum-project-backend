@@ -66,17 +66,22 @@ public class PageBroadcastServiceImpl implements PageBroadcastService {
             return validation;
         }
         PageBroadcastVO vo = new PageBroadcastVO();
+        LocalDateTime startTime = dto.getStartTime() == null ? LocalDateTime.now() : dto.getStartTime();
         vo.setBroadcastId(UUID.randomUUID().toString());
         vo.setScopeType(dto.getScopeType());
         vo.setScopeId(dto.getScopeId());
         vo.setContent(dto.getContent().trim());
-        vo.setStartTime(dto.getStartTime());
+        vo.setStartTime(startTime);
         vo.setEndTime(dto.getEndTime());
         vo.setStatus(resolveStatus(vo, LocalDateTime.now()));
 
         try {
-            long ttlMinutes = ttlMinutes(vo.getEndTime());
-            redisTemplate.opsForValue().set(itemKey(vo.getBroadcastId()), objectMapper.writeValueAsString(vo), ttlMinutes, TimeUnit.MINUTES);
+            String json = objectMapper.writeValueAsString(vo);
+            if (vo.getEndTime() == null) {
+                redisTemplate.opsForValue().set(itemKey(vo.getBroadcastId()), json);
+            } else {
+                redisTemplate.opsForValue().set(itemKey(vo.getBroadcastId()), json, ttlMinutes(vo.getEndTime()), TimeUnit.MINUTES);
+            }
             redisTemplate.opsForSet().add(IDS_KEY, vo.getBroadcastId());
             redisTemplate.opsForSet().add(scopeKey(vo.getScopeType(), vo.getScopeId()), vo.getBroadcastId());
             publishEvent(PageBroadcastEventType.CREATED, vo);
@@ -131,10 +136,8 @@ public class PageBroadcastServiceImpl implements PageBroadcastService {
         if (!StringUtils.hasText(dto.getContent())) {
             return "页面广播内容不能为空";
         }
-        if (dto.getStartTime() == null || dto.getEndTime() == null) {
-            return "显示时间不能为空";
-        }
-        if (!dto.getEndTime().isAfter(dto.getStartTime())) {
+        LocalDateTime startTime = dto.getStartTime() == null ? LocalDateTime.now() : dto.getStartTime();
+        if (dto.getEndTime() != null && !dto.getEndTime().isAfter(startTime)) {
             return "结束时间必须晚于开始时间";
         }
         if (dto.getScopeType() == PageBroadcastScopeType.HOME) {
@@ -168,7 +171,7 @@ public class PageBroadcastServiceImpl implements PageBroadcastService {
         if (now.isBefore(vo.getStartTime())) {
             return PageBroadcastStatus.PENDING;
         }
-        if (!now.isBefore(vo.getEndTime())) {
+        if (vo.getEndTime() != null && !now.isBefore(vo.getEndTime())) {
             return PageBroadcastStatus.EXPIRED;
         }
         return PageBroadcastStatus.ACTIVE;
