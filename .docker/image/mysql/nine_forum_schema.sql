@@ -255,6 +255,25 @@ CREATE TABLE IF NOT EXISTS `report`  (
 ) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
+-- Table structure for dashboard_activity
+-- ----------------------------
+CREATE TABLE IF NOT EXISTS `dashboard_activity` (
+                              `activity_id` bigint NOT NULL AUTO_INCREMENT COMMENT '仪表盘动态ID',
+                              `source_key` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '来源唯一键',
+                              `created_at` datetime NOT NULL COMMENT '动态发生时间',
+                              `user_id` bigint NULL DEFAULT NULL COMMENT '操作者用户ID',
+                              `username` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '操作者用户名',
+                              `action` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '操作类型',
+                              `target` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '操作对象名称',
+                              `target_id` bigint NULL DEFAULT NULL COMMENT '操作对象ID',
+                              `type` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '动态分类',
+                              PRIMARY KEY (`activity_id`) USING BTREE,
+                              UNIQUE INDEX `uk_dashboard_activity_source_key` (`source_key`) USING BTREE,
+                              INDEX `idx_dashboard_activity_created_at` (`created_at`) USING BTREE,
+                              INDEX `idx_dashboard_activity_type_action` (`type`, `action`) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = DYNAMIC;
+
+-- ----------------------------
 -- Table structure for role
 -- ----------------------------
 CREATE TABLE IF NOT EXISTS `role`  (
