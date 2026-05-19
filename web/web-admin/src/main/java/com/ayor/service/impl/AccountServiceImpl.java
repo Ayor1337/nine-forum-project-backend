@@ -49,7 +49,6 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         if (account == null) {
             throw new UsernameNotFoundException("用户不存在");
         }
-        System.out.println(username);
         String roleName = roleMapper.getRoleNameById(account.getRoleId());
         if (!allowedRoles.contains(roleName)) {
             throw new UsernameNotFoundException("用户权限不足");
