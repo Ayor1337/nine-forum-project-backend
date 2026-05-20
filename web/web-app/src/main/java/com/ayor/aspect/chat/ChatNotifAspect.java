@@ -133,6 +133,11 @@ public class ChatNotifAspect {
             messagingTemplate.convertAndSendToUser(toUserId.toString(), "/notif/unread/whisper", chatUnread);
             messagingTemplate.convertAndSendToUser(toUserId.toString(), "/notif/unread/user", messageUnreadService.getUnreadVO(toUserId, UnreadMessageType.USER_MESSAGE));
             messagingTemplate.convertAndSendToUser(toUserId.toString(), "/notif/unread", messageUnreadService.getUnreadVO(toUserId));
+            if (stompUtils.isUserSubscribed(toUserId.toString(), "/notif/unread-overview")) {
+                messagingTemplate.convertAndSendToUser(toUserId.toString(),
+                        "/notif/unread-overview",
+                        messageUnreadService.getUnreadOverviewVO(toUserId));
+            }
         }
 
     }
@@ -166,6 +171,12 @@ public class ChatNotifAspect {
                     .convertAndSendToUser(accountId.toString(),
                             "/notif/unread/user",
                             messageUnread);
+        }
+        if(stompUtils.isUserSubscribed(accountId.toString(), "/notif/unread-overview")) {
+            messagingTemplate
+                    .convertAndSendToUser(accountId.toString(),
+                            "/notif/unread-overview",
+                            messageUnreadService.getUnreadOverviewVO(accountId));
         }
 
 
