@@ -1,6 +1,7 @@
 package com.ayor.controller;
 
 import com.ayor.entity.stomp.MessageUnread;
+import com.ayor.entity.vo.UnreadOverviewVO;
 import com.ayor.result.Result;
 import com.ayor.service.MessageUnreadService;
 import com.ayor.util.SecurityUtils;
@@ -35,6 +36,13 @@ public class NotificationController {
                 return messageUnreadService.getUnreadVO(userId, type);
             }
         }, "获取未读消息失败");
+    }
+
+    @GetMapping("/unread-overview")
+    public Result<UnreadOverviewVO> getUnreadOverview() {
+        Integer userId = securityUtils.getSecurityUserId();
+        return Result.dataMessageHandler(() -> messageUnreadService.getUnreadOverviewVO(userId),
+                "获取未读消息概览失败");
     }
 
 }

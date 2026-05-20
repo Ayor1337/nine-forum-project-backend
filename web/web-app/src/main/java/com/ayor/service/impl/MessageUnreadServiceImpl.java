@@ -1,6 +1,7 @@
 package com.ayor.service.impl;
 
 import com.ayor.entity.stomp.MessageUnread;
+import com.ayor.entity.vo.UnreadOverviewVO;
 import com.ayor.service.MessageUnreadService;
 import com.ayor.type.UnreadMessageType;
 import lombok.RequiredArgsConstructor;
@@ -101,6 +102,25 @@ public class MessageUnreadServiceImpl implements MessageUnreadService {
     public MessageUnread getUnreadVO(Integer userId) {
         return MessageUnread.builder()
                 .unread(getAllUnread(userId))
+                .build();
+    }
+    /**
+     * 构造当前用户全部未读消息的概览对象。
+     */
+
+    @Override
+    public UnreadOverviewVO getUnreadOverviewVO(Integer userId) {
+        Long reply = getUnread(userId, UnreadMessageType.REPLY_MESSAGE);
+        Long mention = getUnread(userId, UnreadMessageType.MENTION_MESSAGE);
+        Long system = getUnread(userId, UnreadMessageType.SYSTEM_MESSAGE);
+        Long user = getUnread(userId, UnreadMessageType.USER_MESSAGE);
+
+        return UnreadOverviewVO.builder()
+                .total(reply + mention + system + user)
+                .reply(reply)
+                .mention(mention)
+                .system(system)
+                .user(user)
                 .build();
     }
     /**
