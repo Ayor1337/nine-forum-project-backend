@@ -93,7 +93,7 @@ class TipTapUtilsTest {
     @Test
     void shouldPreserveGifExtensionWhenConvertingBase64Images() {
         ImageStorageService storageService = mock(ImageStorageService.class);
-        ReflectionTestUtils.setField(tipTapUtils, "staticImageStorageService", storageService);
+        ReflectionTestUtils.setField(tipTapUtils, "imageStorageService", storageService);
         StoredImage storedStaticImage = new StoredImage();
         storedStaticImage.setObjectName("posts/1/a.gif");
         storedStaticImage.setUrl("nineforum/posts/1/a.gif");
