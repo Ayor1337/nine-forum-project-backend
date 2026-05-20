@@ -140,6 +140,10 @@ public class MessageUnreadNotifAspect {
             messagingTemplate.convertAndSendToUser(accountId.toString(), "/notif/unread/"+ type.getType(),
                     messageUnreadService.getUnreadVO(accountId, type));
         }
+        if (stompUtils.isUserSubscribed(accountId.toString(), "/notif/unread-overview")) {
+            messagingTemplate.convertAndSendToUser(accountId.toString(), "/notif/unread-overview",
+                    messageUnreadService.getUnreadOverviewVO(accountId));
+        }
     }
 
 }
