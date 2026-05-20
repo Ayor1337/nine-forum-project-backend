@@ -1,6 +1,7 @@
 package com.ayor.service;
 
 import com.ayor.entity.stomp.MessageUnread;
+import com.ayor.entity.vo.UnreadOverviewVO;
 import com.ayor.type.UnreadMessageType;
 
 /**
@@ -65,6 +66,13 @@ public interface MessageUnreadService {
      * @return 未读消息对象,包含所有类型的未读数量
      */
     MessageUnread getUnreadVO(Integer userId);
+
+    /**
+     * 获取所有类型的未读消息概览对象
+     * @param userId 用户ID
+     * @return 未读消息概览对象,包含总数和各类型未读数量
+     */
+    UnreadOverviewVO getUnreadOverviewVO(Integer userId);
 
     /**
      * 清除指定类型的未读消息(减少指定数量)

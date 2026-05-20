@@ -238,6 +238,11 @@ public class MentionMessageServiceImpl extends ServiceImpl<MentionMessageMapper,
                     "/notif/unread/" + UnreadMessageType.MENTION_MESSAGE.getType(),
                     messageUnreadService.getUnreadVO(accountId, UnreadMessageType.MENTION_MESSAGE));
         }
+        if (stompUtils.isUserSubscribed(accountId.toString(), "/notif/unread-overview")) {
+            messagingTemplate.convertAndSendToUser(accountId.toString(),
+                    "/notif/unread-overview",
+                    messageUnreadService.getUnreadOverviewVO(accountId));
+        }
     }
 
     /**
