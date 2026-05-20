@@ -2,7 +2,6 @@ package com.ayor.service.impl;
 
 import com.ayor.entity.PageEntity;
 import com.ayor.entity.document.ThreadDoc;
-import com.ayor.entity.dto.TagUpdateDTO;
 import com.ayor.entity.dto.ThreadDTO;
 import com.ayor.entity.vo.AnnouncementVO;
 import com.ayor.entity.vo.TagVO;
@@ -325,22 +324,22 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
      */
 
     @Override
-    public String updateThreadTag(TagUpdateDTO tagUpdateDTO) {
-        if (tagUpdateDTO == null) {
+    public String updateThreadTag(Integer threadId, Integer topicId, Integer tagId) {
+        if (threadId == null || topicId == null || tagId == null) {
             return "参数错误";
         }
         Threadd threadd = this.lambdaQuery()
-                .eq(Threadd::getThreadId, tagUpdateDTO.getThreadId())
-                .eq(Threadd::getTopicId, tagUpdateDTO.getTopicId())
+                .eq(Threadd::getThreadId, threadId)
+                .eq(Threadd::getTopicId, topicId)
                 .one();
         if (threadd == null) {
             return "帖子不存在";
         }
-        Tag tag = tagMapper.getTagById(tagUpdateDTO.getTagId());
+        Tag tag = tagMapper.getTagById(tagId);
         if (tag == null) {
             return "标签不存在";
         }
-        threadd.setTagId(tagUpdateDTO.getTagId());
+        threadd.setTagId(tagId);
 
         return this.updateById(threadd) ? null : "修改失败";
     }

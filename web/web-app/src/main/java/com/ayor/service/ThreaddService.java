@@ -2,7 +2,6 @@ package com.ayor.service;
 
 import com.ayor.entity.PageEntity;
 import com.ayor.entity.document.ThreadDoc;
-import com.ayor.entity.dto.TagUpdateDTO;
 import com.ayor.entity.dto.ThreadDTO;
 import com.ayor.entity.vo.AnnouncementVO;
 import com.ayor.entity.vo.ThreadVO;
@@ -131,10 +130,12 @@ public interface ThreaddService extends IService<Threadd> {
 
     /**
      * 更新帖子标签
-     * @param tagUpdateDTO 标签更新数据传输对象,包含标签ID列表
+     * @param threadId 帖子ID
+     * @param topicId 话题ID
+     * @param tagId 标签ID
      * @return 操作结果消息;成功返回null,失败返回错误描述
      */
-    String updateThreadTag(TagUpdateDTO tagUpdateDTO);
+    String updateThreadTag(Integer threadId, Integer topicId, Integer tagId);
 
     /**
      * 移除帖子标签

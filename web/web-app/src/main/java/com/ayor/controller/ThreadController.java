@@ -101,11 +101,9 @@ public class ThreadController {
     @PutMapping("/moderation/threads/{thread_id}/tag")
     public Result<Void> updateTag(@PathVariable(name = "thread_id") Integer threadId,
                                   @RequestParam(name = "topic_id") Integer topicId,
-                                  @RequestBody TagUpdateDTO tagUpdateDTO) {
+                                  @Valid @RequestBody TagUpdateDTO tagUpdateDTO) {
         authorizationService.assertCanUpdateThreadTag(security.getSecurityUserId(), threadId, topicId);
-        tagUpdateDTO.setThreadId(threadId);
-        tagUpdateDTO.setTopicId(topicId);
-        return Result.messageHandler(() -> threaddService.updateThreadTag(tagUpdateDTO));
+        return Result.messageHandler(() -> threaddService.updateThreadTag(threadId, topicId, tagUpdateDTO.getTagId()));
     }
 
     /**

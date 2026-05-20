@@ -13,10 +13,4 @@ public class TagUpdateDTO {
     @NotNull
     private Integer tagId;
 
-    @NotNull
-    private Integer topicId;
-
-    @NotNull
-    private Integer threadId;
-
 }
