@@ -1,8 +1,8 @@
 package com.ayor.service;
 
 import com.ayor.entity.PageEntity;
-import com.ayor.entity.admin.dto.ThemeDTO;
-import com.ayor.entity.admin.vo.ThemeVO;
+import com.ayor.entity.dto.ThemeDTO;
+import com.ayor.entity.vo.ThemeVO;
 import com.ayor.entity.pojo.Theme;
 import com.baomidou.mybatisplus.extension.service.IService;
 
@@ -33,6 +33,13 @@ public interface ThemeService extends IService<Theme> {
      * @return 分页结果,包含所有主题
      */
     PageEntity<ThemeVO> getThemes(Integer pageNum, Integer pageSize);
+
+    /**
+     * 根据主题ID获取主题详情
+     * @param themeId 主题ID
+     * @return 主题详情,不存在时返回null
+     */
+    ThemeVO getThemeById(Integer themeId);
 
     /**
      * 创建新主题

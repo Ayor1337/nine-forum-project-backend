@@ -1,6 +1,7 @@
 package com.ayor.controller;
 
 import com.ayor.entity.pojo.Permission;
+import com.ayor.entity.vo.PermissionVO;
 import com.ayor.result.Result;
 import com.ayor.service.PermissionService;
 import lombok.RequiredArgsConstructor;
@@ -27,8 +28,16 @@ public class PermissionController {
      * 查询某个角色的权限列表。
      */
     @GetMapping
-    public Result<List<Permission>> listPermissions(@RequestParam(value = "role_id", required = false) Integer roleId) {
+    public Result<List<PermissionVO>> listPermissions(@RequestParam(value = "role_id", required = false) Integer roleId) {
         return Result.dataMessageHandler(() -> permissionService.listPermissions(roleId), "获取权限列表失败");
+    }
+
+    /**
+     * 查询单条权限记录。
+     */
+    @GetMapping("/{permissionId}")
+    public Result<PermissionVO> getPermission(@PathVariable("permissionId") Integer permissionId) {
+        return Result.dataMessageHandler(() -> permissionService.getPermissionById(permissionId), "获取权限失败");
     }
 
     /**

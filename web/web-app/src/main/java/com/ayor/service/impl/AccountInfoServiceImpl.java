@@ -1,6 +1,6 @@
 package com.ayor.service.impl;
 
-import com.ayor.entity.app.vo.AccountInfoVO;
+import com.ayor.entity.vo.AccountInfoVO;
 import com.ayor.entity.pojo.Account;
 import com.ayor.entity.pojo.AccountInfo;
 import com.ayor.entity.pojo.UserPrivacySetting;
@@ -72,7 +72,7 @@ public class AccountInfoServiceImpl extends ServiceImpl<AccountInfoMapper, Accou
         if (accountMapper.getAccountById(accountId) == null) {
             return null;
         }
-        if (!privacyPolicyService.canViewProfile(viewerId, accountId)) {
+        if (!privacyPolicyService.canViewAccountInfo(viewerId, accountId)) {
             throw new AccessDeniedException("无权限查看该用户资料");
         }
         AccountInfoVO vo = toVO(initDefaultIfAbsent(accountId));

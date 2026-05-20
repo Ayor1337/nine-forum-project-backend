@@ -1,7 +1,7 @@
 package com.ayor.controller;
 
 import com.ayor.entity.PageEntity;
-import com.ayor.entity.app.vo.ChatboardHistoryVO;
+import com.ayor.entity.vo.ChatboardHistoryVO;
 import com.ayor.entity.stomp.ChatBoardMessage;
 import com.ayor.result.Result;
 import com.ayor.service.ChatboardHistoryService;

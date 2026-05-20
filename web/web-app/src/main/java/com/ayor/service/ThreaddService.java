@@ -1,11 +1,10 @@
 package com.ayor.service;
 
 import com.ayor.entity.PageEntity;
-import com.ayor.entity.app.document.ThreadDoc;
-import com.ayor.entity.app.dto.TagUpdateDTO;
-import com.ayor.entity.app.dto.ThreadDTO;
-import com.ayor.entity.app.vo.AnnouncementVO;
-import com.ayor.entity.app.vo.ThreadVO;
+import com.ayor.entity.document.ThreadDoc;
+import com.ayor.entity.dto.ThreadDTO;
+import com.ayor.entity.vo.AnnouncementVO;
+import com.ayor.entity.vo.ThreadVO;
 import com.ayor.entity.pojo.Threadd;
 import com.baomidou.mybatisplus.extension.service.IService;
 
@@ -46,11 +45,13 @@ public interface ThreaddService extends IService<Threadd> {
     /**
      * 按分类ID获取帖子列表(分页版本)
      * @param topicId 分类ID
+     * @param tagId 标签ID, 可选
+     * @param order 排序方式, 支持 hot/latest
      * @param pageNum 页码,从1开始
      * @param pageSize 每页记录数
      * @return 分页结果,包含ThreadVO列表和总记录数
      */
-    PageEntity<ThreadVO> getThreadVOsByTopicId(Integer topicId, Integer pageNum, Integer pageSize);
+    PageEntity<ThreadVO> getThreadVOsByTopicId(Integer topicId, Integer tagId, String order, Integer pageNum, Integer pageSize);
 
     /**
      * 获取帖子标题
@@ -129,10 +130,12 @@ public interface ThreaddService extends IService<Threadd> {
 
     /**
      * 更新帖子标签
-     * @param tagUpdateDTO 标签更新数据传输对象,包含标签ID列表
+     * @param threadId 帖子ID
+     * @param topicId 话题ID
+     * @param tagId 标签ID
      * @return 操作结果消息;成功返回null,失败返回错误描述
      */
-    String updateThreadTag(TagUpdateDTO tagUpdateDTO);
+    String updateThreadTag(Integer threadId, Integer topicId, Integer tagId);
 
     /**
      * 移除帖子标签

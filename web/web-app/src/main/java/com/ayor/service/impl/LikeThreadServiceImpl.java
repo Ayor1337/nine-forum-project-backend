@@ -1,7 +1,7 @@
 package com.ayor.service.impl;
 
 import com.ayor.entity.PageEntity;
-import com.ayor.entity.app.vo.ThreadVO;
+import com.ayor.entity.vo.ThreadVO;
 import com.ayor.entity.pojo.Account;
 import com.ayor.entity.pojo.LikeThread;
 import com.ayor.entity.pojo.Threadd;
@@ -44,6 +44,10 @@ public class LikeThreadServiceImpl extends ServiceImpl<LikeThreadMapper, LikeThr
         if (account == null) {
             return "用户不存在";
         }
+        Threadd thread = threaddMapper.selectById(threadId);
+        if (thread == null || Boolean.TRUE.equals(thread.getIsDeleted())) {
+            return "帖子不存在";
+        }
         if (isLikedByAccountId(accountId, threadId)) {
             return "不能重复点赞";
         }
@@ -61,6 +65,10 @@ public class LikeThreadServiceImpl extends ServiceImpl<LikeThreadMapper, LikeThr
     public String removeLikeThreadId(Integer accountId, Integer threadId) {
         if (accountId == null) {
             return "取消点赞失败";
+        }
+        Threadd thread = threaddMapper.selectById(threadId);
+        if (thread == null || Boolean.TRUE.equals(thread.getIsDeleted())) {
+            return "帖子不存在";
         }
         LikeThread likeThread = this.lambdaQuery().eq(LikeThread::getAccountId, accountId)
                 .eq(LikeThread::getThreadId, threadId)
@@ -89,7 +97,7 @@ public class LikeThreadServiceImpl extends ServiceImpl<LikeThreadMapper, LikeThr
             return null;
         }
         if (!privacyPolicyService.canViewLikedThreads(viewerId, accountId)) {
-            throw new AccessDeniedException("无权限查看点赞列表");
+            throw new AccessDeniedException("Access denied");
         }
         Page<LikeThread> page = new Page<>(currentPage, pageSize);
         Page<LikeThread> likePage = this.lambdaQuery().eq(LikeThread::getAccountId, accountId).page(page);

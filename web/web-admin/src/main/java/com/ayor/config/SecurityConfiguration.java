@@ -1,6 +1,6 @@
 package com.ayor.config;
 
-import com.ayor.entity.app.vo.AuthorizeVO;
+import com.ayor.entity.vo.AuthorizeVO;
 import com.ayor.entity.pojo.Account;
 import com.ayor.filter.JWTAuthorizeFilter;
 import com.ayor.mapper.AccountMapper;
@@ -50,8 +50,6 @@ public class SecurityConfiguration {
     SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         return http
                 .authorizeHttpRequests(auth -> {
-                    auth.requestMatchers("/api/auth/**").permitAll();
-                    auth.requestMatchers("/api/*/info/**").permitAll();
                     auth.anyRequest().permitAll();
                 })
                 .formLogin(auth -> {

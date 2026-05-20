@@ -1,8 +1,8 @@
 package com.ayor.service;
 
 import com.ayor.entity.PageEntity;
-import com.ayor.entity.app.document.ThreadDoc;
-import com.ayor.entity.app.vo.HotKeywordVO;
+import com.ayor.entity.document.ThreadDoc;
+import com.ayor.entity.vo.HotKeywordVO;
 
 import java.time.Duration;
 import java.util.List;

@@ -2,14 +2,18 @@ package com.ayor.service.impl;
 
 import com.ayor.entity.PageEntity;
 import com.ayor.entity.pojo.AccountStat;
+import com.ayor.entity.vo.AccountStatVO;
 import com.ayor.mapper.AccountStatMapper;
 import com.ayor.service.AccountStatService;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.List;
 @Service
 @Transactional
 @RequiredArgsConstructor
@@ -19,11 +23,27 @@ public class AccountStatServiceImpl extends ServiceImpl<AccountStatMapper, Accou
      * 分页查询用户统计记录，可按账号 ID 过滤。
      */
     @Override
-    public PageEntity<AccountStat> getAccountStats(Integer pageNum, Integer pageSize, Integer accountId) {
+    public PageEntity<AccountStatVO> getAccountStats(Integer pageNum, Integer pageSize, Integer accountId) {
         Page<AccountStat> page = this.lambdaQuery()
                 .eq(accountId != null, AccountStat::getAccountId, accountId)
                 .page(new Page<>(pageNum, pageSize));
-        return new PageEntity<>(page.getTotal(), page.getRecords());
+        return new PageEntity<>(page.getTotal(), toVOList(page.getRecords()));
+    }
+
+    @Override
+    public AccountStatVO getAccountStatById(Integer statId) {
+        if (statId == null) {
+            return null;
+        }
+        return toVO(this.getById(statId));
+    }
+
+    @Override
+    public String createAccountStat(AccountStat accountStat) {
+        if (accountStat == null || accountStat.getAccountId() == null) {
+            return "用户不存在";
+        }
+        return this.save(accountStat) ? null : "创建统计失败";
     }
 
     /**
@@ -63,5 +83,30 @@ public class AccountStatServiceImpl extends ServiceImpl<AccountStatMapper, Accou
             exist.setAccountId(accountStat.getAccountId());
         }
         return this.updateById(exist) ? null : "更新统计失败";
+    }
+
+    @Override
+    public String deleteAccountStat(Integer statId) {
+        if (statId == null) {
+            return "统计记录不存在";
+        }
+        return this.removeById(statId) ? null : "删除统计失败";
+    }
+
+    private List<AccountStatVO> toVOList(List<AccountStat> accountStats) {
+        List<AccountStatVO> accountStatVOS = new ArrayList<>();
+        for (AccountStat accountStat : accountStats) {
+            accountStatVOS.add(toVO(accountStat));
+        }
+        return accountStatVOS;
+    }
+
+    private AccountStatVO toVO(AccountStat accountStat) {
+        if (accountStat == null) {
+            return null;
+        }
+        AccountStatVO accountStatVO = new AccountStatVO();
+        BeanUtils.copyProperties(accountStat, accountStatVO);
+        return accountStatVO;
     }
 }

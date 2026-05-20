@@ -1,7 +1,7 @@
 package com.ayor.service;
 
-import com.ayor.entity.admin.dto.RoleDTO;
-import com.ayor.entity.admin.vo.RoleVO;
+import com.ayor.entity.dto.RoleDTO;
+import com.ayor.entity.vo.RoleVO;
 import com.ayor.entity.pojo.Role;
 import com.baomidou.mybatisplus.extension.service.IService;
 
@@ -31,6 +31,13 @@ public interface RoleService extends IService<Role> {
      * @return 角色视图对象列表,包含角色信息和权限配置
      */
     List<RoleVO> getRoles();
+
+    /**
+     * 获取单个角色详情
+     * @param roleId 角色ID
+     * @return 角色详情
+     */
+    RoleVO getRoleById(Integer roleId);
 
     /**
      * 创建新角色

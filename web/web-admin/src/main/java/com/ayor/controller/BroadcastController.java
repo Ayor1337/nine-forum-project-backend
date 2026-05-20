@@ -1,9 +1,9 @@
 package com.ayor.controller;
 
-import com.ayor.entity.message.UserSystemMessage;
+import com.ayor.entity.dto.UserBroadcastDTO;
 import com.ayor.result.Result;
+import com.ayor.service.UserBroadcastService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -14,15 +14,14 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class BroadcastController {
 
-    private final RabbitTemplate rabbitTemplate;
+    private final UserBroadcastService userBroadcastService;
 
     /**
-     * 通过广播交换机发送一条系统消息，用于联调消息投递链路。
+     * 向一个或多个用户发送系统通知。
      */
     @PostMapping
-    public Result<Void> test(@RequestBody UserSystemMessage<String> message) {
-        rabbitTemplate.convertAndSend("broadcast.direct", "broadcast", message);
-        return Result.ok();
+    public Result<Void> sendUserBroadcast(@RequestBody UserBroadcastDTO dto) {
+        return Result.messageHandler(() -> userBroadcastService.sendUserBroadcast(dto));
     }
 
 }

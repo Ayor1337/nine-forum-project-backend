@@ -1,7 +1,7 @@
 package com.ayor.service.impl;
 
 import com.ayor.entity.PageEntity;
-import com.ayor.entity.app.vo.ThreadVO;
+import com.ayor.entity.vo.ThreadVO;
 import com.ayor.entity.pojo.Account;
 import com.ayor.entity.pojo.Collect;
 import com.ayor.entity.pojo.Threadd;
@@ -40,13 +40,16 @@ public class CollectServiceImpl extends ServiceImpl<CollectMapper, Collect> impl
 
     @Override
     public String insertCollect(Integer accountId, Integer threadId) {
-        // TODO 为什么不能查看，但是可以收藏呢？这权限管理写的牛魔，傻逼 gpt 5.4
         if (accountId == null || threadId == null) {
             return "参数错误";
         }
         Account account = accountMapper.getAccountById(accountId);
         if (account == null) {
             return "用户不存在";
+        }
+        Threadd thread = threaddMapper.selectById(threadId);
+        if (thread == null || Boolean.TRUE.equals(thread.getIsDeleted())) {
+            return "帖子不存在";
         }
         if (isCollectedByAccountId(accountId, threadId)) {
             return "不能重复收藏";
@@ -64,6 +67,10 @@ public class CollectServiceImpl extends ServiceImpl<CollectMapper, Collect> impl
     public String removeCollect(Integer accountId, Integer threadId) {
         if (accountId == null || threadId == null) {
             return "参数错误";
+        }
+        Threadd thread = threaddMapper.selectById(threadId);
+        if (thread == null || Boolean.TRUE.equals(thread.getIsDeleted())) {
+            return "帖子不存在";
         }
         Collect collect = this.lambdaQuery().eq(Collect::getAccountId, accountId)
                 .eq(Collect::getThreadId, threadId)
@@ -110,7 +117,7 @@ public class CollectServiceImpl extends ServiceImpl<CollectMapper, Collect> impl
             return null;
         }
         if (!privacyPolicyService.canViewCollectedThreads(viewerId, accountId)) {
-            throw new AccessDeniedException("无权限查看收藏列表");
+            throw new AccessDeniedException("Access denied");
         }
         Page<Collect> page = new Page<>(pageNum, pageSize);
         List<Collect> collects = this.lambdaQuery().eq(Collect::getAccountId, accountId)
@@ -132,4 +139,3 @@ public class CollectServiceImpl extends ServiceImpl<CollectMapper, Collect> impl
         return new PageEntity<>(page.getTotal(), threadVOS);
     }
 }
-

@@ -1,6 +1,6 @@
 package com.ayor.service;
 
-import com.ayor.entity.app.vo.ConversationVO;
+import com.ayor.entity.vo.ConversationVO;
 import com.ayor.entity.pojo.Conversation;
 import com.ayor.entity.stomp.ChatUnread;
 import com.baomidou.mybatisplus.extension.service.IService;
@@ -79,5 +79,5 @@ public interface ConversationService extends IService<Conversation> {
      * @return 操作结果消息;成功返回null,失败返回错误描述
      * @note 会更新Redis中的未读计数
      */
-    String clearUnread(Integer conversationId, Integer fromUserId);
+    String clearUnread(Integer conversationId, Integer accountId, Integer fromUserId);
 }

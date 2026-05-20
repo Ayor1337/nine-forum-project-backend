@@ -2,6 +2,7 @@ package com.ayor.service;
 
 import com.ayor.entity.PageEntity;
 import com.ayor.entity.pojo.LikeThread;
+import com.ayor.entity.vo.LikeThreadVO;
 import com.baomidou.mybatisplus.extension.service.IService;
 
 /**
@@ -30,7 +31,28 @@ public interface LikeService extends IService<LikeThread> {
      * @param accountId 用户ID过滤条件;为null时不过滤
      * @return 分页结果,包含匹配条件的点赞记录
      */
-    PageEntity<LikeThread> getLikes(Integer pageNum, Integer pageSize, Integer threadId, Integer accountId);
+    PageEntity<LikeThreadVO> getLikes(Integer pageNum, Integer pageSize, Integer threadId, Integer accountId);
+
+    /**
+     * 获取单条点赞记录
+     * @param likeId 点赞记录ID
+     * @return 点赞记录
+     */
+    LikeThreadVO getLikeById(Integer likeId);
+
+    /**
+     * 创建点赞记录
+     * @param like 点赞记录
+     * @return 操作结果消息
+     */
+    String createLike(LikeThread like);
+
+    /**
+     * 更新点赞记录
+     * @param like 点赞记录
+     * @return 操作结果消息
+     */
+    String updateLike(LikeThread like);
 
     /**
      * 删除点赞记录(物理删除)

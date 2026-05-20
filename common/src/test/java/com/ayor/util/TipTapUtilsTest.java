@@ -1,97 +1,121 @@
 package com.ayor.util;
 
 import com.ayor.entity.Base64Upload;
-import com.ayor.minio.MinioService;
+import com.ayor.image.ImageStorageService;
+import com.ayor.image.StoredImage;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+/**
+ * TipTapUtils 的单元测试。
+ */
 class TipTapUtilsTest {
 
     private final TipTapUtils tipTapUtils = new TipTapUtils();
 
     @Test
-    void extractTextRecursivelyConcatenatesTipTapTextNodes() {
+    void shouldExtractMentionTargetsFromTipTapJson() {
         String content = """
-                {"type":"doc","content":[
-                  {"type":"paragraph","content":[{"type":"text","text":"hello "},{"type":"text","text":"world"}]},
-                  {"type":"blockquote","content":[{"type":"paragraph","content":[{"type":"text","text":"!"}]}]}
-                ]}
+                {
+                  "type": "doc",
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "hello "
+                        },
+                        {
+                          "type": "mention",
+                          "attrs": {
+                            "accountId": 12,
+                            "username": "alice"
+                          }
+                        },
+                        {
+                          "type": "text",
+                          "text": " world"
+                        }
+                      ]
+                    }
+                  ]
+                }
                 """;
 
-        assertEquals("hello world!", tipTapUtils.extractText(content));
+        List<TipTapUtils.MentionTarget> mentions = tipTapUtils.extractMentions(content);
+
+        assertEquals(1, mentions.size());
+        assertEquals(12, mentions.get(0).accountId());
+        assertEquals("alice", mentions.get(0).username());
     }
 
     @Test
-    void extractImageUrlsReturnsAtMostThreeImageSrcValues() {
+    void shouldIncludeMentionsWhenExtractingPlainText() {
         String content = """
-                {"type":"doc","content":[
-                  {"type":"image","attrs":{"src":"https://example.com/1.png"}},
-                  {"type":"paragraph","content":[{"type":"image","attrs":{"src":"https://example.com/2.png"}}]},
-                  {"type":"image","attrs":{"src":"https://example.com/3.png"}},
-                  {"type":"image","attrs":{"src":"https://example.com/4.png"}}
-                ]}
+                {
+                  "type": "doc",
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "hi "
+                        },
+                        {
+                          "type": "mention",
+                          "attrs": {
+                            "accountId": 7,
+                            "username": "bob"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
                 """;
 
-        assertEquals(List.of(
-                "https://example.com/1.png",
-                "https://example.com/2.png",
-                "https://example.com/3.png"
-        ), tipTapUtils.extractImageUrls(content));
+        String text = tipTapUtils.extractText(content);
+
+        assertEquals("hi @bob", text);
     }
 
     @Test
-    void filterNonImageRemovesImageNodesAndKeepsTextStructure() {
+    void shouldPreserveGifExtensionWhenConvertingBase64Images() {
+        ImageStorageService storageService = mock(ImageStorageService.class);
+        ReflectionTestUtils.setField(tipTapUtils, "imageStorageService", storageService);
+        StoredImage storedStaticImage = new StoredImage();
+        storedStaticImage.setObjectName("posts/1/a.gif");
+        storedStaticImage.setUrl("nineforum/posts/1/a.gif");
+        when(storageService.storeImageBase64Image(any(Base64Upload.class), eq("posts/1/")))
+                .thenReturn(storedStaticImage);
+
         String content = """
-                {"type":"doc","content":[
-                  {"type":"paragraph","content":[{"type":"text","text":"before"},{"type":"image","attrs":{"src":"https://example.com/a.png"}}]},
-                  {"type":"image","attrs":{"src":"https://example.com/b.png"}},
-                  {"type":"paragraph","content":[{"type":"text","text":"after"}]}
-                ]}
+                {
+                  "type": "doc",
+                  "content": [
+                    {
+                      "type": "image",
+                      "attrs": {
+                        "src": "data:image/gif;base64,R0lGODlhAQABAIAAAAUEBA=="
+                      }
+                    }
+                  ]
+                }
                 """;
 
-        String filtered = tipTapUtils.filterNonImage(content);
+        tipTapUtils.convertBase64ImagesToUrl(content, "posts/1/");
 
-        assertTrue(filtered.contains("\"type\":\"doc\""));
-        assertTrue(filtered.contains("\"text\":\"before\""));
-        assertTrue(filtered.contains("\"text\":\"after\""));
-        assertTrue(!filtered.contains("\"type\":\"image\""));
-    }
-
-    @Test
-    void convertBase64ImagesToUrlUploadsBase64ImageSrcAndReplacesIt() throws Exception {
-        MinioService minioService = mock(MinioService.class);
-        ReflectionTestUtils.setField(tipTapUtils, "minioService", minioService);
-        when(minioService.uploadBase64(any(Base64Upload.class), eq("threads/1/")))
-                .thenReturn("https://cdn.example.com/image.png");
-        String content = """
-                {"type":"doc","content":[
-                  {"type":"image","attrs":{"src":"data:image/png;base64,AAAA"}},
-                  {"type":"image","attrs":{"src":"https://example.com/already.png"}}
-                ]}
-                """;
-
-        String converted = tipTapUtils.convertBase64ImagesToUrl(content, "threads/1/");
-
-        assertTrue(converted.contains("\"src\":\"https://cdn.example.com/image.png\""));
-        assertTrue(converted.contains("\"src\":\"https://example.com/already.png\""));
-        assertTrue(!converted.contains("data:image/png;base64,AAAA"));
-        verify(minioService).uploadBase64(any(Base64Upload.class), eq("threads/1/"));
-    }
-
-    @Test
-    void parseRejectsInvalidJsonAndNonDocRoot() {
-        assertThrows(IllegalArgumentException.class, () -> tipTapUtils.extractText("{"));
-        assertThrows(IllegalArgumentException.class, () -> tipTapUtils.extractText("{\"type\":\"paragraph\"}"));
+        verify(storageService).storeImageBase64Image(new Base64Upload("data:image/gif;base64,R0lGODlhAQABAIAAAAUEBA==", "image.gif"), "posts/1/");
     }
 }

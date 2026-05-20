@@ -1,8 +1,8 @@
 package com.ayor.controller;
 
 import com.ayor.entity.PageEntity;
-import com.ayor.entity.admin.dto.AccountDTO;
-import com.ayor.entity.admin.vo.AccountVO;
+import com.ayor.entity.dto.AccountDTO;
+import com.ayor.entity.vo.AccountVO;
 import com.ayor.result.Result;
 import com.ayor.service.AccountService;
 import jakarta.validation.Valid;
@@ -74,6 +74,11 @@ public class AccountController {
                                       @RequestBody @Valid AccountDTO accountDTO) {
         accountDTO.setAccountId(accountId);
         return Result.messageHandler(() -> accountService.updateAccount(accountDTO));
+    }
+
+    @PutMapping("/{accountId}/restore")
+    public Result<Void> restoreAccount(@PathVariable("accountId") Integer accountId) {
+        return Result.messageHandler(() -> accountService.restoreAccount(accountId));
     }
 
     /**

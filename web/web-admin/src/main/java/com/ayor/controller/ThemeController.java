@@ -1,8 +1,8 @@
 package com.ayor.controller;
 
 import com.ayor.entity.PageEntity;
-import com.ayor.entity.admin.dto.ThemeDTO;
-import com.ayor.entity.admin.vo.ThemeVO;
+import com.ayor.entity.dto.ThemeDTO;
+import com.ayor.entity.vo.ThemeVO;
 import com.ayor.result.Result;
 import com.ayor.service.ThemeService;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +30,14 @@ public class ThemeController {
     public Result<PageEntity<ThemeVO>> getThemes(@RequestParam(name = "page_num") Integer pageNum,
                                                  @RequestParam(name = "page_size", defaultValue = "10") Integer pageSize) {
         return Result.dataMessageHandler(() -> themeService.getThemes(pageNum, pageSize), "获取失败");
+    }
+
+    /**
+     * 查询指定主题。
+     */
+    @GetMapping("/{themeId}")
+    public Result<ThemeVO> getTheme(@PathVariable("themeId") Integer themeId) {
+        return Result.dataMessageHandler(() -> themeService.getThemeById(themeId), "主题不存在");
     }
 
     /**

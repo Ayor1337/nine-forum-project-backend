@@ -1,8 +1,12 @@
 package com.ayor.filter;
 
 import com.auth0.jwt.interfaces.DecodedJWT;
+import com.ayor.entity.pojo.Account;
+import com.ayor.mapper.AccountMapper;
 import com.ayor.mapper.PermissionMapper;
 import com.ayor.mapper.RoleMapper;
+import com.ayor.result.Result;
+import com.ayor.type.AccountStatus;
 import com.ayor.util.JWTUtils;
 import jakarta.annotation.Resource;
 import jakarta.servlet.FilterChain;
@@ -30,6 +34,9 @@ public class JWTAuthorizeFilter extends OncePerRequestFilter {
 
     @Resource
     private PermissionMapper permissionMapper;
+
+    @Resource
+    private AccountMapper accountMapper;
 
     @Resource
     private RoleMapper roleMapper;
@@ -64,6 +71,13 @@ public class JWTAuthorizeFilter extends OncePerRequestFilter {
         if(jwt != null) {
             UserDetails user = jwtUtil.toUser(jwt);
             Integer userId = Integer.parseInt(user.getUsername());
+            Account account = accountMapper.getAccountById(userId);
+            if (account != null && AccountStatus.fromCode(account.getStatus()) == AccountStatus.BANNED) {
+                response.setCharacterEncoding("UTF-8");
+                response.setContentType("application/json");
+                response.getWriter().write(Result.fail(401, "账号已被封禁").toJSONString());
+                return;
+            }
             // 获取用户权限
             String roleNameByUsername = roleMapper.getRoleNameByUserId(userId);
 

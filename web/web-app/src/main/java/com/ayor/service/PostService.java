@@ -1,10 +1,10 @@
 package com.ayor.service;
 
 import com.ayor.entity.PageEntity;
-import com.ayor.entity.app.document.ThreadDoc;
-import com.ayor.entity.app.dto.PostDTO;
-import com.ayor.entity.app.vo.PostVO;
-import com.ayor.entity.app.vo.ReplyMessageVO;
+import com.ayor.entity.document.ThreadDoc;
+import com.ayor.entity.dto.PostDTO;
+import com.ayor.entity.vo.PostVO;
+import com.ayor.entity.vo.ReplyMessageVO;
 import com.ayor.entity.pojo.Post;
 import com.baomidou.mybatisplus.extension.service.IService;
 
@@ -35,11 +35,13 @@ import java.util.List;
 public interface PostService extends IService<Post> {
 
     /**
-     * 获取帖子的所有评论
+     * 分页获取帖子的评论
      * @param threadId 帖子ID
-     * @return 评论视图对象列表,包含评论内容、作者信息、点赞数等
+     * @param pageNum 页码,从1开始
+     * @param pageSize 每页记录数
+     * @return 分页结果,包含评论内容、作者信息等
      */
-    List<PostVO> getPostsByThreadId(Integer threadId);
+    PageEntity<PostVO> getPostsByThreadId(Integer threadId, Integer pageNum, Integer pageSize);
 
     /**
      * 发布新评论

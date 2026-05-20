@@ -1,13 +1,16 @@
 package com.ayor.service.impl;
 
 import com.ayor.entity.pojo.Permission;
+import com.ayor.entity.vo.PermissionVO;
 import com.ayor.mapper.PermissionMapper;
 import com.ayor.service.PermissionService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -18,10 +21,18 @@ public class PermissionServiceImpl extends ServiceImpl<PermissionMapper, Permiss
      * 查询角色下的权限列表；未指定角色时返回全部权限。
      */
     @Override
-    public List<Permission> listPermissions(Integer roleId) {
-        return this.lambdaQuery()
+    public List<PermissionVO> listPermissions(Integer roleId) {
+        return toVOList(this.lambdaQuery()
                 .eq(roleId != null, Permission::getRoleId, roleId)
-        .list();
+        .list());
+    }
+
+    @Override
+    public PermissionVO getPermissionById(Integer permissionId) {
+        if (permissionId == null) {
+            return null;
+        }
+        return toVO(this.getById(permissionId));
     }
 
     /**
@@ -68,5 +79,22 @@ public class PermissionServiceImpl extends ServiceImpl<PermissionMapper, Permiss
             return "权限不存在";
         }
         return this.removeById(permissionId) ? null : "删除权限失败";
+    }
+
+    private List<PermissionVO> toVOList(List<Permission> permissions) {
+        List<PermissionVO> permissionVOS = new ArrayList<>();
+        for (Permission permission : permissions) {
+            permissionVOS.add(toVO(permission));
+        }
+        return permissionVOS;
+    }
+
+    private PermissionVO toVO(Permission permission) {
+        if (permission == null) {
+            return null;
+        }
+        PermissionVO permissionVO = new PermissionVO();
+        BeanUtils.copyProperties(permission, permissionVO);
+        return permissionVO;
     }
 }

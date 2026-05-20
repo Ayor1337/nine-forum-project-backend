@@ -1,9 +1,9 @@
 package com.ayor.controller;
 
 import com.ayor.entity.PageEntity;
-import com.ayor.entity.app.dto.ConversationMessageDTO;
-import com.ayor.entity.app.vo.ConversationMessageVO;
-import com.ayor.entity.app.vo.ConversationVO;
+import com.ayor.entity.dto.ConversationMessageDTO;
+import com.ayor.entity.vo.ConversationMessageVO;
+import com.ayor.entity.vo.ConversationVO;
 import com.ayor.entity.stomp.ChatUnread;
 import com.ayor.result.Result;
 import com.ayor.service.ConversationMessageService;
@@ -97,7 +97,8 @@ public class ConversationController {
     @DeleteMapping("/{conversation_id}/unread-messages")
     public Result<Void> clearUnreadMessageCount(@PathVariable("conversation_id") Integer conversationId,
                                                 @RequestParam("from_user_id") Integer fromUserId) {
-        return Result.messageHandler(() -> conversationService.clearUnread(conversationId, fromUserId));
+        Integer userId = securityUtils.getSecurityUserId();
+        return Result.messageHandler(() -> conversationService.clearUnread(conversationId, userId, fromUserId));
     }
 
 

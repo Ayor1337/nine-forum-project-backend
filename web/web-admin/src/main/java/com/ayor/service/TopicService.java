@@ -1,8 +1,8 @@
 package com.ayor.service;
 
 import com.ayor.entity.PageEntity;
-import com.ayor.entity.admin.dto.TopicDTO;
-import com.ayor.entity.admin.vo.TopicVO;
+import com.ayor.entity.dto.TopicDTO;
+import com.ayor.entity.vo.TopicVO;
 import com.ayor.entity.pojo.Topic;
 import com.baomidou.mybatisplus.extension.service.IService;
 
@@ -45,6 +45,13 @@ public interface TopicService extends IService<Topic> {
      * @return 分页结果,包含指定主题下的所有分类
      */
     PageEntity<TopicVO> getTopicsByThemeId(Integer themeId, Integer pageNum, Integer pageSize);
+
+    /**
+     * 获取单个分类详情
+     * @param topicId 分类ID
+     * @return 分类详情
+     */
+    TopicVO getTopicById(Integer topicId);
 
     /**
      * 按关键词搜索分类作为下拉选项

@@ -4,7 +4,6 @@ import com.ayor.entity.pojo.UserPrivacySetting;
 import com.ayor.service.PrivacyPolicyService;
 import com.ayor.service.UserPrivacySettingService;
 import com.ayor.service.UserRelationService;
-import com.ayor.type.DmPermission;
 import com.ayor.type.VisibilityScope;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -80,35 +79,13 @@ public class PrivacyPolicyServiceImpl implements PrivacyPolicyService {
         return setting != null && canAccessByScope(viewerId, ownerId, setting.getFollowListVisibility());
     }
 
-    /**
-     * 判断是否允许发起私信会话。
-     */
     @Override
-    public boolean canStartConversation(Integer viewerId, Integer ownerId) {
+    public boolean canViewAccountInfo(Integer viewerId, Integer ownerId) {
         if (isSelf(viewerId, ownerId)) {
             return true;
         }
-        if (userRelationService.isBlockedEitherDirection(normalizeViewerId(viewerId), ownerId)) {
-            return false;
-        }
         UserPrivacySetting setting = userPrivacySetting(ownerId);
-        if (setting == null) {
-            return false;
-        }
-        DmPermission permission = setting.getDmPermission();
-        if (permission == DmPermission.EVERYONE) {
-            return true;
-        }
-        if (permission == DmPermission.NOBODY) {
-            return false;
-        }
-        if (normalizeViewerId(viewerId) <= 0) {
-            return false;
-        }
-        if (permission == DmPermission.FOLLOWER_ONLY) {
-            return userRelationService.isFollowing(viewerId, ownerId);
-        }
-        return userRelationService.isMutualFollowing(viewerId, ownerId);
+        return setting != null && canAccessByScope(viewerId, ownerId, setting.getProfileVisibility());
     }
 
     /**

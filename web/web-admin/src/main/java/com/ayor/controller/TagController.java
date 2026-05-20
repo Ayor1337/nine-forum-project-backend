@@ -2,6 +2,7 @@ package com.ayor.controller;
 
 import com.ayor.entity.PageEntity;
 import com.ayor.entity.pojo.Tag;
+import com.ayor.entity.vo.TagVO;
 import com.ayor.result.Result;
 import com.ayor.service.TagService;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +34,14 @@ public class TagController {
             return Result.dataMessageHandler(() -> tagService.pageTags(pageNum, pageSize, topicId), "分页查询标签失败");
         }
         return Result.dataMessageHandler(() -> tagService.listTags(topicId), "获取标签列表失败");
+    }
+
+    /**
+     * 查询单个标签详情。
+     */
+    @GetMapping("/{tagId}")
+    public Result<TagVO> getTag(@PathVariable("tagId") Integer tagId) {
+        return Result.dataMessageHandler(() -> tagService.getTagById(tagId), "获取标签失败");
     }
 
     /**

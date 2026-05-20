@@ -1,7 +1,7 @@
 package com.ayor.service.impl;
 
 import com.ayor.aspect.unread.MessageUnreadNotif;
-import com.ayor.entity.app.vo.SystemMessageVO;
+import com.ayor.entity.vo.SystemMessageVO;
 import com.ayor.entity.message.UserSystemMessage;
 import com.ayor.entity.message.UserViolationMessage;
 import com.ayor.entity.pojo.SystemMessage;

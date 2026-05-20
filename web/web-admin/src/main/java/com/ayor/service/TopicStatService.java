@@ -2,6 +2,7 @@ package com.ayor.service;
 
 import com.ayor.entity.PageEntity;
 import com.ayor.entity.pojo.TopicStat;
+import com.ayor.entity.vo.TopicStatVO;
 import com.baomidou.mybatisplus.extension.service.IService;
 
 /**
@@ -29,7 +30,21 @@ public interface TopicStatService extends IService<TopicStat>  {
      * @param topicId 分类ID过滤条件;为null时查询所有分类
      * @return 分页结果,包含分类统计数据
      */
-    PageEntity<TopicStat> getTopicStats(Integer pageNum, Integer pageSize, Integer topicId);
+    PageEntity<TopicStatVO> getTopicStats(Integer pageNum, Integer pageSize, Integer topicId);
+
+    /**
+     * 获取单条话题统计记录
+     * @param statId 统计记录ID
+     * @return 话题统计记录
+     */
+    TopicStatVO getTopicStatById(Integer statId);
+
+    /**
+     * 创建话题统计记录
+     * @param topicStat 话题统计记录
+     * @return 操作结果消息
+     */
+    String createTopicStat(TopicStat topicStat);
 
     /**
      * 更新分类统计数据
@@ -38,4 +53,11 @@ public interface TopicStatService extends IService<TopicStat>  {
      * @return 操作结果消息;成功返回null,失败返回错误描述
      */
     String updateTopicStat(Integer statId, TopicStat topicStat);
+
+    /**
+     * 删除话题统计记录
+     * @param statId 统计记录ID
+     * @return 操作结果消息
+     */
+    String deleteTopicStat(Integer statId);
 }

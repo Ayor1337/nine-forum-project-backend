@@ -2,20 +2,24 @@ package com.ayor.service.impl;
 
 import com.ayor.aspect.unread.MessageUnreadNotif;
 import com.ayor.entity.PageEntity;
-import com.ayor.entity.app.document.ThreadDoc;
-import com.ayor.entity.app.dto.PostDTO;
-import com.ayor.entity.app.vo.PostVO;
-import com.ayor.entity.app.vo.ReplyMessageVO;
+import com.ayor.entity.document.ThreadDoc;
+import com.ayor.entity.dto.PostDTO;
+import com.ayor.entity.vo.PostVO;
+import com.ayor.entity.vo.ReplyMessageVO;
 import com.ayor.entity.pojo.Account;
 import com.ayor.entity.pojo.Post;
 import com.ayor.entity.pojo.Threadd;
 import com.ayor.mapper.AccountMapper;
 import com.ayor.mapper.PostMapper;
 import com.ayor.mapper.ThreaddMapper;
+import com.ayor.service.AuthorizationService;
+import com.ayor.service.ImageAssetService;
+import com.ayor.service.MentionMessageService;
 import com.ayor.service.PostService;
 import com.ayor.type.UnreadMessageType;
 import com.ayor.util.STOMPUtils;
 import com.ayor.util.TipTapUtils;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
@@ -44,28 +48,44 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
     private final SimpMessagingTemplate messagingTemplate;
 
     private final STOMPUtils stompUtils;
+
+    private final MentionMessageService mentionMessageService;
+
+    private final ImageAssetService imageAssetService;
+
+    private final AuthorizationService authorizationService;
     /**
      * 获取指定帖子下的评论列表。
      */
 
 
     @Override
-    public List<PostVO> getPostsByThreadId(Integer threadId) {
-        if (threadId == null ) {
-            return null;
+    public PageEntity<PostVO> getPostsByThreadId(Integer threadId, Integer pageNum, Integer pageSize) {
+        if (threadId == null) {
+            return new PageEntity<>(0L, Collections.emptyList());
         }
-        List<Post> posts = postMapper.getPostsByThreadId(threadId);
+        if (pageNum == null || pageNum < 1) pageNum = 1;
+        if (pageSize == null || pageSize < 1) pageSize = 10;
+
+        Page<Post> page = new Page<>(pageNum, pageSize);
+        LambdaQueryWrapper<Post> wrapper = new LambdaQueryWrapper<Post>()
+                .eq(Post::getThreadId, threadId)
+                .eq(Post::getIsDeleted, false)
+                .orderByAsc(Post::getCreateTime);
+        Page<Post> posts = this.baseMapper.selectPage(page, wrapper);
+        return new PageEntity<>(posts.getTotal(), toPostVOs(posts.getRecords()));
+    }
+
+    private List<PostVO> toPostVOs(List<Post> posts) {
         List<PostVO> postVOList = new ArrayList<>();
         posts.forEach(post -> {
             PostVO postVO = new PostVO();
-            if (!post.getIsDeleted()) {
-                BeanUtils.copyProperties(post, postVO);
-                Account account = accountMapper.getAccountById(post.getAccountId());
-                postVO.setNickname(account.getNickname());
-                postVO.setAccountId(account.getAccountId());
-                postVO.setAvatarUrl(account.getAvatarUrl());
-                postVOList.add(postVO);
-            }
+            BeanUtils.copyProperties(post, postVO);
+            Account account = accountMapper.getAccountById(post.getAccountId());
+            postVO.setNickname(account.getNickname());
+            postVO.setAccountId(account.getAccountId());
+            postVO.setAvatarUrl(account.getAvatarUrl());
+            postVOList.add(postVO);
         });
         return postVOList;
     }
@@ -92,18 +112,24 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         }
         Integer topicId = threaddMapper.getTopicIdByThreadId(postDTO.getThreadId());
         post.setAccountId(userId)   ;
-        post.setContent(tipTapUtils.convertBase64ImagesToUrl(postDTO.getContent(), "posts/" + post.getThreadId() + "/"));
+        try {
+            post.setContent(tipTapUtils.convertBase64ImagesToUrl(postDTO.getContent(), "posts/" + postDTO.getThreadId() + "/"));
+        } catch (IllegalArgumentException exception) {
+            return exception.getMessage();
+        }
         post.setCreateTime(new Date());
         post.setTopicId(topicId);
         if (this.save(post)) {
-            Integer accountId = threaddMapper.getAccountIdByThreadIdInteger(post.getThreadId());
-            if (stompUtils.isUserSubscribed(accountId.toString(), "/notif/reply")) {
+            imageAssetService.syncContentRefs("POST", post.getPostId(), post.getContent(), userId);
+            Integer currentPostAccountId = threaddMapper.getAccountIdByThreadIdInteger(post.getThreadId());
+            if (stompUtils.isUserSubscribed(currentPostAccountId.toString(), "/notif/reply") && !currentPostAccountId.equals(userId)) {
                 messagingTemplate.convertAndSendToUser(
                         threaddMapper.getAccountIdByThreadIdInteger(postDTO.getThreadId()).toString(),
                         "/notif/reply",
                         toVO(post)
                 );
             }
+            mentionMessageService.createPostMentionMessages(post.getContent(), userId, post.getPostId(), post.getThreadId());
             return null;
         }
         return "发布失败, 未知异常";
@@ -118,9 +144,8 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         if (post == null) {
             return "帖子不存在";
         }
-        if (!post.getAccountId().equals(userId)) {
-            return "没有权限";
-        }
+        authorizationService.assertCanDeletePost(userId, postId);
+        imageAssetService.clearContentRefs("POST", postId);
         return this.removeByIdLogic(post.getPostId()) ? null : "删除失败, 未知异常";
     }
     /**
@@ -133,9 +158,13 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         if (post == null) {
             return "帖子不存在";
         }
+        imageAssetService.clearContentRefs("POST", postId);
         return this.removeByIdLogic(post.getPostId()) ? null : "删除失败, 未知异常";
     }
 
+    /**
+     * 分页获取回复消息列表。
+     */
     @Override
     @MessageUnreadNotif(
             accountId = "#accountId",
@@ -143,33 +172,11 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
             type = UnreadMessageType.REPLY_MESSAGE,
             doRead = true
     )
-    /**
-     * 分页获取回复消息列表。
-     */
     public PageEntity<ReplyMessageVO> listReplyMessage(Integer pageNum, Integer pageSize, Integer accountId) {
         if (accountId == null) return new PageEntity<>(0L, Collections.emptyList());
         if (pageNum == null || pageNum < 1) pageNum = 1;
         if (pageSize == null || pageSize < 1) pageSize = 10;
-        List<Threadd> threads = threaddMapper.getThreadAroundWeekById(accountId);
-
-        if (threads == null || threads.isEmpty()) {
-            return new PageEntity<>(0L, Collections.emptyList());
-        }
-
-        List<Integer> threadIds = threads.stream()
-                .map(Threadd::getThreadId)
-                .filter(Objects::nonNull)
-                .distinct()
-                .toList();
-
-        if (threadIds.isEmpty()) {
-            return new PageEntity<>(0L, Collections.emptyList());
-        }
-
-        Page<Post> page = this.lambdaQuery()
-                .in(Post::getThreadId, threadIds)
-                .orderByDesc(Post::getCreateTime)
-                .page(Page.of(pageNum, pageSize));  // 注意：页码从 1 开始
+        Page<Post> page = postMapper.listReplyMessages(Page.of(pageNum, pageSize), accountId);
 
         List<ReplyMessageVO> vos = toVOList(page.getRecords());
         return new PageEntity<>(page.getTotal(), vos);

@@ -2,6 +2,7 @@ package com.ayor.service;
 
 import com.ayor.entity.PageEntity;
 import com.ayor.entity.pojo.ChatboardHistory;
+import com.ayor.entity.vo.ChatboardHistoryVO;
 import com.baomidou.mybatisplus.extension.service.IService;
 
 /**
@@ -29,7 +30,28 @@ public interface ChatboardHistoryService extends IService<ChatboardHistory> {
      * @param pageSize 每页记录数
      * @return 分页结果,包含指定聊天室的历史记录
      */
-    PageEntity<ChatboardHistory> getHistories(Integer topicId, Integer pageNum, Integer pageSize);
+    PageEntity<ChatboardHistoryVO> getHistories(Integer topicId, Integer pageNum, Integer pageSize);
+
+    /**
+     * 获取单条聊天板历史记录
+     * @param historyId 历史记录ID
+     * @return 聊天板历史记录
+     */
+    ChatboardHistoryVO getHistoryById(Integer historyId);
+
+    /**
+     * 创建聊天板历史记录
+     * @param history 聊天板历史记录
+     * @return 操作结果消息
+     */
+    String createHistory(ChatboardHistory history);
+
+    /**
+     * 更新聊天板历史记录
+     * @param history 聊天板历史记录
+     * @return 操作结果消息
+     */
+    String updateHistory(ChatboardHistory history);
 
     /**
      * 删除历史记录(物理删除)

@@ -1,7 +1,7 @@
 package com.ayor.service.impl;
 
-import com.ayor.entity.app.dto.UserPrivacySettingDTO;
-import com.ayor.entity.app.vo.UserPrivacySettingVO;
+import com.ayor.entity.dto.UserPrivacySettingDTO;
+import com.ayor.entity.vo.UserPrivacySettingVO;
 import com.ayor.entity.pojo.UserPrivacySetting;
 import com.ayor.mapper.AccountMapper;
 import com.ayor.mapper.UserPrivacySettingMapper;
