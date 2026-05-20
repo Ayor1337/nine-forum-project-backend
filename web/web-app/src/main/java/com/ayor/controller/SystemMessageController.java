@@ -1,7 +1,7 @@
 package com.ayor.controller;
 
 import com.ayor.entity.PageEntity;
-import com.ayor.entity.app.vo.SystemMessageVO;
+import com.ayor.entity.vo.SystemMessageVO;
 import com.ayor.result.Result;
 import com.ayor.service.SystemMessageService;
 import com.ayor.util.SecurityUtils;

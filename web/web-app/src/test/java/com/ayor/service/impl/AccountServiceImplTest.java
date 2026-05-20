@@ -1,8 +1,9 @@
 package com.ayor.service.impl;
 
-import com.ayor.entity.app.dto.AccountProfileDTO;
+import com.ayor.entity.Base64Upload;
 import com.ayor.entity.pojo.Account;
-import com.ayor.entity.pojo.AccountInfo;
+import com.ayor.image.ImageStorageService;
+import com.ayor.image.StoredImage;
 import com.ayor.mapper.AccountInfoMapper;
 import com.ayor.mapper.AccountMapper;
 import com.ayor.mapper.AccountStatMapper;
@@ -16,18 +17,14 @@ import com.ayor.service.UserRelationService;
 import com.ayor.util.JWTUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
-
-import java.util.Date;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -36,6 +33,9 @@ class AccountServiceImplTest {
 
     @Mock
     private AccountMapper accountMapper;
+
+    @Mock
+    private AccountInfoMapper accountInfoMapper;
 
     @Mock
     private PermissionMapper permissionMapper;
@@ -56,9 +56,6 @@ class AccountServiceImplTest {
     private JWTUtils jwtUtils;
 
     @Mock
-    private PasswordEncoder encoder;
-
-    @Mock
     private UserRelationService userRelationService;
 
     @Mock
@@ -68,62 +65,83 @@ class AccountServiceImplTest {
     private UserPrivacySettingService userPrivacySettingService;
 
     @Mock
-    private AccountInfoMapper accountInfoMapper;
-
-    @Mock
     private AccountInfoService accountInfoService;
 
-    @Spy
-    @InjectMocks
-    private AccountServiceImpl accountService;
+    @Mock
+    private ImageStorageService imageStorageService;
 
     @Test
-    void shouldUpdateNicknameAndExtendedProfileInAccountInfo() {
-        Account account = new Account(1, "u1", "pwd", "old-name", null, null, 1, new Date(), new Date(), 3, false, "u1@test.com");
-        AccountInfo accountInfo = AccountInfo.builder()
-                .accountId(1)
-                .bio("old bio")
-                .build();
-        AccountProfileDTO dto = AccountProfileDTO.builder()
-                .nickname("new-name")
-                .bio("new bio")
-                .location("Taipei")
-                .birthday(new Date())
-                .website("https://example.com")
-                .build();
+    void shouldUploadAvatarThroughImageStorageService() throws Exception {
+        AccountServiceImpl service = createService();
+        Account account = new Account();
+        account.setAccountId(7);
+        Base64Upload upload = new Base64Upload("data:image/png;base64,abc", "avatar.png");
+        StoredImage storedImage = createStoredImage("nineforum/avatar/test.png");
 
-        when(accountMapper.getAccountById(1)).thenReturn(account);
-        when(accountInfoService.initDefaultIfAbsent(1)).thenReturn(accountInfo);
-        doReturn(true).when(accountService).updateById(account);
-        when(accountInfoMapper.updateById(any(AccountInfo.class))).thenReturn(1);
+        when(accountMapper.selectById(7)).thenReturn(account);
+        when(imageStorageService.storeImageBase64Image(upload, "avatar/")).thenReturn(storedImage);
+        when(accountMapper.updateById(account)).thenReturn(1);
 
-        String result = accountService.updateUserProfile(1, dto);
+        String result = service.updateUserAvatar(7, upload);
 
         assertNull(result);
-        assertEquals("new-name", account.getNickname());
-        assertEquals("new bio", accountInfo.getBio());
-        assertEquals("Taipei", accountInfo.getLocation());
-        assertEquals("https://example.com", accountInfo.getWebsite());
-        verify(accountInfoMapper).updateById(accountInfo);
+        assertEquals("nineforum/avatar/test.png", account.getAvatarUrl());
+        verify(imageStorageService).storeImageBase64Image(upload, "avatar/");
+        verify(minioService, never()).uploadBase64(upload, "avatar/");
     }
 
     @Test
-    void shouldCreateAccountInfoWhenMissingDuringProfileUpdate() {
-        Account account = new Account(1, "u1", "pwd", "old-name", null, null, 1, new Date(), new Date(), 3, false, "u1@test.com");
-        AccountProfileDTO dto = AccountProfileDTO.builder()
-                .bio("new bio")
-                .location("Kaohsiung")
-                .build();
+    void shouldUploadBannerThroughImageStorageService() throws Exception {
+        AccountServiceImpl service = createService();
+        Account account = new Account();
+        account.setAccountId(7);
+        Base64Upload upload = new Base64Upload("data:image/png;base64,abc", "banner.png");
+        StoredImage storedImage = createStoredImage("nineforum/banner/test.png");
 
-        AccountInfo newAccountInfo = AccountInfo.builder().accountId(1).build();
-        when(accountMapper.getAccountById(1)).thenReturn(account);
-        when(accountInfoService.initDefaultIfAbsent(1)).thenReturn(newAccountInfo);
-        doReturn(true).when(accountService).updateById(account);
-        when(accountInfoMapper.updateById(any(AccountInfo.class))).thenReturn(1);
+        when(accountMapper.selectById(7)).thenReturn(account);
+        when(imageStorageService.storeImageBase64Image(upload, "banner/")).thenReturn(storedImage);
+        when(accountMapper.updateById(account)).thenReturn(1);
 
-        String result = accountService.updateUserProfile(1, dto);
+        String result = service.updateUserBanner(7, upload);
 
         assertNull(result);
-        verify(accountInfoMapper).updateById(any(AccountInfo.class));
+        assertEquals("nineforum/banner/test.png", account.getBannerUrl());
+        verify(imageStorageService).storeImageBase64Image(upload, "banner/");
+        verify(minioService, never()).uploadBase64(upload, "banner/");
+    }
+
+    private AccountServiceImpl createService() {
+        AccountServiceImpl service = new AccountServiceImpl(
+                accountMapper,
+                accountInfoMapper,
+                permissionMapper,
+                roleMapper,
+                passwordEncoder,
+                accountStatMapper,
+                jwtUtils,
+                passwordEncoder,
+                userRelationService,
+                privacyPolicyService,
+                userPrivacySettingService,
+                accountInfoService,
+                imageStorageService
+        );
+        ReflectionTestUtils.setField(service, "baseMapper", accountMapper);
+        return service;
+    }
+
+    private StoredImage createStoredImage(String url) {
+        StoredImage image = new StoredImage();
+        image.setUrl(url);
+        image.setObjectName("unused");
+        image.setOriginalExt("png");
+        image.setOutputExt("png");
+        image.setMimeType("image/png");
+        image.setFileSize(123L);
+        image.setWidth(16);
+        image.setHeight(16);
+        image.setSha256("hash");
+        image.setBytes(new byte[]{1, 2, 3});
+        return image;
     }
 }

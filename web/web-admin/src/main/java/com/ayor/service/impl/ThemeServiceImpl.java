@@ -1,8 +1,8 @@
 package com.ayor.service.impl;
 
 import com.ayor.entity.PageEntity;
-import com.ayor.entity.admin.dto.ThemeDTO;
-import com.ayor.entity.admin.vo.ThemeVO;
+import com.ayor.entity.dto.ThemeDTO;
+import com.ayor.entity.vo.ThemeVO;
 import com.ayor.entity.pojo.Theme;
 import com.ayor.mapper.ThemeMapper;
 import com.ayor.service.ThemeService;
@@ -10,6 +10,8 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -36,9 +38,25 @@ public class ThemeServiceImpl extends ServiceImpl<ThemeMapper, Theme> implements
     }
 
     /**
+     * 按ID查询主题详情，管理端允许查看已软删除主题。
+     */
+    @Override
+    public ThemeVO getThemeById(Integer themeId) {
+        if (themeId == null) {
+            return null;
+        }
+        Theme theme = this.getById(themeId);
+        return toVO(theme);
+    }
+
+    /**
      * 创建主题时初始化删除标记。
      */
     @Override
+    @Caching(evict = {
+            @CacheEvict(value = "themeList", key = "'all'"),
+            @CacheEvict(value = "themeTopicList", key = "'all'")
+    })
     public String createTheme(ThemeDTO themeDTO) {
         if (themeDTO == null || !StringUtils.hasText(themeDTO.getTitle())) {
             return "主题名称不能为空";
@@ -53,6 +71,10 @@ public class ThemeServiceImpl extends ServiceImpl<ThemeMapper, Theme> implements
      * 更新主题信息，保留原始记录主键。
      */
     @Override
+    @Caching(evict = {
+            @CacheEvict(value = "themeList", key = "'all'"),
+            @CacheEvict(value = "themeTopicList", key = "'all'")
+    })
     public String updateTheme(ThemeDTO themeDTO) {
         if (themeDTO == null || themeDTO.getThemeId() == null) {
             return "主题不存在";
@@ -69,6 +91,10 @@ public class ThemeServiceImpl extends ServiceImpl<ThemeMapper, Theme> implements
      * 逻辑删除主题。
      */
     @Override
+    @Caching(evict = {
+            @CacheEvict(value = "themeList", key = "'all'"),
+            @CacheEvict(value = "themeTopicList", key = "'all'")
+    })
     public String deleteTheme(Integer themeId) {
         if (themeId == null) {
             return "主题不存在";
@@ -87,11 +113,21 @@ public class ThemeServiceImpl extends ServiceImpl<ThemeMapper, Theme> implements
     private List<ThemeVO> toVOList (List<Theme> themeList) {
         List<ThemeVO> themeVOList = new ArrayList<>();
         for (Theme theme : themeList) {
-            ThemeVO themeVO = new ThemeVO();
-            BeanUtils.copyProperties(theme, themeVO);
-            themeVOList.add(themeVO);
+            themeVOList.add(toVO(theme));
         }
         return themeVOList;
+    }
+
+    /**
+     * 将主题实体转换为管理端视图对象。
+     */
+    private ThemeVO toVO(Theme theme) {
+        if (theme == null) {
+            return null;
+        }
+        ThemeVO themeVO = new ThemeVO();
+        BeanUtils.copyProperties(theme, themeVO);
+        return themeVO;
     }
 
 }

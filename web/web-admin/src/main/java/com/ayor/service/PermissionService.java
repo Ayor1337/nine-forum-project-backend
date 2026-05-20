@@ -1,6 +1,7 @@
 package com.ayor.service;
 
 import com.ayor.entity.pojo.Permission;
+import com.ayor.entity.vo.PermissionVO;
 import com.baomidou.mybatisplus.extension.service.IService;
 
 import java.util.List;
@@ -28,7 +29,14 @@ public interface PermissionService extends IService<Permission> {
      * @param roleId 角色ID
      * @return 权限实体列表
      */
-    List<Permission> listPermissions(Integer roleId);
+    List<PermissionVO> listPermissions(Integer roleId);
+
+    /**
+     * 获取单条权限记录
+     * @param permissionId 权限ID
+     * @return 权限记录
+     */
+    PermissionVO getPermissionById(Integer permissionId);
 
     /**
      * 创建新权限

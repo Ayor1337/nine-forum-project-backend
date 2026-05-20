@@ -1,7 +1,7 @@
 package com.ayor.controller;
 
-import com.ayor.entity.admin.dto.RoleDTO;
-import com.ayor.entity.admin.vo.RoleVO;
+import com.ayor.entity.dto.RoleDTO;
+import com.ayor.entity.vo.RoleVO;
 import com.ayor.result.Result;
 import com.ayor.service.RoleService;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +30,14 @@ public class RoleController {
     @GetMapping
     public Result<List<RoleVO>> getRoles() {
         return Result.dataMessageHandler(roleService::getRoles, "获取角色列表失败");
+    }
+
+    /**
+     * 查询单个角色详情。
+     */
+    @GetMapping("/{roleId}")
+    public Result<RoleVO> getRole(@PathVariable("roleId") Integer roleId) {
+        return Result.dataMessageHandler(() -> roleService.getRoleById(roleId), "获取角色失败");
     }
 
     /**

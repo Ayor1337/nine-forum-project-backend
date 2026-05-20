@@ -3,12 +3,13 @@ package com.ayor.service.impl;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.ayor.entity.Base64Upload;
 import com.ayor.entity.PageEntity;
-import com.ayor.entity.app.dto.AccountDTO;
-import com.ayor.entity.app.dto.AccountProfileDTO;
-import com.ayor.entity.app.dto.PasswordChangeDTO;
-import com.ayor.entity.app.vo.AccountInfoVO;
-import com.ayor.entity.app.vo.UserInfoVO;
-import com.ayor.entity.app.vo.UserPermissionVO;
+import com.ayor.entity.dto.AccountDTO;
+import com.ayor.entity.dto.AccountProfileDTO;
+import com.ayor.entity.dto.PasswordChangeDTO;
+import com.ayor.entity.vo.AccountInfoVO;
+import com.ayor.entity.vo.UserInfoVO;
+import com.ayor.entity.vo.UserPermissionVO;
+import com.ayor.image.ImageStorageService;
 import com.ayor.entity.pojo.Account;
 import com.ayor.entity.pojo.AccountInfo;
 import com.ayor.mapper.AccountInfoMapper;
@@ -16,11 +17,11 @@ import com.ayor.mapper.AccountMapper;
 import com.ayor.mapper.AccountStatMapper;
 import com.ayor.mapper.PermissionMapper;
 import com.ayor.mapper.RoleMapper;
-import com.ayor.minio.MinioService;
 import com.ayor.service.AccountInfoService;
 import com.ayor.service.AccountService;
 import com.ayor.service.PrivacyPolicyService;
 import com.ayor.service.UserPrivacySettingService;
+import com.ayor.type.AccountStatus;
 import com.ayor.service.UserRelationService;
 import com.ayor.util.JWTUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
@@ -55,8 +56,6 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
 
     private final RoleMapper roleMapper;
 
-    private final MinioService minioService;
-
     private final PasswordEncoder passwordEncoder;
 
     private final AccountStatMapper accountStatMapper;
@@ -73,6 +72,8 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
 
     private final AccountInfoService accountInfoService;
 
+    private final ImageStorageService imageStorageService;
+
     /**
      * 根据用户名加载 Spring Security 登录信息。
      */
@@ -82,6 +83,9 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         Account account = accountMapper.getAccountByUsername(username);
         if (account == null) {
             throw new UsernameNotFoundException("用户不存在");
+        }
+        if (AccountStatus.fromCode(account.getStatus()) == AccountStatus.BANNED) {
+            throw new UsernameNotFoundException("账号已被封禁");
         }
         String roleName = roleMapper.getRoleNameById(account.getRoleId());
 
@@ -195,9 +199,8 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
             return "账户不存在";
         }
         try {
-            String avatarUrl = minioService.uploadBase64(dto, "avatar/");
-            account.setAvatarUrl(avatarUrl);
-        } catch (Exception e) {
+            account.setAvatarUrl(imageStorageService.storeImageBase64Image(dto, "avatar/").getUrl());
+        } catch (RuntimeException e) {
             return "资源服务器异常";
         }
         return this.baseMapper.updateById(account) > 0 ? null : "更新失败, 未知异常";
@@ -214,9 +217,8 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
             return "账户不存在";
         }
         try {
-            String bannerUrl = minioService.uploadBase64(dto, "banner/");
-            account.setBannerUrl(bannerUrl);
-        } catch (Exception e) {
+            account.setBannerUrl(imageStorageService.storeImageBase64Image(dto, "banner/").getUrl());
+        } catch (RuntimeException e) {
             return "资源服务器异常";
         }
         return this.baseMapper.updateById(account) > 0 ? null : "更新失败, 未知异常";
@@ -241,7 +243,7 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         account.setEmail(decodedJWT.getClaim("email").asString());
         account.setCreateTime(new Date());
         String encodePwd = passwordEncoder.encode(account.getPassword());
-        account.setStatus(1);
+        account.setStatus(AccountStatus.ACTIVE.getCode());
         account.setRoleId(3);
         account.setPassword(encodePwd);
         if (this.save(account)) {

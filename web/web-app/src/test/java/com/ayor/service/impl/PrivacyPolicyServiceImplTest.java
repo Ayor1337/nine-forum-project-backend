@@ -3,16 +3,16 @@ package com.ayor.service.impl;
 import com.ayor.entity.pojo.UserPrivacySetting;
 import com.ayor.service.UserPrivacySettingService;
 import com.ayor.service.UserRelationService;
-import com.ayor.type.DmPermission;
 import com.ayor.type.VisibilityScope;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -24,69 +24,66 @@ class PrivacyPolicyServiceImplTest {
     @Mock
     private UserPrivacySettingService userPrivacySettingService;
 
-    @InjectMocks
-    private PrivacyPolicyServiceImpl privacyPolicyService;
-
     @Test
-    void shouldAllowSelfProfileAccess() {
-        assertTrue(privacyPolicyService.canViewProfile(1, 1));
+    void shouldAllowOwnerToViewProfileAndAccountInfo() {
+        PrivacyPolicyServiceImpl service = createService();
+
+        assertTrue(service.canViewProfile(12, 12));
+        assertTrue(service.canViewAccountInfo(12, 12));
+
+        verify(userPrivacySettingService, never()).getByAccountId(12);
     }
 
     @Test
-    void shouldDenyAnyAccessWhenBlocked() {
-        when(userRelationService.isBlockedEitherDirection(2, 1)).thenReturn(true);
+    void shouldDenyAnonymousViewerForFollowerOnlyProfile() {
+        PrivacyPolicyServiceImpl service = createService();
+        when(userPrivacySettingService.getByAccountId(18)).thenReturn(setting(VisibilityScope.FOLLOWER_ONLY));
 
-        assertFalse(privacyPolicyService.canViewProfile(2, 1));
-        assertFalse(privacyPolicyService.canStartConversation(2, 1));
+        assertFalse(service.canViewProfile(null, 18));
     }
 
     @Test
-    void shouldAllowFollowerOnlyProfileForFollowers() {
-        UserPrivacySetting setting = privacySetting(VisibilityScope.FOLLOWER_ONLY, DmPermission.EVERYONE);
-        when(userPrivacySettingService.getByAccountId(1)).thenReturn(setting);
-        when(userRelationService.isBlockedEitherDirection(2, 1)).thenReturn(false);
-        when(userRelationService.isFollowing(2, 1)).thenReturn(true);
+    void shouldDenyBlockedViewerEvenWhenProfileIsPublic() {
+        PrivacyPolicyServiceImpl service = createService();
+        when(userPrivacySettingService.getByAccountId(18)).thenReturn(setting(VisibilityScope.PUBLIC));
+        when(userRelationService.isBlockedEitherDirection(7, 18)).thenReturn(true);
 
-        assertTrue(privacyPolicyService.canViewProfile(2, 1));
+        assertFalse(service.canViewProfile(7, 18));
     }
 
     @Test
-    void shouldRequireMutualFollowForCollections() {
-        UserPrivacySetting setting = privacySetting(VisibilityScope.MUTUAL_FOLLOW_ONLY, DmPermission.EVERYONE);
-        when(userPrivacySettingService.getByAccountId(1)).thenReturn(setting);
-        when(userRelationService.isBlockedEitherDirection(2, 1)).thenReturn(false);
-        when(userRelationService.isMutualFollowing(2, 1)).thenReturn(false);
+    void shouldAllowFollowerWhenScopeIsFollowerOnly() {
+        PrivacyPolicyServiceImpl service = createService();
+        when(userPrivacySettingService.getByAccountId(18)).thenReturn(setting(VisibilityScope.FOLLOWER_ONLY));
+        when(userRelationService.isBlockedEitherDirection(7, 18)).thenReturn(false);
+        when(userRelationService.isFollowing(7, 18)).thenReturn(true);
 
-        assertFalse(privacyPolicyService.canViewCollectedThreads(2, 1));
+        assertTrue(service.canViewFollowingList(7, 18));
     }
 
     @Test
-    void shouldDenyPrivateLikedThreadsForOthers() {
-        UserPrivacySetting setting = privacySetting(VisibilityScope.PRIVATE, DmPermission.EVERYONE);
-        when(userPrivacySettingService.getByAccountId(1)).thenReturn(setting);
-        when(userRelationService.isBlockedEitherDirection(2, 1)).thenReturn(false);
+    void shouldRequireMutualFollowForMutualFollowScope() {
+        PrivacyPolicyServiceImpl service = createService();
+        when(userPrivacySettingService.getByAccountId(18)).thenReturn(setting(VisibilityScope.MUTUAL_FOLLOW_ONLY));
+        when(userRelationService.isBlockedEitherDirection(7, 18)).thenReturn(false);
+        when(userRelationService.isMutualFollowing(7, 18)).thenReturn(false);
 
-        assertFalse(privacyPolicyService.canViewLikedThreads(2, 1));
+        assertFalse(service.canViewCollectedThreads(7, 18));
     }
 
-    @Test
-    void shouldDenyConversationWhenNobodyAllowed() {
-        UserPrivacySetting setting = privacySetting(VisibilityScope.PUBLIC, DmPermission.NOBODY);
-        when(userPrivacySettingService.getByAccountId(1)).thenReturn(setting);
-        when(userRelationService.isBlockedEitherDirection(2, 1)).thenReturn(false);
-
-        assertFalse(privacyPolicyService.canStartConversation(2, 1));
+    private PrivacyPolicyServiceImpl createService() {
+        return new PrivacyPolicyServiceImpl(userRelationService, userPrivacySettingService);
     }
 
-    private UserPrivacySetting privacySetting(VisibilityScope visibilityScope, DmPermission dmPermission) {
+    private UserPrivacySetting setting(VisibilityScope scope) {
         return UserPrivacySetting.builder()
-                .accountId(1)
-                .profileVisibility(visibilityScope)
-                .likedThreadsVisibility(visibilityScope)
-                .collectedThreadsVisibility(visibilityScope)
-                .followListVisibility(visibilityScope)
-                .followerListVisibility(visibilityScope)
-                .dmPermission(dmPermission)
+                .accountId(18)
+                .profileVisibility(scope)
+                .likedThreadsVisibility(scope)
+                .collectedThreadsVisibility(scope)
+                .followListVisibility(scope)
+                .followerListVisibility(scope)
+                .birthdayVisibility(scope)
                 .build();
     }
 }

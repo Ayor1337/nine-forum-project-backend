@@ -1,7 +1,7 @@
 package com.ayor.service;
 
-import com.ayor.entity.app.dto.UserPrivacySettingDTO;
-import com.ayor.entity.app.vo.UserPrivacySettingVO;
+import com.ayor.entity.dto.UserPrivacySettingDTO;
+import com.ayor.entity.vo.UserPrivacySettingVO;
 import com.ayor.entity.pojo.UserPrivacySetting;
 import com.baomidou.mybatisplus.extension.service.IService;
 

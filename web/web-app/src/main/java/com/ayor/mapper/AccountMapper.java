@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Select;
 
 import java.util.List;
+import com.ayor.entity.vo.UserSearchVO;
 
 public interface AccountMapper extends BaseMapper<Account> {
 
@@ -26,4 +27,6 @@ public interface AccountMapper extends BaseMapper<Account> {
      * @return 用户实体列表
      */
     List<Account> getAccountsByIds(@Param("accountIds") List<Integer> accountIds);
+
+    List<UserSearchVO> searchUsersForMention(@Param("keyword") String keyword, @Param("currentUserId") Integer currentUserId);
 }

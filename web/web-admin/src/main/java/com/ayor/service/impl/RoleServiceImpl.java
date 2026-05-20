@@ -1,7 +1,7 @@
 package com.ayor.service.impl;
 
-import com.ayor.entity.admin.dto.RoleDTO;
-import com.ayor.entity.admin.vo.RoleVO;
+import com.ayor.entity.dto.RoleDTO;
+import com.ayor.entity.vo.RoleVO;
 import com.ayor.entity.pojo.Role;
 import com.ayor.mapper.RoleMapper;
 import com.ayor.mapper.TopicMapper;
@@ -37,6 +37,21 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
             roleVos.add(roleVO);
         });
         return roleVos;
+    }
+
+    @Override
+    public RoleVO getRoleById(Integer roleId) {
+        if (roleId == null) {
+            return null;
+        }
+        Role role = this.getById(roleId);
+        if (role == null) {
+            return null;
+        }
+        RoleVO roleVO = new RoleVO();
+        BeanUtils.copyProperties(role, roleVO);
+        roleVO.setTopicName(topicMapper.getTopicNameById(role.getTopicId()));
+        return roleVO;
     }
 
     /**

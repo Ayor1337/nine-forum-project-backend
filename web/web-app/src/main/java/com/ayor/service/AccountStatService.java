@@ -1,6 +1,6 @@
 package com.ayor.service;
 
-import com.ayor.entity.app.vo.AccountStatVO;
+import com.ayor.entity.vo.AccountStatVO;
 import com.ayor.entity.pojo.AccountStat;
 import com.baomidou.mybatisplus.extension.service.IService;
 

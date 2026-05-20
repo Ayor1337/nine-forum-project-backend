@@ -1,7 +1,7 @@
 package com.ayor.service;
 
 import com.ayor.entity.PageEntity;
-import com.ayor.entity.app.vo.ChatboardHistoryVO;
+import com.ayor.entity.vo.ChatboardHistoryVO;
 import com.ayor.entity.pojo.ChatboardHistory;
 import com.baomidou.mybatisplus.extension.service.IService;
 

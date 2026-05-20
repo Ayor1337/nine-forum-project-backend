@@ -2,6 +2,7 @@ package com.ayor.service;
 
 import com.ayor.entity.PageEntity;
 import com.ayor.entity.pojo.AccountStat;
+import com.ayor.entity.vo.AccountStatVO;
 import com.baomidou.mybatisplus.extension.service.IService;
 
 /**
@@ -29,7 +30,21 @@ public interface AccountStatService extends IService<AccountStat> {
      * @param accountId 用户ID过滤条件;为null时查询所有用户
      * @return 分页结果,包含用户统计数据
      */
-    PageEntity<AccountStat> getAccountStats(Integer pageNum, Integer pageSize, Integer accountId);
+    PageEntity<AccountStatVO> getAccountStats(Integer pageNum, Integer pageSize, Integer accountId);
+
+    /**
+     * 获取单条用户统计记录
+     * @param statId 统计记录ID
+     * @return 用户统计记录
+     */
+    AccountStatVO getAccountStatById(Integer statId);
+
+    /**
+     * 创建用户统计记录
+     * @param accountStat 用户统计记录
+     * @return 操作结果消息
+     */
+    String createAccountStat(AccountStat accountStat);
 
     /**
      * 更新用户统计数据
@@ -38,4 +53,11 @@ public interface AccountStatService extends IService<AccountStat> {
      * @return 操作结果消息;成功返回null,失败返回错误描述
      */
     String updateAccountStat(Integer statId, AccountStat accountStat);
+
+    /**
+     * 删除用户统计记录
+     * @param statId 统计记录ID
+     * @return 操作结果消息
+     */
+    String deleteAccountStat(Integer statId);
 }

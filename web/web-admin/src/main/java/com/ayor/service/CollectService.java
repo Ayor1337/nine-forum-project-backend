@@ -2,6 +2,7 @@ package com.ayor.service;
 
 import com.ayor.entity.PageEntity;
 import com.ayor.entity.pojo.Collect;
+import com.ayor.entity.vo.CollectVO;
 import com.baomidou.mybatisplus.extension.service.IService;
 
 /**
@@ -30,7 +31,28 @@ public interface CollectService extends IService<Collect> {
      * @param accountId 用户ID过滤条件;为null时不过滤
      * @return 分页结果,包含匹配条件的收藏记录
      */
-    PageEntity<Collect> getCollects(Integer pageNum, Integer pageSize, Integer threadId, Integer accountId);
+    PageEntity<CollectVO> getCollects(Integer pageNum, Integer pageSize, Integer threadId, Integer accountId);
+
+    /**
+     * 获取单条收藏记录
+     * @param collectId 收藏记录ID
+     * @return 收藏记录
+     */
+    CollectVO getCollectById(Integer collectId);
+
+    /**
+     * 创建收藏记录
+     * @param collect 收藏记录
+     * @return 操作结果消息
+     */
+    String createCollect(Collect collect);
+
+    /**
+     * 更新收藏记录
+     * @param collect 收藏记录
+     * @return 操作结果消息
+     */
+    String updateCollect(Collect collect);
 
     /**
      * 删除收藏记录(物理删除)

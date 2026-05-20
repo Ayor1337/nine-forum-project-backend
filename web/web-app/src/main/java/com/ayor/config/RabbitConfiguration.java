@@ -52,6 +52,56 @@ public class RabbitConfiguration {
                 .noargs();
     }
 
+    @Bean("report_exchange")
+    public Exchange reportExchange() {
+        return ExchangeBuilder
+                .directExchange("report.direct")
+                .durable(true)
+                .build();
+    }
+
+    @Bean("report_queue")
+    public Queue reportQueue() {
+        return QueueBuilder
+                .durable("report.queue")
+                .build();
+    }
+
+    @Bean("report_binding")
+    public Binding reportBinding(@Qualifier("report_queue") Queue queue,
+                                 @Qualifier("report_exchange") Exchange exchange) {
+        return BindingBuilder
+                .bind(queue)
+                .to(exchange)
+                .with("report.created")
+                .noargs();
+    }
+
+    @Bean("page_broadcast_exchange")
+    public Exchange pageBroadcastExchange() {
+        return ExchangeBuilder
+                .directExchange("page-broadcast.direct")
+                .durable(true)
+                .build();
+    }
+
+    @Bean("page_broadcast_queue")
+    public Queue pageBroadcastQueue() {
+        return QueueBuilder
+                .durable("page-broadcast.queue")
+                .build();
+    }
+
+    @Bean("page_broadcast_binding")
+    public Binding pageBroadcastBinding(@Qualifier("page_broadcast_queue") Queue queue,
+                                        @Qualifier("page_broadcast_exchange") Exchange exchange) {
+        return BindingBuilder
+                .bind(queue)
+                .to(exchange)
+                .with("page-broadcast.changed")
+                .noargs();
+    }
+
     /**
      * 创建 JSON 消息转换器。
      *

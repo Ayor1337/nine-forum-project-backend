@@ -1,10 +1,12 @@
 package com.ayor.service.impl;
 
 import com.ayor.entity.PageEntity;
-import com.ayor.entity.admin.dto.ThreadDTO;
-import com.ayor.entity.admin.vo.ThreadTableVO;
+import com.ayor.entity.dto.ThreadDTO;
+import com.ayor.entity.pojo.Tag;
+import com.ayor.entity.vo.ThreadTableVO;
 import com.ayor.entity.pojo.Threadd;
 import com.ayor.mapper.AccountMapper;
+import com.ayor.mapper.TagMapper;
 import com.ayor.mapper.ThreaddMapper;
 import com.ayor.mapper.TopicMapper;
 import com.ayor.service.ThreaddService;
@@ -29,6 +31,8 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
 
     private final TopicMapper topicMapper;
 
+    private final TagMapper tagMapper;
+
     /**
      * 分页查询帖子列表，并补充发帖人和话题名称。
      */
@@ -39,6 +43,28 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
         }
         Page<Threadd> page = this.lambdaQuery().page(new Page<>(pageNum, pageSize));
         return new PageEntity<>(page.getTotal(), toVOList(page.getRecords()));
+    }
+
+    @Override
+    public PageEntity<ThreadTableVO> getThreads(Integer topicId, Integer pageNum, Integer pageSize) {
+        if (topicId == null) {
+            return getThreads(pageNum, pageSize);
+        }
+        if (pageNum == null || pageNum < 1) {
+            return null;
+        }
+        Page<Threadd> page = this.lambdaQuery()
+                .eq(Threadd::getTopicId, topicId)
+                .page(new Page<>(pageNum, pageSize));
+        return new PageEntity<>(page.getTotal(), toVOList(page.getRecords()));
+    }
+
+    @Override
+    public Threadd getThreadById(Integer threadId) {
+        if (threadId == null) {
+            return null;
+        }
+        return this.getById(threadId);
     }
 
     /**
@@ -105,9 +131,14 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
         threads.forEach(threadd -> {
             ThreadTableVO threadTableVO = new ThreadTableVO();
             BeanUtils.copyProperties(threadd, threadTableVO);
-            //TODO 添加逻辑待完善
             threadTableVO.setAccountName(accountMapper.getUsernameById(threadd.getAccountId()));
             threadTableVO.setTopicName(topicMapper.getTopicNameById(threadd.getTopicId()));
+            if (threadd.getTagId() != null) {
+                Tag tag = tagMapper.getTagById(threadd.getTagId());
+                if (tag != null) {
+                    threadTableVO.setTagName(tag.getTag());
+                }
+            }
             threadTableVOList.add(threadTableVO);
         });
         return threadTableVOList;

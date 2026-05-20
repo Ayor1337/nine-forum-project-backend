@@ -2,11 +2,11 @@ package com.ayor.service;
 
 import com.ayor.entity.Base64Upload;
 import com.ayor.entity.PageEntity;
-import com.ayor.entity.app.dto.AccountDTO;
-import com.ayor.entity.app.dto.AccountProfileDTO;
-import com.ayor.entity.app.dto.PasswordChangeDTO;
-import com.ayor.entity.app.vo.AccountInfoVO;
-import com.ayor.entity.app.vo.UserInfoVO;
+import com.ayor.entity.dto.AccountDTO;
+import com.ayor.entity.dto.AccountProfileDTO;
+import com.ayor.entity.dto.PasswordChangeDTO;
+import com.ayor.entity.vo.AccountInfoVO;
+import com.ayor.entity.vo.UserInfoVO;
 import com.ayor.entity.pojo.Account;
 import com.baomidou.mybatisplus.extension.service.IService;
 import org.springframework.security.core.userdetails.UserDetailsService;

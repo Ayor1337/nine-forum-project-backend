@@ -1,18 +1,22 @@
 package com.ayor.service.impl;
 
 import com.ayor.entity.PageEntity;
-import com.ayor.entity.app.document.ThreadDoc;
-import com.ayor.entity.app.dto.TagUpdateDTO;
-import com.ayor.entity.app.dto.ThreadDTO;
-import com.ayor.entity.app.vo.AnnouncementVO;
-import com.ayor.entity.app.vo.TagVO;
-import com.ayor.entity.app.vo.ThreadVO;
+import com.ayor.entity.document.ThreadDoc;
+import com.ayor.entity.dto.ThreadDTO;
+import com.ayor.entity.vo.AnnouncementVO;
+import com.ayor.entity.vo.TagVO;
+import com.ayor.entity.vo.ThreadVO;
 import com.ayor.entity.pojo.Account;
 import com.ayor.entity.pojo.Tag;
 import com.ayor.entity.pojo.Threadd;
 import com.ayor.mapper.*;
+import com.ayor.service.AuthorizationService;
+import com.ayor.service.ImageAssetService;
+import com.ayor.service.MentionMessageService;
 import com.ayor.service.ThreaddService;
+import com.ayor.type.ThreadOrderType;
 import com.ayor.util.TipTapUtils;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
@@ -34,9 +38,6 @@ import java.util.concurrent.locks.ReentrantLock;
 @RequiredArgsConstructor
 public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> implements ThreaddService {
 
-    // 删除操作需要校验 topicId 与 threadId 的对应关系，避免误删其他主题的帖子。
-
-
     private final AccountMapper accountMapper;
 
     private final TopicMapper topicMapper;
@@ -46,6 +47,12 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
     private final TipTapUtils tipTapUtils;
 
     private final TagMapper tagMapper;
+
+    private final MentionMessageService mentionMessageService;
+
+    private final ImageAssetService imageAssetService;
+
+    private final AuthorizationService authorizationService;
     /**
      * 获取指定主题下的帖子列表或分页结果。
      */
@@ -66,18 +73,19 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
      */
 
     @Override
-    public PageEntity<ThreadVO> getThreadVOsByTopicId(Integer topicId, Integer pageNum, Integer pageSize) {
+    public PageEntity<ThreadVO> getThreadVOsByTopicId(Integer topicId, Integer tagId, String order, Integer pageNum, Integer pageSize) {
         if (topicId == null) {
             return null;
         }
         if (topicMapper.isTopicDelete(topicId)) {
             return null;
         }
-        Page<Threadd> threads = this.lambdaQuery()
+        LambdaQueryWrapper<Threadd> queryWrapper = new LambdaQueryWrapper<Threadd>()
                 .eq(Threadd::getTopicId, topicId)
                 .eq(Threadd::getIsDeleted, false)
-                .orderByDesc(Threadd::getCreateTime)
-                .page(Page.of(pageNum, pageSize));
+                .eq(tagId != null, Threadd::getTagId, tagId);
+        applyThreadOrder(queryWrapper, normalizeThreadOrder(order));
+        Page<Threadd> threads = this.page(Page.of(pageNum, pageSize), queryWrapper);
 
         return new PageEntity<>(threads.getTotal(), toVOs(threads.getRecords()));
     }
@@ -168,6 +176,28 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
         });
         return threadVOList;
     }
+
+    private ThreadOrderType normalizeThreadOrder(String order) {
+        return ThreadOrderType.fromValue(order);
+    }
+
+    private void applyThreadOrder(LambdaQueryWrapper<Threadd> queryWrapper, ThreadOrderType orderType) {
+        switch (orderType) {
+            case LATEST -> queryWrapper.orderByDesc(Threadd::getCreateTime);
+            case LIKES -> queryWrapper.orderByDesc(Threadd::getLikeCount)
+                    .orderByDesc(Threadd::getCreateTime);
+            case COLLECTS -> queryWrapper.orderByDesc(Threadd::getCollectCount)
+                    .orderByDesc(Threadd::getCreateTime);
+            case VIEWS -> queryWrapper.orderByDesc(Threadd::getViewCount)
+                    .orderByDesc(Threadd::getCreateTime);
+            case REPLIES -> queryWrapper.orderByDesc(Threadd::getPostCount)
+                    .orderByDesc(Threadd::getCreateTime);
+            case HOT -> queryWrapper.orderByDesc(Threadd::getLikeCount)
+                    .orderByDesc(Threadd::getPostCount)
+                    .orderByDesc(Threadd::getViewCount)
+                    .orderByDesc(Threadd::getCreateTime);
+        }
+    }
     /**
      * 校验作者后删除帖子。
      */
@@ -179,12 +209,12 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
         if (account == null) {
             return "用户不存在";
         }
-        if (!Objects.equals(account.getAccountId(), thread.getAccountId())) {
-            return "权限不足";
-        }
+        authorizationService.assertCanDeleteThread(accountId, threadId);
         if (thread.getIsDeleted()) {
             return "帖子已删除";
         }
+        imageAssetService.clearContentRefs("THREAD", threadId);
+        postMapper.getPostsByThreadId(threadId).forEach(post -> imageAssetService.clearContentRefs("POST", post.getPostId()));
         postMapper.removePostsByThreadId(threadId);
         return this.removeByIdLogical(threadId) ? null : "删除失败";
     }
@@ -200,6 +230,8 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
         if (thread.getIsDeleted()) {
             return "帖子已删除";
         }
+        imageAssetService.clearContentRefs("THREAD", threadId);
+        postMapper.getPostsByThreadId(threadId).forEach(post -> imageAssetService.clearContentRefs("POST", post.getPostId()));
         postMapper.removePostsByThreadId(threadId);
         return this.removeByIdLogical(threadId) ? null : "删除失败";
     }
@@ -272,34 +304,42 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
         }
         Threadd threadd = new Threadd();
         BeanUtils.copyProperties(threadDTO, threadd);
-        threadd.setContent(tipTapUtils.convertBase64ImagesToUrl(threadDTO.getContent(), "threads/" + threadd.getTopicId() + "/"));
+        try {
+            threadd.setContent(tipTapUtils.convertBase64ImagesToUrl(threadDTO.getContent(), "threads/" + threadd.getTopicId() + "/"));
+        } catch (IllegalArgumentException exception) {
+            return exception.getMessage();
+        }
         threadd.setAccountId(accountId);
         threadd.setCreateTime(new Date());
 
-
-        return this.save(threadd) ? null : "添加失败";
+        if (this.save(threadd)) {
+            imageAssetService.syncContentRefs("THREAD", threadd.getThreadId(), threadd.getContent(), accountId);
+            mentionMessageService.createThreadMentionMessages(threadd.getContent(), accountId, threadd.getThreadId());
+            return null;
+        }
+        return "添加失败";
     }
     /**
      * 更新帖子标签信息。
      */
 
     @Override
-    public String updateThreadTag(TagUpdateDTO tagUpdateDTO) {
-        if (tagUpdateDTO == null) {
+    public String updateThreadTag(Integer threadId, Integer topicId, Integer tagId) {
+        if (threadId == null || topicId == null || tagId == null) {
             return "参数错误";
         }
         Threadd threadd = this.lambdaQuery()
-                .eq(Threadd::getThreadId, tagUpdateDTO.getThreadId())
-                .eq(Threadd::getTopicId, tagUpdateDTO.getTopicId())
+                .eq(Threadd::getThreadId, threadId)
+                .eq(Threadd::getTopicId, topicId)
                 .one();
         if (threadd == null) {
             return "帖子不存在";
         }
-        Tag tag = tagMapper.getTagById(tagUpdateDTO.getTagId());
+        Tag tag = tagMapper.getTagById(tagId);
         if (tag == null) {
             return "标签不存在";
         }
-        threadd.setTagId(tagUpdateDTO.getTagId());
+        threadd.setTagId(tagId);
 
         return this.updateById(threadd) ? null : "修改失败";
     }

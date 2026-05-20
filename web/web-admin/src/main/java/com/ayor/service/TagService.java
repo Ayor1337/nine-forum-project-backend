@@ -2,6 +2,7 @@ package com.ayor.service;
 
 import com.ayor.entity.PageEntity;
 import com.ayor.entity.pojo.Tag;
+import com.ayor.entity.vo.TagVO;
 import com.baomidou.mybatisplus.extension.service.IService;
 
 import java.util.List;
@@ -29,7 +30,14 @@ public interface TagService extends IService<Tag> {
      * @param topicId 分类ID
      * @return 标签列表
      */
-    List<Tag> listTags(Integer topicId);
+    List<TagVO> listTags(Integer topicId);
+
+    /**
+     * 获取单个标签详情
+     * @param tagId 标签ID
+     * @return 标签详情
+     */
+    TagVO getTagById(Integer tagId);
 
     /**
      * 创建新标签
@@ -59,5 +67,5 @@ public interface TagService extends IService<Tag> {
      * @param topicId 分类ID
      * @return 分页结果,包含指定分类下的标签列表
      */
-    PageEntity<Tag> pageTags(Integer pageNum, Integer pageSize, Integer topicId);
+    PageEntity<TagVO> pageTags(Integer pageNum, Integer pageSize, Integer topicId);
 }

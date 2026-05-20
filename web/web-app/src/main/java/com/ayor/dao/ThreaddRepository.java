@@ -1,6 +1,6 @@
 package com.ayor.dao;
 
-import com.ayor.entity.app.document.ThreadDoc;
+import com.ayor.entity.document.ThreadDoc;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.elasticsearch.repository.ElasticsearchRepository;

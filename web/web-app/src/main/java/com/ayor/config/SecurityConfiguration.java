@@ -1,17 +1,18 @@
 package com.ayor.config;
 
-import com.ayor.entity.app.vo.AuthorizeVO;
+import com.ayor.entity.vo.AuthorizeVO;
 import com.ayor.entity.pojo.Account;
 import com.ayor.filter.JWTAuthorizeFilter;
+import com.ayor.filter.MuteActionFilter;
 import com.ayor.mapper.AccountMapper;
 import com.ayor.result.Result;
 import com.ayor.result.ResultCodeEnum;
+import com.ayor.util.AuthorizeResponseFactory;
 import com.ayor.util.JWTUtils;
 import jakarta.annotation.Resource;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.beans.BeanUtils;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -39,7 +40,9 @@ public class SecurityConfiguration {
     private static final String[] PUBLIC_AUTH_ENDPOINTS = {
             "/api/auth/register-verifications",
             "/api/auth/registrations",
-            LOGIN_PATH
+            LOGIN_PATH,
+            "/api/passkeys/authentication/options",
+            "/api/passkeys/authentications"
     };
 
     private static final String[] AUTHENTICATED_USER_ENDPOINTS = {
@@ -68,7 +71,8 @@ public class SecurityConfiguration {
             "/api/search/hot-keywords",
             "/api/topics/{topic_id}/chat-messages",
             "/api/topics/{topic_id}/breadcrumb",
-            "/api/threads/{thread_id}/breadcrumb"
+            "/api/threads/{thread_id}/breadcrumb",
+            "/api/page-broadcasts/active"
     };
 
     private static final String[] PUBLIC_PAGE_ENDPOINTS = {
@@ -86,6 +90,11 @@ public class SecurityConfiguration {
     @Resource
     private JWTAuthorizeFilter jwtAuthorizeFilter;
 
+    @Resource
+    private MuteActionFilter muteActionFilter;
+
+    @Resource
+    private AuthorizeResponseFactory authorizeResponseFactory;
 
     /**
      * 构造 Spring Security 过滤链。
@@ -121,6 +130,7 @@ public class SecurityConfiguration {
                     conf.authenticationEntryPoint(this::onUnauthorized);
                 })
                 .addFilterBefore(jwtAuthorizeFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(muteActionFilter, JWTAuthorizeFilter.class)
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(Customizer.withDefaults())
                 .build();
@@ -141,11 +151,7 @@ public class SecurityConfiguration {
         resp.setContentType("application/json");
         User user = (User) auth.getPrincipal();
         Account account = accountMapper.getAccountByUsername(user.getUsername());
-        String token = jwtUtil.createJwt(user, account.getAccountId(), user.getUsername());
-        AuthorizeVO authorizeVO = new AuthorizeVO();
-        BeanUtils.copyProperties(account, authorizeVO);
-        authorizeVO.setToken(token);
-        authorizeVO.setExpire(jwtUtil.expiredTime());
+        AuthorizeVO authorizeVO = authorizeResponseFactory.create(account);
         resp.getWriter().write(Result.ok(authorizeVO).toJSONString());
     }
 
