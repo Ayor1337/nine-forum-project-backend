@@ -19,6 +19,7 @@ import com.ayor.service.PostService;
 import com.ayor.type.UnreadMessageType;
 import com.ayor.util.STOMPUtils;
 import com.ayor.util.TipTapUtils;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
@@ -59,22 +60,32 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
 
 
     @Override
-    public List<PostVO> getPostsByThreadId(Integer threadId) {
-        if (threadId == null ) {
-            return null;
+    public PageEntity<PostVO> getPostsByThreadId(Integer threadId, Integer pageNum, Integer pageSize) {
+        if (threadId == null) {
+            return new PageEntity<>(0L, Collections.emptyList());
         }
-        List<Post> posts = postMapper.getPostsByThreadId(threadId);
+        if (pageNum == null || pageNum < 1) pageNum = 1;
+        if (pageSize == null || pageSize < 1) pageSize = 10;
+
+        Page<Post> page = new Page<>(pageNum, pageSize);
+        LambdaQueryWrapper<Post> wrapper = new LambdaQueryWrapper<Post>()
+                .eq(Post::getThreadId, threadId)
+                .eq(Post::getIsDeleted, false)
+                .orderByAsc(Post::getCreateTime);
+        Page<Post> posts = this.baseMapper.selectPage(page, wrapper);
+        return new PageEntity<>(posts.getTotal(), toPostVOs(posts.getRecords()));
+    }
+
+    private List<PostVO> toPostVOs(List<Post> posts) {
         List<PostVO> postVOList = new ArrayList<>();
         posts.forEach(post -> {
             PostVO postVO = new PostVO();
-            if (!post.getIsDeleted()) {
-                BeanUtils.copyProperties(post, postVO);
-                Account account = accountMapper.getAccountById(post.getAccountId());
-                postVO.setNickname(account.getNickname());
-                postVO.setAccountId(account.getAccountId());
-                postVO.setAvatarUrl(account.getAvatarUrl());
-                postVOList.add(postVO);
-            }
+            BeanUtils.copyProperties(post, postVO);
+            Account account = accountMapper.getAccountById(post.getAccountId());
+            postVO.setNickname(account.getNickname());
+            postVO.setAccountId(account.getAccountId());
+            postVO.setAvatarUrl(account.getAvatarUrl());
+            postVOList.add(postVO);
         });
         return postVOList;
     }

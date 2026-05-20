@@ -2,8 +2,6 @@ package com.ayor.controller;
 
 import com.ayor.entity.PageEntity;
 import com.ayor.entity.dto.ContentReportDTO;
-import com.ayor.entity.dto.PostDTO;
-import com.ayor.entity.vo.PostVO;
 import com.ayor.entity.vo.ReplyMessageVO;
 import com.ayor.result.Result;
 import com.ayor.service.AuthorizationService;
@@ -12,10 +10,7 @@ import com.ayor.service.ReportService;
 import com.ayor.util.SecurityUtils;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RequiredArgsConstructor
 @RestController
@@ -29,25 +24,7 @@ public class PostController {
     private final ReportService reportService;
 
     private final AuthorizationService authorizationService;
-    /**
-     * 获取帖子下的评论列表。
-     */
 
-    @GetMapping("/threads/{thread_id}/posts")
-    public Result<List<PostVO>> getPostsByThreadId(@PathVariable(name = "thread_id") Integer threadId) {
-        return Result.dataMessageHandler(() -> postService.getPostsByThreadId(threadId), "获取失败");
-    }
-    /**
-     * 发布评论。
-     */
-
-    @PostMapping("/threads/{thread_id}/posts")
-    public Result<Void> addPost(@PathVariable(name = "thread_id") Integer threadId,
-                                @RequestBody @Validated PostDTO post) {
-        post.setThreadId(threadId);
-        Integer userId = security.getSecurityUserId();
-        return Result.messageHandler(() -> postService.insertPost(post, userId));
-    }
     /**
      * 删除当前用户的评论。
      */
