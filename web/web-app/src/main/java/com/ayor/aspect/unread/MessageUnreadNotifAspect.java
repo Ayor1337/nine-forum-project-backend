@@ -3,6 +3,7 @@ package com.ayor.aspect.unread;
 import com.ayor.service.MessageUnreadService;
 import com.ayor.type.UnreadMessageType;
 import com.ayor.util.STOMPUtils;
+import com.ayor.util.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -22,6 +23,7 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Method;
+import java.util.Objects;
 
 @Aspect
 @Component
@@ -39,8 +41,9 @@ public class MessageUnreadNotifAspect {
 
     private final STOMPUtils stompUtils;
 
-
     private final MessageUnreadService messageUnreadService;
+
+    private final SecurityUtils security;
 
     /**
      * 在消息相关方法执行前后更新未读消息计数并推送通知。
@@ -69,9 +72,20 @@ public class MessageUnreadNotifAspect {
 
         Integer accountId = resolve(messageUnreadNotif.accountId(), context, Integer.class);
         String subscribeDest = messageUnreadNotif.subscribeDest();
-        if (accountId != 0) {
+
+        Integer currentUserId = null;
+        try {
+            currentUserId = security.getSecurityUserId();
+        } catch (Exception e) {
+            // Ignore if not logged in or in an unauthenticated context (e.g. system broadcast)
+        }
+
+        if (accountId != null && accountId != 0) {
+            if (!messageUnreadNotif.doRead() && Objects.equals(currentUserId, accountId)) {
+                // Do not notify oneself for their own actions
+                return joinPoint.proceed();
+            }
             sendUnreadNotificationToUser(accountId, subscribeDest, messageUnreadNotif.type(), messageUnreadNotif.doRead());
-            return joinPoint.proceed();
         }
 
         return joinPoint.proceed();
