@@ -2,17 +2,21 @@ package com.ayor.controller;
 
 import com.ayor.entity.PageEntity;
 import com.ayor.entity.dto.ContentReportDTO;
+import com.ayor.entity.dto.PostDTO;
 import com.ayor.entity.dto.TagUpdateDTO;
 import com.ayor.entity.dto.ThreadDTO;
 import com.ayor.entity.vo.AnnouncementVO;
+import com.ayor.entity.vo.PostVO;
 import com.ayor.entity.vo.ThreadVO;
 import com.ayor.result.Result;
 import com.ayor.service.AuthorizationService;
+import com.ayor.service.PostService;
 import com.ayor.service.ReportService;
 import com.ayor.service.ThreaddService;
 import com.ayor.util.SecurityUtils;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,6 +27,8 @@ import java.util.List;
 public class ThreadController {
 
     private final ThreaddService threaddService;
+
+    private final PostService postService;
 
     private final SecurityUtils security;
 
@@ -61,6 +67,28 @@ public class ThreadController {
     public Result<ThreadVO> getThreadById(@PathVariable(name = "thread_id") Integer threadId) {
         return Result.dataMessageHandler(() -> threaddService.getThreadById(threadId), "获取失败");
     }
+
+    /**
+     * 分页获取帖子下的评论列表。
+     */
+    @GetMapping("/threads/{thread_id}/posts")
+    public Result<PageEntity<PostVO>> getPostsByThreadId(@PathVariable(name = "thread_id") Integer threadId,
+                                                         @RequestParam("page_num") Integer pageNum,
+                                                         @RequestParam(value = "page_size", defaultValue = "10") Integer pageSize) {
+        return Result.dataMessageHandler(() -> postService.getPostsByThreadId(threadId, pageNum, pageSize), "获取失败");
+    }
+
+    /**
+     * 发布评论。
+     */
+    @PostMapping("/threads/{thread_id}/posts")
+    public Result<Void> addPost(@PathVariable(name = "thread_id") Integer threadId,
+                                @RequestBody @Validated PostDTO post) {
+        post.setThreadId(threadId);
+        Integer userId = security.getSecurityUserId();
+        return Result.messageHandler(() -> postService.insertPost(post, userId));
+    }
+
     /**
      * 获取主题下的公告帖子。
      */

@@ -4,6 +4,7 @@ import com.ayor.entity.dto.PostDTO;
 import com.ayor.entity.PageEntity;
 import com.ayor.entity.pojo.Account;
 import com.ayor.entity.pojo.Post;
+import com.ayor.entity.vo.PostVO;
 import com.ayor.entity.vo.ReplyMessageVO;
 import com.ayor.mapper.AccountMapper;
 import com.ayor.mapper.PostMapper;
@@ -20,6 +21,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 
 import java.util.Date;
@@ -62,20 +64,43 @@ class PostServiceImplTest {
     private AuthorizationService authorizationService;
 
     @Test
+    void shouldPagePostsByThreadId() {
+        PostServiceImpl service = createService();
+
+        Post post = new Post();
+        post.setPostId(21);
+        post.setThreadId(9);
+        post.setAccountId(3);
+        post.setTopicId(7);
+        post.setContent("{\"type\":\"doc\",\"content\":[]}");
+        post.setIsDeleted(false);
+        post.setCreateTime(new Date());
+
+        Page<Post> page = Page.of(2, 5);
+        page.setRecords(List.of(post));
+        page.setTotal(12);
+
+        Account account = new Account();
+        account.setAccountId(3);
+        account.setNickname("reply-user");
+        account.setAvatarUrl("avatar.png");
+
+        when(postMapper.selectPage(any(Page.class), any(Wrapper.class))).thenReturn(page);
+        when(accountMapper.getAccountById(3)).thenReturn(account);
+
+        PageEntity<PostVO> result = service.getPostsByThreadId(9, 2, 5);
+
+        assertEquals(12L, result.getTotalSize());
+        assertEquals(1, result.getData().size());
+        assertEquals(21, result.getData().get(0).getPostId());
+        assertEquals("reply-user", result.getData().get(0).getNickname());
+        assertEquals("avatar.png", result.getData().get(0).getAvatarUrl());
+        verify(postMapper).selectPage(any(Page.class), any(Wrapper.class));
+    }
+
+    @Test
     void shouldSyncImageRefsAfterSavingPost() {
-        TipTapUtils tipTapUtils = new TipTapUtils();
-        PostServiceImpl service = new PostServiceImpl(
-                postMapper,
-                accountMapper,
-                tipTapUtils,
-                threaddMapper,
-                messagingTemplate,
-                stompUtils,
-                mentionMessageService,
-                imageAssetService,
-                authorizationService
-        );
-        ReflectionTestUtils.setField(service, "baseMapper", postMapper);
+        PostServiceImpl service = createService();
 
         PostDTO dto = new PostDTO();
         dto.setThreadId(9);
@@ -99,18 +124,7 @@ class PostServiceImplTest {
 
     @Test
     void shouldListReplyMessagesWithPostQueryInsteadOfRecentThreads() {
-        TipTapUtils tipTapUtils = new TipTapUtils();
-        PostServiceImpl service = new PostServiceImpl(
-                postMapper,
-                accountMapper,
-                tipTapUtils,
-                threaddMapper,
-                messagingTemplate,
-                stompUtils,
-                mentionMessageService,
-                imageAssetService,
-                authorizationService
-        );
+        PostServiceImpl service = createService();
 
         Post reply = new Post();
         reply.setPostId(21);
@@ -140,5 +154,21 @@ class PostServiceImplTest {
         assertEquals("old thread", result.getData().get(0).getThreadTitle());
         verify(postMapper).listReplyMessages(any(Page.class), eq(12));
         verify(threaddMapper, never()).getThreadAroundWeekById(12);
+    }
+
+    private PostServiceImpl createService() {
+        PostServiceImpl service = new PostServiceImpl(
+                postMapper,
+                accountMapper,
+                new TipTapUtils(),
+                threaddMapper,
+                messagingTemplate,
+                stompUtils,
+                mentionMessageService,
+                imageAssetService,
+                authorizationService
+        );
+        ReflectionTestUtils.setField(service, "baseMapper", postMapper);
+        return service;
     }
 }
