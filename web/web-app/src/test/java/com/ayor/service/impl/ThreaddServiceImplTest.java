@@ -16,7 +16,10 @@ import com.ayor.service.MentionMessageService;
 import com.ayor.type.ThreadOrderType;
 import com.ayor.util.TipTapUtils;
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
+import com.baomidou.mybatisplus.core.MybatisConfiguration;
+import com.baomidou.mybatisplus.core.metadata.TableInfoHelper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import org.apache.ibatis.builder.MapperBuilderAssistant;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -30,6 +33,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
@@ -65,7 +69,7 @@ class ThreaddServiceImplTest {
     private AuthorizationService authorizationService;
 
     @Test
-    void shouldQueryThreadsByTopicIdWithTagIdAndHotOrder() {
+    void shouldQueryThreadsByTopicIdWithTagIdSelectedAndHotOrder() {
         ThreaddServiceImpl service = createService();
         when(topicMapper.isTopicDelete(1)).thenReturn(false);
 
@@ -82,7 +86,7 @@ class ThreaddServiceImplTest {
         when(accountMapper.getAccountById(11)).thenReturn(account);
         when(threaddMapper.selectPage(any(Page.class), any(Wrapper.class))).thenReturn(page);
 
-        PageEntity<ThreadVO> result = service.getThreadVOsByTopicId(1, 3, "hot", 1, 10);
+        PageEntity<ThreadVO> result = service.getThreadVOsByTopicId(1, 3, true, "hot", 1, 10);
 
         ArgumentCaptor<Wrapper<Threadd>> wrapperCaptor = ArgumentCaptor.forClass(Wrapper.class);
         verify(threaddMapper).selectPage(any(Page.class), wrapperCaptor.capture());
@@ -92,6 +96,10 @@ class ThreaddServiceImplTest {
         assertEquals(1, result.getData().size());
         assertEquals(101, result.getData().get(0).getThreadId());
         assertNotNull(wrapperCaptor.getValue());
+        TableInfoHelper.initTableInfo(new MapperBuilderAssistant(new MybatisConfiguration(), ""), Threadd.class);
+        String targetSql = wrapperCaptor.getValue().getTargetSql();
+        assertTrue(targetSql.contains("tag_id"), targetSql);
+        assertTrue(targetSql.contains("is_selected"), targetSql);
     }
 
     @Test
@@ -113,7 +121,7 @@ class ThreaddServiceImplTest {
     void shouldReturnNullWhenTopicIdIsNull() {
         ThreaddServiceImpl service = createService();
 
-        PageEntity<ThreadVO> result = service.getThreadVOsByTopicId(null, 3, "hot", 1, 10);
+        PageEntity<ThreadVO> result = service.getThreadVOsByTopicId(null, 3, true, "hot", 1, 10);
 
         assertNull(result);
         verifyNoInteractions(topicMapper, threaddMapper);

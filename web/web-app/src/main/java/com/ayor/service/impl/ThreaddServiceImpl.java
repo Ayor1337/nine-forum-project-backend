@@ -73,7 +73,7 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
      */
 
     @Override
-    public PageEntity<ThreadVO> getThreadVOsByTopicId(Integer topicId, Integer tagId, String order, Integer pageNum, Integer pageSize) {
+    public PageEntity<ThreadVO> getThreadVOsByTopicId(Integer topicId, Integer tagId, Boolean isSelected, String order, Integer pageNum, Integer pageSize) {
         if (topicId == null) {
             return null;
         }
@@ -83,7 +83,8 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
         LambdaQueryWrapper<Threadd> queryWrapper = new LambdaQueryWrapper<Threadd>()
                 .eq(Threadd::getTopicId, topicId)
                 .eq(Threadd::getIsDeleted, false)
-                .eq(tagId != null, Threadd::getTagId, tagId);
+                .eq(tagId != null, Threadd::getTagId, tagId)
+                .eq(isSelected != null, Threadd::getIsSelected, isSelected);
         applyThreadOrder(queryWrapper, normalizeThreadOrder(order));
         Page<Threadd> threads = this.page(Page.of(pageNum, pageSize), queryWrapper);
 

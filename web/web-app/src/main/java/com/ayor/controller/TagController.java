@@ -30,7 +30,7 @@ public class TagController {
 
 
     @GetMapping
-    public Result<List<TagVO>> getTagList(@PathVariable(name = "topic_id") Integer topicId) {
+    public Result<List<TagVO>> getTagByTopicId(@PathVariable(name = "topic_id") Integer topicId) {
         return Result.dataMessageHandler(() -> tagService.listTagsByTopicId(topicId), "获取失败");
     }
 
