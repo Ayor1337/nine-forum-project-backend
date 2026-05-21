@@ -15,6 +15,8 @@ import com.ayor.service.ImageAssetService;
 import com.ayor.service.MentionMessageService;
 import com.ayor.service.ThreaddService;
 import com.ayor.type.ThreadOrderType;
+import com.ayor.type.ThreadRankingMetric;
+import com.ayor.type.ThreadRankingPeriod;
 import com.ayor.util.TipTapUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -22,6 +24,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.BeanUtils;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -88,6 +91,35 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
         applyThreadOrder(queryWrapper, normalizeThreadOrder(order));
         Page<Threadd> threads = this.page(Page.of(pageNum, pageSize), queryWrapper);
 
+        return new PageEntity<>(threads.getTotal(), toVOs(threads.getRecords()));
+    }
+
+    @Override
+    @Cacheable(value = "threadRanking",
+            key = "'topic:' + #topicId + ':' + #period + ':' + #metric + ':' + #pageNum + ':' + #pageSize",
+            condition = "#topicId != null && #pageNum != null && #pageSize != null",
+            unless = "#result == null || #result.totalSize == 0")
+    public PageEntity<ThreadVO> getThreadRankingsByTopicId(Integer topicId, String period, String metric, Integer pageNum, Integer pageSize) {
+        if (topicId == null) {
+            return null;
+        }
+        if (topicMapper.isTopicDelete(topicId)) {
+            return null;
+        }
+        LambdaQueryWrapper<Threadd> queryWrapper = buildRankingQuery(period, metric)
+                .eq(Threadd::getTopicId, topicId);
+        Page<Threadd> threads = this.page(Page.of(pageNum, pageSize), queryWrapper);
+        return new PageEntity<>(threads.getTotal(), toVOs(threads.getRecords()));
+    }
+
+    @Override
+    @Cacheable(value = "threadRanking",
+            key = "'all:' + #period + ':' + #metric + ':' + #pageNum + ':' + #pageSize",
+            condition = "#pageNum != null && #pageSize != null",
+            unless = "#result == null || #result.totalSize == 0")
+    public PageEntity<ThreadVO> getThreadRankings(String period, String metric, Integer pageNum, Integer pageSize) {
+        LambdaQueryWrapper<Threadd> queryWrapper = buildRankingQuery(period, metric);
+        Page<Threadd> threads = this.page(Page.of(pageNum, pageSize), queryWrapper);
         return new PageEntity<>(threads.getTotal(), toVOs(threads.getRecords()));
     }
     /**
@@ -196,6 +228,25 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
             case HOT -> queryWrapper.orderByDesc(Threadd::getLikeCount)
                     .orderByDesc(Threadd::getPostCount)
                     .orderByDesc(Threadd::getViewCount)
+                    .orderByDesc(Threadd::getCreateTime);
+        }
+    }
+
+    private LambdaQueryWrapper<Threadd> buildRankingQuery(String period, String metric) {
+        LambdaQueryWrapper<Threadd> queryWrapper = new LambdaQueryWrapper<Threadd>()
+                .eq(Threadd::getIsDeleted, false)
+                .ge(Threadd::getCreateTime, ThreadRankingPeriod.fromValue(period).getStartTime());
+        applyRankingMetricOrder(queryWrapper, ThreadRankingMetric.fromValue(metric));
+        return queryWrapper;
+    }
+
+    private void applyRankingMetricOrder(LambdaQueryWrapper<Threadd> queryWrapper, ThreadRankingMetric metric) {
+        switch (metric) {
+            case LIKES -> queryWrapper.orderByDesc(Threadd::getLikeCount)
+                    .orderByDesc(Threadd::getCreateTime);
+            case VIEWS -> queryWrapper.orderByDesc(Threadd::getViewCount)
+                    .orderByDesc(Threadd::getCreateTime);
+            case COLLECTS -> queryWrapper.orderByDesc(Threadd::getCollectCount)
                     .orderByDesc(Threadd::getCreateTime);
         }
     }
