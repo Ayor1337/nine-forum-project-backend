@@ -25,12 +25,15 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.lang.reflect.Method;
 import java.util.Date;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -67,6 +70,35 @@ class ThreaddServiceImplTest {
 
     @Mock
     private AuthorizationService authorizationService;
+
+    @Test
+    void threadRankingMethodsShouldUseThreadRankingCache() throws NoSuchMethodException {
+        Method topicMethod = ThreaddServiceImpl.class.getMethod(
+                "getThreadRankingsByTopicId",
+                Integer.class,
+                String.class,
+                String.class,
+                Integer.class,
+                Integer.class
+        );
+        Method allMethod = ThreaddServiceImpl.class.getMethod(
+                "getThreadRankings",
+                String.class,
+                String.class,
+                Integer.class,
+                Integer.class
+        );
+
+        Cacheable topicCacheable = topicMethod.getAnnotation(Cacheable.class);
+        Cacheable allCacheable = allMethod.getAnnotation(Cacheable.class);
+
+        assertNotNull(topicCacheable);
+        assertNotNull(allCacheable);
+        assertEquals("threadRanking", topicCacheable.value()[0]);
+        assertEquals("threadRanking", allCacheable.value()[0]);
+        assertEquals("#result == null || #result.totalSize == 0", topicCacheable.unless());
+        assertEquals("#result == null || #result.totalSize == 0", allCacheable.unless());
+    }
 
     @Test
     void shouldQueryThreadsByTopicIdWithTagIdSelectedAndHotOrder() {
@@ -115,6 +147,97 @@ class ThreaddServiceImplTest {
     @Test
     void shouldFallbackToHotOrderWhenUnsupportedOrderProvided() {
         assertEquals(ThreadOrderType.HOT, ThreadOrderType.fromValue("unknown"));
+    }
+
+    @Test
+    void shouldQueryTopicThreadRankingsByPeriodAndLikesMetric() {
+        ThreaddServiceImpl service = createService();
+        when(topicMapper.isTopicDelete(1)).thenReturn(false);
+
+        Threadd thread = createThread();
+        Page<Threadd> page = Page.of(1, 10);
+        page.setRecords(List.of(thread));
+        page.setTotal(1);
+
+        Account account = new Account();
+        account.setAccountId(11);
+        account.setNickname("tester");
+        account.setAvatarUrl("avatar");
+
+        when(accountMapper.getAccountById(11)).thenReturn(account);
+        when(threaddMapper.selectPage(any(Page.class), any(Wrapper.class))).thenReturn(page);
+
+        PageEntity<ThreadVO> result = service.getThreadRankingsByTopicId(1, "day", "likes", 1, 10);
+
+        ArgumentCaptor<Wrapper<Threadd>> wrapperCaptor = ArgumentCaptor.forClass(Wrapper.class);
+        verify(threaddMapper).selectPage(any(Page.class), wrapperCaptor.capture());
+
+        assertNotNull(result);
+        assertEquals(1L, result.getTotalSize());
+        TableInfoHelper.initTableInfo(new MapperBuilderAssistant(new MybatisConfiguration(), ""), Threadd.class);
+        String targetSql = wrapperCaptor.getValue().getTargetSql();
+        assertTrue(targetSql.contains("topic_id"), targetSql);
+        assertTrue(targetSql.contains("is_deleted"), targetSql);
+        assertTrue(targetSql.contains("create_time"), targetSql);
+        assertTrue(targetSql.contains("like_count"), targetSql);
+    }
+
+    @Test
+    void shouldQueryAllThreadRankingsWithoutTopicFilterAndViewsMetric() {
+        ThreaddServiceImpl service = createService();
+        Threadd thread = createThread();
+        Page<Threadd> page = Page.of(1, 10);
+        page.setRecords(List.of(thread));
+        page.setTotal(1);
+
+        Account account = new Account();
+        account.setAccountId(11);
+        account.setNickname("tester");
+        account.setAvatarUrl("avatar");
+
+        when(accountMapper.getAccountById(11)).thenReturn(account);
+        when(threaddMapper.selectPage(any(Page.class), any(Wrapper.class))).thenReturn(page);
+
+        PageEntity<ThreadVO> result = service.getThreadRankings("week", "views", 1, 10);
+
+        ArgumentCaptor<Wrapper<Threadd>> wrapperCaptor = ArgumentCaptor.forClass(Wrapper.class);
+        verify(threaddMapper).selectPage(any(Page.class), wrapperCaptor.capture());
+
+        assertNotNull(result);
+        TableInfoHelper.initTableInfo(new MapperBuilderAssistant(new MybatisConfiguration(), ""), Threadd.class);
+        String targetSql = wrapperCaptor.getValue().getTargetSql();
+        assertFalse(targetSql.contains("topic_id"), targetSql);
+        assertTrue(targetSql.contains("is_deleted"), targetSql);
+        assertTrue(targetSql.contains("create_time"), targetSql);
+        assertTrue(targetSql.contains("view_count"), targetSql);
+    }
+
+    @Test
+    void shouldFallbackToDefaultRankingPeriodAndCollectsMetric() {
+        ThreaddServiceImpl service = createService();
+        Threadd thread = createThread();
+        Page<Threadd> page = Page.of(1, 10);
+        page.setRecords(List.of(thread));
+        page.setTotal(1);
+
+        Account account = new Account();
+        account.setAccountId(11);
+        account.setNickname("tester");
+        account.setAvatarUrl("avatar");
+
+        when(accountMapper.getAccountById(11)).thenReturn(account);
+        when(threaddMapper.selectPage(any(Page.class), any(Wrapper.class))).thenReturn(page);
+
+        PageEntity<ThreadVO> result = service.getThreadRankings("unknown", "collects", 1, 10);
+
+        ArgumentCaptor<Wrapper<Threadd>> wrapperCaptor = ArgumentCaptor.forClass(Wrapper.class);
+        verify(threaddMapper).selectPage(any(Page.class), wrapperCaptor.capture());
+
+        assertNotNull(result);
+        TableInfoHelper.initTableInfo(new MapperBuilderAssistant(new MybatisConfiguration(), ""), Threadd.class);
+        String targetSql = wrapperCaptor.getValue().getTargetSql();
+        assertTrue(targetSql.contains("create_time"), targetSql);
+        assertTrue(targetSql.contains("collect_count"), targetSql);
     }
 
     @Test

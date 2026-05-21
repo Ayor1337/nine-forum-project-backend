@@ -55,6 +55,27 @@ public interface ThreaddService extends IService<Threadd> {
     PageEntity<ThreadVO> getThreadVOsByTopicId(Integer topicId, Integer tagId, Boolean isSelected, String order, Integer pageNum, Integer pageSize);
 
     /**
+     * 获取指定话题下的帖子榜单。
+     * @param topicId 话题ID
+     * @param period 时间范围, 支持 day/week/month
+     * @param metric 榜单指标, 支持 likes/views/collects
+     * @param pageNum 页码,从1开始
+     * @param pageSize 每页记录数
+     * @return 分页榜单结果
+     */
+    PageEntity<ThreadVO> getThreadRankingsByTopicId(Integer topicId, String period, String metric, Integer pageNum, Integer pageSize);
+
+    /**
+     * 获取全站帖子榜单。
+     * @param period 时间范围, 支持 day/week/month
+     * @param metric 榜单指标, 支持 likes/views/collects
+     * @param pageNum 页码,从1开始
+     * @param pageSize 每页记录数
+     * @return 分页榜单结果
+     */
+    PageEntity<ThreadVO> getThreadRankings(String period, String metric, Integer pageNum, Integer pageSize);
+
+    /**
      * 获取帖子标题
      * @param threadId 帖子ID
      * @return 帖子标题字符串

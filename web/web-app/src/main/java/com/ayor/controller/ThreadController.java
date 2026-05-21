@@ -49,6 +49,23 @@ public class ThreadController {
                                                           @RequestParam(value = "page_size", defaultValue = "10") Integer pageSize) {
         return Result.dataMessageHandler(() -> threaddService.getThreadVOsByTopicId(topicId, tagId, isSelected, order, pageNum, pageSize), "获取失败");
     }
+
+    @GetMapping("/topics/{topic_id}/thread-rankings")
+    public Result<PageEntity<ThreadVO>> getTopicThreadRankings(@PathVariable("topic_id") Integer topicId,
+                                                               @RequestParam(value = "period", defaultValue = "day") String period,
+                                                               @RequestParam(value = "metric", defaultValue = "likes") String metric,
+                                                               @RequestParam("page_num") Integer pageNum,
+                                                               @RequestParam(value = "page_size", defaultValue = "10") Integer pageSize) {
+        return Result.dataMessageHandler(() -> threaddService.getThreadRankingsByTopicId(topicId, period, metric, pageNum, pageSize), "获取失败");
+    }
+
+    @GetMapping("/thread-rankings")
+    public Result<PageEntity<ThreadVO>> getThreadRankings(@RequestParam(value = "period", defaultValue = "day") String period,
+                                                          @RequestParam(value = "metric", defaultValue = "likes") String metric,
+                                                          @RequestParam("page_num") Integer pageNum,
+                                                          @RequestParam(value = "page_size", defaultValue = "10") Integer pageSize) {
+        return Result.dataMessageHandler(() -> threaddService.getThreadRankings(period, metric, pageNum, pageSize), "获取失败");
+    }
     /**
      * 获取指定用户发布的帖子列表。
      */

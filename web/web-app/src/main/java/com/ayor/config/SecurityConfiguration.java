@@ -59,6 +59,8 @@ public class SecurityConfiguration {
             "/api/themes/{theme_id}/topics",
             "/api/topics/{topic_id}/tags",
             "/api/topics/{topic_id}/threads",
+            "/api/topics/{topic_id}/thread-rankings",
+            "/api/thread-rankings",
             "/api/users/{user_id}/threads",
             "/api/threads/{thread_id}",
             "/api/topics/{topic_id}/announcements",
