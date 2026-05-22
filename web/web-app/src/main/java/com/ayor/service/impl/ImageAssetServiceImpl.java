@@ -30,7 +30,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -135,36 +134,6 @@ public class ImageAssetServiceImpl extends ServiceImpl<ImageAssetMapper, ImageAs
         imageAssetFavoriteMapper.deleteById(membership.getFavoriteId());
         refreshAddedCount(assetId);
         return null;
-    }
-
-    @Override
-    public String deleteStickerResource(Integer accountId, Integer assetId) {
-        if (accountId == null) {
-            return "用户不存在";
-        }
-        ImageAsset asset = this.getById(assetId);
-        if (asset == null) {
-            return "资源不存在";
-        }
-        if (!Objects.equals(asset.getAccountId(), accountId)) {
-            return "没有权限";
-        }
-        if (!ImageAssetType.STICKER.name().equals(asset.getAssetType())) {
-            return "只能删除自己的表情包资源";
-        }
-        ImageAssetFavorite ownerMembership = imageAssetFavoriteMapper.findMembership(accountId, assetId);
-        refreshAddedCount(assetId);
-        refreshUseCount(assetId);
-        ImageAsset latestAsset = this.getById(assetId);
-        int selfMembershipCount = ownerMembership == null ? 0 : 1;
-        if (latestAsset.getFavoriteCount() <= selfMembershipCount && latestAsset.getUseCount() == 0) {
-            deleteObjectIfNecessary(latestAsset);
-            this.removeById(assetId);
-            return null;
-        }
-        latestAsset.setStatus(ImageAssetStatus.DISABLED.name());
-        latestAsset.setUpdateTime(new Date());
-        return this.updateById(latestAsset) ? null : "删除资源失败";
     }
 
     @Override
@@ -299,16 +268,6 @@ public class ImageAssetServiceImpl extends ServiceImpl<ImageAssetMapper, ImageAs
 
     private void refreshUseCount(Integer assetId) {
         this.baseMapper.refreshUseCount(assetId);
-    }
-
-    private void deleteObjectIfNecessary(ImageAsset asset) {
-        if (asset.getUrl() == null || !minioService.isOwnObjectUrl(asset.getUrl())) {
-            return;
-        }
-        try {
-            minioService.deleteFile(minioService.extractObjectName(asset.getUrl()));
-        } catch (Exception ignored) {
-        }
     }
 
     private int normalizePage(Integer pageNum) {

@@ -25,8 +25,6 @@ public class StickerController {
 
     private final SecurityUtils securityUtils;
 
-    // TODO CODEX NMLGB 写的什么几把
-
     /**
      * 上传表情包并自动加入当前用户的表情包库。
      */
@@ -75,15 +73,6 @@ public class StickerController {
     public Result<Void> removeSticker(@PathVariable("assetId") Integer assetId) {
         Integer accountId = securityUtils.getSecurityUserId();
         return Result.messageHandler(() -> imageAssetService.removeSticker(accountId, assetId));
-    }
-
-    /**
-     * 删除当前用户上传的表情包资源本体。
-     */
-    @DeleteMapping("/{assetId}/resource")
-    public Result<Void> deleteStickerResource(@PathVariable("assetId") Integer assetId) {
-        Integer accountId = securityUtils.getSecurityUserId();
-        return Result.messageHandler(() -> imageAssetService.deleteStickerResource(accountId, assetId));
     }
 
     /**

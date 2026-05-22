@@ -35,11 +35,6 @@ public interface ImageAssetService {
     String removeSticker(Integer accountId, Integer assetId);
 
     /**
-     * 删除当前用户上传的表情包资源本体。
-     */
-    String deleteStickerResource(Integer accountId, Integer assetId);
-
-    /**
      * 查询表情包资源详情。
      */
     StickerVO getDetail(Integer accountId, Integer assetId);

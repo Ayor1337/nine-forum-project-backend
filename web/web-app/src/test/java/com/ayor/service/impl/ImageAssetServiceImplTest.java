@@ -1,5 +1,6 @@
 package com.ayor.service.impl;
 
+import com.ayor.controller.StickerController;
 import com.ayor.entity.Base64Upload;
 import com.ayor.entity.PageEntity;
 import com.ayor.entity.pojo.ImageAsset;
@@ -20,7 +21,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.web.bind.annotation.DeleteMapping;
 
+import java.lang.reflect.Method;
 import java.util.Date;
 import java.util.List;
 
@@ -30,7 +33,6 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mockingDetails;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
@@ -123,27 +125,21 @@ class ImageAssetServiceImplTest {
     }
 
     @Test
-    void shouldDeleteStickerResourceInsteadOfOnlyRemovingMembership() {
-        ImageAssetServiceImpl service = spy(createService());
-        ImageAsset asset = createStickerAsset(22, 8);
-        asset.setFavoriteCount(1);
-        asset.setUseCount(0);
-        asset.setUrl("https://cdn.example.com/stickers/8/cat.webp");
-        ImageAssetFavorite ownerMembership = new ImageAssetFavorite(5, 8, 22, new Date());
+    void shouldNotExposeUserSideStickerResourceDeletionEndpoint() {
+        boolean hasResourceDeletionEndpoint = false;
+        for (Method method : StickerController.class.getDeclaredMethods()) {
+            DeleteMapping mapping = method.getAnnotation(DeleteMapping.class);
+            if (mapping == null) {
+                continue;
+            }
+            for (String path : mapping.value()) {
+                if ("/{assetId}/resource".equals(path)) {
+                    hasResourceDeletionEndpoint = true;
+                }
+            }
+        }
 
-        when(imageAssetMapper.selectById(22)).thenReturn(asset);
-        when(imageAssetFavoriteMapper.findMembership(8, 22)).thenReturn(ownerMembership);
-        when(minioService.isOwnObjectUrl(asset.getUrl())).thenReturn(false);
-        doReturn(true).when(service).removeById(22);
-
-        String result = service.deleteStickerResource(8, 22);
-
-        assertNull(result);
-        verify(service).removeById(22);
-        boolean deletedMembership = mockingDetails(imageAssetFavoriteMapper).getInvocations().stream()
-                .anyMatch(invocation -> "deleteById".equals(invocation.getMethod().getName()));
-        assertFalse(deletedMembership);
-        verify(imageAssetFavoriteMapper).findMembership(8, 22);
+        assertFalse(hasResourceDeletionEndpoint);
     }
 
     private ImageAssetServiceImpl createService() {
