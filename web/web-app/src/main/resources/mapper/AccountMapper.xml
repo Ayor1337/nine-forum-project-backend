@@ -57,4 +57,43 @@
         LIMIT 5
     </select>
 
+    <sql id="userSearchWhere">
+        WHERE a.status != 3
+          AND (a.is_deleted = 0 OR a.is_deleted IS NULL)
+          AND (
+              a.username LIKE CONCAT('%', #{keyword}, '%')
+              OR a.nickname LIKE CONCAT('%', #{keyword}, '%')
+              OR (#{keyword} REGEXP '^[0-9]+$' AND a.account_id = CAST(#{keyword} AS UNSIGNED))
+          )
+    </sql>
+
+    <select id="countSearchUsers" resultType="java.lang.Long">
+        SELECT COUNT(*)
+        FROM account a
+        <include refid="userSearchWhere"/>
+    </select>
+
+    <select id="searchUsers" resultType="com.ayor.entity.vo.UserSearchVO">
+        SELECT a.account_id,
+               a.username,
+               a.nickname,
+               a.avatar_url
+        FROM account a
+        <include refid="userSearchWhere"/>
+        ORDER BY CASE
+                     WHEN #{keyword} REGEXP '^[0-9]+$' AND a.account_id = CAST(#{keyword} AS UNSIGNED) THEN 0
+                     ELSE 1
+                 END,
+                 CASE
+                     WHEN a.username LIKE CONCAT(#{keyword}, '%') THEN 0
+                     ELSE 1
+                 END,
+                 CASE
+                     WHEN a.nickname LIKE CONCAT(#{keyword}, '%') THEN 0
+                     ELSE 1
+                 END,
+                 a.username ASC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
 </mapper>

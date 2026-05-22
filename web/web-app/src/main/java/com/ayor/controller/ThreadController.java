@@ -42,8 +42,8 @@ public class ThreadController {
 
     @GetMapping("/topics/{topic_id}/threads")
     public Result<PageEntity<ThreadVO>> getThreadsByTopicId(@PathVariable("topic_id") Integer topicId,
-                                                          @RequestParam(value = "tagId", required = false) Integer tagId,
-                                                          @RequestParam(value = "isSelected", required = false) Boolean isSelected,
+                                                          @RequestParam(value = "tag_id", required = false) Integer tagId,
+                                                          @RequestParam(value = "is_selected", required = false) Boolean isSelected,
                                                           @RequestParam(value = "order", defaultValue = "hot") String order,
                                                           @RequestParam("page_num")Integer pageNum,
                                                           @RequestParam(value = "page_size", defaultValue = "10") Integer pageSize) {

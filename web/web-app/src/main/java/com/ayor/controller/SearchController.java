@@ -3,8 +3,10 @@ package com.ayor.controller;
 import com.ayor.entity.PageEntity;
 import com.ayor.entity.document.ThreadDoc;
 import com.ayor.entity.vo.HotKeywordVO;
+import com.ayor.entity.vo.UserSearchVO;
 import com.ayor.result.Result;
 import com.ayor.service.SearchService;
+import com.ayor.service.UserSearchService;
 import com.ayor.util.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -19,6 +21,8 @@ import java.util.Set;
 public class SearchController {
 
     private final SearchService searchService;
+
+    private final UserSearchService userSearchService;
 
     private final SecurityUtils securityUtils;
     /**
@@ -51,28 +55,19 @@ public class SearchController {
                 query, userId, topicId, enableHistory, onlyThreadTopic, startTime, endTime, order, pageNum, pageSize), "搜索失败");
     }
     /**
-     * 用户搜索入口，当前仅保留接口占位。
+     * 搜索用户并返回分页结果。
      *
      * @param query 搜索关键字
-     * @param onlyThreadTopic 是否只搜索帖子本体
-     * @param topicId 主题过滤条件
-     * @param enableHistory 是否记录搜索历史
-     * @param duration 统计范围
      * @param pageNum 页码
      * @param pageSize 每页数量
-     * @return 预留响应
+     * @return 用户搜索结果
      */
 
     @GetMapping("/users")
-    public Result<Void> searchUser(@RequestParam(name = "query") String query,
-                                   @RequestParam(name = "only_thread_topic", defaultValue = "false") boolean onlyThreadTopic,
-                                   @RequestParam(name = "topic_id", required = false) Integer topicId,
-                                   @RequestParam(name = "enable_history", defaultValue = "true") boolean enableHistory,
-                                   @RequestParam(name = "duration", defaultValue = "7") int duration,
-                                   @RequestParam(name = "page_num", defaultValue = "1") int pageNum,
-                                   @RequestParam(name = "page_size", defaultValue = "10") int pageSize) {
-        // 当前接口暂未接入具体用户搜索实现
-        return Result.ok();
+    public Result<PageEntity<UserSearchVO>> searchUser(@RequestParam(name = "query") String query,
+                                                       @RequestParam(name = "page_num", defaultValue = "1") int pageNum,
+                                                       @RequestParam(name = "page_size", defaultValue = "10") int pageSize) {
+        return Result.dataMessageHandler(() -> userSearchService.searchUsers(query, pageNum, pageSize), "搜索用户失败");
     }
     /**
      * 获取当前用户的全部搜索历史。
