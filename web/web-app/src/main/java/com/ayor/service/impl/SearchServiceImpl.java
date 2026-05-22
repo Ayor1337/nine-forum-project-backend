@@ -65,25 +65,23 @@ public class SearchServiceImpl implements SearchService {
                                                int pageNum,
                                                int pageSize) {
         pageNum = Math.max(pageNum, 1);
+        String trimmedKeyword = keyword == null ? "" : keyword.trim();
+        if (trimmedKeyword.isEmpty()) {
+            return new PageEntity<>(0L, List.of());
+        }
 
         // 插入搜索历史
         if (enableHistory && userId != null) {
-            insertSearchHistory(keyword, userId);
+            insertSearchHistory(trimmedKeyword, userId);
         }
 
         BoolQuery.Builder boolQuery = new BoolQuery.Builder();
-        boolQuery.should(m -> m.
-                        match(t -> t
-                                .field("title")
-                                .query(keyword)
-                        )
+        boolQuery.must(m -> m
+                .multiMatch(t -> t
+                        .fields("title", "content")
+                        .query(trimmedKeyword)
                 )
-                .should(m -> m
-                        .match(t -> t
-                                .field("content")
-                                .query(keyword)
-                        )
-                );
+        );
         // 如果有时间范围，则做时间筛选
         if (startTime != null && endTime != null) {
 
@@ -91,7 +89,7 @@ public class SearchServiceImpl implements SearchService {
             String gte = Instant.ofEpochMilli(startTime).toString();
             String lte = Instant.ofEpochMilli(endTime).toString();
 
-            boolQuery.must(m -> m
+            boolQuery.filter(m -> m
                     .range(r -> r
                             .date(d -> d.
                                     field("createTime")
@@ -104,12 +102,12 @@ public class SearchServiceImpl implements SearchService {
 
         // 如果有主题则对主题进行判断
         if (topicId != null) {
-            boolQuery.must(m -> m.match(t -> t.field("topicId").query(topicId)));
+            boolQuery.filter(m -> m.term(t -> t.field("topicId").value(topicId)));
         }
 
         // 如果是只搜索主题帖
         if (onlyThreadTopic) {
-            boolQuery.must(m -> m.match(t -> t.field("isThreadTopic").query(true)));
+            boolQuery.filter(m -> m.term(t -> t.field("isThreadTopic").value(true)));
         }
 
         // 构建查询
@@ -141,7 +139,7 @@ public class SearchServiceImpl implements SearchService {
         if (userId != null) {
             SearchLogDoc searchLogDoc = SearchLogDoc.builder()
                     .id(null)
-                    .keyword(keyword)
+                    .keyword(trimmedKeyword)
                     .userId(String.valueOf(userId))
                     .ts(Instant.now())
                     .build();

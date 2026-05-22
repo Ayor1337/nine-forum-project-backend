@@ -29,4 +29,10 @@ public interface AccountMapper extends BaseMapper<Account> {
     List<Account> getAccountsByIds(@Param("accountIds") List<Integer> accountIds);
 
     List<UserSearchVO> searchUsersForMention(@Param("keyword") String keyword, @Param("currentUserId") Integer currentUserId);
+
+    Long countSearchUsers(@Param("keyword") String keyword);
+
+    List<UserSearchVO> searchUsers(@Param("keyword") String keyword,
+                                   @Param("limit") int limit,
+                                   @Param("offset") int offset);
 }
