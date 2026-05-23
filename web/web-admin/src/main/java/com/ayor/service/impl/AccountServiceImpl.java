@@ -319,7 +319,6 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         for (Account account : accounts) {
             AccountVO accountVO = new AccountVO();
             BeanUtils.copyProperties(account, accountVO);
-            //TODO 待完善信息获取
             accountVos.add(accountVO);
         }
         return accountVos;
