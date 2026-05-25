@@ -45,6 +45,7 @@ public class UserController {
      */
     @GetMapping("/me")
     public Result<UserInfoVO> getUserInfo() {
+        //TODO  权限只做了校验，没有在前端返回有哪些权限
         Integer userId = security.getSecurityUserId();
         return Result.dataMessageHandler(() -> accountService.getUserInfo(userId), "获取用户信息失败,用户可能不存在");
     }

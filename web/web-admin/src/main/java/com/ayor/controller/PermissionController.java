@@ -59,10 +59,26 @@ public class PermissionController {
     }
 
     /**
+     * 批量更新权限。
+     */
+    @PutMapping("/batch")
+    public Result<Void> updatePermissions(@RequestBody List<Permission> permissions) {
+        return Result.messageHandler(() -> permissionService.updatePermissions(permissions));
+    }
+
+    /**
      * 删除指定权限。
      */
     @DeleteMapping("/{permissionId}")
     public Result<Void> deletePermission(@PathVariable("permissionId") Integer permissionId) {
         return Result.messageHandler(() -> permissionService.deletePermission(permissionId));
+    }
+
+    /**
+     * 批量删除权限。
+     */
+    @DeleteMapping("/batch")
+    public Result<Void> deletePermissions(@RequestBody List<Integer> permissionIds) {
+        return Result.messageHandler(() -> permissionService.deletePermissions(permissionIds));
     }
 }
