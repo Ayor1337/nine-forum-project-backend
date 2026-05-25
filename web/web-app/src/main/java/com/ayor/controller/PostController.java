@@ -4,7 +4,6 @@ import com.ayor.entity.PageEntity;
 import com.ayor.entity.dto.ContentReportDTO;
 import com.ayor.entity.vo.ReplyMessageVO;
 import com.ayor.result.Result;
-import com.ayor.service.AuthorizationService;
 import com.ayor.service.PostService;
 import com.ayor.service.ReportService;
 import com.ayor.util.SecurityUtils;
@@ -23,8 +22,6 @@ public class PostController {
 
     private final ReportService reportService;
 
-    private final AuthorizationService authorizationService;
-
     /**
      * 删除当前用户的评论。
      */
@@ -40,15 +37,6 @@ public class PostController {
                                          @RequestBody @Valid ContentReportDTO dto) {
         Integer userId = security.getSecurityUserId();
         return Result.messageHandler(() -> reportService.createPostReport(userId, postId, dto));
-    }
-    /**
-     * 管理员删除评论。
-     */
-
-    @DeleteMapping("/moderation/posts/{post_id}")
-    public Result<Void> deletePostPermission(@PathVariable(name = "post_id") Integer postId) {
-        authorizationService.assertCanDeletePost(security.getSecurityUserId(), postId);
-        return Result.messageHandler(() -> postService.removePostPermission(postId));
     }
     /**
      * 获取回复消息分页数据。
