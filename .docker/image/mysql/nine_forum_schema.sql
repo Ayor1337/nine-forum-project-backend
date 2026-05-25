@@ -114,16 +114,9 @@ CREATE TABLE IF NOT EXISTS `like_thread`  (
 CREATE TABLE IF NOT EXISTS `permission`  (
                                   `permission_id` int NOT NULL AUTO_INCREMENT COMMENT '权限id',
                                   `role_id` int NOT NULL COMMENT '哪些权能者拥有权限',
-                                  `grant` tinyint NOT NULL DEFAULT 0 COMMENT '是否可以给别人赋予权限, 只能给予比自己权能等级低的',
-                                  `theme_edit` tinyint NOT NULL DEFAULT 0 COMMENT '是否可以编辑板块',
-                                  `topic_edit` tinyint NOT NULL DEFAULT 0 COMMENT '是否可以编辑主题',
-                                  `thread_delete` tinyint NOT NULL DEFAULT 0 COMMENT '是否可以编辑帖子, 只能删除, 受到fied_id管理',
-                                  `account_muted` tinyint NOT NULL DEFAULT 0 COMMENT '是否可以禁言账号',
-                                  `account_ban` tinyint NOT NULL DEFAULT 0 COMMENT '是否禁用账号',
-                                  `can_select` tinyint NOT NULL DEFAULT 0 COMMENT '是否可以给帖子加精选, 受到fied_id管理',
-                                  `topic_id` int NULL DEFAULT NULL COMMENT '(如果是版主则需要, 添加这个ID, 如果有这个ID 则最帖子的管理只能针对于某一个Topic)',
+                                  `permission` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '权限标识',
                                   PRIMARY KEY (`permission_id` DESC) USING BTREE,
-                                  UNIQUE INDEX `role_id`(`role_id` ASC) USING BTREE,
+                                  UNIQUE INDEX `uk_role_permission`(`role_id` ASC, `permission` ASC) USING BTREE,
                                   CONSTRAINT `db_permission_ibfk_1` FOREIGN KEY (`role_id`) REFERENCES `role` (`role_id`) ON DELETE RESTRICT ON UPDATE RESTRICT
 ) ENGINE = InnoDB AUTO_INCREMENT = 7 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = DYNAMIC;
 
@@ -277,9 +270,11 @@ CREATE TABLE IF NOT EXISTS `dashboard_activity` (
 -- Table structure for role
 -- ----------------------------
 CREATE TABLE IF NOT EXISTS `role`  (
-                            `role_id` int NOT NULL COMMENT '权能id',
+                            `role_id` int NOT NULL AUTO_INCREMENT COMMENT '权能id',
                             `role_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '权能称呼',
+                            `role_nick` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '角色展示名称',
                             `priority` int NULL DEFAULT NULL COMMENT '权限等级, 数字越小权限越高, 最高位 0',
+                            `topic_id` int NULL DEFAULT NULL COMMENT '角色绑定的话题ID',
                             PRIMARY KEY (`role_id`) USING BTREE
 ) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = Dynamic;
 

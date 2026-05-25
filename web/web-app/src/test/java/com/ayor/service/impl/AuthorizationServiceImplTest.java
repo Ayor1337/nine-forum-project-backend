@@ -66,7 +66,7 @@ class AuthorizationServiceImplTest {
         AuthorizationServiceImpl service = createService();
         when(roleMapper.getRoleNameByUserId(8)).thenReturn("MODERATOR");
         when(roleMapper.getTopicIdByUserId(8)).thenReturn(66);
-        when(permissionMapper.getPermissionsByAccountId(8)).thenReturn(List.of("sDELETE_THREAD"));
+        when(permissionMapper.getPermissionsByAccountId(8)).thenReturn(List.of("DELETE_THREAD"));
 
         Threadd thread = new Threadd();
         thread.setThreadId(19);

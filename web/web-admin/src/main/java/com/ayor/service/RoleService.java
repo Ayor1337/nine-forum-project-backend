@@ -1,6 +1,9 @@
 package com.ayor.service;
 
+import com.ayor.entity.PageEntity;
 import com.ayor.entity.dto.RoleDTO;
+import com.ayor.entity.vo.AccountVO;
+import com.ayor.entity.vo.PermissionVO;
 import com.ayor.entity.vo.RoleVO;
 import com.ayor.entity.pojo.Role;
 import com.baomidou.mybatisplus.extension.service.IService;
@@ -60,4 +63,16 @@ public interface RoleService extends IService<Role> {
      * @note 删除角色前需确保没有用户使用该角色
      */
     String deleteRole(Integer roleId);
+
+    PageEntity<AccountVO> listRoleAccounts(Integer roleId, Integer pageNum, Integer pageSize);
+
+    String addAccountToRole(Integer roleId, Integer accountId);
+
+    String removeAccountFromRole(Integer roleId, Integer accountId);
+
+    List<PermissionVO> listRolePermissions(Integer roleId);
+
+    String addPermissionToRole(Integer roleId, String permission);
+
+    String removePermissionFromRole(Integer roleId, String permission);
 }
