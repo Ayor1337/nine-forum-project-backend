@@ -23,6 +23,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -62,11 +63,11 @@ class AuthorizationServiceImplTest {
     }
 
     @Test
-    void shouldAllowScopedModeratorToDeleteThreadWithinTopic() {
+    void shouldAllowScopedModeratorToModerateDeleteThreadWithinTopic() {
         AuthorizationServiceImpl service = createService();
-        when(roleMapper.getRoleNameByUserId(8)).thenReturn("MODERATOR");
-        when(roleMapper.getTopicIdByUserId(8)).thenReturn(66);
-        when(permissionMapper.getPermissionsByAccountId(8)).thenReturn(List.of("DELETE_THREAD"));
+        lenient().when(roleMapper.getRoleNameByUserId(8)).thenReturn("MODERATOR");
+        lenient().when(roleMapper.getTopicIdByUserId(8)).thenReturn(66);
+        lenient().when(permissionMapper.getPermissionsByAccountId(8)).thenReturn(List.of("DELETE_THREAD"));
 
         Threadd thread = new Threadd();
         thread.setThreadId(19);
@@ -75,7 +76,24 @@ class AuthorizationServiceImplTest {
         thread.setIsDeleted(false);
         when(threaddMapper.selectById(19)).thenReturn(thread);
 
-        assertDoesNotThrow(() -> service.assertCanDeleteThread(8, 19));
+        assertDoesNotThrow(() -> service.assertCanModerateDeleteThread(8, 19, 66));
+    }
+
+    @Test
+    void shouldDenyNonAuthorOnUserThreadDeleteEvenWithPermission() {
+        AuthorizationServiceImpl service = createService();
+        lenient().when(roleMapper.getRoleNameByUserId(8)).thenReturn("MODERATOR");
+        lenient().when(roleMapper.getTopicIdByUserId(8)).thenReturn(66);
+        lenient().when(permissionMapper.getPermissionsByAccountId(8)).thenReturn(List.of("DELETE_THREAD"));
+
+        Threadd thread = new Threadd();
+        thread.setThreadId(19);
+        thread.setTopicId(66);
+        thread.setAccountId(5);
+        thread.setIsDeleted(false);
+        when(threaddMapper.selectById(19)).thenReturn(thread);
+
+        assertThrows(AccessDeniedException.class, () -> service.assertCanDeleteThread(8, 19));
     }
 
     @Test
@@ -92,6 +110,86 @@ class AuthorizationServiceImplTest {
     }
 
     @Test
+    void shouldAllowScopedModeratorToUpdateThreadTagWithSpecificPermission() {
+        AuthorizationServiceImpl service = createService();
+        when(roleMapper.getRoleNameByUserId(8)).thenReturn("MODERATOR");
+        when(roleMapper.getTopicIdByUserId(8)).thenReturn(66);
+        when(permissionMapper.getPermissionsByAccountId(8)).thenReturn(List.of("UPDATE_THREAD_TAG"));
+
+        Threadd thread = new Threadd();
+        thread.setThreadId(19);
+        thread.setTopicId(66);
+        thread.setAccountId(5);
+        thread.setIsDeleted(false);
+        when(threaddMapper.selectById(19)).thenReturn(thread);
+
+        assertDoesNotThrow(() -> service.assertCanUpdateThreadTag(8, 19, 66));
+    }
+
+    @Test
+    void shouldAllowScopedModeratorToSetAnnouncementWithSpecificPermission() {
+        AuthorizationServiceImpl service = createService();
+        when(roleMapper.getRoleNameByUserId(8)).thenReturn("MODERATOR");
+        when(roleMapper.getTopicIdByUserId(8)).thenReturn(66);
+        when(permissionMapper.getPermissionsByAccountId(8)).thenReturn(List.of("SET_ANNOUNCEMENT"));
+
+        Threadd thread = new Threadd();
+        thread.setThreadId(19);
+        thread.setTopicId(66);
+        thread.setAccountId(5);
+        thread.setIsDeleted(false);
+        when(threaddMapper.selectById(19)).thenReturn(thread);
+
+        assertDoesNotThrow(() -> service.assertCanSetAnnouncement(8, 19, 66));
+    }
+
+    @Test
+    void shouldAllowScopedModeratorToDeletePostWithDeletePostPermission() {
+        AuthorizationServiceImpl service = createService();
+        when(roleMapper.getRoleNameByUserId(8)).thenReturn("MODERATOR");
+        when(roleMapper.getTopicIdByUserId(8)).thenReturn(66);
+        when(permissionMapper.getPermissionsByAccountId(8)).thenReturn(List.of("DELETE_POST"));
+
+        Post post = new Post();
+        post.setPostId(31);
+        post.setAccountId(9);
+        post.setTopicId(66);
+        post.setIsDeleted(false);
+        when(postMapper.selectById(31)).thenReturn(post);
+
+        assertDoesNotThrow(() -> service.assertCanModerateDeletePost(8, 31));
+    }
+
+    @Test
+    void shouldAllowScopedModeratorToUpdateBoundTopic() {
+        AuthorizationServiceImpl service = createService();
+        when(roleMapper.getRoleNameByUserId(8)).thenReturn("MODERATOR");
+        when(roleMapper.getTopicIdByUserId(8)).thenReturn(66);
+        when(permissionMapper.getPermissionsByAccountId(8)).thenReturn(List.of("UPDATE_TOPIC"));
+
+        assertDoesNotThrow(() -> service.assertCanUpdateTopic(8, 66));
+    }
+
+    @Test
+    void shouldDenyScopedModeratorToUpdateUnboundTopic() {
+        AuthorizationServiceImpl service = createService();
+        when(roleMapper.getRoleNameByUserId(8)).thenReturn("MODERATOR");
+        when(roleMapper.getTopicIdByUserId(8)).thenReturn(66);
+        when(permissionMapper.getPermissionsByAccountId(8)).thenReturn(List.of("UPDATE_TOPIC"));
+
+        assertThrows(AccessDeniedException.class, () -> service.assertCanUpdateTopic(8, 77));
+    }
+
+    @Test
+    void shouldAllowGlobalCreateTopicPermissionWithoutTopicScope() {
+        AuthorizationServiceImpl service = createService();
+        when(roleMapper.getRoleNameByUserId(8)).thenReturn("MODERATOR");
+        when(permissionMapper.getPermissionsByAccountId(8)).thenReturn(List.of("CREATE_TOPIC"));
+
+        assertDoesNotThrow(() -> service.assertCanCreateTopic(8));
+    }
+
+    @Test
     void shouldAllowAuthorToDeleteOwnPost() {
         AuthorizationServiceImpl service = createService();
         Post post = new Post();
@@ -102,6 +200,23 @@ class AuthorizationServiceImplTest {
         when(postMapper.selectById(31)).thenReturn(post);
 
         assertDoesNotThrow(() -> service.assertCanDeletePost(9, 31));
+    }
+
+    @Test
+    void shouldDenyNonAuthorOnUserPostDeleteEvenWithPermission() {
+        AuthorizationServiceImpl service = createService();
+        lenient().when(roleMapper.getRoleNameByUserId(8)).thenReturn("MODERATOR");
+        lenient().when(roleMapper.getTopicIdByUserId(8)).thenReturn(44);
+        lenient().when(permissionMapper.getPermissionsByAccountId(8)).thenReturn(List.of("DELETE_POST"));
+
+        Post post = new Post();
+        post.setPostId(31);
+        post.setAccountId(9);
+        post.setTopicId(44);
+        post.setIsDeleted(false);
+        when(postMapper.selectById(31)).thenReturn(post);
+
+        assertThrows(AccessDeniedException.class, () -> service.assertCanDeletePost(8, 31));
     }
 
     @Test

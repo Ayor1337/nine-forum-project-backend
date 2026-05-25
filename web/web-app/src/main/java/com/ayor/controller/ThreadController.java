@@ -8,7 +8,6 @@ import com.ayor.entity.vo.AnnouncementVO;
 import com.ayor.entity.vo.PostVO;
 import com.ayor.entity.vo.ThreadVO;
 import com.ayor.result.Result;
-import com.ayor.service.AuthorizationService;
 import com.ayor.service.PostService;
 import com.ayor.service.ReportService;
 import com.ayor.service.ThreaddService;
@@ -32,8 +31,6 @@ public class ThreadController {
     private final SecurityUtils security;
 
     private final ReportService reportService;
-
-    private final AuthorizationService authorizationService;
 
     /**
      * 获取指定主题下的帖子列表。
@@ -139,26 +136,6 @@ public class ThreadController {
                                            @RequestBody @Valid ContentReportDTO dto) {
         Integer userId = security.getSecurityUserId();
         return Result.messageHandler(() -> reportService.createThreadReport(userId, threadId, dto));
-    }
-
-    /**
-     * 将帖子设为主题公告。
-     */
-    @PutMapping("/topics/{topic_id}/announcements/{thread_id}")
-    public Result<Void> setAnnouncement(@PathVariable(name = "topic_id") Integer topicId,
-                                        @PathVariable(name = "thread_id") Integer threadId) {
-        authorizationService.assertCanSetAnnouncement(security.getSecurityUserId(), threadId, topicId);
-        return Result.messageHandler(() -> threaddService.setAnnouncementByThreadId(threadId, topicId));
-    }
-
-    /**
-     * 取消帖子公告状态。
-     */
-    @DeleteMapping("/topics/{topic_id}/announcements/{thread_id}")
-    public Result<Void> unsetAnnouncement(@PathVariable(name = "topic_id") Integer topicId,
-                                          @PathVariable(name = "thread_id") Integer threadId) {
-        authorizationService.assertCanSetAnnouncement(security.getSecurityUserId(), threadId, topicId);
-        return Result.messageHandler(() -> threaddService.removeAnnouncementByThreadId(threadId, topicId));
     }
 
     // You see but you do not observe

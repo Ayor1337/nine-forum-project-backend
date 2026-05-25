@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RequiredArgsConstructor
 @RestController
-@RequestMapping("/api/moderation")
+@RequestMapping("/api/perm/post")
 public class PermPostController {
 
     private final PostService postService;
@@ -24,9 +24,9 @@ public class PermPostController {
     /**
      * 管理员删除评论。
      */
-    @DeleteMapping("/posts/{post_id}")
+    @DeleteMapping("/{post_id}")
     public Result<Void> deletePostPermission(@PathVariable(name = "post_id") Integer postId) {
-        authorizationService.assertCanDeletePost(security.getSecurityUserId(), postId);
+        authorizationService.assertCanModerateDeletePost(security.getSecurityUserId(), postId);
         return Result.messageHandler(() -> postService.removePostPermission(postId));
     }
 }

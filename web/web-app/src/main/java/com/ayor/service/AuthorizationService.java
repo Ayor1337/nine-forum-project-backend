@@ -6,6 +6,14 @@ public interface AuthorizationService {
 
     void assertCanManageTopic(Integer actorId);
 
+    void assertCanCreateTheme(Integer actorId);
+
+    void assertCanCreateTopic(Integer actorId);
+
+    void assertCanUpdateTopic(Integer actorId, Integer topicId);
+
+    void assertCanDeleteTopic(Integer actorId, Integer topicId);
+
     void assertCanCreateTag(Integer actorId, Integer topicId);
 
     void assertCanUpdateThreadTag(Integer actorId, Integer threadId, Integer topicId);
@@ -13,6 +21,8 @@ public interface AuthorizationService {
     void assertCanSetAnnouncement(Integer actorId, Integer threadId, Integer topicId);
 
     void assertCanModerateDeleteThread(Integer actorId, Integer threadId, Integer topicId);
+
+    void assertCanModerateDeletePost(Integer actorId, Integer postId);
 
     void assertCanDeleteThread(Integer actorId, Integer threadId);
 

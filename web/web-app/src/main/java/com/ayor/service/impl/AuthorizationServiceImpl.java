@@ -75,6 +75,26 @@ public class AuthorizationServiceImpl implements AuthorizationService {
         assertOwner(actorId);
     }
 
+    @Override
+    public void assertCanCreateTheme(Integer actorId) {
+        assertGlobalPermission(actorId, PermissionType.CREATE_THEME);
+    }
+
+    @Override
+    public void assertCanCreateTopic(Integer actorId) {
+        assertGlobalPermission(actorId, PermissionType.CREATE_TOPIC);
+    }
+
+    @Override
+    public void assertCanUpdateTopic(Integer actorId, Integer topicId) {
+        assertTopicPermission(actorId, topicId, PermissionType.UPDATE_TOPIC);
+    }
+
+    @Override
+    public void assertCanDeleteTopic(Integer actorId, Integer topicId) {
+        assertTopicPermission(actorId, topicId, PermissionType.DELETE_TOPIC);
+    }
+
     /**
      * 断言操作者可以在指定话题下创建标签。
      *
@@ -101,7 +121,7 @@ public class AuthorizationServiceImpl implements AuthorizationService {
     public void assertCanUpdateThreadTag(Integer actorId, Integer threadId, Integer topicId) {
         Threadd thread = requireActiveThread(threadId);
         assertTopicBoundThread(thread, topicId);
-        assertTopicPermission(actorId, topicId, PermissionType.UPDATE_TAG);
+        assertTopicPermission(actorId, topicId, PermissionType.UPDATE_THREAD_TAG);
     }
 
     /**
@@ -118,7 +138,7 @@ public class AuthorizationServiceImpl implements AuthorizationService {
     public void assertCanSetAnnouncement(Integer actorId, Integer threadId, Integer topicId) {
         Threadd thread = requireActiveThread(threadId);
         assertTopicBoundThread(thread, topicId);
-        assertTopicPermission(actorId, topicId, PermissionType.UPDATE_TAG);
+        assertTopicPermission(actorId, topicId, PermissionType.SET_ANNOUNCEMENT);
     }
 
     /**
@@ -138,10 +158,16 @@ public class AuthorizationServiceImpl implements AuthorizationService {
         assertTopicPermission(actorId, topicId, PermissionType.DELETE_THREAD);
     }
 
+    @Override
+    public void assertCanModerateDeletePost(Integer actorId, Integer postId) {
+        Post post = requireActivePost(postId);
+        assertTopicPermission(actorId, post.getTopicId(), PermissionType.DELETE_POST);
+    }
+
     /**
      * 断言操作者可以删除指定帖子。
      *
-     * <p>帖子作者可以删除自己的帖子；非作者需要拥有该帖子所属话题的删帖权限。</p>
+     * <p>普通删除入口只允许帖子作者删除自己的帖子；管理员删帖应使用权限管理入口。</p>
      *
      * @param actorId 操作者账号 ID
      * @param threadId 目标帖子 ID
@@ -154,13 +180,13 @@ public class AuthorizationServiceImpl implements AuthorizationService {
         if (Objects.equals(thread.getAccountId(), actorId)) {
             return;
         }
-        assertTopicPermission(actorId, thread.getTopicId(), PermissionType.DELETE_THREAD);
+        throw new AccessDeniedException(ACCESS_DENIED);
     }
 
     /**
      * 断言操作者可以删除指定回复。
      *
-     * <p>回复作者可以删除自己的回复；非作者需要拥有该回复所属话题的删帖权限。</p>
+     * <p>普通删除入口只允许回复作者删除自己的回复；管理员删回复应使用权限管理入口。</p>
      *
      * @param actorId 操作者账号 ID
      * @param postId 目标回复 ID
@@ -173,7 +199,7 @@ public class AuthorizationServiceImpl implements AuthorizationService {
         if (Objects.equals(post.getAccountId(), actorId)) {
             return;
         }
-        assertTopicPermission(actorId, post.getTopicId(), PermissionType.DELETE_THREAD);
+        throw new AccessDeniedException(ACCESS_DENIED);
     }
 
     /**
@@ -268,6 +294,18 @@ public class AuthorizationServiceImpl implements AuthorizationService {
     private void assertOwner(Integer actorId) {
         requireActor(actorId);
         if (!RoleType.isOwner(roleMapper.getRoleNameByUserId(actorId))) {
+            throw new AccessDeniedException(ACCESS_DENIED);
+        }
+    }
+
+    private void assertGlobalPermission(Integer actorId, PermissionType permission) {
+        requireActor(actorId);
+        if (RoleType.isOwner(roleMapper.getRoleNameByUserId(actorId))) {
+            return;
+        }
+        List<String> permissions = permissionMapper.getPermissionsByAccountId(actorId);
+        boolean hasPermission = permissions != null && permissions.contains(permission.dbValue());
+        if (!hasPermission) {
             throw new AccessDeniedException(ACCESS_DENIED);
         }
     }

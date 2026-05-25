@@ -20,7 +20,7 @@ class PermThreadControllerTest {
     void controllerShouldExposeModerationBasePath() {
         RequestMapping mapping = PermThreadController.class.getAnnotation(RequestMapping.class);
 
-        assertEquals("/api/moderation", mapping.value()[0]);
+        assertEquals("/api/perm/thread", mapping.value()[0]);
     }
 
     @Test
@@ -34,7 +34,7 @@ class PermThreadControllerTest {
 
         PutMapping mapping = method.getAnnotation(PutMapping.class);
 
-        assertEquals("/threads/{thread_id}/tag", mapping.value()[0]);
+        assertEquals("/{thread_id}/tag", mapping.value()[0]);
         assertTrue(queryParamNames(method).contains("topic_id"));
     }
 
@@ -48,7 +48,7 @@ class PermThreadControllerTest {
 
         DeleteMapping mapping = method.getAnnotation(DeleteMapping.class);
 
-        assertEquals("/threads/{thread_id}/tag", mapping.value()[0]);
+        assertEquals("/{thread_id}/tag", mapping.value()[0]);
         assertTrue(queryParamNames(method).contains("topic_id"));
     }
 
@@ -62,7 +62,35 @@ class PermThreadControllerTest {
 
         DeleteMapping mapping = method.getAnnotation(DeleteMapping.class);
 
-        assertEquals("/threads/{thread_id}", mapping.value()[0]);
+        assertEquals("/{thread_id}", mapping.value()[0]);
+        assertTrue(queryParamNames(method).contains("topic_id"));
+    }
+
+    @Test
+    void setAnnouncementShouldExposePermissionRouteAndQueryParam() throws NoSuchMethodException {
+        Method method = PermThreadController.class.getMethod(
+                "setAnnouncement",
+                Integer.class,
+                Integer.class
+        );
+
+        PutMapping mapping = method.getAnnotation(PutMapping.class);
+
+        assertEquals("/{thread_id}/announcement", mapping.value()[0]);
+        assertTrue(queryParamNames(method).contains("topic_id"));
+    }
+
+    @Test
+    void unsetAnnouncementShouldExposePermissionRouteAndQueryParam() throws NoSuchMethodException {
+        Method method = PermThreadController.class.getMethod(
+                "unsetAnnouncement",
+                Integer.class,
+                Integer.class
+        );
+
+        DeleteMapping mapping = method.getAnnotation(DeleteMapping.class);
+
+        assertEquals("/{thread_id}/announcement", mapping.value()[0]);
         assertTrue(queryParamNames(method).contains("topic_id"));
     }
 
