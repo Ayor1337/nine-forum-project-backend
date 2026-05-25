@@ -2,6 +2,7 @@ package com.ayor.service.impl;
 
 import com.ayor.entity.pojo.Permission;
 import com.ayor.entity.vo.PermissionVO;
+import com.ayor.mapper.AccountMapper;
 import com.ayor.mapper.PermissionMapper;
 import com.ayor.mapper.RoleMapper;
 import com.ayor.service.PermissionService;
@@ -9,6 +10,8 @@ import com.ayor.type.PermissionType;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -22,6 +25,10 @@ import java.util.List;
 public class PermissionServiceImpl extends ServiceImpl<PermissionMapper, Permission> implements PermissionService {
 
     private final RoleMapper roleMapper;
+
+    private final AccountMapper accountMapper;
+
+    private final CacheManager cacheManager;
 
     /**
      * 查询角色下的权限列表；未指定角色时返回全部权限。
@@ -58,7 +65,11 @@ public class PermissionServiceImpl extends ServiceImpl<PermissionMapper, Permiss
         if (!PermissionType.isKnown(permission.getPermission())) {
             return "权限标识不存在";
         }
-        return this.save(permission) ? null : "创建权限失败";
+        if (!this.save(permission)) {
+            return "创建权限失败";
+        }
+        evictUserInfoByRoleId(permission.getRoleId());
+        return null;
     }
 
     /**
@@ -73,6 +84,7 @@ public class PermissionServiceImpl extends ServiceImpl<PermissionMapper, Permiss
         if (exist == null) {
             return "权限不存在";
         }
+        Integer originalRoleId = exist.getRoleId();
         if (permission.getRoleId() != null) {
             if (roleMapper.selectById(permission.getRoleId()) == null) {
                 return "角色不存在";
@@ -85,7 +97,12 @@ public class PermissionServiceImpl extends ServiceImpl<PermissionMapper, Permiss
             }
             exist.setPermission(permission.getPermission());
         }
-        return this.updateById(exist) ? null : "更新权限失败";
+        if (!this.updateById(exist)) {
+            return "更新权限失败";
+        }
+        evictUserInfoByRoleId(originalRoleId);
+        evictUserInfoByRoleId(exist.getRoleId());
+        return null;
     }
 
     @Override
@@ -110,7 +127,14 @@ public class PermissionServiceImpl extends ServiceImpl<PermissionMapper, Permiss
         if (permissionId == null) {
             return "权限不存在";
         }
-        return this.removeById(permissionId) ? null : "删除权限失败";
+        Permission exist = this.getById(permissionId);
+        if (!this.removeById(permissionId)) {
+            return "删除权限失败";
+        }
+        if (exist != null) {
+            evictUserInfoByRoleId(exist.getRoleId());
+        }
+        return null;
     }
 
     @Override
@@ -125,6 +149,23 @@ public class PermissionServiceImpl extends ServiceImpl<PermissionMapper, Permiss
             }
         }
         return null;
+    }
+
+    private void evictUserInfoByRoleId(Integer roleId) {
+        if (roleId == null) {
+            return;
+        }
+        List<Integer> accountIds = accountMapper.getAccountIdsByRoleId(roleId);
+        if (accountIds == null || accountIds.isEmpty()) {
+            return;
+        }
+        Cache userInfoCache = cacheManager.getCache("userInfo");
+        if (userInfoCache == null) {
+            return;
+        }
+        for (Integer accountId : accountIds) {
+            userInfoCache.evict(accountId);
+        }
     }
 
     private List<PermissionVO> toVOList(List<Permission> permissions) {
