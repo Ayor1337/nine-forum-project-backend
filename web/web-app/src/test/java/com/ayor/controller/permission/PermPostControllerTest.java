@@ -14,7 +14,7 @@ class PermPostControllerTest {
     void controllerShouldExposeModerationBasePath() {
         RequestMapping mapping = PermPostController.class.getAnnotation(RequestMapping.class);
 
-        assertEquals("/api/moderation", mapping.value()[0]);
+        assertEquals("/api/perm/post", mapping.value()[0]);
     }
 
     @Test
@@ -26,6 +26,6 @@ class PermPostControllerTest {
 
         DeleteMapping mapping = method.getAnnotation(DeleteMapping.class);
 
-        assertEquals("/posts/{post_id}", mapping.value()[0]);
+        assertEquals("/{post_id}", mapping.value()[0]);
     }
 }
