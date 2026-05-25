@@ -3,7 +3,6 @@ package com.ayor.controller;
 import com.ayor.entity.PageEntity;
 import com.ayor.entity.dto.ContentReportDTO;
 import com.ayor.entity.dto.PostDTO;
-import com.ayor.entity.dto.TagUpdateDTO;
 import com.ayor.entity.dto.ThreadDTO;
 import com.ayor.entity.vo.AnnouncementVO;
 import com.ayor.entity.vo.PostVO;
@@ -35,6 +34,7 @@ public class ThreadController {
     private final ReportService reportService;
 
     private final AuthorizationService authorizationService;
+
     /**
      * 获取指定主题下的帖子列表。
      */
@@ -142,27 +142,6 @@ public class ThreadController {
     }
 
     /**
-     * 修改帖子标签。
-     */
-    @PutMapping("/moderation/threads/{thread_id}/tag")
-    public Result<Void> updateTag(@PathVariable(name = "thread_id") Integer threadId,
-                                  @RequestParam(name = "topic_id") Integer topicId,
-                                  @Valid @RequestBody TagUpdateDTO tagUpdateDTO) {
-        authorizationService.assertCanUpdateThreadTag(security.getSecurityUserId(), threadId, topicId);
-        return Result.messageHandler(() -> threaddService.updateThreadTag(threadId, topicId, tagUpdateDTO.getTagId()));
-    }
-
-    /**
-     * 删除帖子标签。
-     */
-    @DeleteMapping("/moderation/threads/{thread_id}/tag")
-    public Result<Void> deleteThreadTag(@PathVariable(name = "thread_id") Integer threadId,
-                                        @RequestParam(name = "topic_id") Integer topicId) {
-        authorizationService.assertCanUpdateThreadTag(security.getSecurityUserId(), threadId, topicId);
-        return Result.messageHandler(() -> threaddService.removeThreadTag(threadId, topicId));
-    }
-
-    /**
      * 将帖子设为主题公告。
      */
     @PutMapping("/topics/{topic_id}/announcements/{thread_id}")
@@ -180,16 +159,6 @@ public class ThreadController {
                                           @PathVariable(name = "thread_id") Integer threadId) {
         authorizationService.assertCanSetAnnouncement(security.getSecurityUserId(), threadId, topicId);
         return Result.messageHandler(() -> threaddService.removeAnnouncementByThreadId(threadId, topicId));
-    }
-
-    /**
-     * 管理员删除帖子。
-     */
-    @DeleteMapping("/moderation/threads/{thread_id}")
-    public Result<Void> removeThreadByIdPermission(@PathVariable(name = "thread_id") Integer threadId,
-                                                   @RequestParam(name = "topic_id") Integer topicId) {
-        authorizationService.assertCanModerateDeleteThread(security.getSecurityUserId(), threadId, topicId);
-        return Result.messageHandler(() -> threaddService.permRemoveThreadById(threadId));
     }
 
     // You see but you do not observe

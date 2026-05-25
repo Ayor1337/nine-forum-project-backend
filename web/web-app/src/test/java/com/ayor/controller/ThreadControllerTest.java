@@ -27,11 +27,11 @@ class ThreadControllerTest {
         Set<String> queryParamNames = Arrays.stream(method.getParameters())
                 .map(parameter -> parameter.getAnnotation(RequestParam.class))
                 .filter(annotation -> annotation != null)
-                .map(RequestParam::value)
+                .map(this::requestParamName)
                 .collect(Collectors.toSet());
 
-        assertTrue(queryParamNames.contains("tagId"));
-        assertTrue(queryParamNames.contains("isSelected"));
+        assertTrue(queryParamNames.contains("tag_id"));
+        assertTrue(queryParamNames.contains("is_selected"));
     }
 
     @Test
@@ -48,7 +48,7 @@ class ThreadControllerTest {
         Set<String> queryParamNames = Arrays.stream(method.getParameters())
                 .map(parameter -> parameter.getAnnotation(RequestParam.class))
                 .filter(annotation -> annotation != null)
-                .map(RequestParam::value)
+                .map(this::requestParamName)
                 .collect(Collectors.toSet());
 
         assertTrue(queryParamNames.contains("period"));
@@ -70,12 +70,19 @@ class ThreadControllerTest {
         Set<String> queryParamNames = Arrays.stream(method.getParameters())
                 .map(parameter -> parameter.getAnnotation(RequestParam.class))
                 .filter(annotation -> annotation != null)
-                .map(RequestParam::value)
+                .map(this::requestParamName)
                 .collect(Collectors.toSet());
 
         assertTrue(queryParamNames.contains("period"));
         assertTrue(queryParamNames.contains("metric"));
         assertTrue(queryParamNames.contains("page_num"));
         assertTrue(queryParamNames.contains("page_size"));
+    }
+
+    private String requestParamName(RequestParam requestParam) {
+        if (!requestParam.value().isEmpty()) {
+            return requestParam.value();
+        }
+        return requestParam.name();
     }
 }
