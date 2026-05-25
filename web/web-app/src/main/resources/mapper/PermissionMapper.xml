@@ -4,19 +4,27 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.ayor.mapper.PermissionMapper">
 
-    <select id="getUserPermissionVO" resultType="com.ayor.entity.vo.UserPermissionVO">
+    <resultMap id="UserPermissionVOMap" type="com.ayor.entity.vo.UserPermissionVO">
+        <id property="accountId" column="account_id"/>
+        <result property="roleName" column="role_name"/>
+        <result property="roleNick" column="role_nick"/>
+        <result property="topicId" column="topic_id"/>
+        <collection property="permissions"
+                    column="account_id"
+                    select="getPermissionsByAccountId"
+                    ofType="java.lang.String"/>
+    </resultMap>
+
+    <select id="getUserPermissionVO" resultMap="UserPermissionVOMap">
         SELECT
             account_id,
             role_name,
             role_nick,
-            role.topic_id as 'topic_id',
-            GROUP_CONCAT(permission.permission) as 'permissions'
+            role.topic_id as 'topic_id'
         FROM
             account
                 JOIN role ON account.role_id = role.role_id
-                LEFT JOIN permission ON account.role_id = permission.role_id
         WHERE account.account_id = #{accountId}
-        GROUP BY account_id, role_name, role.topic_id
     </select>
 
 </mapper>
