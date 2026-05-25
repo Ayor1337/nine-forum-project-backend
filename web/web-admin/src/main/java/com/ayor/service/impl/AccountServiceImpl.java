@@ -75,6 +75,7 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
             AccountVO accountVO = new AccountVO();
             accountVO.setAccountId(account.getAccountId());
             accountVO.setUsername(account.getUsername());
+            accountVO.setNickname(account.getNickname());
             accountVos.add(accountVO);
         });
 
@@ -99,6 +100,7 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
             AccountVO accountVO = new AccountVO();
             accountVO.setAccountId(account.getAccountId());
             accountVO.setUsername(account.getUsername());
+            accountVO.setNickname(account.getNickname());
             accountVos.add(accountVO);
         });
 

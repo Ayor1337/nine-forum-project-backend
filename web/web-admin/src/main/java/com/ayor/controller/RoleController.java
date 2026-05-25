@@ -1,6 +1,10 @@
 package com.ayor.controller;
 
+import com.ayor.entity.PageEntity;
 import com.ayor.entity.dto.RoleDTO;
+import com.ayor.entity.pojo.Permission;
+import com.ayor.entity.vo.AccountVO;
+import com.ayor.entity.vo.PermissionVO;
 import com.ayor.entity.vo.RoleVO;
 import com.ayor.result.Result;
 import com.ayor.service.RoleService;
@@ -12,6 +16,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -65,5 +70,41 @@ public class RoleController {
         return Result.messageHandler(() -> roleService.deleteRole(roleId));
     }
 
+    @GetMapping("/{roleId}/accounts")
+    public Result<PageEntity<AccountVO>> listRoleAccounts(@PathVariable("roleId") Integer roleId,
+                                                          @RequestParam(value = "page_num", defaultValue = "1") Integer pageNum,
+                                                          @RequestParam(value = "page_size", defaultValue = "10") Integer pageSize) {
+        return Result.dataMessageHandler(() -> roleService.listRoleAccounts(roleId, pageNum, pageSize), "获取角色用户失败");
+    }
+
+    @PostMapping("/{roleId}/accounts/{accountId}")
+    public Result<Void> addAccountToRole(@PathVariable("roleId") Integer roleId,
+                                         @PathVariable("accountId") Integer accountId) {
+        return Result.messageHandler(() -> roleService.addAccountToRole(roleId, accountId));
+    }
+
+    @DeleteMapping("/{roleId}/accounts/{accountId}")
+    public Result<Void> removeAccountFromRole(@PathVariable("roleId") Integer roleId,
+                                              @PathVariable("accountId") Integer accountId) {
+        return Result.messageHandler(() -> roleService.removeAccountFromRole(roleId, accountId));
+    }
+
+    @GetMapping("/{roleId}/permissions")
+    public Result<List<PermissionVO>> listRolePermissions(@PathVariable("roleId") Integer roleId) {
+        return Result.dataMessageHandler(() -> roleService.listRolePermissions(roleId), "获取角色权限失败");
+    }
+
+    @PostMapping("/{roleId}/permissions")
+    public Result<Void> addPermissionToRole(@PathVariable("roleId") Integer roleId,
+                                            @RequestBody Permission permission) {
+        String permissionName = permission == null ? null : permission.getPermission();
+        return Result.messageHandler(() -> roleService.addPermissionToRole(roleId, permissionName));
+    }
+
+    @DeleteMapping("/{roleId}/permissions/{permission}")
+    public Result<Void> removePermissionFromRole(@PathVariable("roleId") Integer roleId,
+                                                 @PathVariable("permission") String permission) {
+        return Result.messageHandler(() -> roleService.removePermissionFromRole(roleId, permission));
+    }
 
 }

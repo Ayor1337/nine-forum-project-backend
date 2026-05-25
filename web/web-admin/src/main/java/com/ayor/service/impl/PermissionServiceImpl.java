@@ -3,8 +3,11 @@ package com.ayor.service.impl;
 import com.ayor.entity.pojo.Permission;
 import com.ayor.entity.vo.PermissionVO;
 import com.ayor.mapper.PermissionMapper;
+import com.ayor.mapper.RoleMapper;
 import com.ayor.service.PermissionService;
+import com.ayor.type.PermissionType;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,7 +18,10 @@ import java.util.List;
 
 @Service
 @Transactional
+@RequiredArgsConstructor
 public class PermissionServiceImpl extends ServiceImpl<PermissionMapper, Permission> implements PermissionService {
+
+    private final RoleMapper roleMapper;
 
     /**
      * 查询角色下的权限列表；未指定角色时返回全部权限。
@@ -43,8 +49,14 @@ public class PermissionServiceImpl extends ServiceImpl<PermissionMapper, Permiss
         if (permission == null || permission.getRoleId() == null) {
             return "角色不能为空";
         }
+        if (roleMapper.selectById(permission.getRoleId()) == null) {
+            return "角色不存在";
+        }
         if (!StringUtils.hasText(permission.getPermission())) {
             return "权限标识不能为空";
+        }
+        if (!PermissionType.isKnown(permission.getPermission())) {
+            return "权限标识不存在";
         }
         return this.save(permission) ? null : "创建权限失败";
     }
@@ -62,9 +74,15 @@ public class PermissionServiceImpl extends ServiceImpl<PermissionMapper, Permiss
             return "权限不存在";
         }
         if (permission.getRoleId() != null) {
+            if (roleMapper.selectById(permission.getRoleId()) == null) {
+                return "角色不存在";
+            }
             exist.setRoleId(permission.getRoleId());
         }
         if (StringUtils.hasText(permission.getPermission())) {
+            if (!PermissionType.isKnown(permission.getPermission())) {
+                return "权限标识不存在";
+            }
             exist.setPermission(permission.getPermission());
         }
         return this.updateById(exist) ? null : "更新权限失败";
