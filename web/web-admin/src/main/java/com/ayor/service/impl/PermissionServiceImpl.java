@@ -88,6 +88,20 @@ public class PermissionServiceImpl extends ServiceImpl<PermissionMapper, Permiss
         return this.updateById(exist) ? null : "更新权限失败";
     }
 
+    @Override
+    public String updatePermissions(List<Permission> permissions) {
+        if (permissions == null || permissions.isEmpty()) {
+            return "权限不能为空";
+        }
+        for (Permission permission : permissions) {
+            String message = updatePermission(permission);
+            if (message != null) {
+                return message;
+            }
+        }
+        return null;
+    }
+
     /**
      * 删除指定权限记录。
      */
@@ -97,6 +111,20 @@ public class PermissionServiceImpl extends ServiceImpl<PermissionMapper, Permiss
             return "权限不存在";
         }
         return this.removeById(permissionId) ? null : "删除权限失败";
+    }
+
+    @Override
+    public String deletePermissions(List<Integer> permissionIds) {
+        if (permissionIds == null || permissionIds.isEmpty()) {
+            return "权限不能为空";
+        }
+        for (Integer permissionId : permissionIds) {
+            String message = deletePermission(permissionId);
+            if (message != null) {
+                return message;
+            }
+        }
+        return null;
     }
 
     private List<PermissionVO> toVOList(List<Permission> permissions) {

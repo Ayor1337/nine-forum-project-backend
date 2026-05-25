@@ -53,9 +53,23 @@ public interface PermissionService extends IService<Permission> {
     String updatePermission(Permission permission);
 
     /**
+     * 批量更新权限信息
+     * @param permissions 权限实体列表
+     * @return 操作结果消息;成功返回null,失败返回错误描述
+     */
+    String updatePermissions(List<Permission> permissions);
+
+    /**
      * 删除权限(物理删除)
      * @param permissionId 权限ID
      * @return 操作结果消息;成功返回null,失败返回错误描述
      */
     String deletePermission(Integer permissionId);
+
+    /**
+     * 批量删除权限(物理删除)
+     * @param permissionIds 权限ID列表
+     * @return 操作结果消息;成功返回null,失败返回错误描述
+     */
+    String deletePermissions(List<Integer> permissionIds);
 }
