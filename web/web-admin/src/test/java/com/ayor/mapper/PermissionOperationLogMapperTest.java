@@ -1,6 +1,6 @@
 package com.ayor.mapper;
 
-import com.ayor.entity.pojo.PermissionOperationLog;
+import com.ayor.entity.vo.PermissionOperationLogVO;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Select;
 import org.junit.jupiter.api.Test;
@@ -18,11 +18,13 @@ class PermissionOperationLogMapperTest {
 
         Method method = PermissionOperationLogMapper.class.getMethod("listLatest");
         assertThat(method.getReturnType()).isEqualTo(List.class);
+        assertThat(method.getGenericReturnType().getTypeName())
+                .contains(PermissionOperationLogVO.class.getName());
 
         Select select = method.getAnnotation(Select.class);
         assertThat(select).isNotNull();
-        assertThat(select.value()).containsExactly(
-                "select * from permission_operation_log order by create_time desc, log_id desc"
-        );
+        String sql = String.join(" ", select.value());
+        assertThat(sql).contains("a.username");
+        assertThat(sql).doesNotContain("l.user_id as userId");
     }
 }

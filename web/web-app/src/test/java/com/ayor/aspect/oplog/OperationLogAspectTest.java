@@ -41,14 +41,14 @@ class OperationLogAspectTest {
     void shouldSaveOperationLogWhenResultIsSuccessful() throws Throwable {
         OperationLogAspect aspect = new OperationLogAspect(new ObjectMapper(), operationLogMapper, securityUtils);
         OperationLog operationLog = TestOperations.class
-                .getMethod("successfulOperation", Integer.class, String.class)
+                .getMethod("successfulOperation", Integer.class, TopicUpdateRequest.class)
                 .getAnnotation(OperationLog.class);
         Result<Void> result = Result.ok();
         when(joinPoint.getSignature()).thenReturn(signature);
         when(signature.getDeclaringType()).thenReturn(TestOperations.class);
         when(signature.getName()).thenReturn("successfulOperation");
-        when(signature.getParameterNames()).thenReturn(new String[]{"topicId", "name"});
-        when(joinPoint.getArgs()).thenReturn(new Object[]{7, "java"});
+        when(signature.getParameterNames()).thenReturn(new String[]{"topicId", "request"});
+        when(joinPoint.getArgs()).thenReturn(new Object[]{7, new TopicUpdateRequest("java", 2)});
         when(joinPoint.proceed()).thenReturn(result);
         when(securityUtils.getSecurityUserId()).thenReturn(42);
 
@@ -63,19 +63,22 @@ class OperationLogAspectTest {
         assertEquals("topic", saved.getTargetType());
         assertEquals(7L, saved.getTargetId());
         assertEquals("TestOperations.successfulOperation", saved.getMethod());
+        assertEquals(7, saved.getParams().get("topicId"));
+        assertEquals("java", saved.getParams().get("topicName"));
+        assertEquals(2, saved.getParams().get("themeId"));
     }
 
     @Test
     void shouldNotSaveOperationLogWhenResultFails() throws Throwable {
         OperationLogAspect aspect = new OperationLogAspect(new ObjectMapper(), operationLogMapper, securityUtils);
         OperationLog operationLog = TestOperations.class
-                .getMethod("successfulOperation", Integer.class, String.class)
+                .getMethod("successfulOperation", Integer.class, TopicUpdateRequest.class)
                 .getAnnotation(OperationLog.class);
         Result<Void> result = Result.fail();
         when(joinPoint.getSignature()).thenReturn(signature);
         when(signature.getDeclaringType()).thenReturn(TestOperations.class);
         when(signature.getName()).thenReturn("successfulOperation");
-        when(joinPoint.getArgs()).thenReturn(new Object[]{7, "java"});
+        when(joinPoint.getArgs()).thenReturn(new Object[]{7, new TopicUpdateRequest("java", 2)});
         when(joinPoint.proceed()).thenReturn(result);
 
         Object actual = aspect.around(joinPoint, operationLog);
@@ -88,13 +91,13 @@ class OperationLogAspectTest {
     void shouldNotSaveOperationLogWhenTargetThrows() throws Throwable {
         OperationLogAspect aspect = new OperationLogAspect(new ObjectMapper(), operationLogMapper, securityUtils);
         OperationLog operationLog = TestOperations.class
-                .getMethod("successfulOperation", Integer.class, String.class)
+                .getMethod("successfulOperation", Integer.class, TopicUpdateRequest.class)
                 .getAnnotation(OperationLog.class);
         IllegalStateException exception = new IllegalStateException("boom");
         when(joinPoint.getSignature()).thenReturn(signature);
         when(signature.getDeclaringType()).thenReturn(TestOperations.class);
         when(signature.getName()).thenReturn("successfulOperation");
-        when(joinPoint.getArgs()).thenReturn(new Object[]{7, "java"});
+        when(joinPoint.getArgs()).thenReturn(new Object[]{7, new TopicUpdateRequest("java", 2)});
         when(joinPoint.proceed()).thenThrow(exception);
 
         IllegalStateException actual = assertThrows(IllegalStateException.class, () -> aspect.around(joinPoint, operationLog));
@@ -107,14 +110,14 @@ class OperationLogAspectTest {
     void shouldKeepBusinessResultWhenSavingLogFails() throws Throwable {
         OperationLogAspect aspect = new OperationLogAspect(new ObjectMapper(), operationLogMapper, securityUtils);
         OperationLog operationLog = TestOperations.class
-                .getMethod("successfulOperation", Integer.class, String.class)
+                .getMethod("successfulOperation", Integer.class, TopicUpdateRequest.class)
                 .getAnnotation(OperationLog.class);
         Result<Void> result = Result.ok();
         when(joinPoint.getSignature()).thenReturn(signature);
         when(signature.getDeclaringType()).thenReturn(TestOperations.class);
         when(signature.getName()).thenReturn("successfulOperation");
         when(signature.getParameterNames()).thenReturn(new String[]{"topicId", "name"});
-        when(joinPoint.getArgs()).thenReturn(new Object[]{7, "java"});
+        when(joinPoint.getArgs()).thenReturn(new Object[]{7, new TopicUpdateRequest("java", 2)});
         when(joinPoint.proceed()).thenReturn(result);
         when(securityUtils.getSecurityUserId()).thenReturn(42);
         doThrow(new IllegalStateException("database unavailable"))
@@ -128,7 +131,10 @@ class OperationLogAspectTest {
     private static class TestOperations {
 
         @OperationLog(value = "更新话题", save = true, action = "UPDATE_TOPIC", targetType = "topic", targetIdParam = "topicId")
-        public void successfulOperation(Integer topicId, String name) {
+        public void successfulOperation(Integer topicId, TopicUpdateRequest request) {
         }
+    }
+
+    private record TopicUpdateRequest(String topicName, Integer themeId) {
     }
 }

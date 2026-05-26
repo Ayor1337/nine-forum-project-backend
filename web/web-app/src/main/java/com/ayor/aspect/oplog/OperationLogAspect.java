@@ -6,6 +6,7 @@ import com.ayor.result.Result;
 import com.ayor.result.ResultCodeEnum;
 import com.ayor.util.SecurityUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,6 +18,8 @@ import org.springframework.stereotype.Component;
 
 import java.util.Arrays;
 import java.util.Date;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * 统一处理 {@link OperationLog} 注解的日志切面。
@@ -26,6 +29,9 @@ import java.util.Date;
 @Component
 @RequiredArgsConstructor
 public class OperationLogAspect {
+
+    private static final TypeReference<Map<String, Object>> MAP_TYPE = new TypeReference<>() {
+    };
 
     private final ObjectMapper objectMapper;
 
@@ -46,7 +52,7 @@ public class OperationLogAspect {
         MethodSignature signature = (MethodSignature) joinPoint.getSignature();
         String method = signature.getDeclaringType().getSimpleName() + "." + signature.getName();
         String description = operationLog.value().isEmpty() ? method : operationLog.value();
-        String params = operationLog.logParams() ? toJson(joinPoint.getArgs()) : "[ignored]";
+        Map<String, Object> params = operationLog.logParams() ? toParamMap(signature, joinPoint.getArgs()) : Map.of();
         long start = System.currentTimeMillis();
         try {
             Object result = joinPoint.proceed();
@@ -91,7 +97,7 @@ public class OperationLogAspect {
     private void saveIfNecessary(ProceedingJoinPoint joinPoint,
                                  OperationLog operationLog,
                                  String method,
-                                 String params,
+                                 Map<String, Object> params,
                                  long duration,
                                  Object result) {
         if (!operationLog.save() || !isSuccessfulResult(result)) {
@@ -111,6 +117,56 @@ public class OperationLogAspect {
         } catch (Exception ex) {
             log.error("Failed to save permission operation log - method: {}, error: {}", method, ex.getMessage(), ex);
         }
+    }
+
+    private Map<String, Object> toParamMap(MethodSignature signature, Object[] args) {
+        Map<String, Object> params = new LinkedHashMap<>();
+        if (args == null || args.length == 0) {
+            return params;
+        }
+        String[] parameterNames = signature.getParameterNames();
+        for (int i = 0; i < args.length; i++) {
+            String name = parameterNames != null && i < parameterNames.length ? parameterNames[i] : "arg" + i;
+            putParam(params, name, args[i]);
+        }
+        return params;
+    }
+
+    private void putParam(Map<String, Object> params, String name, Object value) {
+        if (value == null || isScalar(value)) {
+            params.put(name, value);
+            return;
+        }
+        if (value instanceof Map<?, ?> map) {
+            for (Map.Entry<?, ?> entry : map.entrySet()) {
+                if (entry.getKey() != null) {
+                    putWithoutOverwriting(params, String.valueOf(entry.getKey()), entry.getValue());
+                }
+            }
+            return;
+        }
+        if (value instanceof Iterable<?> || value.getClass().isArray()) {
+            params.put(name, value);
+            return;
+        }
+        Map<String, Object> fields = objectMapper.convertValue(value, MAP_TYPE);
+        for (Map.Entry<String, Object> entry : fields.entrySet()) {
+            putWithoutOverwriting(params, entry.getKey(), entry.getValue());
+        }
+    }
+
+    private void putWithoutOverwriting(Map<String, Object> params, String key, Object value) {
+        if (!params.containsKey(key)) {
+            params.put(key, value);
+        }
+    }
+
+    private boolean isScalar(Object value) {
+        return value instanceof CharSequence
+                || value instanceof Number
+                || value instanceof Boolean
+                || value instanceof Enum<?>
+                || value instanceof Date;
     }
 
     private boolean isSuccessfulResult(Object result) {
