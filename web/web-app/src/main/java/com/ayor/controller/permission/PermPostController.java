@@ -1,5 +1,6 @@
 package com.ayor.controller.permission;
 
+import com.ayor.aspect.oplog.OperationLog;
 import com.ayor.result.Result;
 import com.ayor.service.AuthorizationService;
 import com.ayor.service.PostService;
@@ -24,6 +25,7 @@ public class PermPostController {
     /**
      * 管理员删除评论。
      */
+    @OperationLog(value = "权限删除回复", save = true, action = "DELETE_POST", targetType = "post", targetIdParam = "postId")
     @DeleteMapping("/{post_id}")
     public Result<Void> deletePostPermission(@PathVariable(name = "post_id") Integer postId) {
         authorizationService.assertCanModerateDeletePost(security.getSecurityUserId(), postId);

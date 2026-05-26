@@ -267,6 +267,25 @@ CREATE TABLE IF NOT EXISTS `dashboard_activity` (
 ) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
+-- Table structure for permission_operation_log
+-- ----------------------------
+CREATE TABLE IF NOT EXISTS `permission_operation_log` (
+                              `log_id` bigint NOT NULL AUTO_INCREMENT COMMENT '权限操作日志ID',
+                              `user_id` int NOT NULL COMMENT '操作者用户ID',
+                              `action` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '操作类型',
+                              `target_type` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '操作对象类型',
+                              `target_id` bigint NULL DEFAULT NULL COMMENT '操作对象ID',
+                              `method` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '执行方法',
+                              `params` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL COMMENT '请求参数JSON',
+                              `duration_ms` bigint NOT NULL COMMENT '执行耗时毫秒',
+                              `create_time` datetime NOT NULL COMMENT '创建时间',
+                              PRIMARY KEY (`log_id`) USING BTREE,
+                              INDEX `idx_permission_operation_log_create_time` (`create_time`) USING BTREE,
+                              INDEX `idx_permission_operation_log_user_action` (`user_id`, `action`) USING BTREE,
+                              INDEX `idx_permission_operation_log_target` (`target_type`, `target_id`) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = DYNAMIC;
+
+-- ----------------------------
 -- Table structure for role
 -- ----------------------------
 CREATE TABLE IF NOT EXISTS `role`  (

@@ -1,5 +1,10 @@
 package com.ayor.aspect.oplog;
 
+import com.ayor.entity.pojo.PermissionOperationLog;
+import com.ayor.mapper.PermissionOperationLogMapper;
+import com.ayor.result.Result;
+import com.ayor.result.ResultCodeEnum;
+import com.ayor.util.SecurityUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -11,6 +16,7 @@ import org.aspectj.lang.reflect.MethodSignature;
 import org.springframework.stereotype.Component;
 
 import java.util.Arrays;
+import java.util.Date;
 
 /**
  * 统一处理 {@link OperationLog} 注解的日志切面。
@@ -22,6 +28,10 @@ import java.util.Arrays;
 public class OperationLogAspect {
 
     private final ObjectMapper objectMapper;
+
+    private final PermissionOperationLogMapper operationLogMapper;
+
+    private final SecurityUtils securityUtils;
 
     /**
      * 在目标方法执行前后记录操作日志。
@@ -48,6 +58,7 @@ public class OperationLogAspect {
                 log.info("Operation [{}] succeeded in {} ms - method: {}, params: {}",
                         description, duration, method, params);
             }
+            saveIfNecessary(joinPoint, operationLog, method, params, duration, result);
             return result;
         } catch (Throwable ex) {
             long duration = System.currentTimeMillis() - start;
@@ -75,5 +86,69 @@ public class OperationLogAspect {
             }
             return String.valueOf(value);
         }
+    }
+
+    private void saveIfNecessary(ProceedingJoinPoint joinPoint,
+                                 OperationLog operationLog,
+                                 String method,
+                                 String params,
+                                 long duration,
+                                 Object result) {
+        if (!operationLog.save() || !isSuccessfulResult(result)) {
+            return;
+        }
+        try {
+            PermissionOperationLog operation = new PermissionOperationLog();
+            operation.setUserId(securityUtils.getSecurityUserId());
+            operation.setAction(operationLog.action());
+            operation.setTargetType(operationLog.targetType());
+            operation.setTargetId(resolveTargetId(joinPoint, operationLog.targetIdParam()));
+            operation.setMethod(method);
+            operation.setParams(params);
+            operation.setDurationMs(duration);
+            operation.setCreateTime(new Date());
+            operationLogMapper.insert(operation);
+        } catch (Exception ex) {
+            log.error("Failed to save permission operation log - method: {}, error: {}", method, ex.getMessage(), ex);
+        }
+    }
+
+    private boolean isSuccessfulResult(Object result) {
+        if (!(result instanceof Result<?> response)) {
+            return false;
+        }
+        return ResultCodeEnum.SUCCESS.getCode().equals(response.getCode());
+    }
+
+    private Long resolveTargetId(ProceedingJoinPoint joinPoint, String targetIdParam) {
+        if (targetIdParam == null || targetIdParam.isBlank()) {
+            return null;
+        }
+        MethodSignature signature = (MethodSignature) joinPoint.getSignature();
+        String[] parameterNames = signature.getParameterNames();
+        Object[] args = joinPoint.getArgs();
+        if (parameterNames == null || args == null) {
+            return null;
+        }
+        for (int i = 0; i < parameterNames.length && i < args.length; i++) {
+            if (targetIdParam.equals(parameterNames[i])) {
+                return toLong(args[i]);
+            }
+        }
+        return null;
+    }
+
+    private Long toLong(Object value) {
+        if (value instanceof Number number) {
+            return number.longValue();
+        }
+        if (value instanceof String text && !text.isBlank()) {
+            try {
+                return Long.valueOf(text);
+            } catch (NumberFormatException ignored) {
+                return null;
+            }
+        }
+        return null;
     }
 }

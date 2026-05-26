@@ -1,5 +1,6 @@
 package com.ayor.controller.permission;
 
+import com.ayor.aspect.oplog.OperationLog;
 import com.ayor.entity.dto.TagUpdateDTO;
 import com.ayor.result.Result;
 import com.ayor.service.AuthorizationService;
@@ -29,6 +30,7 @@ public class PermThreadController {
     /**
      * 修改帖子标签。
      */
+    @OperationLog(value = "更新帖子标签", save = true, action = "UPDATE_THREAD_TAG", targetType = "thread", targetIdParam = "threadId")
     @PutMapping("/{thread_id}/tag")
     public Result<Void> updateTag(@PathVariable(name = "thread_id") Integer threadId,
                                   @RequestParam(name = "topic_id") Integer topicId,
@@ -40,6 +42,7 @@ public class PermThreadController {
     /**
      * 删除帖子标签。
      */
+    @OperationLog(value = "删除帖子标签", save = true, action = "DELETE_THREAD_TAG", targetType = "thread", targetIdParam = "threadId")
     @DeleteMapping("/{thread_id}/tag")
     public Result<Void> deleteThreadTag(@PathVariable(name = "thread_id") Integer threadId,
                                         @RequestParam(name = "topic_id") Integer topicId) {
@@ -50,6 +53,7 @@ public class PermThreadController {
     /**
      * 管理员删除帖子。
      */
+    @OperationLog(value = "权限删除帖子", save = true, action = "DELETE_THREAD", targetType = "thread", targetIdParam = "threadId")
     @DeleteMapping("/{thread_id}")
     public Result<Void> removeThreadByIdPermission(@PathVariable(name = "thread_id") Integer threadId,
                                                    @RequestParam(name = "topic_id") Integer topicId) {
@@ -60,6 +64,7 @@ public class PermThreadController {
     /**
      * 将帖子设为话题公告。
      */
+    @OperationLog(value = "设置公告帖", save = true, action = "SET_ANNOUNCEMENT", targetType = "thread", targetIdParam = "threadId")
     @PutMapping("/{thread_id}/announcement")
     public Result<Void> setAnnouncement(@PathVariable(name = "thread_id") Integer threadId,
                                         @RequestParam(name = "topic_id") Integer topicId) {
@@ -70,6 +75,7 @@ public class PermThreadController {
     /**
      * 取消帖子公告状态。
      */
+    @OperationLog(value = "取消公告帖", save = true, action = "UNSET_ANNOUNCEMENT", targetType = "thread", targetIdParam = "threadId")
     @DeleteMapping("/{thread_id}/announcement")
     public Result<Void> unsetAnnouncement(@PathVariable(name = "thread_id") Integer threadId,
                                           @RequestParam(name = "topic_id") Integer topicId) {
