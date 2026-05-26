@@ -1,5 +1,6 @@
 package com.ayor.controller.permission;
 
+import com.ayor.aspect.oplog.OperationLog;
 import com.ayor.entity.dto.TopicDTO;
 import com.ayor.result.Result;
 import com.ayor.service.AuthorizationService;
@@ -25,12 +26,14 @@ public class PermTopicController {
 
     private final SecurityUtils securityUtils;
 
+    @OperationLog(value = "新增话题", save = true, action = "CREATE_TOPIC", targetType = "topic")
     @PostMapping
     public Result<Void> insertTopic(@RequestBody TopicDTO topicDTO) {
         authorizationService.assertCanCreateTopic(securityUtils.getSecurityUserId());
         return Result.messageHandler(() -> topicService.insertTopic(topicDTO));
     }
 
+    @OperationLog(value = "更新话题", save = true, action = "UPDATE_TOPIC", targetType = "topic", targetIdParam = "topicId")
     @PutMapping("/{topic_id}")
     public Result<Void> updateTopic(@PathVariable(name = "topic_id") Integer topicId,
                                     @RequestBody TopicDTO topicDTO) {
@@ -39,6 +42,7 @@ public class PermTopicController {
         return Result.messageHandler(() -> topicService.updateTopic(topicDTO));
     }
 
+    @OperationLog(value = "删除话题", save = true, action = "DELETE_TOPIC", targetType = "topic", targetIdParam = "topicId")
     @DeleteMapping("/{topic_id}")
     public Result<Void> deleteTopic(@PathVariable(name = "topic_id") Integer topicId) {
         authorizationService.assertCanDeleteTopic(securityUtils.getSecurityUserId(), topicId);

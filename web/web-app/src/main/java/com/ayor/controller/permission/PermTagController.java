@@ -1,5 +1,6 @@
 package com.ayor.controller.permission;
 
+import com.ayor.aspect.oplog.OperationLog;
 import com.ayor.entity.dto.TagDTO;
 import com.ayor.result.Result;
 import com.ayor.service.AuthorizationService;
@@ -23,6 +24,7 @@ public class PermTagController {
 
     private final SecurityUtils securityUtils;
 
+    @OperationLog(value = "新增话题标签", save = true, action = "CREATE_TAG", targetType = "tag", targetIdParam = "topicId")
     @PostMapping
     public Result<Void> insertNewTag(@PathVariable(name = "topic_id") Integer topicId,
                                      @RequestBody TagDTO tagDTO) {

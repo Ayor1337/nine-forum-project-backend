@@ -1,5 +1,6 @@
 package com.ayor.controller.permission;
 
+import com.ayor.aspect.oplog.OperationLog;
 import com.ayor.entity.dto.ThemeDTO;
 import com.ayor.result.Result;
 import com.ayor.service.AuthorizationService;
@@ -23,6 +24,7 @@ public class PermThemeController {
 
     private final SecurityUtils securityUtils;
 
+    @OperationLog(value = "新增主题", save = true, action = "CREATE_THEME", targetType = "theme")
     @PostMapping
     public Result<Void> insertTheme(@RequestBody @Validated ThemeDTO themeDTO) {
         authorizationService.assertCanCreateTheme(securityUtils.getSecurityUserId());
