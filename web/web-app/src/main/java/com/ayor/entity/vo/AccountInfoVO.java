@@ -1,5 +1,6 @@
 package com.ayor.entity.vo;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -20,11 +21,15 @@ public class AccountInfoVO implements Serializable {
 
     private Integer accountId;
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private String bio;
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private String location;
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private Date birthday;
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private String website;
 }

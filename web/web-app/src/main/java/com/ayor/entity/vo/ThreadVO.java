@@ -1,6 +1,7 @@
 package com.ayor.entity.vo;
 
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -36,8 +37,6 @@ public class ThreadVO implements Serializable {
 
     private Integer collectCount;
 
-    private String tagName;
-
     private Integer accountId;
 
     private Integer topicId;
@@ -46,6 +45,7 @@ public class ThreadVO implements Serializable {
 
     private String avatarUrl;
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private TagVO Tag;
 
 }
