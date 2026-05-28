@@ -8,6 +8,7 @@ import java.lang.reflect.Method;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class PermissionControllerTest {
 
@@ -25,5 +26,11 @@ class PermissionControllerTest {
         DeleteMapping mapping = method.getAnnotation(DeleteMapping.class);
 
         assertArrayEquals(new String[]{"/batch"}, mapping.value());
+    }
+
+    @Test
+    void shouldNotExposePermissionOperationLogOptionsInPermissionController() {
+        assertThrows(NoSuchMethodException.class, () -> PermissionController.class.getMethod("listPermissionOptions"));
+        assertThrows(NoSuchMethodException.class, () -> PermissionController.class.getMethod("listPermissionOperationUsernameOptions"));
     }
 }

@@ -71,6 +71,15 @@ class PermissionServiceImplTest {
     }
 
     @Test
+    void listPermissionOptionsReturnsKnownPermissionValues() {
+        List<String> options = permissionService.listPermissionOptions();
+
+        assertThat(options)
+                .contains("MANAGE_ROLE", "DELETE_THREAD", "MANAGE_HISTORY")
+                .doesNotContain("UNKNOWN");
+    }
+
+    @Test
     void updatePermissionsRejectsEmptyList() {
         String message = permissionService.updatePermissions(List.<Permission>of());
 

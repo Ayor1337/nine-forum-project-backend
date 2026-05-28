@@ -32,6 +32,12 @@ public interface PermissionService extends IService<Permission> {
     List<PermissionVO> listPermissions(Integer roleId);
 
     /**
+     * 获取可分配权限标识选项。
+     * @return 权限标识列表
+     */
+    List<String> listPermissionOptions();
+
+    /**
      * 获取单条权限记录
      * @param permissionId 权限ID
      * @return 权限记录

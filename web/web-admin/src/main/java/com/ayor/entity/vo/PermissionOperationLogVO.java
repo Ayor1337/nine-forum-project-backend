@@ -14,6 +14,8 @@ public class PermissionOperationLogVO {
 
     private Long logId;
 
+    private Integer userId;
+
     private String username;
 
     private String action;
