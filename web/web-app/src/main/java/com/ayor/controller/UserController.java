@@ -57,7 +57,7 @@ public class UserController {
      */
     @GetMapping("/{user_id}")
     public Result<UserInfoVO> getUserInfoByUserId(@PathVariable("user_id") Integer userId) {
-        Integer viewerId = security.getSecurityUserId();
+        Integer viewerId = security.getOptionalSecurityUserId();
         return Result.dataMessageHandler(() -> accountService.getPublicUserInfo(viewerId, userId), "获取用户信息失败,用户可能不存在");
     }
 
@@ -84,7 +84,7 @@ public class UserController {
     public Result<PageEntity<UserInfoVO>> getFollowers(@PathVariable("user_id") Integer userId,
                                                        @RequestParam("page") Integer page,
                                                        @RequestParam("page_size") Integer pageSize) {
-        Integer viewerId = security.getSecurityUserId();
+        Integer viewerId = security.getOptionalSecurityUserId();
         return Result.dataMessageHandler(() -> accountService.getFollowers(viewerId, userId, page, pageSize), "获取粉丝列表失败");
     }
 
@@ -100,7 +100,7 @@ public class UserController {
     public Result<PageEntity<UserInfoVO>> getFollowings(@PathVariable("user_id") Integer userId,
                                                         @RequestParam("page") Integer page,
                                                         @RequestParam("page_size") Integer pageSize) {
-        Integer viewerId = security.getSecurityUserId();
+        Integer viewerId = security.getOptionalSecurityUserId();
         return Result.dataMessageHandler(() -> accountService.getFollowings(viewerId, userId, page, pageSize), "获取关注列表失败");
     }
     /**

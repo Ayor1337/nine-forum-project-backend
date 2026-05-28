@@ -1,7 +1,9 @@
 package com.ayor.service.impl;
 
 import com.ayor.entity.Base64Upload;
+import com.ayor.entity.PageEntity;
 import com.ayor.entity.pojo.Account;
+import com.ayor.entity.vo.UserInfoVO;
 import com.ayor.image.ImageStorageService;
 import com.ayor.image.StoredImage;
 import com.ayor.mapper.AccountInfoMapper;
@@ -22,10 +24,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -108,6 +113,86 @@ class AccountServiceImplTest {
         assertEquals("nineforum/banner/test.png", account.getBannerUrl());
         verify(imageStorageService).storeImageBase64Image(upload, "banner/");
         verify(minioService, never()).uploadBase64(upload, "banner/");
+    }
+
+    @Test
+    void getPublicUserInfoShouldFillRelationFieldsForViewer() {
+        AccountServiceImpl service = createService();
+        Account target = new Account();
+        target.setAccountId(18);
+        target.setUsername("target");
+
+        when(accountMapper.selectById(18)).thenReturn(target);
+        when(privacyPolicyService.canViewProfile(7, 18)).thenReturn(true);
+        when(userRelationService.isFollowing(7, 18)).thenReturn(true);
+        when(userRelationService.isFollowing(18, 7)).thenReturn(false);
+
+        UserInfoVO result = service.getPublicUserInfo(7, 18);
+
+        assertEquals(Boolean.TRUE, result.getIsFollowing());
+        assertEquals(Boolean.FALSE, result.getIsFollowed());
+        verify(userRelationService).isFollowing(7, 18);
+        verify(userRelationService).isFollowing(18, 7);
+    }
+
+    @Test
+    void getPublicUserInfoShouldLeaveRelationFieldsNullForAnonymousViewer() {
+        AccountServiceImpl service = createService();
+        Account target = new Account();
+        target.setAccountId(18);
+
+        when(accountMapper.selectById(18)).thenReturn(target);
+        when(privacyPolicyService.canViewProfile(null, 18)).thenReturn(true);
+
+        UserInfoVO result = service.getPublicUserInfo(null, 18);
+
+        assertNull(result.getIsFollowing());
+        assertNull(result.getIsFollowed());
+        verifyNoInteractions(userRelationService);
+    }
+
+    @Test
+    void getFollowersShouldFillRelationFieldsForEachListItem() {
+        AccountServiceImpl service = createService();
+        Account target = new Account();
+        target.setAccountId(18);
+        UserInfoVO follower = new UserInfoVO();
+        follower.setAccountId(9);
+        PageEntity<UserInfoVO> page = new PageEntity<>(1L, List.of(follower));
+
+        when(accountMapper.selectById(18)).thenReturn(target);
+        when(privacyPolicyService.canViewFollowerList(7, 18)).thenReturn(true);
+        when(userRelationService.getFollowers(18, 1, 20)).thenReturn(page);
+        when(userRelationService.isFollowing(7, 9)).thenReturn(false);
+        when(userRelationService.isFollowing(9, 7)).thenReturn(true);
+
+        PageEntity<UserInfoVO> result = service.getFollowers(7, 18, 1, 20);
+
+        UserInfoVO item = result.getData().get(0);
+        assertEquals(Boolean.FALSE, item.getIsFollowing());
+        assertEquals(Boolean.TRUE, item.getIsFollowed());
+    }
+
+    @Test
+    void getFollowingsShouldFillRelationFieldsForEachListItem() {
+        AccountServiceImpl service = createService();
+        Account target = new Account();
+        target.setAccountId(18);
+        UserInfoVO following = new UserInfoVO();
+        following.setAccountId(10);
+        PageEntity<UserInfoVO> page = new PageEntity<>(1L, List.of(following));
+
+        when(accountMapper.selectById(18)).thenReturn(target);
+        when(privacyPolicyService.canViewFollowingList(7, 18)).thenReturn(true);
+        when(userRelationService.getFollowings(18, 1, 20)).thenReturn(page);
+        when(userRelationService.isFollowing(7, 10)).thenReturn(true);
+        when(userRelationService.isFollowing(10, 7)).thenReturn(true);
+
+        PageEntity<UserInfoVO> result = service.getFollowings(7, 18, 1, 20);
+
+        UserInfoVO item = result.getData().get(0);
+        assertEquals(Boolean.TRUE, item.getIsFollowing());
+        assertEquals(Boolean.TRUE, item.getIsFollowed());
     }
 
     private AccountServiceImpl createService() {
