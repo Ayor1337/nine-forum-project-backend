@@ -19,21 +19,26 @@ public class SecurityUtils {
      * @throws AuthenticationCredentialsNotFoundException 未找到登录验证凭证
      */
     public Integer getSecurityUserId() {
-        Integer userId = Optional.ofNullable(SecurityContextHolder.getContext())
-                .map(SecurityContext::getAuthentication)
-                .filter(Authentication::isAuthenticated)
-                .map(Authentication::getPrincipal)
-                .map(principal -> {
-                    if (principal instanceof UserDetails) {
-                        return Integer.parseInt(((UserDetails) principal).getUsername());
-                    } else
-                        return 0;
-                })
-                .orElse(0);
-        if (userId == null || userId <= 0) {
+        Integer userId = getOptionalSecurityUserId();
+        if (userId == null) {
             throw new AuthenticationCredentialsNotFoundException("未登录");
         }
         return userId;
+    }
+
+    /**
+     * 获取当前认证用户的 ID，未登录或无法解析时返回 null。
+     *
+     * @return 用户 ID，未认证时返回 null
+     */
+    public Integer getOptionalSecurityUserId() {
+        return Optional.ofNullable(SecurityContextHolder.getContext())
+                .map(SecurityContext::getAuthentication)
+                .filter(Authentication::isAuthenticated)
+                .map(Authentication::getPrincipal)
+                .map(this::parsePrincipalUserId)
+                .filter(userId -> userId > 0)
+                .orElse(null);
     }
 
     /**
@@ -46,6 +51,23 @@ public class SecurityUtils {
                 .map(SecurityContext::getAuthentication)
                 .filter(Authentication::isAuthenticated)
                 .orElse(null);
+    }
+
+    private Integer parsePrincipalUserId(Object principal) {
+        String username = null;
+        if (principal instanceof UserDetails userDetails) {
+            username = userDetails.getUsername();
+        } else if (principal instanceof String principalValue) {
+            username = principalValue;
+        }
+        if (username == null) {
+            return null;
+        }
+        try {
+            return Integer.parseInt(username);
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 
 }

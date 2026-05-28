@@ -41,6 +41,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Date;
+import java.util.List;
 import java.util.Objects;
 
 @Service
@@ -135,6 +136,7 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         BeanUtils.copyProperties(account, userInfoVO);
         fillBio(userInfoVO, accountId);
         userInfoVO.setPermission(null);
+        fillFollowRelation(userInfoVO, viewerId);
         return userInfoVO;
     }
 
@@ -165,7 +167,9 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         if (!privacyPolicyService.canViewFollowerList(viewerId, accountId)) {
             throw new AccessDeniedException("无权限查看粉丝列表");
         }
-        return userRelationService.getFollowers(accountId, pageNum, pageSize);
+        PageEntity<UserInfoVO> page = userRelationService.getFollowers(accountId, pageNum, pageSize);
+        fillFollowRelations(page, viewerId);
+        return page;
     }
 
     /**
@@ -185,7 +189,29 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         if (!privacyPolicyService.canViewFollowingList(viewerId, accountId)) {
             throw new AccessDeniedException("无权限查看关注列表");
         }
-        return userRelationService.getFollowings(accountId, pageNum, pageSize);
+        PageEntity<UserInfoVO> page = userRelationService.getFollowings(accountId, pageNum, pageSize);
+        fillFollowRelations(page, viewerId);
+        return page;
+    }
+
+    private void fillFollowRelations(PageEntity<UserInfoVO> page, Integer viewerId) {
+        if (page == null) {
+            return;
+        }
+        List<UserInfoVO> users = page.getData();
+        if (users == null) {
+            return;
+        }
+        users.forEach(userInfoVO -> fillFollowRelation(userInfoVO, viewerId));
+    }
+
+    private void fillFollowRelation(UserInfoVO userInfoVO, Integer viewerId) {
+        if (viewerId == null || userInfoVO == null || userInfoVO.getAccountId() == null) {
+            return;
+        }
+        Integer targetAccountId = userInfoVO.getAccountId();
+        userInfoVO.setIsFollowing(userRelationService.isFollowing(viewerId, targetAccountId));
+        userInfoVO.setIsFollowed(userRelationService.isFollowing(targetAccountId, viewerId));
     }
     /**
      * 更新用户头像并同步到对象存储。
