@@ -1,6 +1,7 @@
 package com.ayor.entity.vo;
 
 import com.ayor.entity.vo.UserPermissionVO;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -36,5 +37,11 @@ public class UserInfoVO implements Serializable {
     private Date createTime;
 
     private Date updateTime;
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private Boolean isFollowed;
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private Boolean isFollowing;
 
 }
