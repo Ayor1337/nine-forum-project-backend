@@ -1,6 +1,7 @@
 package com.ayor.type;
 
 import java.util.Arrays;
+import java.util.List;
 
 public enum PermissionType {
     MANAGE_ROLE("MANAGE_ROLE"),
@@ -64,5 +65,11 @@ public enum PermissionType {
     public static boolean isKnown(String permission) {
         return Arrays.stream(values())
                 .anyMatch(permissionType -> permissionType.dbValue.equals(permission));
+    }
+
+    public static List<String> options() {
+        return Arrays.stream(values())
+                .map(PermissionType::dbValue)
+                .toList();
     }
 }

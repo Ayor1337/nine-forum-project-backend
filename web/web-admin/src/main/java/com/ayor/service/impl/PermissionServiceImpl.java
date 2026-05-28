@@ -41,6 +41,11 @@ public class PermissionServiceImpl extends ServiceImpl<PermissionMapper, Permiss
     }
 
     @Override
+    public List<String> listPermissionOptions() {
+        return PermissionType.options();
+    }
+
+    @Override
     public PermissionVO getPermissionById(Integer permissionId) {
         if (permissionId == null) {
             return null;
