@@ -14,6 +14,7 @@ import com.ayor.service.AuthorizationService;
 import com.ayor.service.ImageAssetService;
 import com.ayor.service.MentionMessageService;
 import com.ayor.service.ThreaddService;
+import com.ayor.service.UserRelationService;
 import com.ayor.type.ThreadOrderType;
 import com.ayor.type.ThreadRankingMetric;
 import com.ayor.type.ThreadRankingPeriod;
@@ -25,6 +26,7 @@ import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.BeanUtils;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -56,6 +58,8 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
     private final ImageAssetService imageAssetService;
 
     private final AuthorizationService authorizationService;
+
+    private final UserRelationService userRelationService;
     /**
      * 获取指定主题下的帖子列表或分页结果。
      */
@@ -166,13 +170,17 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
      */
 
     @Override
-    public PageEntity<ThreadVO> getThreadPagesByUserId(Integer accountId, Integer currentPage, Integer pageSize) {
+    public PageEntity<ThreadVO> getThreadPagesByUserId(Integer viewerId, Integer accountId, Integer currentPage, Integer pageSize) {
+        if (viewerId != null && !Objects.equals(viewerId, accountId)
+                && userRelationService.isBlockedEitherDirection(viewerId, accountId)) {
+            throw new AccessDeniedException("Access denied");
+        }
         Page<Threadd> page = new Page<>(currentPage, pageSize);
-        Page<Threadd> threads = this.lambdaQuery()
+        LambdaQueryWrapper<Threadd> queryWrapper = new LambdaQueryWrapper<Threadd>()
                 .eq(Threadd::getAccountId, accountId)
                 .orderByAsc(Threadd::getCreateTime)
-                .eq(Threadd::getIsDeleted, false)
-                .page(page);
+                .eq(Threadd::getIsDeleted, false);
+        Page<Threadd> threads = this.page(page, queryWrapper);
         List<ThreadVO> threadVOS = toVOs(threads.getRecords());
         Long totalPages = threads.getTotal();
         return new PageEntity<>(totalPages, threadVOS);

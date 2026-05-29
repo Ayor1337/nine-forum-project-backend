@@ -71,7 +71,8 @@ public class ThreadController {
     public Result<PageEntity<ThreadVO>> getThreadsByUserId(@PathVariable(name = "user_id") Integer userId,
                                                  @RequestParam(name = "page") Integer page,
                                                  @RequestParam(name = "page_size") Integer size) {
-        return Result.dataMessageHandler(() -> threaddService.getThreadPagesByUserId(userId, page, size), "获取失败");
+        Integer viewerId = security.getOptionalSecurityUserId();
+        return Result.dataMessageHandler(() -> threaddService.getThreadPagesByUserId(viewerId, userId, page, size), "获取失败");
     }
 
     // 注意调度

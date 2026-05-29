@@ -46,7 +46,7 @@ public class ConversationMessageServiceImpl extends ServiceImpl<ConversationMess
             type = NotificationType.SEND_MSG,
             userId = "#accountId")
     public String sendMessage(ConversationMessageDTO conversationMessage, Integer accountId) {
-        authorizationService.assertCanAccessConversation(accountId, conversationMessage.getConversationId());
+        authorizationService.assertCanSendConversationMessage(accountId, conversationMessage.getConversationId());
         Account account = accountMapper.getAccountById(accountId);
         if(account == null) {
             return "用户不存在";

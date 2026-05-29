@@ -45,9 +45,19 @@ public class UserRelationServiceImpl extends ServiceImpl<UserRelationMapper, Use
     @Override
     @Caching(evict = {
             @CacheEvict(value = "userRelationFollowing", key = "#fromAccountId + ':' + #toAccountId", condition = "#fromAccountId != null && #toAccountId != null"),
+            @CacheEvict(value = "userRelationFollowing", key = "#toAccountId + ':' + #fromAccountId", condition = "#fromAccountId != null && #toAccountId != null"),
             @CacheEvict(value = "userRelationMutualFollowing", key = "T(com.ayor.service.impl.UserRelationServiceImpl).symmetricKey(#fromAccountId, #toAccountId)", condition = "#fromAccountId != null && #toAccountId != null")
     })
     public String follow(Integer fromAccountId, Integer toAccountId) {
+        if (!isValidUserPair(fromAccountId, toAccountId)) {
+            return "用户不存在";
+        }
+        if (fromAccountId.equals(toAccountId)) {
+            return "不能关注自己";
+        }
+        if (userRelationMapper.existsBlockedEitherDirection(fromAccountId, toAccountId)) {
+            return "已拉黑，不能关注";
+        }
         return upsertRelation(fromAccountId, toAccountId, RelationType.FOLLOW, "不能关注自己", "已关注");
     }
 
@@ -57,6 +67,7 @@ public class UserRelationServiceImpl extends ServiceImpl<UserRelationMapper, Use
     @Override
     @Caching(evict = {
             @CacheEvict(value = "userRelationFollowing", key = "#fromAccountId + ':' + #toAccountId", condition = "#fromAccountId != null && #toAccountId != null"),
+            @CacheEvict(value = "userRelationFollowing", key = "#toAccountId + ':' + #fromAccountId", condition = "#fromAccountId != null && #toAccountId != null"),
             @CacheEvict(value = "userRelationMutualFollowing", key = "T(com.ayor.service.impl.UserRelationServiceImpl).symmetricKey(#fromAccountId, #toAccountId)", condition = "#fromAccountId != null && #toAccountId != null")
     })
     public String unfollow(Integer fromAccountId, Integer toAccountId) {
@@ -67,9 +78,19 @@ public class UserRelationServiceImpl extends ServiceImpl<UserRelationMapper, Use
      * 拉黑指定用户。
      */
     @Override
-    @CacheEvict(value = "userRelationBlocked", key = "T(com.ayor.service.impl.UserRelationServiceImpl).symmetricKey(#fromAccountId, #toAccountId)", condition = "#fromAccountId != null && #toAccountId != null")
+    @Caching(evict = {
+            @CacheEvict(value = "userRelationBlocked", key = "T(com.ayor.service.impl.UserRelationServiceImpl).symmetricKey(#fromAccountId, #toAccountId)", condition = "#fromAccountId != null && #toAccountId != null"),
+            @CacheEvict(value = "userRelationFollowing", key = "#fromAccountId + ':' + #toAccountId", condition = "#fromAccountId != null && #toAccountId != null"),
+            @CacheEvict(value = "userRelationFollowing", key = "#toAccountId + ':' + #fromAccountId", condition = "#fromAccountId != null && #toAccountId != null"),
+            @CacheEvict(value = "userRelationMutualFollowing", key = "T(com.ayor.service.impl.UserRelationServiceImpl).symmetricKey(#fromAccountId, #toAccountId)", condition = "#fromAccountId != null && #toAccountId != null")
+    })
     public String block(Integer fromAccountId, Integer toAccountId) {
-        return upsertRelation(fromAccountId, toAccountId, RelationType.BLOCK, "不能拉黑自己", "已拉黑");
+        String result = upsertRelation(fromAccountId, toAccountId, RelationType.BLOCK, "不能拉黑自己", "已拉黑");
+        if (result == null || "已拉黑".equals(result)) {
+            deactivateFollowIfPresent(fromAccountId, toAccountId);
+            deactivateFollowIfPresent(toAccountId, fromAccountId);
+        }
+        return result;
     }
 
     /**
@@ -79,6 +100,25 @@ public class UserRelationServiceImpl extends ServiceImpl<UserRelationMapper, Use
     @CacheEvict(value = "userRelationBlocked", key = "T(com.ayor.service.impl.UserRelationServiceImpl).symmetricKey(#fromAccountId, #toAccountId)", condition = "#fromAccountId != null && #toAccountId != null")
     public String unblock(Integer fromAccountId, Integer toAccountId) {
         return deactivateRelation(fromAccountId, toAccountId, RelationType.BLOCK, "尚未拉黑");
+    }
+
+    /**
+     * 失效指定方向的关注关系。
+     */
+    @Override
+    @Caching(evict = {
+            @CacheEvict(value = "userRelationFollowing", key = "#fromAccountId + ':' + #toAccountId", condition = "#fromAccountId != null && #toAccountId != null"),
+            @CacheEvict(value = "userRelationFollowing", key = "#toAccountId + ':' + #fromAccountId", condition = "#fromAccountId != null && #toAccountId != null"),
+            @CacheEvict(value = "userRelationMutualFollowing", key = "T(com.ayor.service.impl.UserRelationServiceImpl).symmetricKey(#fromAccountId, #toAccountId)", condition = "#fromAccountId != null && #toAccountId != null")
+    })
+    public void deactivateFollowIfPresent(Integer fromAccountId, Integer toAccountId) {
+        UserRelation relation = userRelationMapper.findRelation(fromAccountId, toAccountId, RelationType.FOLLOW);
+        if (relation == null || relation.getStatus() == RelationStatus.INACTIVE) {
+            return;
+        }
+        relation.setStatus(RelationStatus.INACTIVE);
+        relation.setUpdateTime(new Date());
+        userRelationMapper.updateById(relation);
     }
 
     /**
@@ -103,6 +143,17 @@ public class UserRelationServiceImpl extends ServiceImpl<UserRelationMapper, Use
             condition = "#firstAccountId != null && #secondAccountId != null")
     public boolean isMutualFollowing(Integer firstAccountId, Integer secondAccountId) {
         return isFollowing(firstAccountId, secondAccountId) && isFollowing(secondAccountId, firstAccountId);
+    }
+
+    /**
+     * 判断指定方向是否存在拉黑关系。
+     */
+    @Override
+    public boolean isBlocked(Integer fromAccountId, Integer toAccountId) {
+        if (!isValidUserPair(fromAccountId, toAccountId)) {
+            return false;
+        }
+        return userRelationMapper.existsRelation(fromAccountId, toAccountId, RelationType.BLOCK, RelationStatus.ACTIVE);
     }
 
     /**

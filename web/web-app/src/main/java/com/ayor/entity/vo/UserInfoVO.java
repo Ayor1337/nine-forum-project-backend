@@ -44,4 +44,10 @@ public class UserInfoVO implements Serializable {
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private Boolean isFollowing;
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private Boolean isBlock;
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private Boolean isBlocked;
+
 }

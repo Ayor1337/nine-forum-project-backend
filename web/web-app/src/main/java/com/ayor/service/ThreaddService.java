@@ -91,12 +91,13 @@ public interface ThreaddService extends IService<Threadd> {
 
     /**
      * 按用户ID获取帖子列表(分页)
+     * @param viewerId 当前访问用户ID;未登录时为空
      * @param accountId 用户账户ID
      * @param currentPage 当前页码,从1开始
      * @param pageSize 每页记录数
      * @return 分页结果,包含该用户发布的所有帖子
      */
-    PageEntity<ThreadVO> getThreadPagesByUserId(Integer accountId, Integer currentPage, Integer pageSize);
+    PageEntity<ThreadVO> getThreadPagesByUserId(Integer viewerId, Integer accountId, Integer currentPage, Integer pageSize);
 
     /**
      * 删除帖子(用户操作,逻辑删除)

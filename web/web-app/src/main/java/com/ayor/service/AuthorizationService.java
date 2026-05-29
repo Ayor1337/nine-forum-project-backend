@@ -30,6 +30,8 @@ public interface AuthorizationService {
 
     void assertCanStartConversation(Integer actorId, Integer targetUserId);
 
+    void assertCanSendConversationMessage(Integer actorId, Integer conversationId);
+
     void assertCanAccessConversation(Integer actorId, Integer conversationId);
 
     void assertCanClearConversationUnread(Integer actorId, Integer conversationId, Integer fromUserId);
