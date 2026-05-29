@@ -52,6 +52,18 @@ class PrivacyPolicyServiceImplTest {
     }
 
     @Test
+    void shouldDenyThreadRelationListsWhenBlockedEitherDirection() {
+        PrivacyPolicyServiceImpl service = createService();
+        when(userPrivacySettingService.getByAccountId(18)).thenReturn(setting(VisibilityScope.PUBLIC));
+        when(userRelationService.isBlockedEitherDirection(7, 18)).thenReturn(true);
+
+        assertFalse(service.canViewLikedThreads(7, 18));
+        assertFalse(service.canViewCollectedThreads(7, 18));
+        assertFalse(service.canViewFollowerList(7, 18));
+        assertFalse(service.canViewFollowingList(7, 18));
+    }
+
+    @Test
     void shouldAllowFollowerWhenScopeIsFollowerOnly() {
         PrivacyPolicyServiceImpl service = createService();
         when(userPrivacySettingService.getByAccountId(18)).thenReturn(setting(VisibilityScope.FOLLOWER_ONLY));

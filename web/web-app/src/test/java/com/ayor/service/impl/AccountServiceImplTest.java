@@ -27,6 +27,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -123,16 +124,21 @@ class AccountServiceImplTest {
         target.setUsername("target");
 
         when(accountMapper.selectById(18)).thenReturn(target);
-        when(privacyPolicyService.canViewProfile(7, 18)).thenReturn(true);
         when(userRelationService.isFollowing(7, 18)).thenReturn(true);
         when(userRelationService.isFollowing(18, 7)).thenReturn(false);
+        when(userRelationService.isBlocked(7, 18)).thenReturn(true);
+        when(userRelationService.isBlocked(18, 7)).thenReturn(false);
 
         UserInfoVO result = service.getPublicUserInfo(7, 18);
 
         assertEquals(Boolean.TRUE, result.getIsFollowing());
         assertEquals(Boolean.FALSE, result.getIsFollowed());
+        assertEquals(Boolean.TRUE, result.getIsBlock());
+        assertEquals(Boolean.FALSE, result.getIsBlocked());
         verify(userRelationService).isFollowing(7, 18);
         verify(userRelationService).isFollowing(18, 7);
+        verify(userRelationService).isBlocked(7, 18);
+        verify(userRelationService).isBlocked(18, 7);
     }
 
     @Test
@@ -142,13 +148,38 @@ class AccountServiceImplTest {
         target.setAccountId(18);
 
         when(accountMapper.selectById(18)).thenReturn(target);
-        when(privacyPolicyService.canViewProfile(null, 18)).thenReturn(true);
 
         UserInfoVO result = service.getPublicUserInfo(null, 18);
 
         assertNull(result.getIsFollowing());
         assertNull(result.getIsFollowed());
+        assertNull(result.getIsBlock());
+        assertNull(result.getIsBlocked());
         verifyNoInteractions(userRelationService);
+    }
+
+    @Test
+    void getPublicUserInfoShouldReturnBasicInfoWhenProfileVisibilityDeniesViewer() {
+        AccountServiceImpl service = createService();
+        Account target = new Account();
+        target.setAccountId(18);
+        target.setUsername("target");
+        target.setNickname("Target");
+        target.setAvatarUrl("avatar.png");
+        target.setBannerUrl("banner.png");
+
+        when(accountMapper.selectById(18)).thenReturn(target);
+
+        UserInfoVO result = service.getPublicUserInfo(7, 18);
+
+        assertNotNull(result);
+        assertEquals(18, result.getAccountId());
+        assertEquals("target", result.getUsername());
+        assertEquals("Target", result.getNickname());
+        assertEquals("avatar.png", result.getAvatarUrl());
+        assertEquals("banner.png", result.getBannerUrl());
+        assertNull(result.getPermission());
+        verify(privacyPolicyService, never()).canViewProfile(7, 18);
     }
 
     @Test

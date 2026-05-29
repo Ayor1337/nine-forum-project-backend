@@ -117,7 +117,7 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
     }
 
     /**
-     * 获取指定用户的公开资料并检查查看权限。
+     * 获取指定用户的公开资料。
      *
      * @param viewerId 当前查看者用户ID
      * @param accountId 目标用户ID
@@ -129,14 +129,12 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         if (account == null) {
             return null;
         }
-        if (!privacyPolicyService.canViewProfile(viewerId, accountId)) {
-            throw new AccessDeniedException("无权限查看该用户资料");
-        }
         UserInfoVO userInfoVO = new UserInfoVO();
         BeanUtils.copyProperties(account, userInfoVO);
         fillBio(userInfoVO, accountId);
         userInfoVO.setPermission(null);
         fillFollowRelation(userInfoVO, viewerId);
+        fillBlockRelation(userInfoVO, viewerId);
         return userInfoVO;
     }
 
@@ -212,6 +210,20 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         Integer targetAccountId = userInfoVO.getAccountId();
         userInfoVO.setIsFollowing(userRelationService.isFollowing(viewerId, targetAccountId));
         userInfoVO.setIsFollowed(userRelationService.isFollowing(targetAccountId, viewerId));
+    }
+
+    private void fillBlockRelation(UserInfoVO userInfoVO, Integer viewerId) {
+        if (viewerId == null || userInfoVO == null || userInfoVO.getAccountId() == null) {
+            return;
+        }
+        Integer targetAccountId = userInfoVO.getAccountId();
+        if (Objects.equals(viewerId, targetAccountId)) {
+            userInfoVO.setIsBlock(false);
+            userInfoVO.setIsBlocked(false);
+            return;
+        }
+        userInfoVO.setIsBlock(userRelationService.isBlocked(viewerId, targetAccountId));
+        userInfoVO.setIsBlocked(userRelationService.isBlocked(targetAccountId, viewerId));
     }
     /**
      * 更新用户头像并同步到对象存储。

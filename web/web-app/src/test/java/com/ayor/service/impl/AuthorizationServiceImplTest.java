@@ -233,6 +233,34 @@ class AuthorizationServiceImplTest {
     }
 
     @Test
+    void shouldDenySendConversationMessageWhenBlockedEitherDirection() {
+        AuthorizationServiceImpl service = createService();
+        Conversation conversation = new Conversation();
+        conversation.setConversationId(7);
+        conversation.setAlphaAccountId(10);
+        conversation.setBetaAccountId(22);
+        conversation.setIsDeleted(false);
+        when(conversationMapper.selectById(7)).thenReturn(conversation);
+        when(userRelationService.isBlockedEitherDirection(10, 22)).thenReturn(true);
+
+        assertThrows(AccessDeniedException.class, () -> service.assertCanSendConversationMessage(10, 7));
+    }
+
+    @Test
+    void shouldAllowSendConversationMessageForParticipantWithoutBlock() {
+        AuthorizationServiceImpl service = createService();
+        Conversation conversation = new Conversation();
+        conversation.setConversationId(7);
+        conversation.setAlphaAccountId(10);
+        conversation.setBetaAccountId(22);
+        conversation.setIsDeleted(false);
+        when(conversationMapper.selectById(7)).thenReturn(conversation);
+        when(userRelationService.isBlockedEitherDirection(10, 22)).thenReturn(false);
+
+        assertDoesNotThrow(() -> service.assertCanSendConversationMessage(10, 7));
+    }
+
+    @Test
     void shouldDenyStartConversationWhenTargetRejectsDm() {
         AuthorizationServiceImpl service = createService();
         Account target = new Account();

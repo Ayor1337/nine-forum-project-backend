@@ -29,6 +29,14 @@ public interface UserRelationService extends IService<UserRelation> {
     String unfollow(Integer fromAccountId, Integer toAccountId);
 
     /**
+     * 失效指定方向的关注关系。
+     *
+     * @param fromAccountId 发起关注的用户ID
+     * @param toAccountId 被关注用户ID
+     */
+    void deactivateFollowIfPresent(Integer fromAccountId, Integer toAccountId);
+
+    /**
      * 拉黑指定用户。
      *
      * @param fromAccountId 发起拉黑的用户ID
@@ -63,6 +71,15 @@ public interface UserRelationService extends IService<UserRelation> {
      * @return true=互相关注,false=否则
      */
     boolean isMutualFollowing(Integer firstAccountId, Integer secondAccountId);
+
+    /**
+     * 判断指定方向是否存在拉黑关系。
+     *
+     * @param fromAccountId 发起拉黑的用户ID
+     * @param toAccountId 被拉黑用户ID
+     * @return true=已拉黑,false=未拉黑
+     */
+    boolean isBlocked(Integer fromAccountId, Integer toAccountId);
 
     /**
      * 判断两个用户之间是否存在任一方向的拉黑关系。

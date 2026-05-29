@@ -246,6 +246,28 @@ public class AuthorizationServiceImpl implements AuthorizationService {
     }
 
     /**
+     * 断言操作者可以在指定私信会话中发送消息。
+     *
+     * @param actorId 操作者账号 ID
+     * @param conversationId 私信会话 ID
+     * @throws AccessDeniedException 当操作者不是参与者，或双方存在拉黑关系时抛出
+     */
+    @Override
+    public void assertCanSendConversationMessage(Integer actorId, Integer conversationId) {
+        requireActor(actorId);
+        Conversation conversation = requireConversation(conversationId);
+        if (!isParticipant(actorId, conversation)) {
+            throw new AccessDeniedException(ACCESS_DENIED);
+        }
+        Integer partnerId = Objects.equals(actorId, conversation.getAlphaAccountId())
+                ? conversation.getBetaAccountId()
+                : conversation.getAlphaAccountId();
+        if (userRelationService.isBlockedEitherDirection(actorId, partnerId)) {
+            throw new AccessDeniedException(ACCESS_DENIED);
+        }
+    }
+
+    /**
      * 断言操作者可以访问指定私信会话。
      *
      * @param actorId 操作者账号 ID

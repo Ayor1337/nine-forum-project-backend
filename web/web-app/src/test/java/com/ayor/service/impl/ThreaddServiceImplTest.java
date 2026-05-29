@@ -13,6 +13,7 @@ import com.ayor.mapper.TopicMapper;
 import com.ayor.service.AuthorizationService;
 import com.ayor.service.ImageAssetService;
 import com.ayor.service.MentionMessageService;
+import com.ayor.service.UserRelationService;
 import com.ayor.type.ThreadOrderType;
 import com.ayor.util.TipTapUtils;
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
@@ -26,6 +27,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.lang.reflect.Method;
@@ -36,6 +38,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -70,6 +73,9 @@ class ThreaddServiceImplTest {
 
     @Mock
     private AuthorizationService authorizationService;
+
+    @Mock
+    private UserRelationService userRelationService;
 
     @Test
     void threadRankingMethodsShouldUseThreadRankingCache() throws NoSuchMethodException {
@@ -241,6 +247,31 @@ class ThreaddServiceImplTest {
     }
 
     @Test
+    void shouldDenyUserThreadPagesWhenViewerBlockedEitherDirection() {
+        ThreaddServiceImpl service = createService();
+        when(userRelationService.isBlockedEitherDirection(7, 18)).thenReturn(true);
+
+        assertThrows(AccessDeniedException.class, () -> service.getThreadPagesByUserId(7, 18, 1, 10));
+
+        verifyNoInteractions(threaddMapper);
+    }
+
+    @Test
+    void shouldAllowAnonymousUserThreadPagesWithoutBlockCheck() {
+        ThreaddServiceImpl service = createService();
+        Page<Threadd> page = Page.of(1, 10);
+        page.setRecords(List.of());
+        page.setTotal(0);
+        when(threaddMapper.selectPage(any(Page.class), any(Wrapper.class))).thenReturn(page);
+
+        PageEntity<ThreadVO> result = service.getThreadPagesByUserId(null, 18, 1, 10);
+
+        assertNotNull(result);
+        assertEquals(0L, result.getTotalSize());
+        verifyNoInteractions(userRelationService);
+    }
+
+    @Test
     void shouldReturnNullWhenTopicIdIsNull() {
         ThreaddServiceImpl service = createService();
 
@@ -293,7 +324,8 @@ class ThreaddServiceImplTest {
                 tagMapper,
                 mentionMessageService,
                 imageAssetService,
-                authorizationService
+                authorizationService,
+                userRelationService
         );
         ReflectionTestUtils.setField(service, "baseMapper", threaddMapper);
         return service;
