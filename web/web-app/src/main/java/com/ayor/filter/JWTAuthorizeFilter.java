@@ -6,6 +6,7 @@ import com.ayor.mapper.AccountMapper;
 import com.ayor.mapper.PermissionMapper;
 import com.ayor.mapper.RoleMapper;
 import com.ayor.result.Result;
+import com.ayor.result.ResultCodeEnum;
 import com.ayor.type.AccountStatus;
 import com.ayor.util.JWTUtils;
 import jakarta.annotation.Resource;
@@ -68,6 +69,13 @@ public class JWTAuthorizeFilter extends OncePerRequestFilter {
 //                    }).orElse( null);
 //        }
         DecodedJWT jwt = jwtUtil.resolveJwt(authorization);
+        if (authorization != null && jwt == null) {
+            response.setCharacterEncoding("UTF-8");
+            response.setContentType("application/json");
+            response.setStatus(200);
+            response.getWriter().write(Result.build(null, ResultCodeEnum.TOKEN_EXPIRED).toJSONString());
+            return;
+        }
         if(jwt != null) {
             UserDetails user = jwtUtil.toUser(jwt);
             Integer userId = Integer.parseInt(user.getUsername());

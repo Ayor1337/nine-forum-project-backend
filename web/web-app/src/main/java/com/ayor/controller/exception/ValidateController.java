@@ -6,6 +6,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingRequestValueException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 @RestControllerAdvice
 @Slf4j
@@ -25,6 +26,15 @@ public class ValidateController {
 
     @ExceptionHandler(value = MissingRequestValueException.class)
     public Result<Void> handleMissingRequestValueException(MissingRequestValueException e) {
+        log.warn("Resolve [{} : {}]", e.getClass(), e.getMessage());
+        return Result.fail(203, "请求参数内容有误");
+    }
+
+    /**
+     * 处理请求参数类型转换失败。
+     */
+    @ExceptionHandler(value = MethodArgumentTypeMismatchException.class)
+    public Result<Void> handleMethodArgumentTypeMismatchException(MethodArgumentTypeMismatchException e) {
         log.warn("Resolve [{} : {}]", e.getClass(), e.getMessage());
         return Result.fail(203, "请求参数内容有误");
     }
