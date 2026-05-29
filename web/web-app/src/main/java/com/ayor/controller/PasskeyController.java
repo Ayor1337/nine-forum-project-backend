@@ -8,6 +8,7 @@ import com.ayor.entity.vo.PasskeyOptionsVO;
 import com.ayor.result.Result;
 import com.ayor.service.PasskeyService;
 import com.ayor.util.SecurityUtils;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -90,7 +91,8 @@ public class PasskeyController {
      * @return 授权结果
      */
     @PostMapping("/authentications")
-    public Result<AuthorizeVO> authenticate(@RequestBody @Valid PasskeyAuthenticationFinishDTO dto) {
-        return Result.dataMessageHandler(() -> passkeyService.authenticate(dto), "Passkey 登录失败");
+    public Result<AuthorizeVO> authenticate(@RequestBody @Valid PasskeyAuthenticationFinishDTO dto,
+                                            HttpServletRequest request) {
+        return Result.dataMessageHandler(() -> passkeyService.authenticate(dto, request), "Passkey 登录失败");
     }
 }

@@ -5,6 +5,7 @@ import com.ayor.entity.dto.PasskeyRegistrationFinishDTO;
 import com.ayor.entity.vo.AuthorizeVO;
 import com.ayor.entity.vo.PasskeyCredentialVO;
 import com.ayor.entity.vo.PasskeyOptionsVO;
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.util.List;
 import java.util.Map;
@@ -53,10 +54,11 @@ public interface PasskeyService {
     PasskeyOptionsVO<Map<String, Object>> createAuthenticationOptions();
 
     /**
-     * 完成 Passkey 登录并返回 JWT 响应。
+     * 完成 Passkey 登录并记录当前登录会话。
      *
      * @param dto 登录完成请求
+     * @param request 当前 HTTP 请求
      * @return 登录成功后的授权信息，失败时返回 `null`
      */
-    AuthorizeVO authenticate(PasskeyAuthenticationFinishDTO dto);
+    AuthorizeVO authenticate(PasskeyAuthenticationFinishDTO dto, HttpServletRequest request);
 }

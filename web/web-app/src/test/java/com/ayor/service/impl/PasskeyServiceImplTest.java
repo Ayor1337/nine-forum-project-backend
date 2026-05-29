@@ -66,7 +66,7 @@ class PasskeyServiceImplTest {
         PasskeyServiceImpl service = service();
         PasskeyAuthenticationFinishDTO dto = authenticationDto("AQID", "Nw");
 
-        assertNull(service.authenticate(dto));
+        assertNull(service.authenticate(dto, null));
     }
 
     @Test
@@ -79,7 +79,7 @@ class PasskeyServiceImplTest {
         when(requestStore.load("req-1")).thenReturn(snapshot);
         when(credentialMapper.findByCredentialId("AQID")).thenReturn(credential);
 
-        assertNull(service.authenticate(dto));
+        assertNull(service.authenticate(dto, null));
     }
 
     @Test
@@ -97,7 +97,7 @@ class PasskeyServiceImplTest {
         when(webAuthnAdapter.verifyAuthentication(dto, snapshot, credential)).thenReturn(10L);
         when(accountMapper.getAccountById(7)).thenReturn(account);
 
-        assertNull(service.authenticate(dto));
+        assertNull(service.authenticate(dto, null));
     }
 
     @Test
@@ -119,7 +119,7 @@ class PasskeyServiceImplTest {
         when(accountMapper.getAccountById(7)).thenReturn(account);
         when(authorizeResponseFactory.create(account)).thenReturn(authorizeVO);
 
-        AuthorizeVO result = service.authenticate(dto);
+        AuthorizeVO result = service.authenticate(dto, null);
 
         assertEquals("tester", result.getUsername());
         assertEquals("jwt-token", result.getToken());

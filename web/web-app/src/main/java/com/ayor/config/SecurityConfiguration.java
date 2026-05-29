@@ -7,8 +7,10 @@ import com.ayor.filter.MuteActionFilter;
 import com.ayor.mapper.AccountMapper;
 import com.ayor.result.Result;
 import com.ayor.result.ResultCodeEnum;
+import com.ayor.service.UserLoginSessionService;
 import com.ayor.util.AuthorizeResponseFactory;
 import com.ayor.util.JWTUtils;
+import com.auth0.jwt.interfaces.DecodedJWT;
 import jakarta.annotation.Resource;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -98,6 +100,9 @@ public class SecurityConfiguration {
     @Resource
     private AuthorizeResponseFactory authorizeResponseFactory;
 
+    @Resource
+    private UserLoginSessionService loginSessionService;
+
     /**
      * 构造 Spring Security 过滤链。
      *
@@ -153,7 +158,7 @@ public class SecurityConfiguration {
         resp.setContentType("application/json");
         User user = (User) auth.getPrincipal();
         Account account = accountMapper.getAccountByUsername(user.getUsername());
-        AuthorizeVO authorizeVO = authorizeResponseFactory.create(account);
+        AuthorizeVO authorizeVO = authorizeResponseFactory.create(account, req);
         resp.getWriter().write(Result.ok(authorizeVO).toJSONString());
     }
 
@@ -189,9 +194,12 @@ public class SecurityConfiguration {
         resp.setContentType("application/json");
         resp.setCharacterEncoding("utf-8");
         String authorization = req.getHeader("Authorization");
+        DecodedJWT jwt = jwtUtil.resolveJwt(authorization);
+        String sessionId = jwt == null ? null : jwt.getClaim("sid").asString();
         PrintWriter writer = resp.getWriter();
         // 校验是否登录，如果没有登录就不可能退出登录
         if (jwtUtil.invalidateJWT(authorization)) {
+            loginSessionService.revokeCurrentSession(sessionId);
             writer.write(Result.build(null, ResultCodeEnum.LOGOUT_SUCCESS).toJSONString());
         } else {
             writer.write(Result.build(null, ResultCodeEnum.LOGOUT_FAILURE).toJSONString());

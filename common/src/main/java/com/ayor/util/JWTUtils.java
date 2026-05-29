@@ -30,6 +30,9 @@ public class JWTUtils {
     @Value("${spring.security.jwt.expire}")
     int expire;
 
+    public record LoginJwt(String token, String jwtId, String sessionId, Date expireTime) {
+    }
+
     /**
      * 将指定 JWT 加入黑名单，使其失效。
      *
@@ -97,16 +100,27 @@ public class JWTUtils {
      * @return JWT 字符串
      */
     public String createJwt(UserDetails userDetails, int id, String username) {
+        return createLoginJwt(userDetails, id, username, null).token();
+    }
+
+    /**
+     * 创建带会话 ID 的登录态 JWT，并返回 token 元数据。
+     */
+    public LoginJwt createLoginJwt(UserDetails userDetails, int id, String username, String sessionId) {
         Algorithm algorithm = Algorithm.HMAC256(key);
-        Date expire = this.expiredTime();
-        return JWT.create()
-                .withJWTId(UUID.randomUUID().toString())
+        Date expireTime = this.expiredTime();
+        String jwtId = UUID.randomUUID().toString();
+        com.auth0.jwt.JWTCreator.Builder builder = JWT.create()
+                .withJWTId(jwtId)
                 .withClaim("id", id)
                 .withClaim("name", username)
                 .withClaim("authorities", userDetails.getAuthorities().stream().map(GrantedAuthority::getAuthority).toList())
-                .withExpiresAt(expire)
-                .withIssuedAt(new Date())
-                .sign(algorithm);
+                .withExpiresAt(expireTime)
+                .withIssuedAt(new Date());
+        if (sessionId != null) {
+            builder.withClaim("sid", sessionId);
+        }
+        return new LoginJwt(builder.sign(algorithm), jwtId, sessionId, expireTime);
     }
 
     /**
@@ -146,6 +160,10 @@ public class JWTUtils {
         try {
             DecodedJWT verify = jwtVerifier.verify(convertedToken);
             if (this.isInvalidToken(verify.getId())) {
+                return null;
+            }
+            String sessionId = verify.getClaim("sid").asString();
+            if (sessionId != null && Boolean.FALSE.equals(template.hasKey(CONST.LOGIN_SESSION_ACTIVE + sessionId))) {
                 return null;
             }
             Date expiresAt = verify.getExpiresAt();
