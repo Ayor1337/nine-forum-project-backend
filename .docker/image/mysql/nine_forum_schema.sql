@@ -36,6 +36,29 @@ CREATE TABLE IF NOT EXISTS `account`  (
 ) ENGINE = InnoDB AUTO_INCREMENT = 4 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
+-- Table structure for account_login_session
+-- ----------------------------
+CREATE TABLE IF NOT EXISTS `account_login_session` (
+    `id` bigint NOT NULL AUTO_INCREMENT,
+    `session_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '登录会话ID，写入 JWT sid claim',
+    `account_id` int NOT NULL COMMENT '账号ID',
+    `jwt_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'JWT jti，仅保存 token 元数据，不保存完整 token',
+    `ip_address` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '登录 IP',
+    `user_agent` varchar(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '登录 User-Agent',
+    `os_name` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '简单解析出的操作系统',
+    `browser_name` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '简单解析出的浏览器',
+    `device_type` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT 'Desktop/Mobile/Tablet/Unknown',
+    `login_time` datetime NOT NULL COMMENT '登录时间',
+    `expire_time` datetime NOT NULL COMMENT 'JWT 过期时间',
+    `revoked_time` datetime NULL DEFAULT NULL COMMENT '主动登出或被踢下线时间',
+    PRIMARY KEY (`id`) USING BTREE,
+    UNIQUE INDEX `uk_account_login_session_session_id` (`session_id`) USING BTREE,
+    INDEX `idx_account_login_session_account_time` (`account_id`, `login_time`) USING BTREE,
+    INDEX `idx_account_login_session_jwt_id` (`jwt_id`) USING BTREE,
+    CONSTRAINT `fk_account_login_session_account` FOREIGN KEY (`account_id`) REFERENCES `account` (`account_id`) ON DELETE CASCADE ON UPDATE RESTRICT
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = DYNAMIC;
+
+-- ----------------------------
 -- Table structure for account_stat
 -- ----------------------------
 CREATE TABLE IF NOT EXISTS `account_stat`  (

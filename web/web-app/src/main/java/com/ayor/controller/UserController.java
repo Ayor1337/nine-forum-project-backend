@@ -7,6 +7,7 @@ import com.ayor.entity.dto.PasswordChangeDTO;
 import com.ayor.entity.dto.UserReportDTO;
 import com.ayor.entity.dto.UserPrivacySettingDTO;
 import com.ayor.entity.vo.AccountStatVO;
+import com.ayor.entity.vo.LoginSessionVO;
 import com.ayor.entity.vo.UserProfileVO;
 import com.ayor.entity.vo.UserInfoVO;
 import com.ayor.entity.vo.UserPrivacySettingVO;
@@ -14,13 +15,18 @@ import com.ayor.result.Result;
 import com.ayor.service.AccountService;
 import com.ayor.service.AccountStatService;
 import com.ayor.service.ReportService;
+import com.ayor.service.UserLoginSessionService;
 import com.ayor.service.UserPrivacySettingService;
 import com.ayor.service.UserRelationService;
+import com.ayor.util.JWTUtils;
 import com.ayor.util.SecurityUtils;
+import com.auth0.jwt.interfaces.DecodedJWT;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RequiredArgsConstructor
 @RestController
@@ -38,6 +44,11 @@ public class UserController {
     private final UserRelationService userRelationService;
 
     private final ReportService reportService;
+
+    private final UserLoginSessionService loginSessionService;
+
+    private final JWTUtils jwtUtils;
+
     /**
      * 获取当前登录用户的资料。
      *
@@ -47,6 +58,19 @@ public class UserController {
     public Result<UserInfoVO> getUserInfo() {
         Integer userId = security.getSecurityUserId();
         return Result.dataMessageHandler(() -> accountService.getUserInfo(userId), "获取用户信息失败,用户可能不存在");
+    }
+
+    @GetMapping("/me/sessions")
+    public Result<List<LoginSessionVO>> listLoginSessions(HttpServletRequest request) {
+        Integer userId = security.getSecurityUserId();
+        return Result.dataMessageHandler(() -> loginSessionService.listSessions(userId, currentSessionId(request)), "获取登录会话失败");
+    }
+
+    @DeleteMapping("/me/sessions/{session_id}")
+    public Result<Void> revokeLoginSession(@PathVariable("session_id") String sessionId,
+                                           HttpServletRequest request) {
+        Integer userId = security.getSecurityUserId();
+        return Result.messageHandler(() -> loginSessionService.revokeSession(userId, sessionId, currentSessionId(request)));
     }
 
     /**
@@ -241,6 +265,11 @@ public class UserController {
                                        HttpServletRequest request) {
         String token = request.getHeader("Authorization");
         return Result.messageHandler(() -> accountService.updatePasswordWithOld(token, dto));
+    }
+
+    private String currentSessionId(HttpServletRequest request) {
+        DecodedJWT jwt = jwtUtils.resolveJwt(request.getHeader("Authorization"));
+        return jwt == null ? null : jwt.getClaim("sid").asString();
     }
 
 }

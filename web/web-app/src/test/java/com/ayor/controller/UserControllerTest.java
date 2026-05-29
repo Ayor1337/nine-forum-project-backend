@@ -2,13 +2,19 @@ package com.ayor.controller;
 
 import com.ayor.entity.PageEntity;
 import com.ayor.entity.vo.UserInfoVO;
+import com.ayor.entity.vo.LoginSessionVO;
 import com.ayor.result.Result;
 import com.ayor.service.AccountService;
 import com.ayor.service.AccountStatService;
 import com.ayor.service.ReportService;
+import com.ayor.service.UserLoginSessionService;
 import com.ayor.service.UserPrivacySettingService;
 import com.ayor.service.UserRelationService;
+import com.ayor.util.JWTUtils;
 import com.ayor.util.SecurityUtils;
+import com.auth0.jwt.interfaces.Claim;
+import com.auth0.jwt.interfaces.DecodedJWT;
+import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.Test;
 import org.springframework.web.bind.annotation.GetMapping;
 
@@ -30,13 +36,17 @@ class UserControllerTest {
     private final UserPrivacySettingService userPrivacySettingService = mock(UserPrivacySettingService.class);
     private final UserRelationService userRelationService = mock(UserRelationService.class);
     private final ReportService reportService = mock(ReportService.class);
+    private final UserLoginSessionService loginSessionService = mock(UserLoginSessionService.class);
+    private final JWTUtils jwtUtils = mock(JWTUtils.class);
     private final UserController controller = new UserController(
             accountService,
             accountStatService,
             securityUtils,
             userPrivacySettingService,
             userRelationService,
-            reportService
+            reportService,
+            loginSessionService,
+            jwtUtils
     );
 
     @Test
@@ -90,5 +100,41 @@ class UserControllerTest {
     @Test
     void profileViewObjectShouldUseProfileName() {
         assertDoesNotThrow(() -> Class.forName("com.ayor.entity.vo.UserProfileVO"));
+    }
+
+    @Test
+    void shouldListCurrentUserSessionsWithCurrentSessionId() {
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        DecodedJWT decodedJWT = mock(DecodedJWT.class);
+        Claim claim = mock(Claim.class);
+        LoginSessionVO session = new LoginSessionVO();
+        when(securityUtils.getSecurityUserId()).thenReturn(7);
+        when(request.getHeader("Authorization")).thenReturn("Bearer token");
+        when(jwtUtils.resolveJwt("Bearer token")).thenReturn(decodedJWT);
+        when(decodedJWT.getClaim("sid")).thenReturn(claim);
+        when(claim.asString()).thenReturn("session-current");
+        when(loginSessionService.listSessions(7, "session-current")).thenReturn(List.of(session));
+
+        Result<List<LoginSessionVO>> result = controller.listLoginSessions(request);
+
+        assertNotNull(result);
+        verify(loginSessionService).listSessions(7, "session-current");
+    }
+
+    @Test
+    void shouldRevokeCurrentUsersOtherSession() {
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        DecodedJWT decodedJWT = mock(DecodedJWT.class);
+        Claim claim = mock(Claim.class);
+        when(securityUtils.getSecurityUserId()).thenReturn(7);
+        when(request.getHeader("Authorization")).thenReturn("Bearer token");
+        when(jwtUtils.resolveJwt("Bearer token")).thenReturn(decodedJWT);
+        when(decodedJWT.getClaim("sid")).thenReturn(claim);
+        when(claim.asString()).thenReturn("session-current");
+
+        Result<Void> result = controller.revokeLoginSession("session-old", request);
+
+        assertNotNull(result);
+        verify(loginSessionService).revokeSession(7, "session-old", "session-current");
     }
 }
