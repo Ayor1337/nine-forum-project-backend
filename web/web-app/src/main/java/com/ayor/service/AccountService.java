@@ -3,9 +3,9 @@ package com.ayor.service;
 import com.ayor.entity.Base64Upload;
 import com.ayor.entity.PageEntity;
 import com.ayor.entity.dto.AccountDTO;
-import com.ayor.entity.dto.AccountProfileDTO;
+import com.ayor.entity.dto.UserProfileDTO;
 import com.ayor.entity.dto.PasswordChangeDTO;
-import com.ayor.entity.vo.AccountInfoVO;
+import com.ayor.entity.vo.UserProfileVO;
 import com.ayor.entity.vo.UserInfoVO;
 import com.ayor.entity.pojo.Account;
 import com.baomidou.mybatisplus.extension.service.IService;
@@ -51,9 +51,9 @@ public interface AccountService extends UserDetailsService, IService<Account> {
      */
     UserInfoVO getPublicUserInfo(Integer viewerId, Integer accountId);
 
-    AccountInfoVO getMyAccountInfo(Integer accountId);
+    UserProfileVO getMyProfile(Integer accountId);
 
-    AccountInfoVO getPublicAccountInfo(Integer viewerId, Integer accountId);
+    UserProfileVO getPublicProfile(Integer viewerId, Integer accountId);
 
     /**
      * 获取指定用户的粉丝列表。
@@ -103,7 +103,7 @@ public interface AccountService extends UserDetailsService, IService<Account> {
      */
     String insertNewAccount(AccountDTO accountDTO);
 
-    String updateUserProfile(Integer accountId, AccountProfileDTO profileDTO);
+    String updateUserProfile(Integer accountId, UserProfileDTO profileDTO);
 
     String updatePasswordWithOld(String token, PasswordChangeDTO pwDto);
 }

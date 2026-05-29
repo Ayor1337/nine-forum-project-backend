@@ -1,12 +1,12 @@
 package com.ayor.service.impl;
 
-import com.ayor.entity.vo.AccountInfoVO;
+import com.ayor.entity.vo.UserProfileVO;
 import com.ayor.entity.pojo.Account;
-import com.ayor.entity.pojo.AccountInfo;
+import com.ayor.entity.pojo.UserProfile;
 import com.ayor.entity.pojo.UserPrivacySetting;
-import com.ayor.mapper.AccountInfoMapper;
+import com.ayor.mapper.UserProfileMapper;
 import com.ayor.mapper.AccountMapper;
-import com.ayor.service.AccountInfoService;
+import com.ayor.service.UserProfileService;
 import com.ayor.service.PrivacyPolicyService;
 import com.ayor.service.UserPrivacySettingService;
 import com.ayor.service.UserRelationService;
@@ -23,9 +23,9 @@ import java.util.Date;
 @Service
 @Transactional
 @RequiredArgsConstructor
-public class AccountInfoServiceImpl extends ServiceImpl<AccountInfoMapper, AccountInfo> implements AccountInfoService {
+public class UserProfileServiceImpl extends ServiceImpl<UserProfileMapper, UserProfile> implements UserProfileService {
 
-    private final AccountInfoMapper accountInfoMapper;
+    private final UserProfileMapper userProfileMapper;
 
     private final AccountMapper accountMapper;
 
@@ -36,7 +36,7 @@ public class AccountInfoServiceImpl extends ServiceImpl<AccountInfoMapper, Accou
     private final UserRelationService userRelationService;
 
     @Override
-    public AccountInfo initDefaultIfAbsent(Integer accountId) {
+    public UserProfile initDefaultIfAbsent(Integer accountId) {
         if (accountId == null || accountId <= 0) {
             return null;
         }
@@ -44,38 +44,38 @@ public class AccountInfoServiceImpl extends ServiceImpl<AccountInfoMapper, Accou
         if (account == null) {
             return null;
         }
-        AccountInfo accountInfo = accountInfoMapper.selectById(accountId);
-        return accountInfo == null ? createDefault(accountId) : accountInfo;
+        UserProfile userProfile = userProfileMapper.selectById(accountId);
+        return userProfile == null ? createDefault(accountId) : userProfile;
     }
 
     @Override
-    public AccountInfo createDefault(Integer accountId) {
+    public UserProfile createDefault(Integer accountId) {
         if (accountId == null || accountId <= 0 || accountMapper.getAccountById(accountId) == null) {
             return null;
         }
-        AccountInfo accountInfo = AccountInfo.builder()
+        UserProfile userProfile = UserProfile.builder()
                 .accountId(accountId)
                 .createTime(new Date())
                 .updateTime(new Date())
                 .build();
-        accountInfoMapper.insert(accountInfo);
-        return accountInfo;
+        userProfileMapper.insert(userProfile);
+        return userProfile;
     }
 
     @Override
-    public AccountInfoVO getMyAccountInfo(Integer accountId) {
+    public UserProfileVO getMyProfile(Integer accountId) {
         return toVO(initDefaultIfAbsent(accountId));
     }
 
     @Override
-    public AccountInfoVO getPublicAccountInfo(Integer viewerId, Integer accountId) {
+    public UserProfileVO getPublicProfile(Integer viewerId, Integer accountId) {
         if (accountMapper.getAccountById(accountId) == null) {
             return null;
         }
-        if (!privacyPolicyService.canViewAccountInfo(viewerId, accountId)) {
+        if (!privacyPolicyService.canViewUserProfile(viewerId, accountId)) {
             throw new AccessDeniedException("无权限查看该用户资料");
         }
-        AccountInfoVO vo = toVO(initDefaultIfAbsent(accountId));
+        UserProfileVO vo = toVO(initDefaultIfAbsent(accountId));
         if (vo == null) {
             return null;
         }
@@ -86,12 +86,12 @@ public class AccountInfoServiceImpl extends ServiceImpl<AccountInfoMapper, Accou
         return vo;
     }
 
-    private AccountInfoVO toVO(AccountInfo accountInfo) {
-        if (accountInfo == null) {
+    private UserProfileVO toVO(UserProfile userProfile) {
+        if (userProfile == null) {
             return null;
         }
-        AccountInfoVO vo = new AccountInfoVO();
-        BeanUtils.copyProperties(accountInfo, vo);
+        UserProfileVO vo = new UserProfileVO();
+        BeanUtils.copyProperties(userProfile, vo);
         return vo;
     }
 

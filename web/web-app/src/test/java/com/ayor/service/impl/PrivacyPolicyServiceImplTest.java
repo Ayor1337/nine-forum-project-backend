@@ -25,11 +25,11 @@ class PrivacyPolicyServiceImplTest {
     private UserPrivacySettingService userPrivacySettingService;
 
     @Test
-    void shouldAllowOwnerToViewProfileAndAccountInfo() {
+    void shouldAllowOwnerToViewProfileAndUserProfile() {
         PrivacyPolicyServiceImpl service = createService();
 
         assertTrue(service.canViewProfile(12, 12));
-        assertTrue(service.canViewAccountInfo(12, 12));
+        assertTrue(service.canViewUserProfile(12, 12));
 
         verify(userPrivacySettingService, never()).getByAccountId(12);
     }

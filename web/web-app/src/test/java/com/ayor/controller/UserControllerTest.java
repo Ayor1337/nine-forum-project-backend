@@ -10,9 +10,13 @@ import com.ayor.service.UserPrivacySettingService;
 import com.ayor.service.UserRelationService;
 import com.ayor.util.SecurityUtils;
 import org.junit.jupiter.api.Test;
+import org.springframework.web.bind.annotation.GetMapping;
 
+import java.lang.reflect.Method;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -72,5 +76,19 @@ class UserControllerTest {
         assertNotNull(result);
         verify(securityUtils).getOptionalSecurityUserId();
         verify(accountService).getFollowings(null, 18, 1, 20);
+    }
+
+    @Test
+    void profileEndpointsShouldUseProfilePaths() throws NoSuchMethodException {
+        Method myProfile = UserController.class.getMethod("getMyProfile");
+        Method publicProfile = UserController.class.getMethod("getPublicProfile", Integer.class);
+
+        assertArrayEquals(new String[]{"/me/profile"}, myProfile.getAnnotation(GetMapping.class).value());
+        assertArrayEquals(new String[]{"/{user_id}/profile"}, publicProfile.getAnnotation(GetMapping.class).value());
+    }
+
+    @Test
+    void profileViewObjectShouldUseProfileName() {
+        assertDoesNotThrow(() -> Class.forName("com.ayor.entity.vo.UserProfileVO"));
     }
 }

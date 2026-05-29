@@ -6,13 +6,13 @@ import com.ayor.entity.pojo.Account;
 import com.ayor.entity.vo.UserInfoVO;
 import com.ayor.image.ImageStorageService;
 import com.ayor.image.StoredImage;
-import com.ayor.mapper.AccountInfoMapper;
+import com.ayor.mapper.UserProfileMapper;
 import com.ayor.mapper.AccountMapper;
 import com.ayor.mapper.AccountStatMapper;
 import com.ayor.mapper.PermissionMapper;
 import com.ayor.mapper.RoleMapper;
 import com.ayor.minio.MinioService;
-import com.ayor.service.AccountInfoService;
+import com.ayor.service.UserProfileService;
 import com.ayor.service.PrivacyPolicyService;
 import com.ayor.service.UserPrivacySettingService;
 import com.ayor.service.UserRelationService;
@@ -40,7 +40,7 @@ class AccountServiceImplTest {
     private AccountMapper accountMapper;
 
     @Mock
-    private AccountInfoMapper accountInfoMapper;
+    private UserProfileMapper userProfileMapper;
 
     @Mock
     private PermissionMapper permissionMapper;
@@ -70,7 +70,7 @@ class AccountServiceImplTest {
     private UserPrivacySettingService userPrivacySettingService;
 
     @Mock
-    private AccountInfoService accountInfoService;
+    private UserProfileService userProfileService;
 
     @Mock
     private ImageStorageService imageStorageService;
@@ -198,7 +198,7 @@ class AccountServiceImplTest {
     private AccountServiceImpl createService() {
         AccountServiceImpl service = new AccountServiceImpl(
                 accountMapper,
-                accountInfoMapper,
+                userProfileMapper,
                 permissionMapper,
                 roleMapper,
                 passwordEncoder,
@@ -208,7 +208,7 @@ class AccountServiceImplTest {
                 userRelationService,
                 privacyPolicyService,
                 userPrivacySettingService,
-                accountInfoService,
+                userProfileService,
                 imageStorageService
         );
         ReflectionTestUtils.setField(service, "baseMapper", accountMapper);
