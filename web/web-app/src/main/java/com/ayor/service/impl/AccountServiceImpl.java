@@ -4,20 +4,20 @@ import com.auth0.jwt.interfaces.DecodedJWT;
 import com.ayor.entity.Base64Upload;
 import com.ayor.entity.PageEntity;
 import com.ayor.entity.dto.AccountDTO;
-import com.ayor.entity.dto.AccountProfileDTO;
+import com.ayor.entity.dto.UserProfileDTO;
 import com.ayor.entity.dto.PasswordChangeDTO;
-import com.ayor.entity.vo.AccountInfoVO;
+import com.ayor.entity.vo.UserProfileVO;
 import com.ayor.entity.vo.UserInfoVO;
 import com.ayor.entity.vo.UserPermissionVO;
 import com.ayor.image.ImageStorageService;
 import com.ayor.entity.pojo.Account;
-import com.ayor.entity.pojo.AccountInfo;
-import com.ayor.mapper.AccountInfoMapper;
+import com.ayor.entity.pojo.UserProfile;
+import com.ayor.mapper.UserProfileMapper;
 import com.ayor.mapper.AccountMapper;
 import com.ayor.mapper.AccountStatMapper;
 import com.ayor.mapper.PermissionMapper;
 import com.ayor.mapper.RoleMapper;
-import com.ayor.service.AccountInfoService;
+import com.ayor.service.UserProfileService;
 import com.ayor.service.AccountService;
 import com.ayor.service.PrivacyPolicyService;
 import com.ayor.service.UserPrivacySettingService;
@@ -51,7 +51,7 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
 
     private final AccountMapper accountMapper;
 
-    private final AccountInfoMapper accountInfoMapper;
+    private final UserProfileMapper userProfileMapper;
 
     private final PermissionMapper permissionMapper;
 
@@ -71,7 +71,7 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
 
     private final UserPrivacySettingService userPrivacySettingService;
 
-    private final AccountInfoService accountInfoService;
+    private final UserProfileService userProfileService;
 
     private final ImageStorageService imageStorageService;
 
@@ -141,13 +141,13 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
     }
 
     @Override
-    public AccountInfoVO getMyAccountInfo(Integer accountId) {
-        return accountInfoService.getMyAccountInfo(accountId);
+    public UserProfileVO getMyProfile(Integer accountId) {
+        return userProfileService.getMyProfile(accountId);
     }
 
     @Override
-    public AccountInfoVO getPublicAccountInfo(Integer viewerId, Integer accountId) {
-        return accountInfoService.getPublicAccountInfo(viewerId, accountId);
+    public UserProfileVO getPublicProfile(Integer viewerId, Integer accountId) {
+        return userProfileService.getPublicProfile(viewerId, accountId);
     }
 
     /**
@@ -273,7 +273,7 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         account.setRoleId(3);
         account.setPassword(encodePwd);
         if (this.save(account)) {
-            accountInfoService.initDefaultIfAbsent(account.getAccountId());
+            userProfileService.initDefaultIfAbsent(account.getAccountId());
             userPrivacySettingService.initDefaultIfAbsent(account.getAccountId());
             return accountStatMapper.insertNewAccountStat(account.getAccountId()) ? null : "添加统计数据失败";
         }
@@ -285,7 +285,7 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
      */
     @Override
     @CacheEvict(value = "userInfo", key = "#accountId")
-    public String updateUserProfile(Integer accountId, AccountProfileDTO profileDTO) {
+    public String updateUserProfile(Integer accountId, UserProfileDTO profileDTO) {
         if (Objects.isNull(profileDTO)) {
             return "上传的用户信息为空";
         }
@@ -307,20 +307,20 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
             accountById.setNickname(profileDTO.getNickname());
         }
 
-        AccountInfo accountInfo = accountInfoService.initDefaultIfAbsent(accountId);
-        if (accountInfo == null) {
+        UserProfile userProfile = userProfileService.initDefaultIfAbsent(accountId);
+        if (userProfile == null) {
             return "用户不存在";
         }
-        accountInfo.setBio(profileDTO.getBio());
-        accountInfo.setLocation(profileDTO.getLocation());
-        accountInfo.setBirthday(profileDTO.getBirthday());
-        accountInfo.setWebsite(profileDTO.getWebsite());
-        accountInfo.setUpdateTime(new Date());
+        userProfile.setBio(profileDTO.getBio());
+        userProfile.setLocation(profileDTO.getLocation());
+        userProfile.setBirthday(profileDTO.getBirthday());
+        userProfile.setWebsite(profileDTO.getWebsite());
+        userProfile.setUpdateTime(new Date());
 
         if (!this.updateById(accountById)) {
             return "修改失败";
         }
-        return accountInfoMapper.updateById(accountInfo) > 0 ? null : "修改失败";
+        return userProfileMapper.updateById(userProfile) > 0 ? null : "修改失败";
     }
 
     /**
@@ -373,8 +373,8 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
     }
 
     private void fillBio(UserInfoVO userInfoVO, Integer accountId) {
-        AccountInfo accountInfo = accountInfoMapper.selectById(accountId);
-        userInfoVO.setBio(accountInfo == null ? null : accountInfo.getBio());
+        UserProfile userProfile = userProfileMapper.selectById(accountId);
+        userInfoVO.setBio(userProfile == null ? null : userProfile.getBio());
     }
 
     private boolean isValidWebsite(String website) {

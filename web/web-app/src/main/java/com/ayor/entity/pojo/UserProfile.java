@@ -16,7 +16,7 @@ import java.util.Date;
 @NoArgsConstructor
 @AllArgsConstructor
 @TableName("account_info")
-public class AccountInfo implements Serializable {
+public class UserProfile implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 119L;

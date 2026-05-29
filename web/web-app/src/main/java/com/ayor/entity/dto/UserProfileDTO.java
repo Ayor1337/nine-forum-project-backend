@@ -13,7 +13,7 @@ import java.util.Date;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class AccountProfileDTO {
+public class UserProfileDTO {
 
     @Size(min = 3, max = 20)
     private String nickname;

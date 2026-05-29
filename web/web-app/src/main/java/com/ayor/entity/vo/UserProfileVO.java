@@ -14,7 +14,7 @@ import java.util.Date;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class AccountInfoVO implements Serializable {
+public class UserProfileVO implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 120L;

@@ -2,12 +2,12 @@ package com.ayor.controller;
 
 import com.ayor.entity.Base64Upload;
 import com.ayor.entity.PageEntity;
-import com.ayor.entity.dto.AccountProfileDTO;
+import com.ayor.entity.dto.UserProfileDTO;
 import com.ayor.entity.dto.PasswordChangeDTO;
 import com.ayor.entity.dto.UserReportDTO;
 import com.ayor.entity.dto.UserPrivacySettingDTO;
 import com.ayor.entity.vo.AccountStatVO;
-import com.ayor.entity.vo.AccountInfoVO;
+import com.ayor.entity.vo.UserProfileVO;
 import com.ayor.entity.vo.UserInfoVO;
 import com.ayor.entity.vo.UserPrivacySettingVO;
 import com.ayor.result.Result;
@@ -122,21 +122,21 @@ public class UserController {
      * @return 操作结果
      */
     @PutMapping("/me/profile")
-    public Result<Void> updateProfile(@RequestBody @Valid AccountProfileDTO dto) {
+    public Result<Void> updateProfile(@RequestBody @Valid UserProfileDTO dto) {
         Integer userId = security.getSecurityUserId();
         return Result.messageHandler(() -> accountService.updateUserProfile(userId, dto));
     }
 
-    @GetMapping("/me/account-info")
-    public Result<AccountInfoVO> getMyAccountInfo() {
+    @GetMapping("/me/profile")
+    public Result<UserProfileVO> getMyProfile() {
         Integer userId = security.getSecurityUserId();
-        return Result.dataMessageHandler(() -> accountService.getMyAccountInfo(userId), "获取用户扩展资料失败");
+        return Result.dataMessageHandler(() -> accountService.getMyProfile(userId), "获取用户资料失败");
     }
 
-    @GetMapping("/{user_id}/account-info")
-    public Result<AccountInfoVO> getPublicAccountInfo(@PathVariable("user_id") Integer userId) {
+    @GetMapping("/{user_id}/profile")
+    public Result<UserProfileVO> getPublicProfile(@PathVariable("user_id") Integer userId) {
         Integer viewerId = security.getSecurityUserId();
-        return Result.dataMessageHandler(() -> accountService.getPublicAccountInfo(viewerId, userId), "获取用户扩展资料失败");
+        return Result.dataMessageHandler(() -> accountService.getPublicProfile(viewerId, userId), "获取用户资料失败");
     }
 
     /**

@@ -3,9 +3,9 @@ package com.ayor.service.impl;
 import com.ayor.entity.PageEntity;
 import com.ayor.entity.vo.UserInfoVO;
 import com.ayor.entity.pojo.Account;
-import com.ayor.entity.pojo.AccountInfo;
+import com.ayor.entity.pojo.UserProfile;
 import com.ayor.entity.pojo.UserRelation;
-import com.ayor.mapper.AccountInfoMapper;
+import com.ayor.mapper.UserProfileMapper;
 import com.ayor.mapper.AccountMapper;
 import com.ayor.mapper.UserRelationMapper;
 import com.ayor.service.UserRelationService;
@@ -37,7 +37,7 @@ public class UserRelationServiceImpl extends ServiceImpl<UserRelationMapper, Use
 
     private final AccountMapper accountMapper;
 
-    private final AccountInfoMapper accountInfoMapper;
+    private final UserProfileMapper userProfileMapper;
 
     /**
      * 关注指定用户。
@@ -237,8 +237,8 @@ public class UserRelationServiceImpl extends ServiceImpl<UserRelationMapper, Use
     private UserInfoVO toUserInfo(Account account) {
         UserInfoVO userInfoVO = new UserInfoVO();
         BeanUtils.copyProperties(account, userInfoVO);
-        AccountInfo accountInfo = accountInfoMapper.selectById(account.getAccountId());
-        userInfoVO.setBio(accountInfo == null ? null : accountInfo.getBio());
+        UserProfile userProfile = userProfileMapper.selectById(account.getAccountId());
+        userInfoVO.setBio(userProfile == null ? null : userProfile.getBio());
         userInfoVO.setPermission(null);
         return userInfoVO;
     }
