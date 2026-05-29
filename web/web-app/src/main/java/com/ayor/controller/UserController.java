@@ -61,9 +61,11 @@ public class UserController {
     }
 
     @GetMapping("/me/sessions")
-    public Result<List<LoginSessionVO>> listLoginSessions(HttpServletRequest request) {
+    public Result<PageEntity<LoginSessionVO>> listLoginSessions(HttpServletRequest request,
+                                                                @RequestParam(name = "page_num", defaultValue = "1") Integer pageNum,
+                                                                @RequestParam(name = "page_size", defaultValue = "12") Integer pageSize) {
         Integer userId = security.getSecurityUserId();
-        return Result.dataMessageHandler(() -> loginSessionService.listSessions(userId, currentSessionId(request)), "获取登录会话失败");
+        return Result.dataMessageHandler(() -> loginSessionService.listSessions(userId, currentSessionId(request), pageNum, pageSize), "获取登录会话失败");
     }
 
     @DeleteMapping("/me/sessions/{session_id}")

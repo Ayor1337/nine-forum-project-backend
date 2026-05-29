@@ -16,9 +16,22 @@ public interface LoginSessionMapper extends BaseMapper<AccountLoginSession> {
             SELECT session_id, ip_address, os_name, browser_name, device_type, login_time, expire_time, revoked_time
             FROM account_login_session
             WHERE account_id = #{accountId}
-            ORDER BY login_time DESC
+              AND login_time >= #{since}
+            ORDER BY revoked_time IS NOT NULL ASC, login_time DESC
+            LIMIT #{pageSize} OFFSET #{offset}
             """)
-    List<LoginSessionVO> listByAccountId(@Param("accountId") Integer accountId);
+    List<LoginSessionVO> listByAccountId(@Param("accountId") Integer accountId,
+                                         @Param("since") Date since,
+                                         @Param("pageSize") Integer pageSize,
+                                         @Param("offset") Long offset);
+
+    @Select("""
+            SELECT COUNT(*)
+            FROM account_login_session
+            WHERE account_id = #{accountId}
+              AND login_time >= #{since}
+            """)
+    Long countByAccountId(@Param("accountId") Integer accountId, @Param("since") Date since);
 
     @Select("""
             SELECT *

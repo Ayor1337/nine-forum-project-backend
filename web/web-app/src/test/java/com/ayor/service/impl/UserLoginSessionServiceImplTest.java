@@ -1,5 +1,6 @@
 package com.ayor.service.impl;
 
+import com.ayor.entity.PageEntity;
 import com.ayor.entity.pojo.AccountLoginSession;
 import com.ayor.entity.vo.LoginSessionVO;
 import com.ayor.mapper.LoginSessionMapper;
@@ -22,6 +23,7 @@ import java.util.concurrent.TimeUnit;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.longThat;
 import static org.mockito.Mockito.verify;
@@ -64,17 +66,40 @@ class UserLoginSessionServiceImplTest {
     }
 
     @Test
-    void shouldMarkCurrentSessionWhenListingSessions() {
+    void shouldPageRecentSessionsAndMarkCurrentSessionWhenListingSessions() {
         UserLoginSessionService service = service();
         LoginSessionVO first = new LoginSessionVO();
         first.setSessionId("session-1");
         LoginSessionVO second = new LoginSessionVO();
         second.setSessionId("session-2");
-        when(loginSessionMapper.listByAccountId(7)).thenReturn(List.of(first, second));
+        when(loginSessionMapper.listByAccountId(eq(7), any(Date.class), eq(12), eq(0L)))
+                .thenReturn(List.of(first, second));
+        when(loginSessionMapper.countByAccountId(eq(7), any(Date.class))).thenReturn(2L);
 
-        List<LoginSessionVO> sessions = service.listSessions(7, "session-2");
+        PageEntity<LoginSessionVO> page = service.listSessions(7, "session-2", 1, null);
 
-        assertTrue(sessions.get(1).isCurrent());
+        assertEquals(2L, page.getTotalSize());
+        assertTrue(page.getData().get(1).isCurrent());
+        verify(loginSessionMapper).listByAccountId(eq(7), any(Date.class), eq(12), eq(0L));
+    }
+
+    @Test
+    void shouldUseSixMonthCutoffAndOffsetWhenListingSessions() {
+        UserLoginSessionService service = service();
+        Date earliestAccepted = new Date(System.currentTimeMillis() - TimeUnit.DAYS.toMillis(190));
+        Date latestAccepted = new Date(System.currentTimeMillis() - TimeUnit.DAYS.toMillis(170));
+        when(loginSessionMapper.listByAccountId(eq(7), any(Date.class), eq(5), eq(10L)))
+                .thenReturn(List.of());
+        when(loginSessionMapper.countByAccountId(eq(7), any(Date.class))).thenReturn(0L);
+
+        PageEntity<LoginSessionVO> page = service.listSessions(7, "session-2", 3, 5);
+
+        assertEquals(0L, page.getTotalSize());
+        ArgumentCaptor<Date> cutoffCaptor = ArgumentCaptor.forClass(Date.class);
+        verify(loginSessionMapper).listByAccountId(eq(7), cutoffCaptor.capture(), eq(5), eq(10L));
+        Date cutoff = cutoffCaptor.getValue();
+        assertTrue(cutoff.after(earliestAccepted));
+        assertTrue(cutoff.before(latestAccepted));
     }
 
     @Test

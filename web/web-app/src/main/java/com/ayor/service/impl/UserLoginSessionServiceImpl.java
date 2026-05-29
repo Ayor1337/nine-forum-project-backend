@@ -1,5 +1,6 @@
 package com.ayor.service.impl;
 
+import com.ayor.entity.PageEntity;
 import com.ayor.entity.pojo.AccountLoginSession;
 import com.ayor.entity.vo.LoginSessionVO;
 import com.ayor.mapper.LoginSessionMapper;
@@ -13,6 +14,7 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -22,6 +24,10 @@ import java.util.concurrent.TimeUnit;
 public class UserLoginSessionServiceImpl implements UserLoginSessionService {
 
     private static final int MAX_HEADER_VALUE_LENGTH = 512;
+
+    private static final int DEFAULT_PAGE_NUM = 1;
+
+    private static final int DEFAULT_PAGE_SIZE = 12;
 
     private final LoginSessionMapper loginSessionMapper;
 
@@ -48,10 +54,16 @@ public class UserLoginSessionServiceImpl implements UserLoginSessionService {
     }
 
     @Override
-    public List<LoginSessionVO> listSessions(Integer accountId, String currentSessionId) {
-        return loginSessionMapper.listByAccountId(accountId).stream()
+    public PageEntity<LoginSessionVO> listSessions(Integer accountId, String currentSessionId, Integer pageNum, Integer pageSize) {
+        int normalizedPageNum = normalizePageNum(pageNum);
+        int normalizedPageSize = normalizePageSize(pageSize);
+        long offset = (long) (normalizedPageNum - 1) * normalizedPageSize;
+        Date since = sixMonthsAgo();
+        List<LoginSessionVO> sessions = loginSessionMapper.listByAccountId(accountId, since, normalizedPageSize, offset).stream()
                 .peek(session -> session.setCurrent(session.getSessionId().equals(currentSessionId)))
                 .toList();
+        Long total = loginSessionMapper.countByAccountId(accountId, since);
+        return new PageEntity<>(total, sessions);
     }
 
     @Override
@@ -110,5 +122,19 @@ public class UserLoginSessionServiceImpl implements UserLoginSessionService {
 
     private static long ttlMillis(Date expireTime) {
         return Math.max(expireTime.getTime() - System.currentTimeMillis(), 0);
+    }
+
+    private static int normalizePageNum(Integer pageNum) {
+        return pageNum == null || pageNum < 1 ? DEFAULT_PAGE_NUM : pageNum;
+    }
+
+    private static int normalizePageSize(Integer pageSize) {
+        return pageSize == null || pageSize < 1 ? DEFAULT_PAGE_SIZE : pageSize;
+    }
+
+    private static Date sixMonthsAgo() {
+        Calendar calendar = Calendar.getInstance();
+        calendar.add(Calendar.MONTH, -6);
+        return calendar.getTime();
     }
 }

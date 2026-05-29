@@ -113,12 +113,13 @@ class UserControllerTest {
         when(jwtUtils.resolveJwt("Bearer token")).thenReturn(decodedJWT);
         when(decodedJWT.getClaim("sid")).thenReturn(claim);
         when(claim.asString()).thenReturn("session-current");
-        when(loginSessionService.listSessions(7, "session-current")).thenReturn(List.of(session));
+        when(loginSessionService.listSessions(7, "session-current", 2, 5))
+                .thenReturn(new PageEntity<>(1L, List.of(session)));
 
-        Result<List<LoginSessionVO>> result = controller.listLoginSessions(request);
+        Result<PageEntity<LoginSessionVO>> result = controller.listLoginSessions(request, 2, 5);
 
         assertNotNull(result);
-        verify(loginSessionService).listSessions(7, "session-current");
+        verify(loginSessionService).listSessions(7, "session-current", 2, 5);
     }
 
     @Test
