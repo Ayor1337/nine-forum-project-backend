@@ -7,6 +7,7 @@ import com.ayor.mapper.AccountMapper;
 import com.ayor.mapper.ConversationMapper;
 import com.ayor.service.ChatUnreadService;
 import com.ayor.service.MessageUnreadService;
+import com.ayor.type.NotificationType;
 import com.ayor.type.UnreadMessageType;
 import com.ayor.util.STOMPUtils;
 import lombok.RequiredArgsConstructor;
@@ -77,12 +78,17 @@ public class ChatNotifAspect {
         Integer userId = resolve(chatNotif.userId(), ctx, Integer.class);
         Integer conversationId = resolve(chatNotif.conversationId(), ctx, Integer.class);
 
-        switch (chatNotif.type()){
+        Object result = joinPoint.proceed();
+        if (chatNotif.type() == NotificationType.SEND_MSG && result != null) {
+            return result;
+        }
+
+        switch (chatNotif.type()) {
             case SEND_MSG -> chatMessageNotif(userId, conversationId);
             case RECEIVED_MSG -> readChatMessage(conversationId, userId);
         }
 
-        return joinPoint.proceed();
+        return result;
     }
 
     /**
