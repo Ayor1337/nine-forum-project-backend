@@ -52,7 +52,7 @@ public interface ThreaddService extends IService<Threadd> {
      * @param pageSize 每页记录数
      * @return 分页结果,包含ThreadVO列表和总记录数
      */
-    PageEntity<ThreadVO> getThreadVOsByTopicId(Integer topicId, Integer tagId, Boolean isSelected, String order, Integer pageNum, Integer pageSize);
+    PageEntity<ThreadVO> getThreadVOsByTopicId(Integer viewerId, Integer topicId, Integer tagId, Boolean isSelected, String order, Integer pageNum, Integer pageSize);
 
     /**
      * 获取指定话题下的帖子榜单。
@@ -63,7 +63,7 @@ public interface ThreaddService extends IService<Threadd> {
      * @param pageSize 每页记录数
      * @return 分页榜单结果
      */
-    PageEntity<ThreadVO> getThreadRankingsByTopicId(Integer topicId, String period, String metric, Integer pageNum, Integer pageSize);
+    PageEntity<ThreadVO> getThreadRankingsByTopicId(Integer viewerId, Integer topicId, String period, String metric, Integer pageNum, Integer pageSize);
 
     /**
      * 获取全站帖子榜单。
@@ -73,7 +73,7 @@ public interface ThreaddService extends IService<Threadd> {
      * @param pageSize 每页记录数
      * @return 分页榜单结果
      */
-    PageEntity<ThreadVO> getThreadRankings(String period, String metric, Integer pageNum, Integer pageSize);
+    PageEntity<ThreadVO> getThreadRankings(Integer viewerId, String period, String metric, Integer pageNum, Integer pageSize);
 
     /**
      * 获取帖子标题
@@ -87,7 +87,7 @@ public interface ThreaddService extends IService<Threadd> {
      * @param threadId 帖子ID
      * @return 帖子视图对象,包含完整的帖子信息、作者信息等
      */
-    ThreadVO getThreadById(Integer threadId);
+    ThreadVO getThreadById(Integer viewerId, Integer threadId);
 
     /**
      * 按用户ID获取帖子列表(分页)

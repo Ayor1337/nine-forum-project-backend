@@ -16,6 +16,7 @@ import com.ayor.service.AuthorizationService;
 import com.ayor.service.ImageAssetService;
 import com.ayor.service.MentionMessageService;
 import com.ayor.service.PostService;
+import com.ayor.service.UserRelationService;
 import com.ayor.type.UnreadMessageType;
 import com.ayor.util.STOMPUtils;
 import com.ayor.util.TipTapUtils;
@@ -26,6 +27,7 @@ import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.BeanUtils;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -54,15 +56,25 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
     private final ImageAssetService imageAssetService;
 
     private final AuthorizationService authorizationService;
+
+    private final UserRelationService userRelationService;
     /**
      * 获取指定帖子下的评论列表。
      */
 
 
     @Override
-    public PageEntity<PostVO> getPostsByThreadId(Integer threadId, Integer pageNum, Integer pageSize) {
+    public PageEntity<PostVO> getPostsByThreadId(Integer viewerId, Integer threadId, Integer pageNum, Integer pageSize) {
         if (threadId == null) {
             return new PageEntity<>(0L, Collections.emptyList());
+        }
+        Integer threadAuthorId = threaddMapper.getAccountIdByThreadIdInteger(threadId);
+        if (threadAuthorId == null) {
+            return new PageEntity<>(0L, Collections.emptyList());
+        }
+        if (viewerId != null && !Objects.equals(viewerId, threadAuthorId)
+                && userRelationService.isBlockedEitherDirection(viewerId, threadAuthorId)) {
+            throw new AccessDeniedException("Access denied");
         }
         if (pageNum == null || pageNum < 1) pageNum = 1;
         if (pageSize == null || pageSize < 1) pageSize = 10;
@@ -72,8 +84,19 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
                 .eq(Post::getThreadId, threadId)
                 .eq(Post::getIsDeleted, false)
                 .orderByAsc(Post::getCreateTime);
+        applyBlockedAuthorFilter(wrapper, viewerId);
         Page<Post> posts = this.baseMapper.selectPage(page, wrapper);
         return new PageEntity<>(posts.getTotal(), toPostVOs(posts.getRecords()));
+    }
+
+    private void applyBlockedAuthorFilter(LambdaQueryWrapper<Post> wrapper, Integer viewerId) {
+        if (viewerId == null) {
+            return;
+        }
+        List<Integer> blockedAccountIds = userRelationService.listBlockedAccountIdsEitherDirection(viewerId);
+        if (!blockedAccountIds.isEmpty()) {
+            wrapper.notIn(Post::getAccountId, blockedAccountIds);
+        }
     }
 
     private List<PostVO> toPostVOs(List<Post> posts) {
@@ -110,6 +133,14 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         if (userId == null) {
             return "用户不存在";
         }
+        Integer threadAuthorId = threaddMapper.getAccountIdByThreadIdInteger(postDTO.getThreadId());
+        if (threadAuthorId == null) {
+            return "帖子不存在";
+        }
+        if (!Objects.equals(userId, threadAuthorId)
+                && userRelationService.isBlockedEitherDirection(userId, threadAuthorId)) {
+            return "已拉黑，不能回复";
+        }
         Integer topicId = threaddMapper.getTopicIdByThreadId(postDTO.getThreadId());
         post.setAccountId(userId)   ;
         try {
@@ -121,7 +152,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         post.setTopicId(topicId);
         if (this.save(post)) {
             imageAssetService.syncContentRefs("POST", post.getPostId(), post.getContent(), userId);
-            Integer currentPostAccountId = threaddMapper.getAccountIdByThreadIdInteger(post.getThreadId());
+            Integer currentPostAccountId = threadAuthorId;
             if (stompUtils.isUserSubscribed(currentPostAccountId.toString(), "/notif/reply") && !currentPostAccountId.equals(userId)) {
                 messagingTemplate.convertAndSendToUser(
                         threaddMapper.getAccountIdByThreadIdInteger(postDTO.getThreadId()).toString(),
@@ -204,6 +235,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
             threadDoc.setUpdateTime(post.getUpdateTime());
             threadDoc.setId("POST-" + post.getPostId());
             threadDoc.setIsThreadTopic(false);
+            threadDoc.setAccountId(post.getAccountId());
             threadDocs.add(threadDoc);
         });
         return threadDocs;

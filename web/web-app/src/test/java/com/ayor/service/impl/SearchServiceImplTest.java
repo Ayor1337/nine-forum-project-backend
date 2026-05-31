@@ -5,6 +5,7 @@ import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import com.ayor.dao.SearchLogDocRepository;
 import com.ayor.entity.PageEntity;
 import com.ayor.entity.document.ThreadDoc;
+import com.ayor.service.UserRelationService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -41,9 +42,12 @@ class SearchServiceImplTest {
     @Mock
     private ElasticsearchOperations operations;
 
+    @Mock
+    private UserRelationService userRelationService;
+
     @Test
     void searchThreadsShouldRequireKeywordMatchWhenFiltersExist() {
-        SearchServiceImpl service = new SearchServiceImpl(null, searchLogDocRepository, redisTemplate, operations);
+        SearchServiceImpl service = createService();
         when(operations.search(any(NativeQuery.class), eq(ThreadDoc.class))).thenReturn(emptyHits());
 
         service.searchThreads(" spring ", null, null, false, true, null, null, "rel", 1, 10);
@@ -57,7 +61,7 @@ class SearchServiceImplTest {
 
     @Test
     void searchThreadsShouldPutMetadataConditionsInFilter() {
-        SearchServiceImpl service = new SearchServiceImpl(null, searchLogDocRepository, redisTemplate, operations);
+        SearchServiceImpl service = createService();
         when(operations.search(any(NativeQuery.class), eq(ThreadDoc.class))).thenReturn(emptyHits());
 
         service.searchThreads("spring", null, 7, false, true, 1_700_000_000_000L, 1_700_086_400_000L, "rel", 1, 10);
@@ -72,7 +76,7 @@ class SearchServiceImplTest {
 
     @Test
     void searchThreadsShouldReturnEmptyPageForBlankKeywordWithoutSideEffects() {
-        SearchServiceImpl service = new SearchServiceImpl(null, searchLogDocRepository, redisTemplate, operations);
+        SearchServiceImpl service = createService();
 
         PageEntity<ThreadDoc> result = service.searchThreads("   ", 1, null, true, false, null, null, "rel", 1, 10);
 
@@ -86,6 +90,24 @@ class SearchServiceImplTest {
         assertTrue(ThreadDoc.class.getDeclaredField("topicId").getAnnotation(Field.class).index());
         assertTrue(ThreadDoc.class.getDeclaredField("createTime").getAnnotation(Field.class).index());
         assertTrue(ThreadDoc.class.getDeclaredField("isThreadTopic").getAnnotation(Field.class).index());
+        assertTrue(ThreadDoc.class.getDeclaredField("accountId").getAnnotation(Field.class).index());
+    }
+
+    @Test
+    void searchThreadsShouldExcludeBlockedAuthors() {
+        SearchServiceImpl service = createService();
+        when(userRelationService.listBlockedAccountIdsEitherDirection(5)).thenReturn(List.of(11, 12));
+        when(operations.search(any(NativeQuery.class), eq(ThreadDoc.class))).thenReturn(emptyHits());
+
+        service.searchThreads("spring", 5, null, false, false, null, null, "rel", 1, 10);
+
+        BoolQuery boolQuery = capturedBoolQuery();
+        assertTrue(boolQuery.mustNot().stream().anyMatch(query -> query.isTerms()
+                && "accountId".equals(query.terms().field())));
+    }
+
+    private SearchServiceImpl createService() {
+        return new SearchServiceImpl(null, searchLogDocRepository, redisTemplate, operations, userRelationService);
     }
 
     private BoolQuery capturedBoolQuery() {

@@ -30,6 +30,9 @@ public class ThreadDoc implements Serializable {
     private Integer threadId;
 
     @Field(type = FieldType.Integer)
+    private Integer accountId;
+
+    @Field(type = FieldType.Integer)
     private Integer topicId;
 
     @Field(type = FieldType.Text, analyzer = "ik_max_word", searchAnalyzer = "ik_smart")

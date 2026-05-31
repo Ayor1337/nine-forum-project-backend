@@ -12,6 +12,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
@@ -87,6 +89,23 @@ class UserRelationServiceImplTest {
         when(userRelationMapper.existsRelation(1, 2, RelationType.BLOCK, RelationStatus.ACTIVE)).thenReturn(true);
 
         assertEquals(true, service.isBlocked(1, 2));
+    }
+
+    @Test
+    void shouldListBlockedAccountIdsEitherDirection() {
+        UserRelationServiceImpl service = createService();
+        when(userRelationMapper.listBlockedAccountIdsEitherDirection(7)).thenReturn(List.of(11, 12));
+
+        assertEquals(List.of(11, 12), service.listBlockedAccountIdsEitherDirection(7));
+    }
+
+    @Test
+    void shouldReturnEmptyBlockedAccountIdsWhenAccountIdIsNull() {
+        UserRelationServiceImpl service = createService();
+
+        assertEquals(List.of(), service.listBlockedAccountIdsEitherDirection(null));
+
+        verify(userRelationMapper, never()).listBlockedAccountIdsEitherDirection(any());
     }
 
     private UserRelationServiceImpl createService() {

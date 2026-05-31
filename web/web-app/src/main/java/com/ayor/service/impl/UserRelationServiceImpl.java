@@ -22,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -168,6 +169,17 @@ public class UserRelationServiceImpl extends ServiceImpl<UserRelationMapper, Use
             return false;
         }
         return userRelationMapper.existsBlockedEitherDirection(firstAccountId, secondAccountId);
+    }
+
+    /**
+     * 获取与指定用户存在任一方向拉黑关系的账号 ID。
+     */
+    @Override
+    public List<Integer> listBlockedAccountIdsEitherDirection(Integer accountId) {
+        if (accountId == null) {
+            return Collections.emptyList();
+        }
+        return userRelationMapper.listBlockedAccountIdsEitherDirection(accountId);
     }
 
     /**

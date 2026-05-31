@@ -2,6 +2,7 @@ package com.ayor.service.impl;
 
 import co.elastic.clients.elasticsearch._types.aggregations.Aggregation;
 import co.elastic.clients.elasticsearch._types.aggregations.StringTermsBucket;
+import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import com.ayor.dao.SearchLogDocRepository;
 import com.ayor.dao.ThreaddRepository;
@@ -10,6 +11,7 @@ import com.ayor.entity.document.SearchLogDoc;
 import com.ayor.entity.document.ThreadDoc;
 import com.ayor.entity.vo.HotKeywordVO;
 import com.ayor.service.SearchService;
+import com.ayor.service.UserRelationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -40,6 +42,8 @@ public class SearchServiceImpl implements SearchService {
     private final StringRedisTemplate redisTemplate;
 
     private final ElasticsearchOperations operations;
+
+    private final UserRelationService userRelationService;
 
     static final List<String> ORDER = List.of("asc", "desc", "rel");
     /**
@@ -108,6 +112,18 @@ public class SearchServiceImpl implements SearchService {
         // 如果是只搜索主题帖
         if (onlyThreadTopic) {
             boolQuery.filter(m -> m.term(t -> t.field("isThreadTopic").value(true)));
+        }
+
+        if (userId != null) {
+            List<FieldValue> blockedAccountIds = userRelationService.listBlockedAccountIdsEitherDirection(userId)
+                    .stream()
+                    .map(FieldValue::of)
+                    .toList();
+            if (!blockedAccountIds.isEmpty()) {
+                boolQuery.mustNot(m -> m.terms(t -> t
+                        .field("accountId")
+                        .terms(v -> v.value(blockedAccountIds))));
+            }
         }
 
         // 构建查询

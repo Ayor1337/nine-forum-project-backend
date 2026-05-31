@@ -46,7 +46,8 @@ public class ChatBoardController {
     public Result<PageEntity<ChatboardHistoryVO>> getHistory(@PathVariable("topic_id")Integer topicId,
                                                              @RequestParam(value = "page_num", defaultValue = "1") Integer pageNum,
                                                              @RequestParam(value = "page_size", defaultValue = "10") Integer pageSize) {
-        return Result.dataMessageHandler(() -> chatboardHistoryService.getChatboardHistory(topicId, pageNum, pageSize), "获取聊天记录失败");
+        Integer userId = securityUtils.getSecurityUserId();
+        return Result.dataMessageHandler(() -> chatboardHistoryService.getChatboardHistory(userId, topicId, pageNum, pageSize), "获取聊天记录失败");
     }
 
 

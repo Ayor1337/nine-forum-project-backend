@@ -82,6 +82,7 @@ class ThreaddServiceImplTest {
         Method topicMethod = ThreaddServiceImpl.class.getMethod(
                 "getThreadRankingsByTopicId",
                 Integer.class,
+                Integer.class,
                 String.class,
                 String.class,
                 Integer.class,
@@ -89,6 +90,7 @@ class ThreaddServiceImplTest {
         );
         Method allMethod = ThreaddServiceImpl.class.getMethod(
                 "getThreadRankings",
+                Integer.class,
                 String.class,
                 String.class,
                 Integer.class,
@@ -124,7 +126,7 @@ class ThreaddServiceImplTest {
         when(accountMapper.getAccountById(11)).thenReturn(account);
         when(threaddMapper.selectPage(any(Page.class), any(Wrapper.class))).thenReturn(page);
 
-        PageEntity<ThreadVO> result = service.getThreadVOsByTopicId(1, 3, true, "hot", 1, 10);
+        PageEntity<ThreadVO> result = service.getThreadVOsByTopicId(7, 1, 3, true, "hot", 1, 10);
 
         ArgumentCaptor<Wrapper<Threadd>> wrapperCaptor = ArgumentCaptor.forClass(Wrapper.class);
         verify(threaddMapper).selectPage(any(Page.class), wrapperCaptor.capture());
@@ -138,6 +140,27 @@ class ThreaddServiceImplTest {
         String targetSql = wrapperCaptor.getValue().getTargetSql();
         assertTrue(targetSql.contains("tag_id"), targetSql);
         assertTrue(targetSql.contains("is_selected"), targetSql);
+    }
+
+    @Test
+    void shouldExcludeBlockedAccountsFromTopicThreadPages() {
+        ThreaddServiceImpl service = createService();
+        when(topicMapper.isTopicDelete(1)).thenReturn(false);
+        when(userRelationService.listBlockedAccountIdsEitherDirection(7)).thenReturn(List.of(11, 12));
+
+        Page<Threadd> page = Page.of(1, 10);
+        page.setRecords(List.of());
+        page.setTotal(0);
+        when(threaddMapper.selectPage(any(Page.class), any(Wrapper.class))).thenReturn(page);
+
+        service.getThreadVOsByTopicId(7, 1, null, null, "hot", 1, 10);
+
+        ArgumentCaptor<Wrapper<Threadd>> wrapperCaptor = ArgumentCaptor.forClass(Wrapper.class);
+        verify(threaddMapper).selectPage(any(Page.class), wrapperCaptor.capture());
+
+        TableInfoHelper.initTableInfo(new MapperBuilderAssistant(new MybatisConfiguration(), ""), Threadd.class);
+        String targetSql = wrapperCaptor.getValue().getTargetSql();
+        assertTrue(targetSql.contains("account_id NOT IN"), targetSql);
     }
 
     @Test
@@ -173,7 +196,7 @@ class ThreaddServiceImplTest {
         when(accountMapper.getAccountById(11)).thenReturn(account);
         when(threaddMapper.selectPage(any(Page.class), any(Wrapper.class))).thenReturn(page);
 
-        PageEntity<ThreadVO> result = service.getThreadRankingsByTopicId(1, "day", "likes", 1, 10);
+        PageEntity<ThreadVO> result = service.getThreadRankingsByTopicId(7, 1, "day", "likes", 1, 10);
 
         ArgumentCaptor<Wrapper<Threadd>> wrapperCaptor = ArgumentCaptor.forClass(Wrapper.class);
         verify(threaddMapper).selectPage(any(Page.class), wrapperCaptor.capture());
@@ -204,7 +227,7 @@ class ThreaddServiceImplTest {
         when(accountMapper.getAccountById(11)).thenReturn(account);
         when(threaddMapper.selectPage(any(Page.class), any(Wrapper.class))).thenReturn(page);
 
-        PageEntity<ThreadVO> result = service.getThreadRankings("week", "views", 1, 10);
+        PageEntity<ThreadVO> result = service.getThreadRankings(7, "week", "views", 1, 10);
 
         ArgumentCaptor<Wrapper<Threadd>> wrapperCaptor = ArgumentCaptor.forClass(Wrapper.class);
         verify(threaddMapper).selectPage(any(Page.class), wrapperCaptor.capture());
@@ -234,7 +257,7 @@ class ThreaddServiceImplTest {
         when(accountMapper.getAccountById(11)).thenReturn(account);
         when(threaddMapper.selectPage(any(Page.class), any(Wrapper.class))).thenReturn(page);
 
-        PageEntity<ThreadVO> result = service.getThreadRankings("unknown", "collects", 1, 10);
+        PageEntity<ThreadVO> result = service.getThreadRankings(7, "unknown", "collects", 1, 10);
 
         ArgumentCaptor<Wrapper<Threadd>> wrapperCaptor = ArgumentCaptor.forClass(Wrapper.class);
         verify(threaddMapper).selectPage(any(Page.class), wrapperCaptor.capture());
@@ -272,10 +295,20 @@ class ThreaddServiceImplTest {
     }
 
     @Test
+    void shouldDenyThreadDetailWhenViewerBlockedEitherDirection() {
+        ThreaddServiceImpl service = createService();
+        Threadd thread = createThread();
+        when(threaddMapper.selectById(101)).thenReturn(thread);
+        when(userRelationService.isBlockedEitherDirection(7, 11)).thenReturn(true);
+
+        assertThrows(AccessDeniedException.class, () -> service.getThreadById(7, 101));
+    }
+
+    @Test
     void shouldReturnNullWhenTopicIdIsNull() {
         ThreaddServiceImpl service = createService();
 
-        PageEntity<ThreadVO> result = service.getThreadVOsByTopicId(null, 3, true, "hot", 1, 10);
+        PageEntity<ThreadVO> result = service.getThreadVOsByTopicId(7, null, 3, true, "hot", 1, 10);
 
         assertNull(result);
         verifyNoInteractions(topicMapper, threaddMapper);

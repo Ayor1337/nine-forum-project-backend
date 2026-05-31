@@ -5,6 +5,8 @@ import com.ayor.entity.vo.UserInfoVO;
 import com.ayor.entity.pojo.UserRelation;
 import com.baomidou.mybatisplus.extension.service.IService;
 
+import java.util.List;
+
 /**
  * 用户关系服务接口。
  */
@@ -89,6 +91,14 @@ public interface UserRelationService extends IService<UserRelation> {
      * @return true=存在拉黑,false=不存在拉黑
      */
     boolean isBlockedEitherDirection(Integer firstAccountId, Integer secondAccountId);
+
+    /**
+     * 获取与指定用户存在任一方向拉黑关系的账号 ID。
+     *
+     * @param accountId 当前账号 ID
+     * @return 被当前用户拉黑或拉黑当前用户的账号 ID 列表
+     */
+    List<Integer> listBlockedAccountIdsEitherDirection(Integer accountId);
 
     /**
      * 获取用户粉丝列表。

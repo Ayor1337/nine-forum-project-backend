@@ -35,10 +35,11 @@ public interface ChatboardHistoryService extends IService<ChatboardHistory> {
     /**
      * 获取聊天室历史消息
      *
+     * @param accountId 当前查看用户 ID
      * @param topicId  分类ID,标识聊天室
      * @param pageNum  页码
      * @param pageSize 每页数量
      * @return 历史消息视图对象列表
      */
-    PageEntity<ChatboardHistoryVO> getChatboardHistory(Integer topicId, Integer pageNum, Integer pageSize);
+    PageEntity<ChatboardHistoryVO> getChatboardHistory(Integer accountId, Integer topicId, Integer pageNum, Integer pageSize);
 }

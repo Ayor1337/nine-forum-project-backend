@@ -12,6 +12,7 @@ import com.ayor.mapper.ThreaddMapper;
 import com.ayor.service.AuthorizationService;
 import com.ayor.service.ImageAssetService;
 import com.ayor.service.MentionMessageService;
+import com.ayor.service.UserRelationService;
 import com.ayor.util.STOMPUtils;
 import com.ayor.util.TipTapUtils;
 import org.junit.jupiter.api.Test;
@@ -29,12 +30,15 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+import org.springframework.security.access.AccessDeniedException;
 
 @ExtendWith(MockitoExtension.class)
 class PostServiceImplTest {
@@ -63,6 +67,9 @@ class PostServiceImplTest {
     @Mock
     private AuthorizationService authorizationService;
 
+    @Mock
+    private UserRelationService userRelationService;
+
     @Test
     void shouldPagePostsByThreadId() {
         PostServiceImpl service = createService();
@@ -88,7 +95,7 @@ class PostServiceImplTest {
         when(postMapper.selectPage(any(Page.class), any(Wrapper.class))).thenReturn(page);
         when(accountMapper.getAccountById(3)).thenReturn(account);
 
-        PageEntity<PostVO> result = service.getPostsByThreadId(9, 2, 5);
+        PageEntity<PostVO> result = service.getPostsByThreadId(5, 9, 2, 5);
 
         assertEquals(12L, result.getTotalSize());
         assertEquals(1, result.getData().size());
@@ -96,6 +103,34 @@ class PostServiceImplTest {
         assertEquals("reply-user", result.getData().get(0).getNickname());
         assertEquals("avatar.png", result.getData().get(0).getAvatarUrl());
         verify(postMapper).selectPage(any(Page.class), any(Wrapper.class));
+    }
+
+    @Test
+    void shouldExcludeBlockedAccountsFromPostPages() {
+        PostServiceImpl service = createService();
+        when(threaddMapper.getAccountIdByThreadIdInteger(9)).thenReturn(11);
+        when(userRelationService.isBlockedEitherDirection(5, 11)).thenReturn(false);
+        when(userRelationService.listBlockedAccountIdsEitherDirection(5)).thenReturn(List.of(3));
+
+        Page<Post> page = Page.of(1, 10);
+        page.setRecords(List.of());
+        page.setTotal(0);
+        when(postMapper.selectPage(any(Page.class), any(Wrapper.class))).thenReturn(page);
+
+        service.getPostsByThreadId(5, 9, 1, 10);
+
+        verify(postMapper).selectPage(any(Page.class), any(Wrapper.class));
+    }
+
+    @Test
+    void shouldDenyPostPagesWhenViewerBlockedWithThreadAuthor() {
+        PostServiceImpl service = createService();
+        when(threaddMapper.getAccountIdByThreadIdInteger(9)).thenReturn(11);
+        when(userRelationService.isBlockedEitherDirection(5, 11)).thenReturn(true);
+
+        assertThrows(AccessDeniedException.class, () -> service.getPostsByThreadId(5, 9, 1, 10));
+
+        verify(postMapper, never()).selectPage(any(Page.class), any(Wrapper.class));
     }
 
     @Test
@@ -120,6 +155,24 @@ class PostServiceImplTest {
         assertNull(result);
         verify(imageAssetService).syncContentRefs("POST", 123, "{\"type\":\"doc\",\"content\":[]}", 5);
         verify(messagingTemplate, never()).convertAndSendToUser(any(), any(), any());
+    }
+
+    @Test
+    void shouldRejectInsertPostWhenBlockedWithThreadAuthor() {
+        PostServiceImpl service = createService();
+
+        PostDTO dto = new PostDTO();
+        dto.setThreadId(9);
+        dto.setContent("{\"type\":\"doc\",\"content\":[]}");
+
+        when(threaddMapper.getAccountIdByThreadIdInteger(9)).thenReturn(11);
+        when(userRelationService.isBlockedEitherDirection(5, 11)).thenReturn(true);
+
+        String result = service.insertPost(dto, 5);
+
+        assertEquals("已拉黑，不能回复", result);
+        verify(postMapper, never()).insert(any(Post.class));
+        verifyNoInteractions(imageAssetService, mentionMessageService);
     }
 
     @Test
@@ -166,7 +219,8 @@ class PostServiceImplTest {
                 stompUtils,
                 mentionMessageService,
                 imageAssetService,
-                authorizationService
+                authorizationService,
+                userRelationService
         );
         ReflectionTestUtils.setField(service, "baseMapper", postMapper);
         return service;

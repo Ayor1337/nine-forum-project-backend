@@ -44,7 +44,8 @@ public class ThreadController {
                                                           @RequestParam(value = "order", defaultValue = "hot") String order,
                                                           @RequestParam("page_num")Integer pageNum,
                                                           @RequestParam(value = "page_size", defaultValue = "10") Integer pageSize) {
-        return Result.dataMessageHandler(() -> threaddService.getThreadVOsByTopicId(topicId, tagId, isSelected, order, pageNum, pageSize), "获取失败");
+        Integer viewerId = security.getOptionalSecurityUserId();
+        return Result.dataMessageHandler(() -> threaddService.getThreadVOsByTopicId(viewerId, topicId, tagId, isSelected, order, pageNum, pageSize), "获取失败");
     }
 
     @GetMapping("/topics/{topic_id}/thread-rankings")
@@ -53,7 +54,8 @@ public class ThreadController {
                                                                @RequestParam(value = "metric", defaultValue = "likes") String metric,
                                                                @RequestParam("page_num") Integer pageNum,
                                                                @RequestParam(value = "page_size", defaultValue = "10") Integer pageSize) {
-        return Result.dataMessageHandler(() -> threaddService.getThreadRankingsByTopicId(topicId, period, metric, pageNum, pageSize), "获取失败");
+        Integer viewerId = security.getOptionalSecurityUserId();
+        return Result.dataMessageHandler(() -> threaddService.getThreadRankingsByTopicId(viewerId, topicId, period, metric, pageNum, pageSize), "获取失败");
     }
 
     @GetMapping("/thread-rankings")
@@ -61,7 +63,8 @@ public class ThreadController {
                                                           @RequestParam(value = "metric", defaultValue = "likes") String metric,
                                                           @RequestParam("page_num") Integer pageNum,
                                                           @RequestParam(value = "page_size", defaultValue = "10") Integer pageSize) {
-        return Result.dataMessageHandler(() -> threaddService.getThreadRankings(period, metric, pageNum, pageSize), "获取失败");
+        Integer viewerId = security.getOptionalSecurityUserId();
+        return Result.dataMessageHandler(() -> threaddService.getThreadRankings(viewerId, period, metric, pageNum, pageSize), "获取失败");
     }
     /**
      * 获取指定用户发布的帖子列表。
@@ -81,7 +84,8 @@ public class ThreadController {
      */
     @GetMapping("/threads/{thread_id}")
     public Result<ThreadVO> getThreadById(@PathVariable(name = "thread_id") Integer threadId) {
-        return Result.dataMessageHandler(() -> threaddService.getThreadById(threadId), "获取失败");
+        Integer viewerId = security.getOptionalSecurityUserId();
+        return Result.dataMessageHandler(() -> threaddService.getThreadById(viewerId, threadId), "获取失败");
     }
 
     /**
@@ -91,7 +95,8 @@ public class ThreadController {
     public Result<PageEntity<PostVO>> getPostsByThreadId(@PathVariable(name = "thread_id") Integer threadId,
                                                          @RequestParam("page_num") Integer pageNum,
                                                          @RequestParam(value = "page_size", defaultValue = "10") Integer pageSize) {
-        return Result.dataMessageHandler(() -> postService.getPostsByThreadId(threadId, pageNum, pageSize), "获取失败");
+        Integer viewerId = security.getOptionalSecurityUserId();
+        return Result.dataMessageHandler(() -> postService.getPostsByThreadId(viewerId, threadId, pageNum, pageSize), "获取失败");
     }
 
     /**

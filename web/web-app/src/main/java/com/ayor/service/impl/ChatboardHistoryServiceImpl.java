@@ -7,6 +7,8 @@ import com.ayor.entity.pojo.ChatboardHistory;
 import com.ayor.mapper.AccountMapper;
 import com.ayor.mapper.ChatboardHistoryMapper;
 import com.ayor.service.ChatboardHistoryService;
+import com.ayor.service.UserRelationService;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +29,8 @@ public class ChatboardHistoryServiceImpl extends ServiceImpl<ChatboardHistoryMap
     private final AccountMapper accountMapper;
 
     private final SimpMessagingTemplate simpMessagingTemplate;
+
+    private final UserRelationService userRelationService;
     /**
      * 保存聊天室消息到聊天记录中。
      */
@@ -57,11 +61,15 @@ public class ChatboardHistoryServiceImpl extends ServiceImpl<ChatboardHistoryMap
      */
 
     @Override
-    public PageEntity<ChatboardHistoryVO> getChatboardHistory(Integer topicId, Integer pageNum, Integer pageSize) {
-        Page<ChatboardHistory> page = this.lambdaQuery()
+    public PageEntity<ChatboardHistoryVO> getChatboardHistory(Integer accountId, Integer topicId, Integer pageNum, Integer pageSize) {
+        List<Integer> blockedAccountIds = accountId == null
+                ? List.of()
+                : userRelationService.listBlockedAccountIdsEitherDirection(accountId);
+        LambdaQueryWrapper<ChatboardHistory> wrapper = new LambdaQueryWrapper<ChatboardHistory>()
                 .eq(ChatboardHistory::getTopicId, topicId)
-                .orderByDesc(ChatboardHistory::getCreateTime)
-                .page(Page.of(pageNum, pageSize));
+                .notIn(blockedAccountIds != null && !blockedAccountIds.isEmpty(), ChatboardHistory::getAccountId, blockedAccountIds)
+                .orderByDesc(ChatboardHistory::getCreateTime);
+        Page<ChatboardHistory> page = this.baseMapper.selectPage(Page.of(pageNum, pageSize), wrapper);
         List<ChatboardHistory> records = page.getRecords();
 
         if (records == null || records.isEmpty()) {

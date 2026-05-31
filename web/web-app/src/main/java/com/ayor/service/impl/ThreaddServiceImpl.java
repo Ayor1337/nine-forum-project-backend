@@ -80,7 +80,7 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
      */
 
     @Override
-    public PageEntity<ThreadVO> getThreadVOsByTopicId(Integer topicId, Integer tagId, Boolean isSelected, String order, Integer pageNum, Integer pageSize) {
+    public PageEntity<ThreadVO> getThreadVOsByTopicId(Integer viewerId, Integer topicId, Integer tagId, Boolean isSelected, String order, Integer pageNum, Integer pageSize) {
         if (topicId == null) {
             return null;
         }
@@ -92,6 +92,7 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
                 .eq(Threadd::getIsDeleted, false)
                 .eq(tagId != null, Threadd::getTagId, tagId)
                 .eq(isSelected != null, Threadd::getIsSelected, isSelected);
+        applyBlockedAuthorFilter(queryWrapper, viewerId);
         applyThreadOrder(queryWrapper, normalizeThreadOrder(order));
         Page<Threadd> threads = this.page(Page.of(pageNum, pageSize), queryWrapper);
 
@@ -100,10 +101,10 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
 
     @Override
     @Cacheable(value = "threadRanking",
-            key = "'topic:' + #topicId + ':' + #period + ':' + #metric + ':' + #pageNum + ':' + #pageSize",
+            key = "'topic:' + #viewerId + ':' + #topicId + ':' + #period + ':' + #metric + ':' + #pageNum + ':' + #pageSize",
             condition = "#topicId != null && #pageNum != null && #pageSize != null",
             unless = "#result == null || #result.totalSize == 0")
-    public PageEntity<ThreadVO> getThreadRankingsByTopicId(Integer topicId, String period, String metric, Integer pageNum, Integer pageSize) {
+    public PageEntity<ThreadVO> getThreadRankingsByTopicId(Integer viewerId, Integer topicId, String period, String metric, Integer pageNum, Integer pageSize) {
         if (topicId == null) {
             return null;
         }
@@ -112,17 +113,19 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
         }
         LambdaQueryWrapper<Threadd> queryWrapper = buildRankingQuery(period, metric)
                 .eq(Threadd::getTopicId, topicId);
+        applyBlockedAuthorFilter(queryWrapper, viewerId);
         Page<Threadd> threads = this.page(Page.of(pageNum, pageSize), queryWrapper);
         return new PageEntity<>(threads.getTotal(), toVOs(threads.getRecords()));
     }
 
     @Override
     @Cacheable(value = "threadRanking",
-            key = "'all:' + #period + ':' + #metric + ':' + #pageNum + ':' + #pageSize",
+            key = "'all:' + #viewerId + ':' + #period + ':' + #metric + ':' + #pageNum + ':' + #pageSize",
             condition = "#pageNum != null && #pageSize != null",
             unless = "#result == null || #result.totalSize == 0")
-    public PageEntity<ThreadVO> getThreadRankings(String period, String metric, Integer pageNum, Integer pageSize) {
+    public PageEntity<ThreadVO> getThreadRankings(Integer viewerId, String period, String metric, Integer pageNum, Integer pageSize) {
         LambdaQueryWrapper<Threadd> queryWrapper = buildRankingQuery(period, metric);
+        applyBlockedAuthorFilter(queryWrapper, viewerId);
         Page<Threadd> threads = this.page(Page.of(pageNum, pageSize), queryWrapper);
         return new PageEntity<>(threads.getTotal(), toVOs(threads.getRecords()));
     }
@@ -143,11 +146,18 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
      */
 
     @Override
-    public ThreadVO getThreadById(Integer threadId) {
-        if (threadId == null || !existsThreadById(threadId)) {
+    public ThreadVO getThreadById(Integer viewerId, Integer threadId) {
+        if (threadId == null) {
             return null;
         }
-        Threadd threadd = this.lambdaQuery().eq(Threadd::getThreadId, threadId).one();
+        Threadd threadd = this.baseMapper.selectById(threadId);
+        if (threadd == null || Boolean.TRUE.equals(threadd.getIsDeleted())) {
+            return null;
+        }
+        if (viewerId != null && !Objects.equals(viewerId, threadd.getAccountId())
+                && userRelationService.isBlockedEitherDirection(viewerId, threadd.getAccountId())) {
+            throw new AccessDeniedException("Access denied");
+        }
         ThreadVO threadVO = new ThreadVO();
         TagVO tagVO = new TagVO();
         Account account = accountMapper.getAccountById(threadd.getAccountId());
@@ -246,6 +256,16 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
                 .ge(Threadd::getCreateTime, ThreadRankingPeriod.fromValue(period).getStartTime());
         applyRankingMetricOrder(queryWrapper, ThreadRankingMetric.fromValue(metric));
         return queryWrapper;
+    }
+
+    private void applyBlockedAuthorFilter(LambdaQueryWrapper<Threadd> queryWrapper, Integer viewerId) {
+        if (viewerId == null) {
+            return;
+        }
+        List<Integer> blockedAccountIds = userRelationService.listBlockedAccountIdsEitherDirection(viewerId);
+        if (!blockedAccountIds.isEmpty()) {
+            queryWrapper.notIn(Threadd::getAccountId, blockedAccountIds);
+        }
     }
 
     private void applyRankingMetricOrder(LambdaQueryWrapper<Threadd> queryWrapper, ThreadRankingMetric metric) {
@@ -453,6 +473,7 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
             threadDoc.setContent(tipTapUtils.extractText(thread.getContent()));
             threadDoc.setId("THREAD_"+thread.getThreadId());
             threadDoc.setIsThreadTopic(true);
+            threadDoc.setAccountId(thread.getAccountId());
             threadDocs.add(threadDoc);
         });
         return threadDocs;

@@ -10,6 +10,7 @@ import com.ayor.mapper.CollectMapper;
 import com.ayor.mapper.ThreaddMapper;
 import com.ayor.service.CollectService;
 import com.ayor.service.PrivacyPolicyService;
+import com.ayor.service.UserRelationService;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @Transactional
@@ -34,6 +36,8 @@ public class CollectServiceImpl extends ServiceImpl<CollectMapper, Collect> impl
     private final ThreaddMapper threaddMapper;
 
     private final PrivacyPolicyService privacyPolicyService;
+
+    private final UserRelationService userRelationService;
     /**
      * 为当前用户收藏指定帖子，重复收藏会被拒绝。
      */
@@ -50,6 +54,10 @@ public class CollectServiceImpl extends ServiceImpl<CollectMapper, Collect> impl
         Threadd thread = threaddMapper.selectById(threadId);
         if (thread == null || Boolean.TRUE.equals(thread.getIsDeleted())) {
             return "帖子不存在";
+        }
+        if (!Objects.equals(accountId, thread.getAccountId())
+                && userRelationService.isBlockedEitherDirection(accountId, thread.getAccountId())) {
+            return "已拉黑，不能收藏";
         }
         if (isCollectedByAccountId(accountId, threadId)) {
             return "不能重复收藏";
@@ -128,8 +136,14 @@ public class CollectServiceImpl extends ServiceImpl<CollectMapper, Collect> impl
             return new PageEntity<>(page.getTotal(), new ArrayList<>());
         }
         List<Threadd> threads = threaddMapper.selectByIds(threadIds);
+        List<Integer> blockedAccountIds = viewerId == null
+                ? List.of()
+                : userRelationService.listBlockedAccountIdsEitherDirection(viewerId);
         List<ThreadVO> threadVOS = new ArrayList<>();
         threads.forEach(thread -> {
+            if (blockedAccountIds.contains(thread.getAccountId())) {
+                return;
+            }
             ThreadVO threadVO = new ThreadVO();
             BeanUtils.copyProperties(thread, threadVO);
             threadVO.setContent(null);

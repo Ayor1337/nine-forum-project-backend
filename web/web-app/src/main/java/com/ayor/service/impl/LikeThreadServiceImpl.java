@@ -10,6 +10,7 @@ import com.ayor.mapper.LikeThreadMapper;
 import com.ayor.mapper.ThreaddMapper;
 import com.ayor.service.LikeThreadService;
 import com.ayor.service.PrivacyPolicyService;
+import com.ayor.service.UserRelationService;
 import com.ayor.util.TipTapUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -21,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @Transactional
@@ -34,6 +36,8 @@ public class LikeThreadServiceImpl extends ServiceImpl<LikeThreadMapper, LikeThr
     private final TipTapUtils tipTapUtils;
 
     private final PrivacyPolicyService privacyPolicyService;
+
+    private final UserRelationService userRelationService;
     /**
      * 为指定帖子记录一次点赞。
      */
@@ -47,6 +51,10 @@ public class LikeThreadServiceImpl extends ServiceImpl<LikeThreadMapper, LikeThr
         Threadd thread = threaddMapper.selectById(threadId);
         if (thread == null || Boolean.TRUE.equals(thread.getIsDeleted())) {
             return "帖子不存在";
+        }
+        if (!Objects.equals(accountId, thread.getAccountId())
+                && userRelationService.isBlockedEitherDirection(accountId, thread.getAccountId())) {
+            return "已拉黑，不能点赞";
         }
         if (isLikedByAccountId(accountId, threadId)) {
             return "不能重复点赞";
@@ -108,8 +116,14 @@ public class LikeThreadServiceImpl extends ServiceImpl<LikeThreadMapper, LikeThr
             return new PageEntity<>(likePage.getTotal(), new ArrayList<>());
         }
         List<Threadd> threads = threaddMapper.selectByIds(threadIds);
+        List<Integer> blockedAccountIds = viewerId == null
+                ? List.of()
+                : userRelationService.listBlockedAccountIdsEitherDirection(viewerId);
         List<ThreadVO> threadVOS = new ArrayList<>();
         for (Threadd thread : threads) {
+            if (blockedAccountIds.contains(thread.getAccountId())) {
+                continue;
+            }
             ThreadVO threadVO = new ThreadVO();
             BeanUtils.copyProperties(thread, threadVO);
             threadVO.setContent(tipTapUtils.filterNonImage(thread.getContent()));

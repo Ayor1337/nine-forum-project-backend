@@ -41,7 +41,7 @@ public interface PostService extends IService<Post> {
      * @param pageSize 每页记录数
      * @return 分页结果,包含评论内容、作者信息等
      */
-    PageEntity<PostVO> getPostsByThreadId(Integer threadId, Integer pageNum, Integer pageSize);
+    PageEntity<PostVO> getPostsByThreadId(Integer viewerId, Integer threadId, Integer pageNum, Integer pageSize);
 
     /**
      * 发布新评论
