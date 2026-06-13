@@ -6,6 +6,7 @@ import com.ayor.entity.dto.PostDTO;
 import com.ayor.entity.dto.ThreadDTO;
 import com.ayor.entity.vo.AnnouncementVO;
 import com.ayor.entity.vo.PostVO;
+import com.ayor.entity.vo.ThreadEditHistoryVO;
 import com.ayor.entity.vo.ThreadVO;
 import com.ayor.result.Result;
 import com.ayor.service.PostService;
@@ -127,6 +128,25 @@ public class ThreadController {
         Integer userId = security.getSecurityUserId();
         return Result.messageHandler(() -> threaddService.insertThread(threadDTO, userId));
     }
+
+    /**
+     * 编辑当前用户发布的帖子。
+     */
+    @PutMapping("/threads/{thread_id}")
+    public Result<Void> editThread(@PathVariable(name = "thread_id") Integer threadId,
+                                   @Valid @RequestBody ThreadDTO threadDTO) {
+        Integer userId = security.getSecurityUserId();
+        return Result.messageHandler(() -> threaddService.editThread(threadId, threadDTO, userId));
+    }
+
+    /**
+     * 获取帖子的公开编辑历史（不含正文与标题快照）。
+     */
+    @GetMapping("/threads/{thread_id}/edit-history")
+    public Result<List<ThreadEditHistoryVO>> getThreadEditHistory(@PathVariable(name = "thread_id") Integer threadId) {
+        return Result.dataMessageHandler(() -> threaddService.listEditHistory(threadId), "获取失败");
+    }
+
     /**
      * 删除当前用户发布的帖子。
      */

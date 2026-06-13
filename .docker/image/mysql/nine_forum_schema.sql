@@ -397,6 +397,24 @@ CREATE TABLE IF NOT EXISTS `thread`  (
 
 
 -- ----------------------------
+-- Table structure for thread_edit_history
+-- ----------------------------
+CREATE TABLE IF NOT EXISTS `thread_edit_history`  (
+                              `history_id` int NOT NULL AUTO_INCREMENT COMMENT '编辑历史ID',
+                              `thread_id` int NOT NULL COMMENT '帖子ID',
+                              `editor_account_id` int NOT NULL COMMENT '编辑者账号ID',
+                              `title` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '编辑前标题快照',
+                              `content` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT '编辑前内容快照(TipTap JSON)',
+                              `edit_time` datetime NOT NULL COMMENT '本次编辑发生时间',
+                              PRIMARY KEY (`history_id`) USING BTREE,
+                              INDEX `idx_thread_id`(`thread_id` ASC) USING BTREE,
+                              INDEX `idx_editor_account_id`(`editor_account_id` ASC) USING BTREE,
+                              CONSTRAINT `db_thread_edit_history_ibfk_1` FOREIGN KEY (`thread_id`) REFERENCES `thread` (`thread_id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
+                              CONSTRAINT `db_thread_edit_history_ibfk_2` FOREIGN KEY (`editor_account_id`) REFERENCES `account` (`account_id`) ON DELETE RESTRICT ON UPDATE RESTRICT
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
+
+
+-- ----------------------------
 -- Table structure for topic
 -- ----------------------------
 CREATE TABLE IF NOT EXISTS `topic`  (

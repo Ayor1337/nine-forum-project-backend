@@ -184,6 +184,43 @@ public class AuthorizationServiceImpl implements AuthorizationService {
     }
 
     /**
+     * 断言操作者可以编辑指定帖子。
+     *
+     * <p>只有帖子作者可以编辑自己的帖子；帖子必须存在且未被删除。</p>
+     *
+     * @param actorId 操作者账号 ID
+     * @param threadId 目标帖子 ID
+     * @throws AccessDeniedException 当操作者无效、帖子无效，或操作者不是帖子作者时抛出
+     */
+    @Override
+    public void assertCanEditThread(Integer actorId, Integer threadId) {
+        requireActor(actorId);
+        Threadd thread = requireActiveThread(threadId);
+        if (Objects.equals(thread.getAccountId(), actorId)) {
+            return;
+        }
+        throw new AccessDeniedException(ACCESS_DENIED);
+    }
+
+    /**
+     * 断言操作者可以查看指定帖子的编辑历史快照（含标题与正文）。
+     *
+     * <p>复用版主删帖权限：必须拥有 {@link PermissionType#DELETE_THREAD} 且话题范围匹配，
+     * 或者是论坛所有者。</p>
+     *
+     * @param actorId 操作者账号 ID
+     * @param threadId 目标帖子 ID
+     * @param topicId 目标话题 ID
+     * @throws AccessDeniedException 当帖子无效、帖子不属于目标话题，或操作者没有删帖权限时抛出
+     */
+    @Override
+    public void assertCanViewThreadEditSnapshots(Integer actorId, Integer threadId, Integer topicId) {
+        Threadd thread = requireActiveThread(threadId);
+        assertTopicBoundThread(thread, topicId);
+        assertTopicPermission(actorId, topicId, PermissionType.DELETE_THREAD);
+    }
+
+    /**
      * 断言操作者可以删除指定回复。
      *
      * <p>普通删除入口只允许回复作者删除自己的回复；管理员删回复应使用权限管理入口。</p>

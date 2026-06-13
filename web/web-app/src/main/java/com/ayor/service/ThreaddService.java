@@ -4,6 +4,8 @@ import com.ayor.entity.PageEntity;
 import com.ayor.entity.document.ThreadDoc;
 import com.ayor.entity.dto.ThreadDTO;
 import com.ayor.entity.vo.AnnouncementVO;
+import com.ayor.entity.vo.ThreadEditHistoryDetailVO;
+import com.ayor.entity.vo.ThreadEditHistoryVO;
 import com.ayor.entity.vo.ThreadVO;
 import com.ayor.entity.pojo.Threadd;
 import com.baomidou.mybatisplus.extension.service.IService;
@@ -150,6 +152,43 @@ public interface ThreaddService extends IService<Threadd> {
      * @return 操作结果消息;成功返回null,失败返回错误描述
      */
     String insertThread(ThreadDTO threadDTO, Integer accountId);
+
+    /**
+     * 编辑已发布的帖子（仅作者）
+     *
+     * 写入快照到 thread_edit_history 后，再用新的标题与正文覆盖当前帖子。
+     *
+     * @param threadId 帖子ID
+     * @param threadDTO 帖子数据传输对象, 只读取 title 与 content
+     * @param accountId 编辑者账号ID, 必须是帖子作者
+     * @return 操作结果消息;成功返回null,失败返回错误描述
+     */
+    String editThread(Integer threadId, ThreadDTO threadDTO, Integer accountId);
+
+    /**
+     * 统计帖子的编辑次数
+     * @param threadId 帖子ID
+     * @return 编辑历史行数
+     */
+    Integer countEdits(Integer threadId);
+
+    /**
+     * 获取帖子的编辑历史（公开）
+     *
+     * 返回的列表不包含标题与正文快照, 仅含编辑时间和编辑者信息。
+     *
+     * @param threadId 帖子ID
+     * @return 编辑历史视图对象列表, 按 editTime 倒序
+     */
+    List<ThreadEditHistoryVO> listEditHistory(Integer threadId);
+
+    /**
+     * 获取帖子的编辑历史（含快照, 仅版主/所有者）
+     *
+     * @param threadId 帖子ID
+     * @return 编辑历史视图对象列表, 含 title 与 content 快照, 按 editTime 倒序
+     */
+    List<ThreadEditHistoryDetailVO> listEditHistoryWithSnapshots(Integer threadId);
 
     /**
      * 更新帖子标签

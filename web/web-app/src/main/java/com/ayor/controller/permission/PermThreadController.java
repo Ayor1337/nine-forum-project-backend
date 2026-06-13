@@ -2,6 +2,7 @@ package com.ayor.controller.permission;
 
 import com.ayor.aspect.oplog.OperationLog;
 import com.ayor.entity.dto.TagUpdateDTO;
+import com.ayor.entity.vo.ThreadEditHistoryDetailVO;
 import com.ayor.result.Result;
 import com.ayor.service.AuthorizationService;
 import com.ayor.service.ThreaddService;
@@ -9,12 +10,15 @@ import com.ayor.util.SecurityUtils;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 @RequiredArgsConstructor
 @RestController
@@ -81,5 +85,16 @@ public class PermThreadController {
                                           @RequestParam(name = "topic_id") Integer topicId) {
         authorizationService.assertCanSetAnnouncement(security.getSecurityUserId(), threadId, topicId);
         return Result.messageHandler(() -> threaddService.removeAnnouncementByThreadId(threadId, topicId));
+    }
+
+    /**
+     * 版主查看帖子编辑历史（含标题与正文快照）。
+     */
+    @GetMapping("/{thread_id}/edit-history")
+    public Result<List<ThreadEditHistoryDetailVO>> listEditHistoryWithSnapshots(
+            @PathVariable(name = "thread_id") Integer threadId,
+            @RequestParam(name = "topic_id") Integer topicId) {
+        authorizationService.assertCanViewThreadEditSnapshots(security.getSecurityUserId(), threadId, topicId);
+        return Result.dataMessageHandler(() -> threaddService.listEditHistoryWithSnapshots(threadId), "获取失败");
     }
 }

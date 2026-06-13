@@ -26,6 +26,10 @@ public interface AuthorizationService {
 
     void assertCanDeleteThread(Integer actorId, Integer threadId);
 
+    void assertCanEditThread(Integer actorId, Integer threadId);
+
+    void assertCanViewThreadEditSnapshots(Integer actorId, Integer threadId, Integer topicId);
+
     void assertCanDeletePost(Integer actorId, Integer postId);
 
     void assertCanStartConversation(Integer actorId, Integer targetUserId);

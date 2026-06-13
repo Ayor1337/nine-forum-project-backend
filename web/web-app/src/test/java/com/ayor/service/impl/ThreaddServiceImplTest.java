@@ -8,6 +8,7 @@ import com.ayor.entity.vo.ThreadVO;
 import com.ayor.mapper.AccountMapper;
 import com.ayor.mapper.PostMapper;
 import com.ayor.mapper.TagMapper;
+import com.ayor.mapper.ThreadEditHistoryMapper;
 import com.ayor.mapper.ThreaddMapper;
 import com.ayor.mapper.TopicMapper;
 import com.ayor.service.AuthorizationService;
@@ -76,6 +77,9 @@ class ThreaddServiceImplTest {
 
     @Mock
     private UserRelationService userRelationService;
+
+    @Mock
+    private ThreadEditHistoryMapper threadEditHistoryMapper;
 
     @Test
     void threadRankingMethodsShouldUseThreadRankingCache() throws NoSuchMethodException {
@@ -358,7 +362,8 @@ class ThreaddServiceImplTest {
                 mentionMessageService,
                 imageAssetService,
                 authorizationService,
-                userRelationService
+                userRelationService,
+                threadEditHistoryMapper
         );
         ReflectionTestUtils.setField(service, "baseMapper", threaddMapper);
         return service;

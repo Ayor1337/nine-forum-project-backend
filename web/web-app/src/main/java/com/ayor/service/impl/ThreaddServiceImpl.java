@@ -5,10 +5,13 @@ import com.ayor.entity.document.ThreadDoc;
 import com.ayor.entity.dto.ThreadDTO;
 import com.ayor.entity.vo.AnnouncementVO;
 import com.ayor.entity.vo.TagVO;
+import com.ayor.entity.vo.ThreadEditHistoryDetailVO;
+import com.ayor.entity.vo.ThreadEditHistoryVO;
 import com.ayor.entity.vo.ThreadVO;
 import com.ayor.entity.pojo.Account;
 import com.ayor.entity.pojo.Tag;
 import com.ayor.entity.pojo.Threadd;
+import com.ayor.entity.pojo.ThreadEditHistory;
 import com.ayor.mapper.*;
 import com.ayor.service.AuthorizationService;
 import com.ayor.service.ImageAssetService;
@@ -60,6 +63,8 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
     private final AuthorizationService authorizationService;
 
     private final UserRelationService userRelationService;
+
+    private final ThreadEditHistoryMapper threadEditHistoryMapper;
     /**
      * 获取指定主题下的帖子列表或分页结果。
      */
@@ -173,6 +178,7 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
         threadVO.setAccountName(account.getNickname());
         threadVO.setAvatarUrl(account.getAvatarUrl());
         threadVO.setAccountId(account.getAccountId());
+        threadVO.setEditCount(countEdits(threadId));
         return threadVO;
     }
     /**
@@ -399,6 +405,109 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
         }
         return "添加失败";
     }
+
+    /**
+     * 编辑帖子：先快照原标题与原正文，再以新值覆盖当前帖子。
+     */
+    @Override
+    public String editThread(Integer threadId, ThreadDTO threadDTO, Integer accountId) {
+        if (threadId == null || threadDTO == null) {
+            return "参数错误";
+        }
+        authorizationService.assertCanEditThread(accountId, threadId);
+        Threadd threadd = this.getById(threadId);
+        if (threadd == null || Boolean.TRUE.equals(threadd.getIsDeleted())) {
+            return "帖子不存在";
+        }
+
+        String newContent;
+        try {
+            newContent = tipTapUtils.convertBase64ImagesToUrl(threadDTO.getContent(), "threads/" + threadd.getTopicId() + "/");
+        } catch (IllegalArgumentException exception) {
+            return exception.getMessage();
+        }
+
+        ThreadEditHistory snapshot = new ThreadEditHistory();
+        snapshot.setThreadId(threadId);
+        snapshot.setEditorAccountId(accountId);
+        snapshot.setTitle(threadd.getTitle());
+        snapshot.setContent(threadd.getContent());
+        snapshot.setEditTime(new Date());
+        threadEditHistoryMapper.insert(snapshot);
+
+        threadd.setTitle(threadDTO.getTitle());
+        threadd.setContent(newContent);
+        threadd.setUpdateTime(new Date());
+        if (!this.updateById(threadd)) {
+            return "编辑失败";
+        }
+
+        imageAssetService.syncContentRefs("THREAD", threadId, newContent, accountId);
+        mentionMessageService.createThreadMentionMessages(newContent, accountId, threadId);
+        return null;
+    }
+
+    @Override
+    public Integer countEdits(Integer threadId) {
+        if (threadId == null) {
+            return 0;
+        }
+        Long count = threadEditHistoryMapper.selectCount(
+                new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<ThreadEditHistory>()
+                        .eq(ThreadEditHistory::getThreadId, threadId));
+        return count == null ? 0 : count.intValue();
+    }
+
+    @Override
+    public List<ThreadEditHistoryVO> listEditHistory(Integer threadId) {
+        if (threadId == null) {
+            return new ArrayList<>();
+        }
+        List<ThreadEditHistory> records = threadEditHistoryMapper.selectList(
+                new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<ThreadEditHistory>()
+                        .eq(ThreadEditHistory::getThreadId, threadId)
+                        .orderByDesc(ThreadEditHistory::getEditTime));
+        List<ThreadEditHistoryVO> result = new ArrayList<>(records.size());
+        for (ThreadEditHistory record : records) {
+            ThreadEditHistoryVO vo = new ThreadEditHistoryVO();
+            populateBaseHistoryVO(vo, record);
+            result.add(vo);
+        }
+        return result;
+    }
+
+    @Override
+    public List<ThreadEditHistoryDetailVO> listEditHistoryWithSnapshots(Integer threadId) {
+        if (threadId == null) {
+            return new ArrayList<>();
+        }
+        List<ThreadEditHistory> records = threadEditHistoryMapper.selectList(
+                new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<ThreadEditHistory>()
+                        .eq(ThreadEditHistory::getThreadId, threadId)
+                        .orderByDesc(ThreadEditHistory::getEditTime));
+        List<ThreadEditHistoryDetailVO> result = new ArrayList<>(records.size());
+        for (ThreadEditHistory record : records) {
+            ThreadEditHistoryDetailVO vo = new ThreadEditHistoryDetailVO();
+            populateBaseHistoryVO(vo, record);
+            vo.setTitle(record.getTitle());
+            vo.setContent(record.getContent());
+            result.add(vo);
+        }
+        return result;
+    }
+
+    private void populateBaseHistoryVO(ThreadEditHistoryVO vo, ThreadEditHistory record) {
+        vo.setHistoryId(record.getHistoryId());
+        vo.setThreadId(record.getThreadId());
+        vo.setEditTime(record.getEditTime());
+        vo.setEditorId(record.getEditorAccountId());
+        Account editor = accountMapper.getAccountById(record.getEditorAccountId());
+        if (editor != null) {
+            vo.setEditorName(editor.getNickname());
+            vo.setEditorAvatar(editor.getAvatarUrl());
+        }
+    }
+
     /**
      * 更新帖子标签信息。
      */

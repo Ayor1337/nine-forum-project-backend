@@ -29,6 +29,12 @@ public class ThreadVO implements Serializable {
 
     private Date createTime;
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private Date updateTime;
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private Integer editCount;
+
     private Integer viewCount;
 
     private Integer postCount;
