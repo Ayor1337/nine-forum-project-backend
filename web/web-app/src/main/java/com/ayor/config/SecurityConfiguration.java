@@ -82,7 +82,13 @@ public class SecurityConfiguration {
     private static final String[] PUBLIC_PAGE_ENDPOINTS = {
             "/chat",
             "/chatboard",
-            "/system"
+            "/system",
+            "/doc.html",
+            "/swagger-ui.html",
+            "/swagger-ui/**",
+            "/v3/api-docs",
+            "/v3/api-docs/**",
+            "/webjars/**"
     };
 
     @Resource

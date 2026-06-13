@@ -5,6 +5,9 @@ import com.ayor.result.Result;
 import com.ayor.service.UserSearchService;
 import com.ayor.util.SecurityUtils;
 import lombok.RequiredArgsConstructor;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -15,14 +18,16 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/user")
 @RequiredArgsConstructor
+@Tag(name = "用户搜索")
 public class UserSearchController {
 
     private final UserSearchService userSearchService;
 
     private final SecurityUtils securityUtils;
 
+    @Operation(summary = "搜索可提及用户")
     @GetMapping("/search")
-    public Result<List<UserSearchVO>> searchUsers(@RequestParam("keyword") String keyword) {
+    public Result<List<UserSearchVO>> searchUsers(@Parameter(description = "搜索关键字") @RequestParam("keyword") String keyword) {
         Integer userId = securityUtils.getSecurityUserId();
         return Result.dataMessageHandler(() -> userSearchService.searchUsersForMention(keyword, userId), "搜索用户失败");
     }

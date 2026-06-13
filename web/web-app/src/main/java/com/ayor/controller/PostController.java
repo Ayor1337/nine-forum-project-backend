@@ -9,11 +9,15 @@ import com.ayor.service.ReportService;
 import com.ayor.util.SecurityUtils;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.*;
 
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/api")
+@Tag(name = "回复")
 public class PostController {
 
     private final PostService postService;
@@ -25,15 +29,16 @@ public class PostController {
     /**
      * 删除当前用户的评论。
      */
-
+    @Operation(summary = "删除当前用户的评论")
     @DeleteMapping("/posts/{post_id}")
-    public Result<Void> deletePost(@PathVariable(name = "post_id") Integer postId) {
+    public Result<Void> deletePost(@Parameter(description = "回复 ID") @PathVariable(name = "post_id") Integer postId) {
         Integer userId = security.getSecurityUserId();
         return Result.messageHandler(() -> postService.removePostAuthorizeAccountId(postId, userId));
     }
 
+    @Operation(summary = "举报回复")
     @PostMapping("/posts/{post_id}/reports")
-    public Result<Void> createPostReport(@PathVariable(name = "post_id") Integer postId,
+    public Result<Void> createPostReport(@Parameter(description = "回复 ID") @PathVariable(name = "post_id") Integer postId,
                                          @RequestBody @Valid ContentReportDTO dto) {
         Integer userId = security.getSecurityUserId();
         return Result.messageHandler(() -> reportService.createPostReport(userId, postId, dto));
@@ -41,10 +46,10 @@ public class PostController {
     /**
      * 获取回复消息分页数据。
      */
-
+    @Operation(summary = "获取回复消息分页数据")
     @GetMapping("/posts/reply-messages")
-    public Result<PageEntity<ReplyMessageVO>> getReplyMessage(@RequestParam("page_num") Integer pageNum,
-                                                            @RequestParam(value = "page_size", defaultValue = "7") Integer pageSize) {
+    public Result<PageEntity<ReplyMessageVO>> getReplyMessage(@Parameter(description = "页码") @RequestParam("page_num") Integer pageNum,
+                                                            @Parameter(description = "每页数量") @RequestParam(value = "page_size", defaultValue = "7") Integer pageSize) {
         Integer userId = security.getSecurityUserId();
         return Result.dataMessageHandler(() -> postService.listReplyMessage(pageNum, pageSize, userId), "获取失败");
     }

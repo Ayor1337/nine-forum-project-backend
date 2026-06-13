@@ -6,6 +6,7 @@ import com.ayor.type.PageBroadcastScopeType;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -13,6 +14,7 @@ import java.io.Serializable;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Schema(description = "页面广播事件消息")
 public class PageBroadcastEventMessage implements Serializable {
 
     @Serial

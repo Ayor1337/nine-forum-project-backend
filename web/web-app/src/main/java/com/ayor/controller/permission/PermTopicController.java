@@ -7,6 +7,9 @@ import com.ayor.service.AuthorizationService;
 import com.ayor.service.TopicService;
 import com.ayor.util.SecurityUtils;
 import lombok.RequiredArgsConstructor;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -18,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/perm/topic")
+@Tag(name = "权限-话题")
 public class PermTopicController {
 
     private final TopicService topicService;
@@ -27,6 +31,7 @@ public class PermTopicController {
     private final SecurityUtils securityUtils;
 
     @OperationLog(value = "新增话题", save = true, action = "CREATE_TOPIC", targetType = "topic")
+    @Operation(summary = "新增话题")
     @PostMapping
     public Result<Void> insertTopic(@RequestBody TopicDTO topicDTO) {
         authorizationService.assertCanCreateTopic(securityUtils.getSecurityUserId());
@@ -34,8 +39,9 @@ public class PermTopicController {
     }
 
     @OperationLog(value = "更新话题", save = true, action = "UPDATE_TOPIC", targetType = "topic", targetIdParam = "topicId")
+    @Operation(summary = "更新话题")
     @PutMapping("/{topic_id}")
-    public Result<Void> updateTopic(@PathVariable(name = "topic_id") Integer topicId,
+    public Result<Void> updateTopic(@Parameter(description = "话题 ID") @PathVariable(name = "topic_id") Integer topicId,
                                     @RequestBody TopicDTO topicDTO) {
         authorizationService.assertCanUpdateTopic(securityUtils.getSecurityUserId(), topicId);
         topicDTO.setTopicId(topicId);
@@ -43,8 +49,9 @@ public class PermTopicController {
     }
 
     @OperationLog(value = "删除话题", save = true, action = "DELETE_TOPIC", targetType = "topic", targetIdParam = "topicId")
+    @Operation(summary = "删除话题")
     @DeleteMapping("/{topic_id}")
-    public Result<Void> deleteTopic(@PathVariable(name = "topic_id") Integer topicId) {
+    public Result<Void> deleteTopic(@Parameter(description = "话题 ID") @PathVariable(name = "topic_id") Integer topicId) {
         authorizationService.assertCanDeleteTopic(securityUtils.getSecurityUserId(), topicId);
         return Result.messageHandler(() -> topicService.deleteTopic(topicId));
     }

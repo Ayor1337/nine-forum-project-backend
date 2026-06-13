@@ -1,10 +1,12 @@
 package com.ayor.entity.vo;
 
 import lombok.Data;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.Date;
 
 @Data
+@Schema(description = "登录会话视图对象")
 public class LoginSessionVO {
 
     private String sessionId;

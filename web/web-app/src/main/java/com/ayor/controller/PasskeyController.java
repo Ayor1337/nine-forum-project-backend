@@ -11,6 +11,8 @@ import com.ayor.util.SecurityUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -22,6 +24,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/passkeys")
 @RequiredArgsConstructor
+@Tag(name = "Passkey")
 public class PasskeyController {
 
     private final PasskeyService passkeyService;
@@ -30,9 +33,8 @@ public class PasskeyController {
 
     /**
      * 生成当前账号的 Passkey 注册参数。
-     *
-     * @return 注册 options
      */
+    @Operation(summary = "生成 Passkey 注册参数")
     @PostMapping("/registration/options")
     public Result<PasskeyOptionsVO<Map<String, Object>>> createRegistrationOptions() {
         Integer accountId = securityUtils.getSecurityUserId();
@@ -41,10 +43,8 @@ public class PasskeyController {
 
     /**
      * 完成当前账号的 Passkey 注册。
-     *
-     * @param dto 注册完成请求体
-     * @return 结果
      */
+    @Operation(summary = "完成 Passkey 注册")
     @PostMapping("/registrations")
     public Result<Void> registerCredential(@RequestBody @Valid PasskeyRegistrationFinishDTO dto) {
         Integer accountId = securityUtils.getSecurityUserId();
@@ -53,9 +53,8 @@ public class PasskeyController {
 
     /**
      * 列出当前账号已绑定的 Passkey。
-     *
-     * @return Passkey 列表
      */
+    @Operation(summary = "列出当前账号已绑定的 Passkey")
     @GetMapping
     public Result<List<PasskeyCredentialVO>> listCredentials() {
         Integer accountId = securityUtils.getSecurityUserId();
@@ -64,10 +63,8 @@ public class PasskeyController {
 
     /**
      * 删除当前账号绑定的指定 Passkey。
-     *
-     * @param credentialId 凭证 ID
-     * @return 结果
      */
+    @Operation(summary = "删除当前账号绑定的指定 Passkey")
     @DeleteMapping("/{credential_id}")
     public Result<Void> deleteCredential(@PathVariable("credential_id") Long credentialId) {
         Integer accountId = securityUtils.getSecurityUserId();
@@ -76,9 +73,8 @@ public class PasskeyController {
 
     /**
      * 生成无用户名 Passkey 登录参数。
-     *
-     * @return 登录 options
      */
+    @Operation(summary = "生成 Passkey 登录参数")
     @PostMapping("/authentication/options")
     public Result<PasskeyOptionsVO<Map<String, Object>>> createAuthenticationOptions() {
         return Result.dataMessageHandler(passkeyService::createAuthenticationOptions, "生成 Passkey 登录参数失败");
@@ -86,10 +82,8 @@ public class PasskeyController {
 
     /**
      * 完成 Passkey 登录。
-     *
-     * @param dto 登录完成请求体
-     * @return 授权结果
      */
+    @Operation(summary = "完成 Passkey 登录")
     @PostMapping("/authentications")
     public Result<AuthorizeVO> authenticate(@RequestBody @Valid PasskeyAuthenticationFinishDTO dto,
                                             HttpServletRequest request) {

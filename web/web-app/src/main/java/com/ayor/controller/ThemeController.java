@@ -5,6 +5,8 @@ import com.ayor.entity.vo.ThemeVO;
 import com.ayor.result.Result;
 import com.ayor.service.ThemeService;
 import lombok.RequiredArgsConstructor;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -12,6 +14,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/themes")
+@Tag(name = "主题")
 public class ThemeController {
 
     private final ThemeService themeService;
@@ -19,7 +22,7 @@ public class ThemeController {
     /**
      * 获取全部主题列表。
      */
-
+    @Operation(summary = "获取全部主题列表")
     @GetMapping
     public Result<List<ThemeVO>> getThemeList() {
         return Result.dataMessageHandler(themeService::getThemeList, "获取列表失败");
@@ -27,7 +30,7 @@ public class ThemeController {
     /**
      * 获取包含话题的主题聚合列表。
      */
-
+    @Operation(summary = "获取包含话题的主题聚合列表")
     @GetMapping("/topics")
     public Result<List<ThemeTopicVO>> getThemesContainsTopics() {
         return Result.dataMessageHandler(themeService::getThemeTopicList, "获取列表失败");

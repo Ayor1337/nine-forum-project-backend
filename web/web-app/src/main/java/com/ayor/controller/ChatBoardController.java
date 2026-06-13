@@ -7,6 +7,9 @@ import com.ayor.result.Result;
 import com.ayor.service.ChatboardHistoryService;
 import com.ayor.util.SecurityUtils;
 import lombok.RequiredArgsConstructor;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -14,6 +17,7 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/topics/{topic_id}/chat-messages")
+@Tag(name = "聊天室")
 public class ChatBoardController {
 
     private final ChatboardHistoryService chatboardHistoryService;
@@ -21,31 +25,22 @@ public class ChatBoardController {
     private final SecurityUtils securityUtils;
     /**
      * 发送聊天频道消息并写入聊天记录。
-     *
-     * @param topicId 主题 ID
-     * @param message 聊天消息内容
-     * @return 发送结果
      */
-
+    @Operation(summary = "发送聊天频道消息")
     @PostMapping
-    public Result<Void> chat(@PathVariable("topic_id") Integer topicId,
+    public Result<Void> chat(@Parameter(description = "主题 ID") @PathVariable("topic_id") Integer topicId,
                              @RequestBody ChatBoardMessage message) {
         Integer userId = securityUtils.getSecurityUserId();
         return Result.messageHandler(() -> chatboardHistoryService.insertChatboardHistory(userId, topicId, message.getContent()));
     }
     /**
      * 获取主题聊天室的聊天记录。
-     *
-     * @param topicId 主题 ID
-     * @param pageNum 页码
-     * @param pageSize 每页数量
-     * @return 聊天记录分页数据
      */
-
+    @Operation(summary = "获取主题聊天室的聊天记录")
     @GetMapping
-    public Result<PageEntity<ChatboardHistoryVO>> getHistory(@PathVariable("topic_id")Integer topicId,
-                                                             @RequestParam(value = "page_num", defaultValue = "1") Integer pageNum,
-                                                             @RequestParam(value = "page_size", defaultValue = "10") Integer pageSize) {
+    public Result<PageEntity<ChatboardHistoryVO>> getHistory(@Parameter(description = "主题 ID") @PathVariable("topic_id")Integer topicId,
+                                                             @Parameter(description = "页码") @RequestParam(value = "page_num", defaultValue = "1") Integer pageNum,
+                                                             @Parameter(description = "每页数量") @RequestParam(value = "page_size", defaultValue = "10") Integer pageSize) {
         Integer userId = securityUtils.getSecurityUserId();
         return Result.dataMessageHandler(() -> chatboardHistoryService.getChatboardHistory(userId, topicId, pageNum, pageSize), "获取聊天记录失败");
     }
