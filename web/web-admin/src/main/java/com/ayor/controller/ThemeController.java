@@ -15,7 +15,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
+@Tag(name = "主题管理", description = "后台主题管理接口")
 @RestController
 @RequestMapping("/api/themes")
 @RequiredArgsConstructor
@@ -26,33 +30,37 @@ public class ThemeController {
     /**
      * 分页查询主题列表。
      */
+    @Operation(summary = "分页查询主题列表")
     @GetMapping
-    public Result<PageEntity<ThemeVO>> getThemes(@RequestParam(name = "page_num") Integer pageNum,
-                                                 @RequestParam(name = "page_size", defaultValue = "10") Integer pageSize) {
+    public Result<PageEntity<ThemeVO>> getThemes(@Parameter(description = "页码") @RequestParam(name = "page_num") Integer pageNum,
+                                                 @Parameter(description = "每页数量") @RequestParam(name = "page_size", defaultValue = "10") Integer pageSize) {
         return Result.dataMessageHandler(() -> themeService.getThemes(pageNum, pageSize), "获取失败");
     }
 
     /**
      * 查询指定主题。
      */
+    @Operation(summary = "查询指定主题")
     @GetMapping("/{themeId}")
-    public Result<ThemeVO> getTheme(@PathVariable("themeId") Integer themeId) {
+    public Result<ThemeVO> getTheme(@Parameter(description = "主题ID") @PathVariable("themeId") Integer themeId) {
         return Result.dataMessageHandler(() -> themeService.getThemeById(themeId), "主题不存在");
     }
 
     /**
      * 创建主题。
      */
+    @Operation(summary = "创建主题")
     @PostMapping
-    public Result<Void> createTheme(@RequestBody ThemeDTO themeDTO) {
+    public Result<Void> createTheme(@Parameter(description = "主题信息") @RequestBody ThemeDTO themeDTO) {
         return Result.messageHandler(() -> themeService.createTheme(themeDTO));
     }
 
     /**
      * 更新指定主题。
      */
+    @Operation(summary = "更新指定主题")
     @PutMapping("/{themeId}")
-    public Result<Void> updateTheme(@PathVariable("themeId") Integer themeId, @RequestBody ThemeDTO themeDTO) {
+    public Result<Void> updateTheme(@Parameter(description = "主题ID") @PathVariable("themeId") Integer themeId, @RequestBody ThemeDTO themeDTO) {
         themeDTO.setThemeId(themeId);
         return Result.messageHandler(() -> themeService.updateTheme(themeDTO));
     }
@@ -60,8 +68,9 @@ public class ThemeController {
     /**
      * 删除指定主题。
      */
+    @Operation(summary = "删除指定主题")
     @DeleteMapping("/{themeId}")
-    public Result<Void> deleteTheme(@PathVariable("themeId") Integer themeId) {
+    public Result<Void> deleteTheme(@Parameter(description = "主题ID") @PathVariable("themeId") Integer themeId) {
         return Result.messageHandler(() -> themeService.deleteTheme(themeId));
     }
 
