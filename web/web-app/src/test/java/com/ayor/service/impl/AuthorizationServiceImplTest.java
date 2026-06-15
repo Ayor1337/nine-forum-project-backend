@@ -144,6 +144,67 @@ class AuthorizationServiceImplTest {
     }
 
     @Test
+    void shouldAllowOwnerToSetGlobalAnnouncement() {
+        AuthorizationServiceImpl service = createService();
+        when(roleMapper.getRoleNameByUserId(1)).thenReturn("OWNER");
+
+        Threadd thread = new Threadd();
+        thread.setThreadId(19);
+        thread.setTopicId(66);
+        thread.setAccountId(5);
+        thread.setIsDeleted(false);
+        when(threaddMapper.selectById(19)).thenReturn(thread);
+
+        assertDoesNotThrow(() -> service.assertCanSetGlobalAnnouncement(1, 19));
+    }
+
+    @Test
+    void shouldAllowUserWithGlobalSetAnnouncementPermissionToSetGlobalAnnouncement() {
+        AuthorizationServiceImpl service = createService();
+        when(roleMapper.getRoleNameByUserId(8)).thenReturn("MODERATOR");
+        when(permissionMapper.getPermissionsByAccountId(8)).thenReturn(List.of("SET_ANNOUNCEMENT"));
+
+        Threadd thread = new Threadd();
+        thread.setThreadId(19);
+        thread.setTopicId(66);
+        thread.setAccountId(5);
+        thread.setIsDeleted(false);
+        when(threaddMapper.selectById(19)).thenReturn(thread);
+
+        assertDoesNotThrow(() -> service.assertCanSetGlobalAnnouncement(8, 19));
+    }
+
+    @Test
+    void shouldDenyGlobalAnnouncementWithoutGlobalPermission() {
+        AuthorizationServiceImpl service = createService();
+        when(roleMapper.getRoleNameByUserId(8)).thenReturn("MODERATOR");
+        when(permissionMapper.getPermissionsByAccountId(8)).thenReturn(List.of("DELETE_THREAD"));
+
+        Threadd thread = new Threadd();
+        thread.setThreadId(19);
+        thread.setTopicId(66);
+        thread.setAccountId(5);
+        thread.setIsDeleted(false);
+        when(threaddMapper.selectById(19)).thenReturn(thread);
+
+        assertThrows(AccessDeniedException.class, () -> service.assertCanSetGlobalAnnouncement(8, 19));
+    }
+
+    @Test
+    void shouldDenyGlobalAnnouncementWhenThreadDeleted() {
+        AuthorizationServiceImpl service = createService();
+
+        Threadd thread = new Threadd();
+        thread.setThreadId(19);
+        thread.setTopicId(66);
+        thread.setAccountId(5);
+        thread.setIsDeleted(true);
+        when(threaddMapper.selectById(19)).thenReturn(thread);
+
+        assertThrows(AccessDeniedException.class, () -> service.assertCanSetGlobalAnnouncement(1, 19));
+    }
+
+    @Test
     void shouldAllowScopedModeratorToDeletePostWithDeletePostPermission() {
         AuthorizationServiceImpl service = createService();
         when(roleMapper.getRoleNameByUserId(8)).thenReturn("MODERATOR");

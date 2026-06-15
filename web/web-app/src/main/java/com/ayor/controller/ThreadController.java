@@ -127,6 +127,15 @@ public class ThreadController {
     public Result<List<AnnouncementVO>> getAnnouncementByTopicId(@Parameter(description = "话题 ID") @PathVariable(name = "topic_id") Integer topicId) {
         return Result.dataMessageHandler(() -> threaddService.getAnnouncementThreads(topicId), "获取失败");
     }
+
+    /**
+     * 获取全局公告帖子。
+     */
+    @Operation(summary = "获取全局公告帖子")
+    @GetMapping("/announcements/global")
+    public Result<List<AnnouncementVO>> getGlobalAnnouncements() {
+        return Result.dataMessageHandler(threaddService::getGlobalAnnouncementThreads, "获取失败");
+    }
     /**
      * 发布新帖子。
      */

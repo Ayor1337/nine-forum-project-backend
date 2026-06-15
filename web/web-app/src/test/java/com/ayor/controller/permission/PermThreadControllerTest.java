@@ -100,6 +100,32 @@ class PermThreadControllerTest {
         assertOperationLog(method, "UNSET_ANNOUNCEMENT", "thread", "threadId");
     }
 
+    @Test
+    void setGlobalAnnouncementShouldExposePermissionRoute() throws NoSuchMethodException {
+        Method method = PermThreadController.class.getMethod(
+                "setGlobalAnnouncement",
+                Integer.class
+        );
+
+        PutMapping mapping = method.getAnnotation(PutMapping.class);
+
+        assertEquals("/{thread_id}/global-announcement", mapping.value()[0]);
+        assertOperationLog(method, "SET_GLOBAL_ANNOUNCEMENT", "thread", "threadId");
+    }
+
+    @Test
+    void unsetGlobalAnnouncementShouldExposePermissionRoute() throws NoSuchMethodException {
+        Method method = PermThreadController.class.getMethod(
+                "unsetGlobalAnnouncement",
+                Integer.class
+        );
+
+        DeleteMapping mapping = method.getAnnotation(DeleteMapping.class);
+
+        assertEquals("/{thread_id}/global-announcement", mapping.value()[0]);
+        assertOperationLog(method, "UNSET_GLOBAL_ANNOUNCEMENT", "thread", "threadId");
+    }
+
     private void assertOperationLog(Method method, String action, String targetType, String targetIdParam) {
         OperationLog operationLog = method.getAnnotation(OperationLog.class);
 

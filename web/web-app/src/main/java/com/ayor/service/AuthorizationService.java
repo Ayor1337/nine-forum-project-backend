@@ -20,6 +20,8 @@ public interface AuthorizationService {
 
     void assertCanSetAnnouncement(Integer actorId, Integer threadId, Integer topicId);
 
+    void assertCanSetGlobalAnnouncement(Integer actorId, Integer threadId);
+
     void assertCanModerateDeleteThread(Integer actorId, Integer threadId, Integer topicId);
 
     void assertCanModerateDeletePost(Integer actorId, Integer postId);

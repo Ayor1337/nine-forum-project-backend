@@ -97,6 +97,28 @@ public class PermThreadController {
     }
 
     /**
+     * 将帖子设为全局公告。
+     */
+    @OperationLog(value = "设置全局公告帖", save = true, action = "SET_GLOBAL_ANNOUNCEMENT", targetType = "thread", targetIdParam = "threadId")
+    @Operation(summary = "设置全局公告帖")
+    @PutMapping("/{thread_id}/global-announcement")
+    public Result<Void> setGlobalAnnouncement(@Parameter(description = "帖子 ID") @PathVariable(name = "thread_id") Integer threadId) {
+        authorizationService.assertCanSetGlobalAnnouncement(security.getSecurityUserId(), threadId);
+        return Result.messageHandler(() -> threaddService.setGlobalAnnouncementByThreadId(threadId));
+    }
+
+    /**
+     * 取消帖子全局公告状态。
+     */
+    @OperationLog(value = "取消全局公告帖", save = true, action = "UNSET_GLOBAL_ANNOUNCEMENT", targetType = "thread", targetIdParam = "threadId")
+    @Operation(summary = "取消全局公告帖")
+    @DeleteMapping("/{thread_id}/global-announcement")
+    public Result<Void> unsetGlobalAnnouncement(@Parameter(description = "帖子 ID") @PathVariable(name = "thread_id") Integer threadId) {
+        authorizationService.assertCanSetGlobalAnnouncement(security.getSecurityUserId(), threadId);
+        return Result.messageHandler(() -> threaddService.removeGlobalAnnouncementByThreadId(threadId));
+    }
+
+    /**
      * 版主查看帖子编辑历史（含标题与正文快照）。
      */
     @Operation(summary = "版主查看帖子编辑历史")

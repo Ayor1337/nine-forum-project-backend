@@ -72,8 +72,4 @@ public class ThreadDTO {
     @Schema(description = "isDeleted")
 
     private Boolean isDeleted;
-
-    @Schema(description = "isAnnouncement")
-
-    private Boolean isAnnouncement;
 }

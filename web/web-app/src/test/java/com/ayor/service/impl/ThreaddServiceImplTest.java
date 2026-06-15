@@ -1,11 +1,14 @@
 package com.ayor.service.impl;
 
 import com.ayor.entity.PageEntity;
+import com.ayor.entity.pojo.Announcement;
 import com.ayor.entity.pojo.Account;
 import com.ayor.entity.pojo.Threadd;
 import com.ayor.entity.dto.ThreadDTO;
+import com.ayor.entity.vo.AnnouncementVO;
 import com.ayor.entity.vo.ThreadVO;
 import com.ayor.mapper.AccountMapper;
+import com.ayor.mapper.AnnouncementMapper;
 import com.ayor.mapper.PostMapper;
 import com.ayor.mapper.TagMapper;
 import com.ayor.mapper.ThreadEditHistoryMapper;
@@ -56,6 +59,9 @@ class ThreaddServiceImplTest {
 
     @Mock
     private AccountMapper accountMapper;
+
+    @Mock
+    private AnnouncementMapper announcementMapper;
 
     @Mock
     private TopicMapper topicMapper;
@@ -339,6 +345,125 @@ class ThreaddServiceImplTest {
         verify(mentionMessageService).createThreadMentionMessages("{\"type\":\"doc\",\"content\":[]}", 8, 321);
     }
 
+    @Test
+    void shouldSetTopicAnnouncementUsingAnnouncementTable() {
+        ThreaddServiceImpl service = createService();
+        Threadd thread = createThread();
+        when(threaddMapper.selectOne(any(Wrapper.class))).thenReturn(thread);
+        when(announcementMapper.selectOne(any(Wrapper.class))).thenReturn(null);
+        when(announcementMapper.insert(any(Announcement.class))).thenReturn(1);
+
+        String result = service.setAnnouncementByThreadId(101, 1);
+
+        ArgumentCaptor<Announcement> captor = ArgumentCaptor.forClass(Announcement.class);
+        verify(announcementMapper).insert(captor.capture());
+        assertNull(result);
+        assertEquals(101, captor.getValue().getThreadId());
+        assertFalse(captor.getValue().getIsGlobal());
+        assertNotNull(captor.getValue().getCreateTime());
+    }
+
+    @Test
+    void shouldRejectDuplicateTopicAnnouncement() {
+        ThreaddServiceImpl service = createService();
+        Threadd thread = createThread();
+        Announcement existing = new Announcement();
+        existing.setAnnouncementId(5);
+        existing.setThreadId(101);
+        existing.setIsGlobal(false);
+        when(threaddMapper.selectOne(any(Wrapper.class))).thenReturn(thread);
+        when(announcementMapper.selectOne(any(Wrapper.class))).thenReturn(existing);
+
+        String result = service.setAnnouncementByThreadId(101, 1);
+
+        assertEquals("该帖子已经是公告", result);
+    }
+
+    @Test
+    void shouldRemoveTopicAnnouncementFromAnnouncementTable() {
+        ThreaddServiceImpl service = createService();
+        Threadd thread = createThread();
+        Announcement existing = new Announcement();
+        existing.setAnnouncementId(5);
+        existing.setThreadId(101);
+        existing.setIsGlobal(false);
+        when(threaddMapper.selectOne(any(Wrapper.class))).thenReturn(thread);
+        when(announcementMapper.selectOne(any(Wrapper.class))).thenReturn(existing);
+        when(announcementMapper.deleteById(5)).thenReturn(1);
+
+        String result = service.removeAnnouncementByThreadId(101, 1);
+
+        assertNull(result);
+        verify(announcementMapper).deleteById(5);
+    }
+
+    @Test
+    void shouldReturnTopicAnnouncementsFromAnnouncementMapper() {
+        ThreaddServiceImpl service = createService();
+        AnnouncementVO announcementVO = new AnnouncementVO();
+        announcementVO.setAnnouncementId(7);
+        announcementVO.setThreadId(101);
+        announcementVO.setTopicId(1);
+        announcementVO.setIsGlobal(false);
+        when(announcementMapper.getTopicAnnouncements(1)).thenReturn(List.of(announcementVO));
+
+        List<AnnouncementVO> result = service.getAnnouncementThreads(1);
+
+        assertEquals(1, result.size());
+        assertEquals(7, result.get(0).getAnnouncementId());
+        assertFalse(result.get(0).getIsGlobal());
+    }
+
+    @Test
+    void shouldSetGlobalAnnouncementUsingAnnouncementTable() {
+        ThreaddServiceImpl service = createService();
+        Threadd thread = createThread();
+        when(threaddMapper.selectById(101)).thenReturn(thread);
+        when(announcementMapper.selectOne(any(Wrapper.class))).thenReturn(null);
+        when(announcementMapper.insert(any(Announcement.class))).thenReturn(1);
+
+        String result = service.setGlobalAnnouncementByThreadId(101);
+
+        ArgumentCaptor<Announcement> captor = ArgumentCaptor.forClass(Announcement.class);
+        verify(announcementMapper).insert(captor.capture());
+        assertNull(result);
+        assertEquals(101, captor.getValue().getThreadId());
+        assertTrue(captor.getValue().getIsGlobal());
+    }
+
+    @Test
+    void shouldRemoveGlobalAnnouncementFromAnnouncementTable() {
+        ThreaddServiceImpl service = createService();
+        Threadd thread = createThread();
+        Announcement existing = new Announcement();
+        existing.setAnnouncementId(5);
+        existing.setThreadId(101);
+        existing.setIsGlobal(true);
+        when(threaddMapper.selectById(101)).thenReturn(thread);
+        when(announcementMapper.selectOne(any(Wrapper.class))).thenReturn(existing);
+        when(announcementMapper.deleteById(5)).thenReturn(1);
+
+        String result = service.removeGlobalAnnouncementByThreadId(101);
+
+        assertNull(result);
+        verify(announcementMapper).deleteById(5);
+    }
+
+    @Test
+    void shouldReturnGlobalAnnouncementsFromAnnouncementMapper() {
+        ThreaddServiceImpl service = createService();
+        AnnouncementVO announcementVO = new AnnouncementVO();
+        announcementVO.setAnnouncementId(7);
+        announcementVO.setThreadId(101);
+        announcementVO.setIsGlobal(true);
+        when(announcementMapper.getGlobalAnnouncements()).thenReturn(List.of(announcementVO));
+
+        List<AnnouncementVO> result = service.getGlobalAnnouncementThreads();
+
+        assertEquals(1, result.size());
+        assertTrue(result.get(0).getIsGlobal());
+    }
+
     private Threadd createThread() {
         Threadd thread = new Threadd();
         thread.setThreadId(101);
@@ -355,6 +480,7 @@ class ThreaddServiceImplTest {
     private ThreaddServiceImpl createService() {
         ThreaddServiceImpl service = new ThreaddServiceImpl(
                 accountMapper,
+                announcementMapper,
                 topicMapper,
                 postMapper,
                 new TipTapUtils(),

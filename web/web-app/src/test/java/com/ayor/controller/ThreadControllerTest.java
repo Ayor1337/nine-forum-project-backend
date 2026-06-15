@@ -1,6 +1,7 @@
 package com.ayor.controller;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.lang.reflect.Method;
@@ -77,6 +78,15 @@ class ThreadControllerTest {
         assertTrue(queryParamNames.contains("metric"));
         assertTrue(queryParamNames.contains("page_num"));
         assertTrue(queryParamNames.contains("page_size"));
+    }
+
+    @Test
+    void getGlobalAnnouncementsShouldExposePublicRoute() throws NoSuchMethodException {
+        Method method = ThreadController.class.getMethod("getGlobalAnnouncements");
+
+        GetMapping mapping = method.getAnnotation(GetMapping.class);
+
+        assertTrue(Arrays.asList(mapping.value()).contains("/announcements/global"));
     }
 
     private String requestParamName(RequestParam requestParam) {

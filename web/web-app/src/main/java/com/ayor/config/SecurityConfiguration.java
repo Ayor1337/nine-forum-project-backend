@@ -66,6 +66,7 @@ public class SecurityConfiguration {
             "/api/users/{user_id}/threads",
             "/api/threads/{thread_id}",
             "/api/topics/{topic_id}/announcements",
+            "/api/announcements/global",
             "/api/threads/{thread_id}/posts",
             "/api/threads/{thread_id}/likes/count",
             "/api/users/{user_id}/liked-threads",

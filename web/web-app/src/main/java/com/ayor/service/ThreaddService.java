@@ -139,11 +139,31 @@ public interface ThreaddService extends IService<Threadd> {
     String removeAnnouncementByThreadId(Integer threadId, Integer topicId);
 
     /**
+     * 设置帖子为全局公告
+     * @param threadId 帖子ID
+     * @return 操作结果消息;成功返回null,失败返回错误描述
+     */
+    String setGlobalAnnouncementByThreadId(Integer threadId);
+
+    /**
+     * 取消帖子的全局公告状态
+     * @param threadId 帖子ID
+     * @return 操作结果消息;成功返回null,失败返回错误描述
+     */
+    String removeGlobalAnnouncementByThreadId(Integer threadId);
+
+    /**
      * 获取指定分类的公告帖子列表
      * @param topicId 分类ID
      * @return 公告视图对象列表
      */
     List<AnnouncementVO> getAnnouncementThreads(Integer topicId);
+
+    /**
+     * 获取全局公告帖子列表
+     * @return 公告视图对象列表
+     */
+    List<AnnouncementVO> getGlobalAnnouncementThreads();
 
     /**
      * 创建新帖子

@@ -141,6 +141,12 @@ public class AuthorizationServiceImpl implements AuthorizationService {
         assertTopicPermission(actorId, topicId, PermissionType.SET_ANNOUNCEMENT);
     }
 
+    @Override
+    public void assertCanSetGlobalAnnouncement(Integer actorId, Integer threadId) {
+        requireActiveThread(threadId);
+        assertGlobalPermission(actorId, PermissionType.SET_ANNOUNCEMENT);
+    }
+
     /**
      * 断言操作者可以以版主管理身份删除指定帖子。
      *

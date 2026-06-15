@@ -1,31 +1,26 @@
-package com.ayor.entity.vo;
+package com.ayor.entity.pojo;
 
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.io.Serial;
-import java.io.Serializable;
 import java.util.Date;
 
+@TableName("announcements")
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class AnnouncementVO implements Serializable {
+public class Announcement {
 
-    @Serial
-    private static final long serialVersionUID = 102L;
-
+    @TableId(type = IdType.AUTO)
     private Integer announcementId;
 
     private Integer threadId;
 
-    private Integer topicId;
-
-    private String title;
-
     private Boolean isGlobal;
 
     private Date createTime;
-
 }

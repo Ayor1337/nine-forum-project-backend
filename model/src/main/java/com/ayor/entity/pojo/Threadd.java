@@ -52,6 +52,4 @@ public class Threadd {
 
     private Boolean isDeleted;
 
-    private Boolean isAnnouncement;
-
 }

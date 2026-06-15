@@ -3,6 +3,7 @@ package com.ayor.service.impl;
 import com.ayor.entity.PageEntity;
 import com.ayor.entity.document.ThreadDoc;
 import com.ayor.entity.dto.ThreadDTO;
+import com.ayor.entity.pojo.Announcement;
 import com.ayor.entity.vo.AnnouncementVO;
 import com.ayor.entity.vo.TagVO;
 import com.ayor.entity.vo.ThreadEditHistoryDetailVO;
@@ -47,6 +48,8 @@ import java.util.concurrent.locks.ReentrantLock;
 public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> implements ThreaddService {
 
     private final AccountMapper accountMapper;
+
+    private final AnnouncementMapper announcementMapper;
 
     private final TopicMapper topicMapper;
 
@@ -327,18 +330,20 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
 
     @Override
     public String setAnnouncementByThreadId(Integer threadId, Integer topicId) {
-        Threadd thread = this.lambdaQuery()
+        Threadd thread = this.baseMapper.selectOne(new LambdaQueryWrapper<Threadd>()
                 .eq(Threadd::getThreadId, threadId)
-                .eq(Threadd::getTopicId, topicId)
-                .one();
+                .eq(Threadd::getTopicId, topicId));
         if (thread == null || thread.getIsDeleted()) {
             return "帖子不存在";
         }
-        if (thread.getIsAnnouncement()) {
+        if (getAnnouncement(threadId, false) != null) {
             return "该帖子已经是公告";
         }
-        thread.setIsAnnouncement(true);
-        return this.updateById(thread) ? null : "修改失败";
+        Announcement announcement = new Announcement();
+        announcement.setThreadId(threadId);
+        announcement.setIsGlobal(false);
+        announcement.setCreateTime(new Date());
+        return announcementMapper.insert(announcement) > 0 ? null : "修改失败";
     }
     /**
      * 取消帖子公告状态。
@@ -346,18 +351,46 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
 
     @Override
     public String removeAnnouncementByThreadId(Integer threadId, Integer topicId) {
-        Threadd thread = this.lambdaQuery()
+        Threadd thread = this.baseMapper.selectOne(new LambdaQueryWrapper<Threadd>()
                 .eq(Threadd::getThreadId, threadId)
-                .eq(Threadd::getTopicId, topicId)
-                .one();
+                .eq(Threadd::getTopicId, topicId));
         if (thread == null || thread.getIsDeleted()) {
             return "帖子不存在";
         }
-        if (!thread.getIsAnnouncement()) {
+        Announcement announcement = getAnnouncement(threadId, false);
+        if (announcement == null) {
             return "该帖子不是公告";
         }
-        thread.setIsAnnouncement(false);
-        return this.updateById(thread) ? null : "修改失败";
+        return announcementMapper.deleteById(announcement.getAnnouncementId()) > 0 ? null : "修改失败";
+    }
+
+    @Override
+    public String setGlobalAnnouncementByThreadId(Integer threadId) {
+        Threadd thread = this.getById(threadId);
+        if (thread == null || thread.getIsDeleted()) {
+            return "帖子不存在";
+        }
+        if (getAnnouncement(threadId, true) != null) {
+            return "该帖子已经是全局公告";
+        }
+        Announcement announcement = new Announcement();
+        announcement.setThreadId(threadId);
+        announcement.setIsGlobal(true);
+        announcement.setCreateTime(new Date());
+        return announcementMapper.insert(announcement) > 0 ? null : "修改失败";
+    }
+
+    @Override
+    public String removeGlobalAnnouncementByThreadId(Integer threadId) {
+        Threadd thread = this.getById(threadId);
+        if (thread == null || thread.getIsDeleted()) {
+            return "帖子不存在";
+        }
+        Announcement announcement = getAnnouncement(threadId, true);
+        if (announcement == null) {
+            return "该帖子不是全局公告";
+        }
+        return announcementMapper.deleteById(announcement.getAnnouncementId()) > 0 ? null : "修改失败";
     }
     /**
      * 获取主题下的公告帖子列表。
@@ -368,16 +401,21 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
         if (topicId == null) {
             return null;
         }
-        List<Threadd> announcements = this.baseMapper.getAnnouncementsByTopicId(topicId);
-        List<AnnouncementVO> announcementVOList = new ArrayList<>();
-        announcements.forEach(announcement -> {
-            if (!announcement.getIsDeleted()) {
-                AnnouncementVO announcementVO = new AnnouncementVO();
-                BeanUtils.copyProperties(announcement, announcementVO);
-                announcementVOList.add(announcementVO);
-            }
-        });
-        return announcementVOList;
+        return announcementMapper.getTopicAnnouncements(topicId);
+    }
+
+    @Override
+    public List<AnnouncementVO> getGlobalAnnouncementThreads() {
+        return announcementMapper.getGlobalAnnouncements();
+    }
+
+    private Announcement getAnnouncement(Integer threadId, Boolean isGlobal) {
+        if (threadId == null || isGlobal == null) {
+            return null;
+        }
+        return announcementMapper.selectOne(new LambdaQueryWrapper<Announcement>()
+                .eq(Announcement::getThreadId, threadId)
+                .eq(Announcement::getIsGlobal, isGlobal));
     }
     /**
      * 创建帖子并同步写入索引与统计。
