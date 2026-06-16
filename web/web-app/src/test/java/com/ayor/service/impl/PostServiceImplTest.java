@@ -1,12 +1,17 @@
 package com.ayor.service.impl;
 
 import com.ayor.entity.dto.PostDTO;
+import com.ayor.entity.dto.PostEditDTO;
 import com.ayor.entity.PageEntity;
 import com.ayor.entity.pojo.Account;
 import com.ayor.entity.pojo.Post;
+import com.ayor.entity.pojo.PostEditHistory;
+import com.ayor.entity.vo.PostEditHistoryDetailVO;
+import com.ayor.entity.vo.PostEditHistoryVO;
 import com.ayor.entity.vo.PostVO;
 import com.ayor.entity.vo.ReplyMessageVO;
 import com.ayor.mapper.AccountMapper;
+import com.ayor.mapper.PostEditHistoryMapper;
 import com.ayor.mapper.PostMapper;
 import com.ayor.mapper.ThreaddMapper;
 import com.ayor.service.AuthorizationService;
@@ -28,16 +33,20 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import java.util.Date;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 import org.springframework.security.access.AccessDeniedException;
 
 @ExtendWith(MockitoExtension.class)
@@ -69,6 +78,9 @@ class PostServiceImplTest {
 
     @Mock
     private UserRelationService userRelationService;
+
+    @Mock
+    private PostEditHistoryMapper postEditHistoryMapper;
 
     @Test
     void shouldPagePostsByThreadId() {
@@ -102,6 +114,7 @@ class PostServiceImplTest {
         assertEquals(21, result.getData().get(0).getPostId());
         assertEquals("reply-user", result.getData().get(0).getNickname());
         assertEquals("avatar.png", result.getData().get(0).getAvatarUrl());
+        assertEquals(0, result.getData().get(0).getEditCount());
         verify(postMapper).selectPage(any(Page.class), any(Wrapper.class));
     }
 
@@ -176,6 +189,121 @@ class PostServiceImplTest {
     }
 
     @Test
+    void shouldSnapshotAndUpdatePostWhenEditing() {
+        PostServiceImpl service = createService();
+        Post post = createPost();
+        post.setContent("{\"type\":\"doc\",\"content\":[{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"old\"}]}]}");
+        when(postMapper.selectById(21)).thenReturn(post);
+        when(postEditHistoryMapper.insert(any(PostEditHistory.class))).thenReturn(1);
+        when(postMapper.updateById(any(Post.class))).thenReturn(1);
+
+        PostEditDTO dto = new PostEditDTO("{\"type\":\"doc\",\"content\":[{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"new\"}]}]}");
+
+        String result = service.editPost(21, dto, 3);
+
+        assertNull(result);
+        ArgumentCaptor<PostEditHistory> historyCaptor = ArgumentCaptor.forClass(PostEditHistory.class);
+        ArgumentCaptor<Post> postCaptor = ArgumentCaptor.forClass(Post.class);
+        verify(postEditHistoryMapper).insert(historyCaptor.capture());
+        verify(postMapper).updateById(postCaptor.capture());
+        assertEquals(21, historyCaptor.getValue().getPostId());
+        assertEquals(3, historyCaptor.getValue().getEditorAccountId());
+        assertEquals("{\"type\":\"doc\",\"content\":[{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"old\"}]}]}", historyCaptor.getValue().getContent());
+        assertEquals(dto.getContent(), postCaptor.getValue().getContent());
+        assertEquals(3, postCaptor.getValue().getAccountId());
+        InOrder inOrder = inOrder(postEditHistoryMapper, postMapper);
+        inOrder.verify(postEditHistoryMapper).insert(any(PostEditHistory.class));
+        inOrder.verify(postMapper).updateById(any(Post.class));
+    }
+
+    @Test
+    void shouldSyncImageRefsAndMentionsAfterEditingPost() {
+        PostServiceImpl service = createService();
+        Post post = createPost();
+        when(postMapper.selectById(21)).thenReturn(post);
+        when(postEditHistoryMapper.insert(any(PostEditHistory.class))).thenReturn(1);
+        when(postMapper.updateById(any(Post.class))).thenReturn(1);
+
+        PostEditDTO dto = new PostEditDTO("{\"type\":\"doc\",\"content\":[]}");
+
+        String result = service.editPost(21, dto, 3);
+
+        assertNull(result);
+        verify(imageAssetService).syncContentRefs("POST", 21, "{\"type\":\"doc\",\"content\":[]}", 3);
+        verify(mentionMessageService).createPostMentionMessages("{\"type\":\"doc\",\"content\":[]}", 3, 21, 9);
+    }
+
+    @Test
+    void shouldReturnMissingPostMessageWhenEditingDeletedPost() {
+        PostServiceImpl service = createService();
+        Post post = createPost();
+        post.setIsDeleted(true);
+        when(postMapper.selectById(21)).thenReturn(post);
+
+        String result = service.editPost(21, new PostEditDTO("{\"type\":\"doc\",\"content\":[]}"), 3);
+
+        assertEquals("回复不存在", result);
+        verify(postEditHistoryMapper, never()).insert(any(PostEditHistory.class));
+        verify(imageAssetService, never()).syncContentRefs(any(), any(), any(), any());
+    }
+
+    @Test
+    void shouldPropagateAccessDeniedWhenNonAuthorEditsPost() {
+        PostServiceImpl service = createService();
+        org.mockito.Mockito.doThrow(new AccessDeniedException("Access denied"))
+                .when(authorizationService).assertCanEditPost(4, 21);
+
+        assertThrows(AccessDeniedException.class,
+                () -> service.editPost(21, new PostEditDTO("{\"type\":\"doc\",\"content\":[]}"), 4));
+
+        verify(postMapper, never()).selectById(21);
+        verify(postEditHistoryMapper, never()).insert(any(PostEditHistory.class));
+    }
+
+    @Test
+    void shouldCountPostEdits() {
+        PostServiceImpl service = createService();
+        when(postEditHistoryMapper.selectCount(any(Wrapper.class))).thenReturn(2L);
+
+        Integer result = service.countEdits(21);
+
+        assertEquals(2, result);
+    }
+
+    @Test
+    void shouldListPublicPostEditHistoryWithoutContentSnapshot() {
+        PostServiceImpl service = createService();
+        PostEditHistory history = createHistory();
+        Account editor = new Account();
+        editor.setAccountId(3);
+        editor.setNickname("editor");
+        editor.setAvatarUrl("avatar.png");
+        when(postEditHistoryMapper.selectList(any(Wrapper.class))).thenReturn(List.of(history));
+        when(accountMapper.getAccountById(3)).thenReturn(editor);
+
+        List<PostEditHistoryVO> result = service.listEditHistory(21);
+
+        assertEquals(1, result.size());
+        assertEquals(21, result.get(0).getPostId());
+        assertEquals("editor", result.get(0).getEditorName());
+        assertEquals("avatar.png", result.get(0).getEditorAvatar());
+        assertFalse(result.get(0) instanceof PostEditHistoryDetailVO);
+    }
+
+    @Test
+    void shouldListPostEditHistorySnapshotsWithContent() {
+        PostServiceImpl service = createService();
+        PostEditHistory history = createHistory();
+        when(postEditHistoryMapper.selectList(any(Wrapper.class))).thenReturn(List.of(history));
+        when(accountMapper.getAccountById(3)).thenReturn(null);
+
+        List<PostEditHistoryDetailVO> result = service.listEditHistoryWithSnapshots(21);
+
+        assertEquals(1, result.size());
+        assertEquals("{\"type\":\"doc\",\"content\":[]}", result.get(0).getContent());
+    }
+
+    @Test
     void shouldListReplyMessagesWithPostQueryInsteadOfRecentThreads() {
         PostServiceImpl service = createService();
 
@@ -220,9 +348,32 @@ class PostServiceImplTest {
                 mentionMessageService,
                 imageAssetService,
                 authorizationService,
-                userRelationService
+                userRelationService,
+                postEditHistoryMapper
         );
         ReflectionTestUtils.setField(service, "baseMapper", postMapper);
         return service;
+    }
+
+    private Post createPost() {
+        Post post = new Post();
+        post.setPostId(21);
+        post.setThreadId(9);
+        post.setAccountId(3);
+        post.setTopicId(7);
+        post.setContent("{\"type\":\"doc\",\"content\":[]}");
+        post.setIsDeleted(false);
+        post.setCreateTime(new Date());
+        return post;
+    }
+
+    private PostEditHistory createHistory() {
+        PostEditHistory history = new PostEditHistory();
+        history.setHistoryId(51);
+        history.setPostId(21);
+        history.setEditorAccountId(3);
+        history.setContent("{\"type\":\"doc\",\"content\":[]}");
+        history.setEditTime(new Date());
+        return history;
     }
 }

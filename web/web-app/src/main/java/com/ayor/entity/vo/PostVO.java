@@ -3,6 +3,7 @@ package com.ayor.entity.vo;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -33,4 +34,7 @@ public class PostVO implements Serializable {
     private Integer threadId;
 
     private Integer topicId;
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private Integer editCount;
 }

@@ -264,6 +264,53 @@ class AuthorizationServiceImplTest {
     }
 
     @Test
+    void shouldAllowAuthorToEditOwnPost() {
+        AuthorizationServiceImpl service = createService();
+        Post post = new Post();
+        post.setPostId(31);
+        post.setAccountId(9);
+        post.setTopicId(44);
+        post.setIsDeleted(false);
+        when(postMapper.selectById(31)).thenReturn(post);
+
+        assertDoesNotThrow(() -> service.assertCanEditPost(9, 31));
+    }
+
+    @Test
+    void shouldDenyNonAuthorOnUserPostEditEvenWithPermission() {
+        AuthorizationServiceImpl service = createService();
+        lenient().when(roleMapper.getRoleNameByUserId(8)).thenReturn("MODERATOR");
+        lenient().when(roleMapper.getTopicIdByUserId(8)).thenReturn(44);
+        lenient().when(permissionMapper.getPermissionsByAccountId(8)).thenReturn(List.of("DELETE_POST"));
+
+        Post post = new Post();
+        post.setPostId(31);
+        post.setAccountId(9);
+        post.setTopicId(44);
+        post.setIsDeleted(false);
+        when(postMapper.selectById(31)).thenReturn(post);
+
+        assertThrows(AccessDeniedException.class, () -> service.assertCanEditPost(8, 31));
+    }
+
+    @Test
+    void shouldAllowScopedModeratorToViewPostEditSnapshotsWithDeletePostPermission() {
+        AuthorizationServiceImpl service = createService();
+        when(roleMapper.getRoleNameByUserId(8)).thenReturn("MODERATOR");
+        when(roleMapper.getTopicIdByUserId(8)).thenReturn(66);
+        when(permissionMapper.getPermissionsByAccountId(8)).thenReturn(List.of("DELETE_POST"));
+
+        Post post = new Post();
+        post.setPostId(31);
+        post.setAccountId(9);
+        post.setTopicId(66);
+        post.setIsDeleted(false);
+        when(postMapper.selectById(31)).thenReturn(post);
+
+        assertDoesNotThrow(() -> service.assertCanViewPostEditSnapshots(8, 31));
+    }
+
+    @Test
     void shouldDenyNonAuthorOnUserPostDeleteEvenWithPermission() {
         AuthorizationServiceImpl service = createService();
         lenient().when(roleMapper.getRoleNameByUserId(8)).thenReturn("MODERATOR");

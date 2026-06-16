@@ -3,13 +3,18 @@ package com.ayor.service.impl;
 import com.ayor.aspect.unread.MessageUnreadNotif;
 import com.ayor.entity.PageEntity;
 import com.ayor.entity.document.ThreadDoc;
+import com.ayor.entity.dto.PostEditDTO;
 import com.ayor.entity.dto.PostDTO;
+import com.ayor.entity.pojo.PostEditHistory;
+import com.ayor.entity.vo.PostEditHistoryDetailVO;
+import com.ayor.entity.vo.PostEditHistoryVO;
 import com.ayor.entity.vo.PostVO;
 import com.ayor.entity.vo.ReplyMessageVO;
 import com.ayor.entity.pojo.Account;
 import com.ayor.entity.pojo.Post;
 import com.ayor.entity.pojo.Threadd;
 import com.ayor.mapper.AccountMapper;
+import com.ayor.mapper.PostEditHistoryMapper;
 import com.ayor.mapper.PostMapper;
 import com.ayor.mapper.ThreaddMapper;
 import com.ayor.service.AuthorizationService;
@@ -58,6 +63,8 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
     private final AuthorizationService authorizationService;
 
     private final UserRelationService userRelationService;
+
+    private final PostEditHistoryMapper postEditHistoryMapper;
     /**
      * 获取指定帖子下的评论列表。
      */
@@ -108,6 +115,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
             postVO.setNickname(account.getNickname());
             postVO.setAccountId(account.getAccountId());
             postVO.setAvatarUrl(account.getAvatarUrl());
+            postVO.setEditCount(countEdits(post.getPostId()));
             postVOList.add(postVO);
         });
         return postVOList;
@@ -164,6 +172,105 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
             return null;
         }
         return "发布失败, 未知异常";
+    }
+
+    /**
+     * 编辑回复：先快照原正文，再以新正文覆盖当前回复。
+     */
+    @Override
+    public String editPost(Integer postId, PostEditDTO postEditDTO, Integer accountId) {
+        if (postId == null || postEditDTO == null) {
+            return "参数错误";
+        }
+        authorizationService.assertCanEditPost(accountId, postId);
+        Post post = this.getById(postId);
+        if (post == null || Boolean.TRUE.equals(post.getIsDeleted())) {
+            return "回复不存在";
+        }
+
+        String newContent;
+        try {
+            newContent = tipTapUtils.convertBase64ImagesToUrl(postEditDTO.getContent(), "posts/" + post.getThreadId() + "/");
+        } catch (IllegalArgumentException exception) {
+            return exception.getMessage();
+        }
+
+        PostEditHistory snapshot = new PostEditHistory();
+        snapshot.setPostId(postId);
+        snapshot.setEditorAccountId(accountId);
+        snapshot.setContent(post.getContent());
+        snapshot.setEditTime(new Date());
+        postEditHistoryMapper.insert(snapshot);
+
+        post.setContent(newContent);
+        post.setUpdateTime(new Date());
+        if (!this.updateById(post)) {
+            return "编辑失败";
+        }
+
+        imageAssetService.syncContentRefs("POST", postId, newContent, accountId);
+        mentionMessageService.createPostMentionMessages(newContent, accountId, postId, post.getThreadId());
+        return null;
+    }
+
+    @Override
+    public Integer countEdits(Integer postId) {
+        if (postId == null) {
+            return 0;
+        }
+        Long count = postEditHistoryMapper.selectCount(
+                new LambdaQueryWrapper<PostEditHistory>()
+                        .eq(PostEditHistory::getPostId, postId));
+        return count == null ? 0 : count.intValue();
+    }
+
+    @Override
+    public List<PostEditHistoryVO> listEditHistory(Integer postId) {
+        if (postId == null) {
+            return new ArrayList<>();
+        }
+        List<PostEditHistory> records = postEditHistoryMapper.selectList(
+                new LambdaQueryWrapper<PostEditHistory>()
+                        .eq(PostEditHistory::getPostId, postId)
+                        .orderByDesc(PostEditHistory::getEditTime));
+        List<PostEditHistoryVO> result = new ArrayList<>(records.size());
+        for (PostEditHistory record : records) {
+            PostEditHistoryVO vo = new PostEditHistoryVO();
+            populateBaseHistoryVO(vo, record);
+            result.add(vo);
+        }
+        return result;
+    }
+
+    @Override
+    public List<PostEditHistoryDetailVO> listEditHistoryWithSnapshots(Integer postId) {
+        if (postId == null) {
+            return new ArrayList<>();
+        }
+        List<PostEditHistory> records = postEditHistoryMapper.selectList(
+                new LambdaQueryWrapper<PostEditHistory>()
+                        .eq(PostEditHistory::getPostId, postId)
+                        .orderByDesc(PostEditHistory::getEditTime));
+        List<PostEditHistoryDetailVO> result = new ArrayList<>(records.size());
+        for (PostEditHistory record : records) {
+            PostEditHistoryDetailVO vo = new PostEditHistoryDetailVO();
+            populateBaseHistoryVO(vo, record);
+            vo.setContent(record.getContent());
+            result.add(vo);
+        }
+        return result;
+    }
+
+    private void populateBaseHistoryVO(PostEditHistoryVO vo, PostEditHistory record) {
+        vo.setHistoryId(record.getHistoryId());
+        vo.setPostId(record.getPostId());
+        vo.setEditTime(record.getEditTime());
+        vo.setEditorId(record.getEditorAccountId());
+        Account editor = accountMapper.getAccountById(record.getEditorAccountId());
+        if (editor != null) {
+            vo.setEditorName(editor.getNickname());
+            vo.setEditorAvatar(editor.getAvatarUrl());
+        }
     }
     /**
      * 校验作者身份后删除评论。

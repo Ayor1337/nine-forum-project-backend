@@ -246,6 +246,41 @@ public class AuthorizationServiceImpl implements AuthorizationService {
     }
 
     /**
+     * 断言操作者可以编辑指定回复。
+     *
+     * <p>只有回复作者可以编辑自己的回复；回复必须存在且未被删除。</p>
+     *
+     * @param actorId 操作者账号 ID
+     * @param postId 目标回复 ID
+     * @throws AccessDeniedException 当操作者无效、回复无效，或操作者不是回复作者时抛出
+     */
+    @Override
+    public void assertCanEditPost(Integer actorId, Integer postId) {
+        requireActor(actorId);
+        Post post = requireActivePost(postId);
+        if (Objects.equals(post.getAccountId(), actorId)) {
+            return;
+        }
+        throw new AccessDeniedException(ACCESS_DENIED);
+    }
+
+    /**
+     * 断言操作者可以查看指定回复的编辑历史快照（含正文）。
+     *
+     * <p>复用版主删回复权限：必须拥有 {@link PermissionType#DELETE_POST} 且话题范围匹配，
+     * 或者是论坛所有者。</p>
+     *
+     * @param actorId 操作者账号 ID
+     * @param postId 目标回复 ID
+     * @throws AccessDeniedException 当回复无效，或操作者没有删回复权限时抛出
+     */
+    @Override
+    public void assertCanViewPostEditSnapshots(Integer actorId, Integer postId) {
+        Post post = requireActivePost(postId);
+        assertTopicPermission(actorId, post.getTopicId(), PermissionType.DELETE_POST);
+    }
+
+    /**
      * 断言操作者可以向目标用户发起私信会话。
      *
      * <p>目标用户必须存在；双方任一方向存在拉黑关系时禁止发起。给自己发起会话直接放行。

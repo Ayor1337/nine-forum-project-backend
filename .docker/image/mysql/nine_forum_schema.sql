@@ -162,6 +162,22 @@ CREATE TABLE IF NOT EXISTS `post`  (
 ) ENGINE = InnoDB AUTO_INCREMENT = 2 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
+-- Table structure for post_edit_history
+-- ----------------------------
+CREATE TABLE IF NOT EXISTS `post_edit_history`  (
+                              `history_id` int NOT NULL AUTO_INCREMENT COMMENT '编辑历史ID',
+                              `post_id` int NOT NULL COMMENT '回复ID',
+                              `editor_account_id` int NOT NULL COMMENT '编辑者账号ID',
+                              `content` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL COMMENT '编辑前内容快照(TipTap JSON)',
+                              `edit_time` datetime NOT NULL COMMENT '本次编辑发生时间',
+                              PRIMARY KEY (`history_id`) USING BTREE,
+                              INDEX `idx_post_id`(`post_id` ASC) USING BTREE,
+                              INDEX `idx_editor_account_id`(`editor_account_id` ASC) USING BTREE,
+                              CONSTRAINT `db_post_edit_history_ibfk_1` FOREIGN KEY (`post_id`) REFERENCES `post` (`post_id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
+                              CONSTRAINT `db_post_edit_history_ibfk_2` FOREIGN KEY (`editor_account_id`) REFERENCES `account` (`account_id`) ON DELETE RESTRICT ON UPDATE RESTRICT
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = DYNAMIC;
+
+-- ----------------------------
 -- Table structure for image_asset
 -- ----------------------------
 CREATE TABLE IF NOT EXISTS `image_asset` (

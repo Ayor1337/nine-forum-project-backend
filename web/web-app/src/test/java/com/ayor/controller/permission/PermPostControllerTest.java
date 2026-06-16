@@ -3,6 +3,7 @@ package com.ayor.controller.permission;
 import com.ayor.aspect.oplog.OperationLog;
 import org.junit.jupiter.api.Test;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import java.lang.reflect.Method;
@@ -34,5 +35,17 @@ class PermPostControllerTest {
         assertEquals("DELETE_POST", operationLog.action());
         assertEquals("post", operationLog.targetType());
         assertEquals("postId", operationLog.targetIdParam());
+    }
+
+    @Test
+    void listEditHistoryWithSnapshotsShouldExposeModerationHistoryRoute() throws NoSuchMethodException {
+        Method method = PermPostController.class.getMethod(
+                "listEditHistoryWithSnapshots",
+                Integer.class
+        );
+
+        GetMapping mapping = method.getAnnotation(GetMapping.class);
+
+        assertEquals("/{post_id}/edit-history", mapping.value()[0]);
     }
 }

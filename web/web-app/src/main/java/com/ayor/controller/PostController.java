@@ -2,6 +2,8 @@ package com.ayor.controller;
 
 import com.ayor.entity.PageEntity;
 import com.ayor.entity.dto.ContentReportDTO;
+import com.ayor.entity.dto.PostEditDTO;
+import com.ayor.entity.vo.PostEditHistoryVO;
 import com.ayor.entity.vo.ReplyMessageVO;
 import com.ayor.result.Result;
 import com.ayor.service.PostService;
@@ -14,6 +16,8 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/api")
@@ -25,6 +29,26 @@ public class PostController {
     private final SecurityUtils security;
 
     private final ReportService reportService;
+
+    /**
+     * 编辑当前用户的评论。
+     */
+    @Operation(summary = "编辑当前用户的评论")
+    @PutMapping("/posts/{post_id}")
+    public Result<Void> editPost(@Parameter(description = "回复 ID") @PathVariable(name = "post_id") Integer postId,
+                                 @RequestBody @Valid PostEditDTO postEditDTO) {
+        Integer userId = security.getSecurityUserId();
+        return Result.messageHandler(() -> postService.editPost(postId, postEditDTO, userId));
+    }
+
+    /**
+     * 获取回复的公开编辑历史（不含正文快照）。
+     */
+    @Operation(summary = "获取回复的公开编辑历史")
+    @GetMapping("/posts/{post_id}/edit-history")
+    public Result<List<PostEditHistoryVO>> getPostEditHistory(@Parameter(description = "回复 ID") @PathVariable(name = "post_id") Integer postId) {
+        return Result.dataMessageHandler(() -> postService.listEditHistory(postId), "获取失败");
+    }
 
     /**
      * 删除当前用户的评论。
