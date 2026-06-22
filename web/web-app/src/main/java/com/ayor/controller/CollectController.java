@@ -63,7 +63,7 @@ public class    CollectController {
     public Result<PageEntity<ThreadVO>> getCollects(@Parameter(description = "用户 ID") @PathVariable(name = "user_id") Integer userId,
                                                     @Parameter(description = "页码") @RequestParam(name = "page") Integer pageNum,
                                                     @Parameter(description = "每页数量") @RequestParam(name = "page_size") Integer pageSize) {
-        Integer viewerId = security.getSecurityUserId();
+        Integer viewerId = security.getOptionalSecurityUserId();
         return Result.dataMessageHandler(() -> collectService.getCollectsByAccountId(viewerId, userId, pageNum, pageSize), "获取失败");
     }
 

@@ -5,9 +5,11 @@ import com.ayor.entity.pojo.Collect;
 import com.ayor.entity.pojo.Threadd;
 import com.ayor.mapper.AccountMapper;
 import com.ayor.mapper.CollectMapper;
+import com.ayor.mapper.TagMapper;
 import com.ayor.mapper.ThreaddMapper;
 import com.ayor.service.PrivacyPolicyService;
 import com.ayor.service.UserRelationService;
+import com.ayor.util.TipTapUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -31,6 +33,12 @@ class CollectServiceImplTest {
 
     @Mock
     private CollectMapper collectMapper;
+
+    @Mock
+    private TagMapper tagMapper;
+
+    @Mock
+    private TipTapUtils tipTapUtils;
 
     @Mock
     private PrivacyPolicyService privacyPolicyService;
@@ -62,6 +70,8 @@ class CollectServiceImplTest {
         CollectServiceImpl service = new CollectServiceImpl(
                 accountMapper,
                 threaddMapper,
+                tagMapper,
+                tipTapUtils,
                 privacyPolicyService,
                 userRelationService
         );

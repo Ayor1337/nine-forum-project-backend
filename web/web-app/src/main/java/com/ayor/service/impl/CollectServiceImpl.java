@@ -2,20 +2,23 @@ package com.ayor.service.impl;
 
 import com.ayor.entity.PageEntity;
 import com.ayor.entity.vo.ThreadVO;
+import com.ayor.entity.vo.TagVO;
 import com.ayor.entity.pojo.Account;
 import com.ayor.entity.pojo.Collect;
+import com.ayor.entity.pojo.Tag;
 import com.ayor.entity.pojo.Threadd;
 import com.ayor.mapper.AccountMapper;
 import com.ayor.mapper.CollectMapper;
+import com.ayor.mapper.TagMapper;
 import com.ayor.mapper.ThreaddMapper;
 import com.ayor.service.CollectService;
 import com.ayor.service.PrivacyPolicyService;
 import com.ayor.service.UserRelationService;
+import com.ayor.util.TipTapUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,6 +37,10 @@ public class CollectServiceImpl extends ServiceImpl<CollectMapper, Collect> impl
     private final AccountMapper accountMapper;
 
     private final ThreaddMapper threaddMapper;
+
+    private final TagMapper tagMapper;
+
+    private final TipTapUtils tipTapUtils;
 
     private final PrivacyPolicyService privacyPolicyService;
 
@@ -141,15 +148,34 @@ public class CollectServiceImpl extends ServiceImpl<CollectMapper, Collect> impl
                 : userRelationService.listBlockedAccountIdsEitherDirection(viewerId);
         List<ThreadVO> threadVOS = new ArrayList<>();
         threads.forEach(thread -> {
-            if (blockedAccountIds.contains(thread.getAccountId())) {
+            if (Boolean.TRUE.equals(thread.getIsDeleted()) || blockedAccountIds.contains(thread.getAccountId())) {
                 return;
             }
-            ThreadVO threadVO = new ThreadVO();
-            BeanUtils.copyProperties(thread, threadVO);
-            threadVO.setContent(null);
-            threadVO.setImageUrls(null);
-            threadVOS.add(threadVO);
+            threadVOS.add(toVO(thread));
         });
         return new PageEntity<>(page.getTotal(), threadVOS);
+    }
+
+    private ThreadVO toVO(Threadd thread) {
+        ThreadVO threadVO = new ThreadVO();
+        BeanUtils.copyProperties(thread, threadVO);
+
+        Account account = accountMapper.getAccountById(thread.getAccountId());
+        if (account != null) {
+            threadVO.setAccountName(account.getNickname());
+            threadVO.setAvatarUrl(account.getAvatarUrl());
+            threadVO.setAccountId(account.getAccountId());
+        }
+
+        Tag tag = tagMapper.getTagById(thread.getTagId());
+        if (tag != null) {
+            TagVO tagVO = new TagVO();
+            BeanUtils.copyProperties(tag, tagVO);
+            threadVO.setTag(tagVO);
+        }
+
+        threadVO.setContent(tipTapUtils.filterNonImage(thread.getContent()));
+        threadVO.setImageUrls(tipTapUtils.extractImageUrls(thread.getContent()));
+        return threadVO;
     }
 }
