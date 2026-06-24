@@ -29,6 +29,7 @@ NineForum 同时使用 RabbitMQ 和 WebSocket/STOMP。RabbitMQ 负责跨应用�
 - `/chatboard`
 - `/chat`
 - `/system`
+- `/forum`
 
 消息代理配置：
 
@@ -49,8 +50,12 @@ NineForum 同时使用 RabbitMQ 和 WebSocket/STOMP。RabbitMQ 负责跨应用�
 | `/user/{accountId}/notif/unread/{type}` | 指定类型未读消息。 |
 | `/user/{accountId}/notif/unread-overview` | 未读消息概览。 |
 | `/user/{accountId}/notif/unread/whisper` | 私信未读消息。 |
+| `/broadcast/forum/topics/{topicId}/threads` | 话题帖子列表新增主题帖事件，消息体只包含 `topicId`、`threadId`、`increment`、`createTime`。 |
+| `/broadcast/forum/threads/{threadId}/posts` | 帖子详情页新增回复事件，消息体只包含 `topicId`、`threadId`、`postId`、`increment`、`createTime`。 |
 
 页面广播目的地由 `PageBroadcastEventListener` 根据广播作用域生成，调用方应以该监听器实现为准。
+
+论坛实时更新通过 `/forum` 端点订阅 `/broadcast/forum/**` 目的地。新增主题帖事件用于前端累计当前话题的新帖子数量；新增回复事件不携带正文，前端应使用现有 `GET /api/threads/{thread_id}/posts` 按当前登录态拉取最新回复并追加或刷新底部，避免绕过 REST 侧的拉黑过滤规则。
 
 ## 管理端 STOMP
 

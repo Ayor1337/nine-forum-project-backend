@@ -30,6 +30,8 @@ public class FollowMessageVO implements Serializable {
 
     private Integer threadId;
 
+    private Integer topicId;
+
     private String title;
 
     private String contentSummary;

@@ -19,4 +19,15 @@ class SecurityConfigurationPublicGetTest {
 
         assertTrue(Arrays.asList(endpoints).contains("/api/announcements/global"));
     }
+
+    // 测试允许公开论坛实时更新 STOMP 握手端点
+    @Test
+    void shouldAllowPublicForumWebsocketEndpoint() throws Exception {
+        Field field = SecurityConfiguration.class.getDeclaredField("PUBLIC_PAGE_ENDPOINTS");
+        field.setAccessible(true);
+
+        String[] endpoints = (String[]) field.get(null);
+
+        assertTrue(Arrays.asList(endpoints).contains("/forum"));
+    }
 }

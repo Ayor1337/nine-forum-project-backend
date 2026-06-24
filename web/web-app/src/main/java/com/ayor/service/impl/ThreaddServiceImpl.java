@@ -17,6 +17,7 @@ import com.ayor.mapper.*;
 import com.ayor.service.AuthorizationService;
 import com.ayor.service.CacheInvalidationService;
 import com.ayor.service.FollowMessageService;
+import com.ayor.service.ForumRealtimeService;
 import com.ayor.service.ImageAssetService;
 import com.ayor.service.MentionMessageService;
 import com.ayor.service.ThreaddService;
@@ -64,6 +65,8 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
     private final MentionMessageService mentionMessageService;
 
     private final FollowMessageService followMessageService;
+
+    private final ForumRealtimeService forumRealtimeService;
 
     private final ImageAssetService imageAssetService;
 
@@ -455,6 +458,7 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
             mentionMessageService.createThreadMentionMessages(threadd.getContent(), accountId, threadd.getThreadId());
             followMessageService.createThreadFollowMessages(threadd);
             cacheInvalidationService.clearThreadRanking();
+            forumRealtimeService.publishThreadCreated(threadd);
             return null;
         }
         return "添加失败";

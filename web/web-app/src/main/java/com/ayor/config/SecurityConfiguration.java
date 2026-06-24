@@ -84,6 +84,7 @@ public class SecurityConfiguration {
             "/chat",
             "/chatboard",
             "/system",
+            "/forum",
             "/doc.html",
             "/swagger-ui.html",
             "/swagger-ui/**",

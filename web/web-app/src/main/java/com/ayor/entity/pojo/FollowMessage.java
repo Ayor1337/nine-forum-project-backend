@@ -24,6 +24,8 @@ public class FollowMessage {
 
     private Integer threadId;
 
+    private Integer topicId;
+
     private String path;
 
     private String title;

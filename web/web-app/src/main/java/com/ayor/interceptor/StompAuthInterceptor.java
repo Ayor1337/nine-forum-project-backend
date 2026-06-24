@@ -40,7 +40,8 @@ public class StompAuthInterceptor implements ChannelInterceptor {
     private static final Map<String, List<String>> ENDPOINT_DEST_WHITELIST = Map.of(
             "/chatboard", List.of("/broadcast"),
             "/chat", List.of("/transfer", "/notif"),
-            "/system", List.of("/notif", "/verify")
+            "/system", List.of("/notif", "/verify"),
+            "/forum", List.of("/broadcast")
     );
 
     private static final Pattern CONVERSATION_DESTINATION =

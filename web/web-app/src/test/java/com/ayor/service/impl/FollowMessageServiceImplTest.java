@@ -86,9 +86,11 @@ class FollowMessageServiceImplTest {
         assertEquals(7, entityCaptor.getValue().getAccountId());
         assertEquals(8, entityCaptor.getValue().getFromAccountId());
         assertEquals(101, entityCaptor.getValue().getThreadId());
+        assertEquals(3, entityCaptor.getValue().getTopicId());
         assertEquals("/threads/101", entityCaptor.getValue().getPath());
         assertEquals("关注帖", entityCaptor.getValue().getTitle());
         assertEquals("hello follow", entityCaptor.getValue().getContentSummary());
+        assertEquals(3, voCaptor.getValue().getTopicId());
         assertEquals("author", voCaptor.getValue().getFromNickname());
         verify(messageUnreadService, never()).addUnread(any(), any(), any());
     }
@@ -133,6 +135,7 @@ class FollowMessageServiceImplTest {
         message.setAccountId(7);
         message.setFromAccountId(8);
         message.setThreadId(101);
+        message.setTopicId(3);
         message.setPath("/threads/101");
         message.setTitle("关注帖");
         message.setContentSummary("summary");
@@ -148,6 +151,7 @@ class FollowMessageServiceImplTest {
         assertEquals(1L, result.getTotalSize());
         assertEquals(1, result.getData().size());
         assertEquals(51, result.getData().get(0).getFollowMessageId());
+        assertEquals(3, result.getData().get(0).getTopicId());
         assertEquals("author", result.getData().get(0).getFromNickname());
     }
 
@@ -180,6 +184,7 @@ class FollowMessageServiceImplTest {
     private Threadd createThread() {
         Threadd thread = new Threadd();
         thread.setThreadId(101);
+        thread.setTopicId(3);
         thread.setAccountId(8);
         thread.setTitle("关注帖");
         thread.setContent("{\"type\":\"doc\",\"content\":[{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"hello follow\"}]}]}");

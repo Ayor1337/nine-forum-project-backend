@@ -18,6 +18,7 @@ import com.ayor.mapper.PostEditHistoryMapper;
 import com.ayor.mapper.PostMapper;
 import com.ayor.mapper.ThreaddMapper;
 import com.ayor.service.AuthorizationService;
+import com.ayor.service.ForumRealtimeService;
 import com.ayor.service.ImageAssetService;
 import com.ayor.service.MentionMessageService;
 import com.ayor.service.PostService;
@@ -44,6 +45,9 @@ import java.util.*;
 @RequiredArgsConstructor
 public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements PostService {
 
+    private static final String REPLY_NOTIFICATION_DESTINATION = "/notif/reply";
+    private static final String THREAD_POSTS_REALTIME_DESTINATION = "/broadcast/forum/threads/%d/posts";
+
     private final PostMapper postMapper;
 
     private final AccountMapper accountMapper;
@@ -57,6 +61,8 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
     private final STOMPUtils stompUtils;
 
     private final MentionMessageService mentionMessageService;
+
+    private final ForumRealtimeService forumRealtimeService;
 
     private final ImageAssetService imageAssetService;
 
@@ -161,17 +167,29 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         if (this.save(post)) {
             imageAssetService.syncContentRefs("POST", post.getPostId(), post.getContent(), userId);
             Integer currentPostAccountId = threadAuthorId;
-            if (stompUtils.isUserSubscribed(currentPostAccountId.toString(), "/notif/reply") && !currentPostAccountId.equals(userId)) {
+            if (shouldPushReplyNotification(currentPostAccountId, userId, post.getThreadId())) {
                 messagingTemplate.convertAndSendToUser(
                         threaddMapper.getAccountIdByThreadIdInteger(postDTO.getThreadId()).toString(),
-                        "/notif/reply",
+                        REPLY_NOTIFICATION_DESTINATION,
                         toVO(post)
                 );
             }
             mentionMessageService.createPostMentionMessages(post.getContent(), userId, post.getPostId(), post.getThreadId());
+            forumRealtimeService.publishPostCreated(post);
             return null;
         }
         return "发布失败, 未知异常";
+    }
+
+    private boolean shouldPushReplyNotification(Integer threadAuthorId, Integer senderId, Integer threadId) {
+        if (threadAuthorId == null || threadAuthorId.equals(senderId)) {
+            return false;
+        }
+        String authorId = threadAuthorId.toString();
+        if (!stompUtils.isUserSubscribed(authorId, REPLY_NOTIFICATION_DESTINATION)) {
+            return false;
+        }
+        return !stompUtils.isUserSubscribed(authorId, THREAD_POSTS_REALTIME_DESTINATION.formatted(threadId));
     }
 
     /**

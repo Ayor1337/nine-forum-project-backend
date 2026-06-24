@@ -17,6 +17,7 @@ import com.ayor.mapper.TopicMapper;
 import com.ayor.service.AuthorizationService;
 import com.ayor.service.ImageAssetService;
 import com.ayor.service.FollowMessageService;
+import com.ayor.service.ForumRealtimeService;
 import com.ayor.service.MentionMessageService;
 import com.ayor.service.UserRelationService;
 import com.ayor.service.CacheInvalidationService;
@@ -49,6 +50,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -79,6 +81,9 @@ class ThreaddServiceImplTest {
 
     @Mock
     private FollowMessageService followMessageService;
+
+    @Mock
+    private ForumRealtimeService forumRealtimeService;
 
     @Mock
     private ImageAssetService imageAssetService;
@@ -367,6 +372,23 @@ class ThreaddServiceImplTest {
         verify(mentionMessageService).createThreadMentionMessages("{\"type\":\"doc\",\"content\":[]}", 8, 321);
         verify(followMessageService).createThreadFollowMessages(any(Threadd.class));
         verify(cacheInvalidationService).clearThreadRanking();
+        verify(forumRealtimeService).publishThreadCreated(any(Threadd.class));
+    }
+
+    // 测试保存帖子串失败时不推送实时事件
+    @Test
+    void shouldNotPublishRealtimeEventWhenInsertThreadFails() {
+        ThreaddServiceImpl service = createService();
+        ThreadDTO dto = new ThreadDTO();
+        dto.setTitle("hello");
+        dto.setTopicId(2);
+        dto.setContent("{\"type\":\"doc\",\"content\":[]}");
+        when(threaddMapper.insert(any(Threadd.class))).thenReturn(0);
+
+        String result = service.insertThread(dto, 8);
+
+        assertEquals("添加失败", result);
+        verify(forumRealtimeService, never()).publishThreadCreated(any(Threadd.class));
     }
 
     // 测试设置主题公告使用公告表
@@ -518,6 +540,7 @@ class ThreaddServiceImplTest {
                 tagMapper,
                 mentionMessageService,
                 followMessageService,
+                forumRealtimeService,
                 imageAssetService,
                 authorizationService,
                 userRelationService,

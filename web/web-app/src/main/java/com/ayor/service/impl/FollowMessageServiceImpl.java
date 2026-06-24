@@ -100,6 +100,7 @@ public class FollowMessageServiceImpl extends ServiceImpl<FollowMessageMapper, F
             followMessage.setAccountId(followerId);
             followMessage.setFromAccountId(thread.getAccountId());
             followMessage.setThreadId(thread.getThreadId());
+            followMessage.setTopicId(thread.getTopicId());
             followMessage.setPath("/threads/" + thread.getThreadId());
             followMessage.setTitle(thread.getTitle());
             followMessage.setContentSummary(summary);
@@ -165,6 +166,7 @@ public class FollowMessageServiceImpl extends ServiceImpl<FollowMessageMapper, F
                 .fromNickname(fromAccount.getNickname())
                 .fromAvatarUrl(fromAccount.getAvatarUrl())
                 .threadId(followMessage.getThreadId())
+                .topicId(followMessage.getTopicId())
                 .title(followMessage.getTitle())
                 .contentSummary(followMessage.getContentSummary())
                 .path(followMessage.getPath())

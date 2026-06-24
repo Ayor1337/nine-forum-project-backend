@@ -15,6 +15,7 @@ import com.ayor.mapper.PostEditHistoryMapper;
 import com.ayor.mapper.PostMapper;
 import com.ayor.mapper.ThreaddMapper;
 import com.ayor.service.AuthorizationService;
+import com.ayor.service.ForumRealtimeService;
 import com.ayor.service.ImageAssetService;
 import com.ayor.service.MentionMessageService;
 import com.ayor.service.UserRelationService;
@@ -69,6 +70,9 @@ class PostServiceImplTest {
 
     @Mock
     private MentionMessageService mentionMessageService;
+
+    @Mock
+    private ForumRealtimeService forumRealtimeService;
 
     @Mock
     private ImageAssetService imageAssetService;
@@ -171,7 +175,64 @@ class PostServiceImplTest {
 
         assertNull(result);
         verify(imageAssetService).syncContentRefs("POST", 123, "{\"type\":\"doc\",\"content\":[]}", 5);
+        verify(forumRealtimeService).publishPostCreated(any(Post.class));
         verify(messagingTemplate, never()).convertAndSendToUser(any(), any(), any());
+    }
+
+    // 测试楼主正在当前帖子详情页时不额外推送 reply 实时消息
+    @Test
+    void shouldNotPushReplyNotificationWhenThreadAuthorIsViewingThread() {
+        PostServiceImpl service = createService();
+
+        PostDTO dto = new PostDTO();
+        dto.setThreadId(9);
+        dto.setContent("{\"type\":\"doc\",\"content\":[]}");
+
+        when(threaddMapper.getTopicIdByThreadId(9)).thenReturn(7);
+        when(threaddMapper.getAccountIdByThreadIdInteger(9)).thenReturn(11);
+        when(stompUtils.isUserSubscribed("11", "/notif/reply")).thenReturn(true);
+        when(stompUtils.isUserSubscribed("11", "/broadcast/forum/threads/9/posts")).thenReturn(true);
+        doAnswer(invocation -> {
+            Post post = invocation.getArgument(0);
+            post.setPostId(123);
+            return 1;
+        }).when(postMapper).insert(any(Post.class));
+
+        String result = service.insertPost(dto, 5);
+
+        assertNull(result);
+        verify(messagingTemplate, never()).convertAndSendToUser(any(), any(), any());
+        verify(forumRealtimeService).publishPostCreated(any(Post.class));
+    }
+
+    // 测试楼主不在当前帖子详情页时仍推送 reply 实时消息
+    @Test
+    void shouldPushReplyNotificationWhenThreadAuthorIsNotViewingThread() {
+        PostServiceImpl service = createService();
+
+        PostDTO dto = new PostDTO();
+        dto.setThreadId(9);
+        dto.setContent("{\"type\":\"doc\",\"content\":[]}");
+
+        Account account = new Account();
+        account.setNickname("reply-user");
+
+        when(threaddMapper.getTopicIdByThreadId(9)).thenReturn(7);
+        when(threaddMapper.getAccountIdByThreadIdInteger(9)).thenReturn(11);
+        when(threaddMapper.getThreadTitleById(9)).thenReturn("thread");
+        when(accountMapper.getAccountById(5)).thenReturn(account);
+        when(stompUtils.isUserSubscribed("11", "/notif/reply")).thenReturn(true);
+        when(stompUtils.isUserSubscribed("11", "/broadcast/forum/threads/9/posts")).thenReturn(false);
+        doAnswer(invocation -> {
+            Post post = invocation.getArgument(0);
+            post.setPostId(123);
+            return 1;
+        }).when(postMapper).insert(any(Post.class));
+
+        String result = service.insertPost(dto, 5);
+
+        assertNull(result);
+        verify(messagingTemplate).convertAndSendToUser(eq("11"), eq("/notif/reply"), any(ReplyMessageVO.class));
     }
 
     // 测试拒绝新增帖子当拉黑带有帖子串作者
@@ -190,7 +251,26 @@ class PostServiceImplTest {
 
         assertEquals("已拉黑，不能回复", result);
         verify(postMapper, never()).insert(any(Post.class));
-        verifyNoInteractions(imageAssetService, mentionMessageService);
+        verifyNoInteractions(imageAssetService, mentionMessageService, forumRealtimeService);
+    }
+
+    // 测试新增帖子失败时不推送实时事件
+    @Test
+    void shouldNotPublishRealtimeEventWhenInsertPostFails() {
+        PostServiceImpl service = createService();
+
+        PostDTO dto = new PostDTO();
+        dto.setThreadId(9);
+        dto.setContent("{\"type\":\"doc\",\"content\":[]}");
+
+        when(threaddMapper.getAccountIdByThreadIdInteger(9)).thenReturn(11);
+        when(threaddMapper.getTopicIdByThreadId(9)).thenReturn(7);
+        when(postMapper.insert(any(Post.class))).thenReturn(0);
+
+        String result = service.insertPost(dto, 5);
+
+        assertEquals("发布失败, 未知异常", result);
+        verify(forumRealtimeService, never()).publishPostCreated(any(Post.class));
     }
 
     // 测试快照并更新帖子当编辑
@@ -359,6 +439,7 @@ class PostServiceImplTest {
                 messagingTemplate,
                 stompUtils,
                 mentionMessageService,
+                forumRealtimeService,
                 imageAssetService,
                 authorizationService,
                 userRelationService,
