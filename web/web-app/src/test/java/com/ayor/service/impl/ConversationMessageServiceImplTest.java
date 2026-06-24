@@ -36,6 +36,7 @@ class ConversationMessageServiceImplTest {
     @Mock
     private AuthorizationService authorizationService;
 
+    // 测试发送消息前先执行发送授权
     @Test
     void shouldUseSendAuthorizationBeforeSendingMessage() {
         ConversationMessageServiceImpl service = createService();

@@ -16,6 +16,7 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 
 class PermissionOperationLogControllerTest {
 
+    // 测试后台暴露列表接口
     @Test
     void shouldExposeListEndpointInWebAdmin() throws NoSuchMethodException, NoSuchFieldException {
         RequestMapping requestMapping = PermissionOperationLogController.class.getAnnotation(RequestMapping.class);
@@ -51,6 +52,7 @@ class PermissionOperationLogControllerTest {
                 .isEqualTo(java.util.Map.class);
     }
 
+    // 测试后台暴露操作选项接口
     @Test
     void shouldExposeOperationOptionsEndpointInWebAdmin() throws NoSuchMethodException {
         Method method = PermissionOperationLogController.class.getMethod("listPermissionOptions");
@@ -59,6 +61,7 @@ class PermissionOperationLogControllerTest {
         assertArrayEquals(new String[]{"/operation/options"}, mapping.value());
     }
 
+    // 测试后台暴露用户名选项接口
     @Test
     void shouldExposeUsernameOptionsEndpointInWebAdmin() throws NoSuchMethodException {
         Method method = PermissionOperationLogController.class.getMethod("listUsernameOptions");

@@ -11,6 +11,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class TagUpdateDTOTest {
 
+    // 测试请求体只包含标签ID
     @Test
     void shouldOnlyContainTagIdFromRequestBody() {
         Set<String> fieldNames = Arrays.stream(TagUpdateDTO.class.getDeclaredFields())

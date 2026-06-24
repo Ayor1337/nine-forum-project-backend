@@ -80,6 +80,7 @@ class AccountServiceImplTest {
     @Mock
     private CacheInvalidationService cacheInvalidationService;
 
+    // 测试通过图片存储服务上传头像
     @Test
     void shouldUploadAvatarThroughImageStorageService() throws Exception {
         AccountServiceImpl service = createService();
@@ -100,6 +101,7 @@ class AccountServiceImplTest {
         verify(minioService, never()).uploadBase64(upload, "avatar/");
     }
 
+    // 测试通过图片存储服务上传横幅
     @Test
     void shouldUploadBannerThroughImageStorageService() throws Exception {
         AccountServiceImpl service = createService();
@@ -120,6 +122,7 @@ class AccountServiceImplTest {
         verify(minioService, never()).uploadBase64(upload, "banner/");
     }
 
+    // 测试获取公开用户信息填充关系字段用于查看者
     @Test
     void getPublicUserInfoShouldFillRelationFieldsForViewer() {
         AccountServiceImpl service = createService();
@@ -145,6 +148,7 @@ class AccountServiceImplTest {
         verify(userRelationService).isBlocked(18, 7);
     }
 
+    // 测试匿名查看公开用户信息时关系字段为空
     @Test
     void getPublicUserInfoShouldLeaveRelationFieldsNullForAnonymousViewer() {
         AccountServiceImpl service = createService();
@@ -162,6 +166,7 @@ class AccountServiceImplTest {
         verifyNoInteractions(userRelationService);
     }
 
+    // 测试获取公开用户信息返回基础信息当资料可见性拒绝查看者
     @Test
     void getPublicUserInfoShouldReturnBasicInfoWhenProfileVisibilityDeniesViewer() {
         AccountServiceImpl service = createService();
@@ -186,6 +191,7 @@ class AccountServiceImplTest {
         verify(privacyPolicyService, never()).canViewProfile(7, 18);
     }
 
+    // 测试获取粉丝填充关系字段用于每个列表项
     @Test
     void getFollowersShouldFillRelationFieldsForEachListItem() {
         AccountServiceImpl service = createService();
@@ -208,6 +214,7 @@ class AccountServiceImplTest {
         assertEquals(Boolean.TRUE, item.getIsFollowed());
     }
 
+    // 测试获取关注填充关系字段用于每个列表项
     @Test
     void getFollowingsShouldFillRelationFieldsForEachListItem() {
         AccountServiceImpl service = createService();

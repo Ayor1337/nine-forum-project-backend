@@ -48,6 +48,7 @@ class RoleServiceImplTest {
         ReflectionTestUtils.setField(roleService, "baseMapper", roleMapper);
     }
 
+    // 测试删除角色拒绝角色带有账号
     @Test
     void deleteRoleRejectsRoleWithAccounts() {
         when(roleMapper.selectById(2)).thenReturn(role(2));
@@ -59,6 +60,7 @@ class RoleServiceImplTest {
         verify(roleMapper, never()).deleteById(2);
     }
 
+    // 测试删除角色拒绝角色带有权限
     @Test
     void deleteRoleRejectsRoleWithPermissions() {
         when(roleMapper.selectById(2)).thenReturn(role(2));
@@ -71,6 +73,7 @@ class RoleServiceImplTest {
         verify(roleMapper, never()).deleteById(2);
     }
 
+    // 测试新增账号到角色分配角色 ID
     @Test
     void addAccountToRoleAssignsRoleId() {
         Account account = account(7, 3);
@@ -86,6 +89,7 @@ class RoleServiceImplTest {
         assertThat(accountCaptor.getValue().getRoleId()).isEqualTo(2);
     }
 
+    // 测试移除账号从角色重置到默认用户角色
     @Test
     void removeAccountFromRoleResetsToDefaultUserRole() {
         Account account = account(7, 2);
@@ -101,6 +105,7 @@ class RoleServiceImplTest {
         assertThat(accountCaptor.getValue().getRoleId()).isEqualTo(3);
     }
 
+    // 测试移除账号从角色拒绝账号不属于角色
     @Test
     void removeAccountFromRoleRejectsAccountOutsideRole() {
         when(roleMapper.selectById(2)).thenReturn(role(2));
@@ -112,6 +117,7 @@ class RoleServiceImplTest {
         verify(accountMapper, never()).updateById(any(Account.class));
     }
 
+    // 测试新增权限到角色拒绝未知权限
     @Test
     void addPermissionToRoleRejectsUnknownPermission() {
         when(roleMapper.selectById(2)).thenReturn(role(2));
@@ -122,6 +128,7 @@ class RoleServiceImplTest {
         verify(permissionMapper, never()).insert(any(Permission.class));
     }
 
+    // 测试新增权限到角色创建已知权限
     @Test
     void addPermissionToRoleCreatesKnownPermission() {
         when(roleMapper.selectById(2)).thenReturn(role(2));
@@ -137,6 +144,7 @@ class RoleServiceImplTest {
         assertThat(permissionCaptor.getValue().getPermission()).isEqualTo("DELETE_THREAD");
     }
 
+    // 测试列表角色权限返回角色权限
     @Test
     void listRolePermissionsReturnsRolePermissions() {
         Permission permission = new Permission(9, 2, "INSERT_TAG");

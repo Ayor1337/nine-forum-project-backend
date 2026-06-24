@@ -63,6 +63,7 @@ class ConversationServiceImplTest {
     @Mock
     private Cache conversationListCache;
 
+    // 测试按账号获取会话时使用缓存管理器而非@Cacheable
     @Test
     void getConversationByAccountIdShouldUseCacheManagerInsteadOfCacheable() throws NoSuchMethodException {
         Method method = ConversationServiceImpl.class.getMethod(
@@ -74,6 +75,7 @@ class ConversationServiceImplTest {
         assertNull(method.getAnnotation(org.springframework.cache.annotation.Cacheable.class));
     }
 
+    // 测试会话配对键对双方账号顺序对称
     @Test
     void conversationPairKeyShouldBeSymmetric() {
         String first = ConversationServiceImpl.conversationPairKey(1, 2);
@@ -82,6 +84,7 @@ class ConversationServiceImplTest {
         assertEquals(first, second);
     }
 
+    // 测试返回缓存会话前先授权
     @Test
     void shouldAuthorizeBeforeReturningCachedConversation() {
         ConversationServiceImpl service = createService();
@@ -97,6 +100,7 @@ class ConversationServiceImplTest {
         verify(cacheManager).getCache("conversation");
     }
 
+    // 测试隐藏会话在授权失败时被拒绝
     @Test
     void shouldRejectHideConversationWhenAuthorizationFails() {
         ConversationServiceImpl service = createService();
@@ -106,6 +110,7 @@ class ConversationServiceImplTest {
         assertThrows(AccessDeniedException.class, () -> service.hiddenConversation(7, 3));
     }
 
+    // 测试授权未读清理带有会话上下文
     @Test
     void shouldAuthorizeUnreadClearingWithConversationContext() {
         ConversationServiceImpl service = createService();
@@ -116,6 +121,7 @@ class ConversationServiceImplTest {
         verify(chatUnreadService).clearUnreadAndTotal(7, 1);
     }
 
+    // 测试新增会话前先授权创建
     @Test
     void shouldAuthorizeConversationCreationBeforeInsert() {
         ConversationServiceImpl service = createService();
@@ -136,6 +142,7 @@ class ConversationServiceImplTest {
         verify(authorizationService).assertCanStartConversation(1, 2);
     }
 
+    // 测试解析最新用户信息当会话列表元数据缓存命中
     @Test
     void shouldResolveFreshUserInfoWhenConversationListMetadataCacheHits() {
         ConversationServiceImpl service = createService();
@@ -164,6 +171,7 @@ class ConversationServiceImplTest {
         verify(conversationMapper, never()).selectList(any());
     }
 
+    // 测试清理双方参与者会话列表当创建会话
     @Test
     void shouldEvictBothParticipantsConversationListWhenCreatingConversation() {
         ConversationServiceImpl service = createService();
@@ -186,6 +194,7 @@ class ConversationServiceImplTest {
         verify(conversationListCache).evict(2);
     }
 
+    // 测试重建会话列表当缓存值使用旧 VO 格式
     @Test
     void shouldRebuildConversationListWhenCachedValueUsesOldVoFormat() {
         ConversationServiceImpl service = createService();

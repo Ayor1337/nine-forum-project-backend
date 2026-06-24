@@ -51,6 +51,7 @@ class PermissionServiceImplTest {
         ReflectionTestUtils.setField(permissionService, "baseMapper", permissionMapper);
     }
 
+    // 测试更新权限更新每个权限
     @Test
     void updatePermissionsUpdatesEveryPermission() {
         Permission first = new Permission(11, 2, "DELETE_THREAD");
@@ -70,6 +71,7 @@ class PermissionServiceImplTest {
                 .containsExactly("DELETE_THREAD", "DELETE_POST");
     }
 
+    // 测试列表权限选项返回已知权限值
     @Test
     void listPermissionOptionsReturnsKnownPermissionValues() {
         List<String> options = permissionService.listPermissionOptions();
@@ -79,6 +81,7 @@ class PermissionServiceImplTest {
                 .doesNotContain("UNKNOWN");
     }
 
+    // 测试更新权限拒绝空列表
     @Test
     void updatePermissionsRejectsEmptyList() {
         String message = permissionService.updatePermissions(List.<Permission>of());
@@ -87,6 +90,7 @@ class PermissionServiceImplTest {
         verify(permissionMapper, never()).updateById(any(Permission.class));
     }
 
+    // 测试更新权限停止当权限为无效
     @Test
     void updatePermissionsStopsWhenPermissionIsInvalid() {
         Permission first = new Permission(11, null, "UNKNOWN");
@@ -99,6 +103,7 @@ class PermissionServiceImplTest {
         verify(permissionMapper, never()).updateById(any(Permission.class));
     }
 
+    // 测试批量删除会删除每个权限ID
     @Test
     void deletePermissionsDeletesEveryPermissionId() {
         when(permissionMapper.deleteById((Serializable) 11)).thenReturn(1);
@@ -111,6 +116,7 @@ class PermissionServiceImplTest {
         verify(permissionMapper).deleteById((Serializable) 12);
     }
 
+    // 测试删除权限拒绝空列表
     @Test
     void deletePermissionsRejectsEmptyList() {
         String message = permissionService.deletePermissions(List.<Integer>of());
@@ -119,6 +125,7 @@ class PermissionServiceImplTest {
         verify(permissionMapper, never()).deleteById(any(Serializable.class));
     }
 
+    // 测试创建权限后清理权限角色用户的信息缓存
     @Test
     void createPermissionEvictsUserInfoCacheForUsersInPermissionRole() {
         Permission permission = new Permission(null, 2, "DELETE_THREAD");
@@ -134,6 +141,7 @@ class PermissionServiceImplTest {
         verify(userInfoCache).evict(8);
     }
 
+    // 测试更新权限后清理原角色和当前角色用户的信息缓存
     @Test
     void updatePermissionEvictsUserInfoCacheForOriginalAndCurrentRoleUsers() {
         Permission permission = new Permission(11, 2, "DELETE_THREAD");
@@ -152,6 +160,7 @@ class PermissionServiceImplTest {
         verify(userInfoCache).evict(8);
     }
 
+    // 测试删除权限后清理被删权限角色用户的信息缓存
     @Test
     void deletePermissionEvictsUserInfoCacheForUsersInDeletedPermissionRole() {
         when(permissionMapper.selectById(11)).thenReturn(new Permission(11, 2, "DELETE_THREAD"));

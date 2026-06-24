@@ -37,6 +37,7 @@ class OperationLogAspectTest {
     @Mock
     private MethodSignature signature;
 
+    // 测试保存操作日志当结果为成功
     @Test
     void shouldSaveOperationLogWhenResultIsSuccessful() throws Throwable {
         OperationLogAspect aspect = new OperationLogAspect(new ObjectMapper(), operationLogMapper, securityUtils);
@@ -68,6 +69,7 @@ class OperationLogAspectTest {
         assertEquals(2, saved.getParams().get("themeId"));
     }
 
+    // 测试不保存操作日志当结果失败
     @Test
     void shouldNotSaveOperationLogWhenResultFails() throws Throwable {
         OperationLogAspect aspect = new OperationLogAspect(new ObjectMapper(), operationLogMapper, securityUtils);
@@ -87,6 +89,7 @@ class OperationLogAspectTest {
         verify(operationLogMapper, never()).insert(any(PermissionOperationLog.class));
     }
 
+    // 测试不保存操作日志当目标方法抛异常
     @Test
     void shouldNotSaveOperationLogWhenTargetThrows() throws Throwable {
         OperationLogAspect aspect = new OperationLogAspect(new ObjectMapper(), operationLogMapper, securityUtils);
@@ -106,6 +109,7 @@ class OperationLogAspectTest {
         verify(operationLogMapper, never()).insert(any(PermissionOperationLog.class));
     }
 
+    // 测试保存日志失败时仍保留业务结果
     @Test
     void shouldKeepBusinessResultWhenSavingLogFails() throws Throwable {
         OperationLogAspect aspect = new OperationLogAspect(new ObjectMapper(), operationLogMapper, securityUtils);

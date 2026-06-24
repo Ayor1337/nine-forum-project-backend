@@ -82,6 +82,7 @@ class PostServiceImplTest {
     @Mock
     private PostEditHistoryMapper postEditHistoryMapper;
 
+    // 测试分页帖子按帖子串 ID
     @Test
     void shouldPagePostsByThreadId() {
         PostServiceImpl service = createService();
@@ -118,6 +119,7 @@ class PostServiceImplTest {
         verify(postMapper).selectPage(any(Page.class), any(Wrapper.class));
     }
 
+    // 测试排除拉黑账号从帖子分页
     @Test
     void shouldExcludeBlockedAccountsFromPostPages() {
         PostServiceImpl service = createService();
@@ -135,6 +137,7 @@ class PostServiceImplTest {
         verify(postMapper).selectPage(any(Page.class), any(Wrapper.class));
     }
 
+    // 测试拒绝帖子分页当查看者拉黑带有帖子串作者
     @Test
     void shouldDenyPostPagesWhenViewerBlockedWithThreadAuthor() {
         PostServiceImpl service = createService();
@@ -146,6 +149,7 @@ class PostServiceImplTest {
         verify(postMapper, never()).selectPage(any(Page.class), any(Wrapper.class));
     }
 
+    // 测试保存帖子后同步图片引用
     @Test
     void shouldSyncImageRefsAfterSavingPost() {
         PostServiceImpl service = createService();
@@ -170,6 +174,7 @@ class PostServiceImplTest {
         verify(messagingTemplate, never()).convertAndSendToUser(any(), any(), any());
     }
 
+    // 测试拒绝新增帖子当拉黑带有帖子串作者
     @Test
     void shouldRejectInsertPostWhenBlockedWithThreadAuthor() {
         PostServiceImpl service = createService();
@@ -188,6 +193,7 @@ class PostServiceImplTest {
         verifyNoInteractions(imageAssetService, mentionMessageService);
     }
 
+    // 测试快照并更新帖子当编辑
     @Test
     void shouldSnapshotAndUpdatePostWhenEditing() {
         PostServiceImpl service = createService();
@@ -216,6 +222,7 @@ class PostServiceImplTest {
         inOrder.verify(postMapper).updateById(any(Post.class));
     }
 
+    // 测试编辑帖子后同步图片引用和提及消息
     @Test
     void shouldSyncImageRefsAndMentionsAfterEditingPost() {
         PostServiceImpl service = createService();
@@ -233,6 +240,7 @@ class PostServiceImplTest {
         verify(mentionMessageService).createPostMentionMessages("{\"type\":\"doc\",\"content\":[]}", 3, 21, 9);
     }
 
+    // 测试返回缺失帖子消息当编辑已删除帖子
     @Test
     void shouldReturnMissingPostMessageWhenEditingDeletedPost() {
         PostServiceImpl service = createService();
@@ -247,6 +255,7 @@ class PostServiceImplTest {
         verify(imageAssetService, never()).syncContentRefs(any(), any(), any(), any());
     }
 
+    // 测试非作者编辑帖子时透传访问拒绝
     @Test
     void shouldPropagateAccessDeniedWhenNonAuthorEditsPost() {
         PostServiceImpl service = createService();
@@ -260,6 +269,7 @@ class PostServiceImplTest {
         verify(postEditHistoryMapper, never()).insert(any(PostEditHistory.class));
     }
 
+    // 测试统计帖子编辑次数
     @Test
     void shouldCountPostEdits() {
         PostServiceImpl service = createService();
@@ -270,6 +280,7 @@ class PostServiceImplTest {
         assertEquals(2, result);
     }
 
+    // 测试列表公开帖子编辑历史不带内容快照
     @Test
     void shouldListPublicPostEditHistoryWithoutContentSnapshot() {
         PostServiceImpl service = createService();
@@ -290,6 +301,7 @@ class PostServiceImplTest {
         assertFalse(result.get(0) instanceof PostEditHistoryDetailVO);
     }
 
+    // 测试列表帖子编辑历史快照带有内容
     @Test
     void shouldListPostEditHistorySnapshotsWithContent() {
         PostServiceImpl service = createService();
@@ -303,6 +315,7 @@ class PostServiceImplTest {
         assertEquals("{\"type\":\"doc\",\"content\":[]}", result.get(0).getContent());
     }
 
+    // 测试回复消息列表使用帖子查询而不是最近帖子串查询
     @Test
     void shouldListReplyMessagesWithPostQueryInsteadOfRecentThreads() {
         PostServiceImpl service = createService();

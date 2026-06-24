@@ -9,6 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class SecurityConfigurationPublicGetTest {
 
+    // 测试允许公开全局公告接口
     @Test
     void shouldAllowPublicGlobalAnnouncementEndpoint() throws Exception {
         Field field = SecurityConfiguration.class.getDeclaredField("PUBLIC_GET_ENDPOINTS");

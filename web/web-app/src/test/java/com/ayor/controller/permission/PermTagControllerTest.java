@@ -13,6 +13,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class PermTagControllerTest {
 
+    // 测试控制器暴露权限主题标签基础路径
     @Test
     void controllerShouldExposePermissionTopicTagBasePath() {
         RequestMapping mapping = PermTagController.class.getAnnotation(RequestMapping.class);
@@ -20,6 +21,7 @@ class PermTagControllerTest {
         assertEquals("/api/perm/topic/{topic_id}/tag", mapping.value()[0]);
     }
 
+    // 测试新增标签使用基础路由
     @Test
     void insertTagShouldUseBaseRoute() throws NoSuchMethodException {
         Method method = PermTagController.class.getMethod("insertNewTag", Integer.class, TagDTO.class);

@@ -57,6 +57,7 @@ class ChatNotifAspectTest {
     @Mock
     private ChatNotif chatNotif;
 
+    // 测试发送消息被拒绝时不创建消息通知
     @Test
     void shouldNotCreateMessageNotificationWhenSendMessageIsRejected() throws Throwable {
         ChatNotifAspect aspect = new ChatNotifAspect(

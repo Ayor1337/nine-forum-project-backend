@@ -40,6 +40,7 @@ class FeedbackServiceImplTest {
         ReflectionTestUtils.setField(feedbackService, "baseMapper", feedbackMapper);
     }
 
+    // 测试待处理反馈可以流转到处理中
     @Test
     void pendingFeedbackCanMoveToProcessing() {
         Feedback feedback = feedback(1, FeedbackStatus.PENDING);
@@ -60,6 +61,7 @@ class FeedbackServiceImplTest {
         assertThat(updated.getUpdateTime()).isNotNull();
     }
 
+    // 测试终态状态要求处理备注
     @Test
     void finalStatusRequiresHandleNote() {
         when(feedbackMapper.selectById(1)).thenReturn(feedback(1, FeedbackStatus.PROCESSING));
@@ -71,6 +73,7 @@ class FeedbackServiceImplTest {
         verify(feedbackMapper, never()).updateById(any(Feedback.class));
     }
 
+    // 测试处理中反馈可设为已解决并记录处理时间
     @Test
     void processingFeedbackCanBeResolvedAndRecordsHandledTime() {
         Feedback feedback = feedback(1, FeedbackStatus.PROCESSING);
@@ -85,6 +88,7 @@ class FeedbackServiceImplTest {
         assertThat(feedback.getHandledAt()).isNotNull();
     }
 
+    // 测试终态反馈不能再次变更
     @Test
     void finalFeedbackCannotBeChangedAgain() {
         when(feedbackMapper.selectById(1)).thenReturn(feedback(1, FeedbackStatus.CLOSED));
@@ -96,6 +100,7 @@ class FeedbackServiceImplTest {
         verify(feedbackMapper, never()).updateById(any(Feedback.class));
     }
 
+    // 测试拒绝不支持状态流转
     @Test
     void rejectsUnsupportedStatusTransition() {
         when(feedbackMapper.selectById(1)).thenReturn(feedback(1, FeedbackStatus.PROCESSING));
@@ -107,6 +112,7 @@ class FeedbackServiceImplTest {
         verify(feedbackMapper, never()).updateById(any(Feedback.class));
     }
 
+    // 测试缺失反馈不能被处理
     @Test
     void missingFeedbackCannotBeHandled() {
         when(feedbackMapper.selectById(404)).thenReturn(null);
@@ -117,6 +123,7 @@ class FeedbackServiceImplTest {
         assertThat(result).isEqualTo("反馈不存在");
     }
 
+    // 测试获取反馈返回分页后台视图
     @Test
     @SuppressWarnings("unchecked")
     void getFeedbacksReturnsPagedAdminView() {
@@ -138,6 +145,7 @@ class FeedbackServiceImplTest {
         });
     }
 
+    // 测试获取反馈拒绝无效分页
     @Test
     void getFeedbacksRejectsInvalidPagination() {
         assertThat(feedbackService.getFeedbacks(1, 0, null, null, null)).isNull();

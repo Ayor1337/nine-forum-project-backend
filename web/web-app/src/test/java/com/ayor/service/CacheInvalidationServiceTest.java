@@ -22,6 +22,7 @@ class CacheInvalidationServiceTest {
         TransactionSynchronizationManager.setActualTransactionActive(false);
     }
 
+    // 测试事务提交后清理缓存
     @Test
     void shouldClearCacheAfterTransactionCommit() {
         CacheManager cacheManager = mock(CacheManager.class);

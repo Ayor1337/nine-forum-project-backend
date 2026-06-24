@@ -39,6 +39,7 @@ class UserProfileServiceImplTest {
     @Mock
     private UserRelationService userRelationService;
 
+    // 测试获取我的资料时只返回资料信息
     @Test
     void getMyProfileShouldReturnProfileOnly() {
         UserProfileServiceImpl service = createService();
@@ -51,6 +52,7 @@ class UserProfileServiceImplTest {
         verify(userRelationService, never()).isBlocked(7, 7);
     }
 
+    // 测试获取公开资料时只返回资料信息
     @Test
     void getPublicProfileShouldReturnProfileOnly() {
         UserProfileServiceImpl service = createService();

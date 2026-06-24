@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class SimpleUserAgentParserTest {
 
+    // 测试解析 Windows Chrome 桌面端
     @Test
     void shouldParseWindowsChromeDesktop() {
         LoginDeviceInfo info = SimpleUserAgentParser.parse("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/124.0 Safari/537.36");
@@ -15,6 +16,7 @@ class SimpleUserAgentParserTest {
         assertEquals("Desktop", info.deviceType());
     }
 
+    // 测试解析 iPhone Safari 移动端
     @Test
     void shouldParseIphoneSafariMobile() {
         LoginDeviceInfo info = SimpleUserAgentParser.parse("Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 Version/17.0 Mobile/15E148 Safari/604.1");

@@ -47,6 +47,7 @@ class SearchServiceImplTest {
     @Mock
     private UserRelationService userRelationService;
 
+    // 测试存在过滤条件时搜索帖子串仍要求关键词匹配
     @Test
     void searchThreadsShouldRequireKeywordMatchWhenFiltersExist() {
         SearchServiceImpl service = createService();
@@ -61,6 +62,7 @@ class SearchServiceImplTest {
         assertTrue(boolQuery.should().isEmpty());
     }
 
+    // 测试搜索帖子串时把元数据条件放入过滤器
     @Test
     void searchThreadsShouldPutMetadataConditionsInFilter() {
         SearchServiceImpl service = createService();
@@ -76,6 +78,7 @@ class SearchServiceImplTest {
         assertTrue(boolQuery.filter().stream().anyMatch(query -> query.isRange()));
     }
 
+    // 测试搜索帖子串返回空分页用于空关键词不带副作用
     @Test
     void searchThreadsShouldReturnEmptyPageForBlankKeywordWithoutSideEffects() {
         SearchServiceImpl service = createService();
@@ -87,6 +90,7 @@ class SearchServiceImplTest {
         verifyNoInteractions(redisTemplate, searchLogDocRepository, operations);
     }
 
+    // 测试帖子串文档的过滤字段会被索引
     @Test
     void threadDocFilterFieldsShouldBeIndexed() throws NoSuchFieldException {
         assertTrue(ThreadDoc.class.getDeclaredField("topicId").getAnnotation(Field.class).index());
@@ -95,6 +99,7 @@ class SearchServiceImplTest {
         assertTrue(ThreadDoc.class.getDeclaredField("accountId").getAnnotation(Field.class).index());
     }
 
+    // 测试搜索帖子串排除拉黑作者
     @Test
     void searchThreadsShouldExcludeBlockedAuthors() {
         SearchServiceImpl service = createService();
@@ -108,6 +113,7 @@ class SearchServiceImplTest {
                 && "accountId".equals(query.terms().field())));
     }
 
+    // 测试搜索历史被原子化裁剪并过期
     @Test
     void searchHistoryShouldBeAtomicallyTrimmedAndExpired() {
         SearchServiceImpl service = createService();

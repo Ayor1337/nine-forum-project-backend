@@ -21,6 +21,7 @@ class UserSearchServiceImplTest {
     @Mock
     private AccountMapper accountMapper;
 
+    // 测试搜索用户返回空分页当关键词为空白
     @Test
     void searchUsersShouldReturnEmptyPageWhenKeywordIsBlank() {
         UserSearchServiceImpl service = new UserSearchServiceImpl(accountMapper);
@@ -32,6 +33,7 @@ class UserSearchServiceImplTest {
         verify(accountMapper, never()).countSearchUsers("   ");
     }
 
+    // 测试搜索用户规范化分页并去空格关键词
     @Test
     void searchUsersShouldNormalizePagingAndTrimKeyword() {
         UserSearchServiceImpl service = new UserSearchServiceImpl(accountMapper);
@@ -47,6 +49,7 @@ class UserSearchServiceImplTest {
         verify(accountMapper).searchUsers("ay", 50, 0);
     }
 
+    // 测试搜索用户计算偏移量从页码
     @Test
     void searchUsersShouldCalculateOffsetFromPageNum() {
         UserSearchServiceImpl service = new UserSearchServiceImpl(accountMapper);

@@ -23,6 +23,7 @@ class SecurityUtilsTest {
         SecurityContextHolder.clearContext();
     }
 
+    // 测试获取可选安全上下文用户 ID 返回已认证用户 ID
     @Test
     void getOptionalSecurityUserIdShouldReturnAuthenticatedUserId() {
         UserDetails principal = User.withUsername("42")
@@ -36,6 +37,7 @@ class SecurityUtilsTest {
         assertEquals(42, securityUtils.getOptionalSecurityUserId());
     }
 
+    // 测试未认证时可选安全上下文用户ID返回空
     @Test
     void getOptionalSecurityUserIdShouldReturnNullWhenUnauthenticated() {
         SecurityContextHolder.getContext().setAuthentication(
@@ -45,6 +47,7 @@ class SecurityUtilsTest {
         assertNull(securityUtils.getOptionalSecurityUserId());
     }
 
+    // 测试认证主体无效时可选安全上下文用户ID返回空
     @Test
     void getOptionalSecurityUserIdShouldReturnNullWhenPrincipalIsInvalid() {
         UserDetails principal = User.withUsername("not-a-number")
@@ -58,6 +61,7 @@ class SecurityUtilsTest {
         assertNull(securityUtils.getOptionalSecurityUserId());
     }
 
+    // 测试未认证时强制获取安全上下文用户ID仍抛异常
     @Test
     void getSecurityUserIdShouldStillThrowWhenUnauthenticated() {
         assertThrows(AuthenticationCredentialsNotFoundException.class, securityUtils::getSecurityUserId);

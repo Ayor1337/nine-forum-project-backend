@@ -11,6 +11,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ModerationRouteOwnershipTest {
 
+    // 测试普通控制器不暴露管理路由
     @Test
     void regularControllersShouldNotExposeModerationRoutes() {
         Stream<Class<?>> controllers = Stream.of(ThemeController.class, TopicController.class, TagController.class, ThreadController.class, PostController.class);

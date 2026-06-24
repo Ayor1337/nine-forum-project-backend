@@ -43,6 +43,7 @@ class LikeThreadServiceImplTest {
     @Mock
     private CacheInvalidationService cacheInvalidationService;
 
+    // 测试拒绝点赞当拉黑带有帖子串作者
     @Test
     void shouldRejectLikeWhenBlockedWithThreadAuthor() {
         LikeThreadServiceImpl service = createService();

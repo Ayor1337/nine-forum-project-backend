@@ -14,6 +14,7 @@ import static org.mockito.Mockito.when;
 
 class ChatBoardControllerTest {
 
+    // 测试获取历史时把当前用户ID传给服务
     @Test
     void getHistoryShouldPassCurrentUserIdToService() {
         ChatboardHistoryService chatboardHistoryService = mock(ChatboardHistoryService.class);

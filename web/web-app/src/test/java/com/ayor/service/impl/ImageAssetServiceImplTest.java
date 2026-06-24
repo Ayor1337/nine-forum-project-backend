@@ -60,6 +60,7 @@ class ImageAssetServiceImplTest {
     @Mock
     private MinioService minioService;
 
+    // 测试新增已上传贴纸到当前用户资源库
     @Test
     void shouldAddUploadedStickerToCurrentUsersLibrary() {
         ImageAssetServiceImpl service = spy(createService());
@@ -86,6 +87,7 @@ class ImageAssetServiceImplTest {
         verify(imageAssetMapper).refreshAddedCount(15);
     }
 
+    // 测试列表当前用户贴纸资源库
     @Test
     void shouldListCurrentUsersStickerLibrary() {
         ImageAssetServiceImpl service = createService();
@@ -102,6 +104,7 @@ class ImageAssetServiceImplTest {
         assertTrue(result.getData().get(0).getAvailable());
     }
 
+    // 测试移除贴纸从当前用户资源库不带删除资源
     @Test
     void shouldRemoveStickerFromCurrentUsersLibraryWithoutDeletingResource() {
         ImageAssetServiceImpl service = spy(createService());
@@ -124,6 +127,7 @@ class ImageAssetServiceImplTest {
         verify(imageAssetMapper, never()).updateById(any(ImageAsset.class));
     }
 
+    // 测试用户侧不暴露贴纸资源删除接口
     @Test
     void shouldNotExposeUserSideStickerResourceDeletionEndpoint() {
         boolean hasResourceDeletionEndpoint = false;

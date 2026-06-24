@@ -45,6 +45,7 @@ class TopicServiceImplTest {
     @Mock
     private CacheInvalidationService cacheInvalidationService;
 
+    // 测试通过图片存储服务上传新主题封面
     @Test
     void shouldUploadNewTopicCoverThroughImageStorageService() throws Exception {
         TopicServiceImpl service = spy(createService());
@@ -66,6 +67,7 @@ class TopicServiceImplTest {
         verify(minioService, never()).uploadBase64(topicDTO.getCover(), "topic/");
     }
 
+    // 测试通过图片存储服务上传更新后的主题封面
     @Test
     void shouldUploadUpdatedTopicCoverThroughImageStorageService() throws Exception {
         TopicServiceImpl service = spy(createService());
@@ -86,6 +88,7 @@ class TopicServiceImplTest {
         verify(minioService, never()).uploadBase64(topicDTO.getCover(), "topic/");
     }
 
+    // 测试清理新旧版块缓存当主题移动
     @Test
     void shouldEvictOldAndNewThemeCachesWhenTopicMoves() {
         TopicServiceImpl service = spy(createService());

@@ -22,6 +22,7 @@ class DashboardServiceImplTest {
     @Mock
     private DashboardMapper dashboardMapper;
 
+    // 测试用聚合仪表盘指标构建概览
     @Test
     void shouldBuildOverviewFromAggregatedDashboardMetrics() {
         DashboardServiceImpl service = new DashboardServiceImpl(dashboardMapper);
@@ -63,6 +64,7 @@ class DashboardServiceImplTest {
         assertEquals("STABLE", overview.getHealth().getSystemStatus());
     }
 
+    // 测试返回分页动态带有默认分页
     @Test
     void shouldReturnPagedActivitiesWithDefaultPagination() {
         DashboardServiceImpl service = new DashboardServiceImpl(dashboardMapper);

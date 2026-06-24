@@ -49,6 +49,7 @@ class UserControllerTest {
             jwtUtils
     );
 
+    // 测试获取公开用户信息使用可选查看者 ID
     @Test
     void getPublicUserInfoShouldUseOptionalViewerId() {
         UserInfoVO userInfo = new UserInfoVO();
@@ -62,6 +63,7 @@ class UserControllerTest {
         verify(accountService).getPublicUserInfo(null, 18);
     }
 
+    // 测试获取粉丝使用可选查看者 ID
     @Test
     void getFollowersShouldUseOptionalViewerId() {
         PageEntity<UserInfoVO> page = new PageEntity<>(0L, List.of());
@@ -75,6 +77,7 @@ class UserControllerTest {
         verify(accountService).getFollowers(null, 18, 1, 20);
     }
 
+    // 测试获取关注使用可选查看者 ID
     @Test
     void getFollowingsShouldUseOptionalViewerId() {
         PageEntity<UserInfoVO> page = new PageEntity<>(0L, List.of());
@@ -88,6 +91,7 @@ class UserControllerTest {
         verify(accountService).getFollowings(null, 18, 1, 20);
     }
 
+    // 测试资料接口使用资料路径
     @Test
     void profileEndpointsShouldUseProfilePaths() throws NoSuchMethodException {
         Method myProfile = UserController.class.getMethod("getMyProfile");
@@ -97,11 +101,13 @@ class UserControllerTest {
         assertArrayEquals(new String[]{"/{user_id}/profile"}, publicProfile.getAnnotation(GetMapping.class).value());
     }
 
+    // 测试资料视图对象使用资料名称
     @Test
     void profileViewObjectShouldUseProfileName() {
         assertDoesNotThrow(() -> Class.forName("com.ayor.entity.vo.UserProfileVO"));
     }
 
+    // 测试列表当前用户会话带有当前会话 ID
     @Test
     void shouldListCurrentUserSessionsWithCurrentSessionId() {
         HttpServletRequest request = mock(HttpServletRequest.class);
@@ -122,6 +128,7 @@ class UserControllerTest {
         verify(loginSessionService).listSessions(7, "session-current", 2, 5);
     }
 
+    // 测试撤销当前用户其他会话
     @Test
     void shouldRevokeCurrentUsersOtherSession() {
         HttpServletRequest request = mock(HttpServletRequest.class);

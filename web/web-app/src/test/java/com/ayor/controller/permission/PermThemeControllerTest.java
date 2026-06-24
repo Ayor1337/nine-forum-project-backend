@@ -13,6 +13,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class PermThemeControllerTest {
 
+    // 测试控制器暴露权限版块基础路径
     @Test
     void controllerShouldExposePermissionThemeBasePath() {
         RequestMapping mapping = PermThemeController.class.getAnnotation(RequestMapping.class);
@@ -20,6 +21,7 @@ class PermThemeControllerTest {
         assertEquals("/api/perm/theme", mapping.value()[0]);
     }
 
+    // 测试新增版块使用基础路由
     @Test
     void insertThemeShouldUseBaseRoute() throws NoSuchMethodException {
         Method method = PermThemeController.class.getMethod("insertTheme", ThemeDTO.class);

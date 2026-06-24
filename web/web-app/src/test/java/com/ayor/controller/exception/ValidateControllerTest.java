@@ -19,6 +19,7 @@ class ValidateControllerTest {
             .setControllerAdvice(new ValidateController())
             .build();
 
+    // 测试请求参数类型不匹配时返回参数错误
     @Test
     void shouldReturnParamErrorWhenRequestParamTypeMismatch() throws Exception {
         mockMvc.perform(get("/sample").param("page", "not-a-number"))

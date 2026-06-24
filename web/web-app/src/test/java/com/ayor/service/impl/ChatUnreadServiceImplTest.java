@@ -15,6 +15,7 @@ import static org.mockito.Mockito.when;
 
 class ChatUnreadServiceImplTest {
 
+    // 测试原子化增加会话并总未读数
     @Test
     void shouldAtomicallyIncreaseConversationAndTotalUnread() {
         StringRedisTemplate template = mock(StringRedisTemplate.class);
@@ -31,6 +32,7 @@ class ChatUnreadServiceImplTest {
         );
     }
 
+    // 测试原子化消费会话未读不带负数总量
     @Test
     void shouldAtomicallyConsumeConversationUnreadWithoutNegativeTotal() {
         StringRedisTemplate template = mock(StringRedisTemplate.class);

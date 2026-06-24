@@ -12,6 +12,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class PermissionOperationLogMapperTest {
 
+    // 测试Mapper提供基础日志查询
     @Test
     void mapperProvidesBasicLogQuery() throws NoSuchMethodException {
         assertThat(BaseMapper.class).isAssignableFrom(PermissionOperationLogMapper.class);

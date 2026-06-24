@@ -45,6 +45,7 @@ class PasskeyServiceImplTest {
     @Mock
     private PasskeyWebAuthnAdapter webAuthnAdapter;
 
+    // 测试注册选项的用户名称使用用户名
     @Test
     void shouldUseUsernameInRegistrationOptionsUserName() {
         PasskeyServiceImpl service = service();
@@ -61,6 +62,7 @@ class PasskeyServiceImplTest {
         assertEquals("Nw", user.get("id"));
     }
 
+    // 测试拒绝过期认证请求
     @Test
     void shouldRejectExpiredAuthenticationRequest() {
         PasskeyServiceImpl service = service();
@@ -69,6 +71,7 @@ class PasskeyServiceImplTest {
         assertNull(service.authenticate(dto, null));
     }
 
+    // 测试用户句柄不匹配凭据所有者时拒绝认证
     @Test
     void shouldRejectAuthenticationWhenUserHandleDoesNotMatchCredentialOwner() {
         PasskeyServiceImpl service = service();
@@ -82,6 +85,7 @@ class PasskeyServiceImplTest {
         assertNull(service.authenticate(dto, null));
     }
 
+    // 测试拒绝封禁账号认证
     @Test
     void shouldRejectBannedAccountAuthentication() {
         PasskeyServiceImpl service = service();
@@ -100,6 +104,7 @@ class PasskeyServiceImplTest {
         assertNull(service.authenticate(dto, null));
     }
 
+    // 测试返回授权 VO 当认证成功
     @Test
     void shouldReturnAuthorizeVoWhenAuthenticationSucceeds() {
         PasskeyServiceImpl service = service();
@@ -127,6 +132,7 @@ class PasskeyServiceImplTest {
         verify(requestStore).consume("req-1");
     }
 
+    // 测试拒绝删除其他账号拥有的凭据
     @Test
     void shouldRejectDeletingCredentialOwnedByAnotherAccount() {
         PasskeyServiceImpl service = service();

@@ -91,6 +91,7 @@ class ThreaddServiceImplTest {
     @Mock
     private CacheInvalidationService cacheInvalidationService;
 
+    // 测试帖子串排行方法使用帖子串排行缓存
     @Test
     void threadRankingMethodsShouldUseThreadRankingCache() throws NoSuchMethodException {
         Method topicMethod = ThreaddServiceImpl.class.getMethod(
@@ -122,6 +123,7 @@ class ThreaddServiceImplTest {
         assertEquals("#result == null || #result.totalSize == 0", allCacheable.unless());
     }
 
+    // 测试按主题查询帖子串时传入标签ID和选中状态并按热门排序
     @Test
     void shouldQueryThreadsByTopicIdWithTagIdSelectedAndHotOrder() {
         ThreaddServiceImpl service = createService();
@@ -156,6 +158,7 @@ class ThreaddServiceImplTest {
         assertTrue(targetSql.contains("is_selected"), targetSql);
     }
 
+    // 测试排除拉黑账号从主题帖子串分页
     @Test
     void shouldExcludeBlockedAccountsFromTopicThreadPages() {
         ThreaddServiceImpl service = createService();
@@ -177,21 +180,25 @@ class ThreaddServiceImplTest {
         assertTrue(targetSql.contains("account_id NOT IN"), targetSql);
     }
 
+    // 测试解析点赞排序
     @Test
     void shouldParseLikesOrder() {
         assertEquals(ThreadOrderType.LIKES, ThreadOrderType.fromValue("likes"));
     }
 
+    // 测试解析收藏排序
     @Test
     void shouldParseCollectsOrder() {
         assertEquals(ThreadOrderType.COLLECTS, ThreadOrderType.fromValue("collects"));
     }
 
+    // 测试传入不支持排序时回退到热门排序
     @Test
     void shouldFallbackToHotOrderWhenUnsupportedOrderProvided() {
         assertEquals(ThreadOrderType.HOT, ThreadOrderType.fromValue("unknown"));
     }
 
+    // 测试查询主题帖子串排行按周期并点赞指标
     @Test
     void shouldQueryTopicThreadRankingsByPeriodAndLikesMetric() {
         ThreaddServiceImpl service = createService();
@@ -225,6 +232,7 @@ class ThreaddServiceImplTest {
         assertTrue(targetSql.contains("like_count"), targetSql);
     }
 
+    // 测试查询全部帖子串排行不带主题过滤并浏览指标
     @Test
     void shouldQueryAllThreadRankingsWithoutTopicFilterAndViewsMetric() {
         ThreaddServiceImpl service = createService();
@@ -255,6 +263,7 @@ class ThreaddServiceImplTest {
         assertTrue(targetSql.contains("view_count"), targetSql);
     }
 
+    // 测试回退到默认排行周期并收藏指标
     @Test
     void shouldFallbackToDefaultRankingPeriodAndCollectsMetric() {
         ThreaddServiceImpl service = createService();
@@ -283,6 +292,7 @@ class ThreaddServiceImplTest {
         assertTrue(targetSql.contains("collect_count"), targetSql);
     }
 
+    // 测试拒绝用户帖子串分页当查看者拉黑任一方向
     @Test
     void shouldDenyUserThreadPagesWhenViewerBlockedEitherDirection() {
         ThreaddServiceImpl service = createService();
@@ -293,6 +303,7 @@ class ThreaddServiceImplTest {
         verifyNoInteractions(threaddMapper);
     }
 
+    // 测试匿名访问用户帖子串分页时不做拉黑检查
     @Test
     void shouldAllowAnonymousUserThreadPagesWithoutBlockCheck() {
         ThreaddServiceImpl service = createService();
@@ -308,6 +319,7 @@ class ThreaddServiceImplTest {
         verifyNoInteractions(userRelationService);
     }
 
+    // 测试拒绝帖子串详情当查看者拉黑任一方向
     @Test
     void shouldDenyThreadDetailWhenViewerBlockedEitherDirection() {
         ThreaddServiceImpl service = createService();
@@ -318,6 +330,7 @@ class ThreaddServiceImplTest {
         assertThrows(AccessDeniedException.class, () -> service.getThreadById(7, 101));
     }
 
+    // 测试主题ID为空时返回空
     @Test
     void shouldReturnNullWhenTopicIdIsNull() {
         ThreaddServiceImpl service = createService();
@@ -328,6 +341,7 @@ class ThreaddServiceImplTest {
         verifyNoInteractions(topicMapper, threaddMapper);
     }
 
+    // 测试保存帖子后同步图片引用串
     @Test
     void shouldSyncImageRefsAfterSavingThread() {
         ThreaddServiceImpl service = createService();
@@ -350,6 +364,7 @@ class ThreaddServiceImplTest {
         verify(cacheInvalidationService).clearThreadRanking();
     }
 
+    // 测试设置主题公告使用公告表
     @Test
     void shouldSetTopicAnnouncementUsingAnnouncementTable() {
         ThreaddServiceImpl service = createService();
@@ -368,6 +383,7 @@ class ThreaddServiceImplTest {
         assertNotNull(captor.getValue().getCreateTime());
     }
 
+    // 测试拒绝重复主题公告
     @Test
     void shouldRejectDuplicateTopicAnnouncement() {
         ThreaddServiceImpl service = createService();
@@ -384,6 +400,7 @@ class ThreaddServiceImplTest {
         assertEquals("该帖子已经是公告", result);
     }
 
+    // 测试移除主题公告从公告表
     @Test
     void shouldRemoveTopicAnnouncementFromAnnouncementTable() {
         ThreaddServiceImpl service = createService();
@@ -402,6 +419,7 @@ class ThreaddServiceImplTest {
         verify(announcementMapper).deleteById(5);
     }
 
+    // 测试返回主题公告从公告 Mapper
     @Test
     void shouldReturnTopicAnnouncementsFromAnnouncementMapper() {
         ThreaddServiceImpl service = createService();
@@ -419,6 +437,7 @@ class ThreaddServiceImplTest {
         assertFalse(result.get(0).getIsGlobal());
     }
 
+    // 测试设置全局公告使用公告表
     @Test
     void shouldSetGlobalAnnouncementUsingAnnouncementTable() {
         ThreaddServiceImpl service = createService();
@@ -436,6 +455,7 @@ class ThreaddServiceImplTest {
         assertTrue(captor.getValue().getIsGlobal());
     }
 
+    // 测试移除全局公告从公告表
     @Test
     void shouldRemoveGlobalAnnouncementFromAnnouncementTable() {
         ThreaddServiceImpl service = createService();
@@ -454,6 +474,7 @@ class ThreaddServiceImplTest {
         verify(announcementMapper).deleteById(5);
     }
 
+    // 测试返回全局公告从公告 Mapper
     @Test
     void shouldReturnGlobalAnnouncementsFromAnnouncementMapper() {
         ThreaddServiceImpl service = createService();

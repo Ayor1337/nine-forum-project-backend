@@ -53,6 +53,7 @@ class AuthorizationServiceImplTest {
     @Mock
     private UserPrivacySettingService userPrivacySettingService;
 
+    // 测试所有者可管理版块和主题
     @Test
     void shouldAllowOwnerToManageThemeAndTopic() {
         AuthorizationServiceImpl service = createService();
@@ -62,6 +63,7 @@ class AuthorizationServiceImplTest {
         assertDoesNotThrow(() -> service.assertCanManageTopic(1));
     }
 
+    // 测试范围版主可在主题内管理删除帖子串
     @Test
     void shouldAllowScopedModeratorToModerateDeleteThreadWithinTopic() {
         AuthorizationServiceImpl service = createService();
@@ -79,6 +81,7 @@ class AuthorizationServiceImplTest {
         assertDoesNotThrow(() -> service.assertCanModerateDeleteThread(8, 19, 66));
     }
 
+    // 测试拒绝非作者在用户帖子串删除即使带有权限
     @Test
     void shouldDenyNonAuthorOnUserThreadDeleteEvenWithPermission() {
         AuthorizationServiceImpl service = createService();
@@ -96,6 +99,7 @@ class AuthorizationServiceImplTest {
         assertThrows(AccessDeniedException.class, () -> service.assertCanDeleteThread(8, 19));
     }
 
+    // 测试帖子串主题不匹配时拒绝范围版主
     @Test
     void shouldDenyScopedModeratorWhenThreadTopicDoesNotMatch() {
         AuthorizationServiceImpl service = createService();
@@ -109,6 +113,7 @@ class AuthorizationServiceImplTest {
         assertThrows(AccessDeniedException.class, () -> service.assertCanUpdateThreadTag(8, 19, 66));
     }
 
+    // 测试允许范围版主到更新帖子串标签带有指定权限
     @Test
     void shouldAllowScopedModeratorToUpdateThreadTagWithSpecificPermission() {
         AuthorizationServiceImpl service = createService();
@@ -126,6 +131,7 @@ class AuthorizationServiceImplTest {
         assertDoesNotThrow(() -> service.assertCanUpdateThreadTag(8, 19, 66));
     }
 
+    // 测试范围版主拥有指定权限时可设置公告
     @Test
     void shouldAllowScopedModeratorToSetAnnouncementWithSpecificPermission() {
         AuthorizationServiceImpl service = createService();
@@ -143,6 +149,7 @@ class AuthorizationServiceImplTest {
         assertDoesNotThrow(() -> service.assertCanSetAnnouncement(8, 19, 66));
     }
 
+    // 测试允许所有者到设置全局公告
     @Test
     void shouldAllowOwnerToSetGlobalAnnouncement() {
         AuthorizationServiceImpl service = createService();
@@ -158,6 +165,7 @@ class AuthorizationServiceImplTest {
         assertDoesNotThrow(() -> service.assertCanSetGlobalAnnouncement(1, 19));
     }
 
+    // 测试允许用户带有全局设置公告权限到设置全局公告
     @Test
     void shouldAllowUserWithGlobalSetAnnouncementPermissionToSetGlobalAnnouncement() {
         AuthorizationServiceImpl service = createService();
@@ -174,6 +182,7 @@ class AuthorizationServiceImplTest {
         assertDoesNotThrow(() -> service.assertCanSetGlobalAnnouncement(8, 19));
     }
 
+    // 测试拒绝全局公告不带全局权限
     @Test
     void shouldDenyGlobalAnnouncementWithoutGlobalPermission() {
         AuthorizationServiceImpl service = createService();
@@ -190,6 +199,7 @@ class AuthorizationServiceImplTest {
         assertThrows(AccessDeniedException.class, () -> service.assertCanSetGlobalAnnouncement(8, 19));
     }
 
+    // 测试拒绝全局公告当帖子串已删除
     @Test
     void shouldDenyGlobalAnnouncementWhenThreadDeleted() {
         AuthorizationServiceImpl service = createService();
@@ -204,6 +214,7 @@ class AuthorizationServiceImplTest {
         assertThrows(AccessDeniedException.class, () -> service.assertCanSetGlobalAnnouncement(1, 19));
     }
 
+    // 测试允许范围版主到删除帖子带有删除帖子权限
     @Test
     void shouldAllowScopedModeratorToDeletePostWithDeletePostPermission() {
         AuthorizationServiceImpl service = createService();
@@ -221,6 +232,7 @@ class AuthorizationServiceImplTest {
         assertDoesNotThrow(() -> service.assertCanModerateDeletePost(8, 31));
     }
 
+    // 测试允许范围版主到更新已绑定主题
     @Test
     void shouldAllowScopedModeratorToUpdateBoundTopic() {
         AuthorizationServiceImpl service = createService();
@@ -231,6 +243,7 @@ class AuthorizationServiceImplTest {
         assertDoesNotThrow(() -> service.assertCanUpdateTopic(8, 66));
     }
 
+    // 测试拒绝范围版主到更新未绑定主题
     @Test
     void shouldDenyScopedModeratorToUpdateUnboundTopic() {
         AuthorizationServiceImpl service = createService();
@@ -241,6 +254,7 @@ class AuthorizationServiceImplTest {
         assertThrows(AccessDeniedException.class, () -> service.assertCanUpdateTopic(8, 77));
     }
 
+    // 测试允许全局创建主题权限不带主题范围
     @Test
     void shouldAllowGlobalCreateTopicPermissionWithoutTopicScope() {
         AuthorizationServiceImpl service = createService();
@@ -250,6 +264,7 @@ class AuthorizationServiceImplTest {
         assertDoesNotThrow(() -> service.assertCanCreateTopic(8));
     }
 
+    // 测试作者可删除自己的帖子
     @Test
     void shouldAllowAuthorToDeleteOwnPost() {
         AuthorizationServiceImpl service = createService();
@@ -263,6 +278,7 @@ class AuthorizationServiceImplTest {
         assertDoesNotThrow(() -> service.assertCanDeletePost(9, 31));
     }
 
+    // 测试作者可编辑自己的帖子
     @Test
     void shouldAllowAuthorToEditOwnPost() {
         AuthorizationServiceImpl service = createService();
@@ -276,6 +292,7 @@ class AuthorizationServiceImplTest {
         assertDoesNotThrow(() -> service.assertCanEditPost(9, 31));
     }
 
+    // 测试拒绝非作者在用户帖子编辑即使带有权限
     @Test
     void shouldDenyNonAuthorOnUserPostEditEvenWithPermission() {
         AuthorizationServiceImpl service = createService();
@@ -293,6 +310,7 @@ class AuthorizationServiceImplTest {
         assertThrows(AccessDeniedException.class, () -> service.assertCanEditPost(8, 31));
     }
 
+    // 测试范围版主拥有删帖权限时可查看帖子编辑快照
     @Test
     void shouldAllowScopedModeratorToViewPostEditSnapshotsWithDeletePostPermission() {
         AuthorizationServiceImpl service = createService();
@@ -310,6 +328,7 @@ class AuthorizationServiceImplTest {
         assertDoesNotThrow(() -> service.assertCanViewPostEditSnapshots(8, 31));
     }
 
+    // 测试拒绝非作者在用户帖子删除即使带有权限
     @Test
     void shouldDenyNonAuthorOnUserPostDeleteEvenWithPermission() {
         AuthorizationServiceImpl service = createService();
@@ -327,6 +346,7 @@ class AuthorizationServiceImplTest {
         assertThrows(AccessDeniedException.class, () -> service.assertCanDeletePost(8, 31));
     }
 
+    // 测试拒绝会话访问用于非参与者
     @Test
     void shouldDenyConversationAccessForNonParticipant() {
         AuthorizationServiceImpl service = createService();
@@ -340,6 +360,7 @@ class AuthorizationServiceImplTest {
         assertThrows(AccessDeniedException.class, () -> service.assertCanAccessConversation(3, 7));
     }
 
+    // 测试拒绝发送会话消息当拉黑任一方向
     @Test
     void shouldDenySendConversationMessageWhenBlockedEitherDirection() {
         AuthorizationServiceImpl service = createService();
@@ -354,6 +375,7 @@ class AuthorizationServiceImplTest {
         assertThrows(AccessDeniedException.class, () -> service.assertCanSendConversationMessage(10, 7));
     }
 
+    // 测试未互相拉黑的会话参与者可发送消息
     @Test
     void shouldAllowSendConversationMessageForParticipantWithoutBlock() {
         AuthorizationServiceImpl service = createService();
@@ -368,6 +390,7 @@ class AuthorizationServiceImplTest {
         assertDoesNotThrow(() -> service.assertCanSendConversationMessage(10, 7));
     }
 
+    // 测试拒绝发起会话当目标拒绝私信
     @Test
     void shouldDenyStartConversationWhenTargetRejectsDm() {
         AuthorizationServiceImpl service = createService();

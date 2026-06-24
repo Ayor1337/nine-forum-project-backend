@@ -10,6 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class TagControllerTest {
 
+    // 测试按主题ID获取标签时使用主题ID路径变量
     @Test
     void getTagByTopicIdShouldUseTopicIdPathVariable() throws NoSuchMethodException {
         Method method = TagController.class.getMethod("getTagByTopicId", Integer.class);

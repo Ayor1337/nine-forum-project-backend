@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class PermissionTypeTest {
 
+    // 测试识别已存在权限
     @Test
     void shouldRecognizeExistingPermissions() {
         assertTrue(PermissionType.isKnown("INSERT_TAG"));
@@ -14,6 +15,7 @@ class PermissionTypeTest {
         assertTrue(PermissionType.isKnown("DELETE_THREAD"));
     }
 
+    // 测试识别扩展权限
     @Test
     void shouldRecognizeExpandedPermissions() {
         assertTrue(PermissionType.isKnown("MANAGE_ROLE"));
@@ -27,6 +29,7 @@ class PermissionTypeTest {
         assertTrue(PermissionType.isKnown("VIEW_DASHBOARD"));
     }
 
+    // 测试拒绝未知权限
     @Test
     void shouldRejectUnknownPermission() {
         assertFalse(PermissionType.isKnown("UNKNOWN"));

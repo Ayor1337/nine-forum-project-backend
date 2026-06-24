@@ -11,6 +11,7 @@ class FeedbackCreateDTOTest {
 
     private final Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
 
+    // 测试拒绝缺失类型并空白内容
     @Test
     void rejectsMissingTypeAndBlankContent() {
         FeedbackCreateDTO dto = new FeedbackCreateDTO();
@@ -19,6 +20,7 @@ class FeedbackCreateDTOTest {
         assertThat(validator.validate(dto)).hasSize(3);
     }
 
+    // 测试接受有效反馈
     @Test
     void acceptsValidFeedback() {
         FeedbackCreateDTO dto = new FeedbackCreateDTO();

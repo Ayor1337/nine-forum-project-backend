@@ -14,6 +14,7 @@ import org.xml.sax.InputSource;
 
 class PermissionMapperXmlTest {
 
+    // 测试获取用户权限VO时将权限映射为集合
     @Test
     void getUserPermissionVoShouldMapPermissionsAsCollection() throws Exception {
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();

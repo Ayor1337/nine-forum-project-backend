@@ -10,6 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class RedisConfigurationTest {
 
+    // 测试缓存使用显式 TTL
     @Test
     void cachesShouldUseExplicitTtl() {
         RedisCacheConfiguration defaultCacheConfiguration = RedisCacheConfiguration.defaultCacheConfig()

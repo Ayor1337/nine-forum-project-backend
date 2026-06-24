@@ -15,6 +15,7 @@ import static org.mockito.Mockito.when;
 
 class SecurityConfigurationUnauthorizedTest {
 
+    // 测试返回未认证状态码当未授权
     @Test
     void shouldReturnUnauthenticatedCodeWhenUnauthorized() throws Exception {
         SecurityConfiguration configuration = new SecurityConfiguration();

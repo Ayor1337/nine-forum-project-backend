@@ -11,6 +11,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class PostControllerTest {
 
+    // 测试编辑帖子暴露用户编辑路由
     @Test
     void editPostShouldExposeUserEditRoute() throws NoSuchMethodException {
         Method method = PostController.class.getMethod(
@@ -24,6 +25,7 @@ class PostControllerTest {
         assertEquals("/posts/{post_id}", mapping.value()[0]);
     }
 
+    // 测试获取帖子编辑历史暴露公开历史路由
     @Test
     void getPostEditHistoryShouldExposePublicHistoryRoute() throws NoSuchMethodException {
         Method method = PostController.class.getMethod(

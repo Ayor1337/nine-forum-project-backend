@@ -22,6 +22,7 @@ class TipTapUtilsTest {
 
     private final TipTapUtils tipTapUtils = new TipTapUtils();
 
+    // 测试提取提及目标从 TipTap JSON
     @Test
     void shouldExtractMentionTargetsFromTipTapJson() {
         String content = """
@@ -59,6 +60,7 @@ class TipTapUtilsTest {
         assertEquals("alice", mentions.get(0).username());
     }
 
+    // 测试提取纯文本时会包含提及内容
     @Test
     void shouldIncludeMentionsWhenExtractingPlainText() {
         String content = """
@@ -90,6 +92,7 @@ class TipTapUtilsTest {
         assertEquals("hi @bob", text);
     }
 
+    // 测试转换Base64图片时保留GIF扩展名
     @Test
     void shouldPreserveGifExtensionWhenConvertingBase64Images() {
         ImageStorageService storageService = mock(ImageStorageService.class);

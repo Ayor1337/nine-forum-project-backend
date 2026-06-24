@@ -31,6 +31,7 @@ class JWTUtilsSessionTest {
         user = User.withUsername("tester").password("N/A").roles("USER").build();
     }
 
+    // 测试会话有效时解析JWT
     @Test
     void shouldResolveJwtWhenSessionIsActive() {
         JWTUtils.LoginJwt loginJwt = jwtUtils.createLoginJwt(user, 7, "tester", "session-1");
@@ -44,6 +45,7 @@ class JWTUtilsSessionTest {
         assertEquals(loginJwt.jwtId(), decodedJWT.getId());
     }
 
+    // 测试会话缺失时拒绝JWT
     @Test
     void shouldRejectJwtWhenSessionIsMissing() {
         JWTUtils.LoginJwt loginJwt = jwtUtils.createLoginJwt(user, 7, "tester", "session-1");

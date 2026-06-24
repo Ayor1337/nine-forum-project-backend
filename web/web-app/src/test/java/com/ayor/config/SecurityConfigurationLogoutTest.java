@@ -18,6 +18,7 @@ import static org.mockito.Mockito.when;
 
 class SecurityConfigurationLogoutTest {
 
+    // 测试登出成功时撤销当前登录会话
     @Test
     void shouldRevokeCurrentLoginSessionWhenLogoutSucceeds() throws Exception {
         SecurityConfiguration configuration = new SecurityConfiguration();

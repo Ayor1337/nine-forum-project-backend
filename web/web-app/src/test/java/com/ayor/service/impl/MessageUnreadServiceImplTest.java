@@ -17,6 +17,7 @@ import static org.mockito.Mockito.when;
 
 class MessageUnreadServiceImplTest {
 
+    // 测试新增未读时使用指定增量
     @Test
     void addUnreadShouldUseRequestedIncrement() {
         StringRedisTemplate template = mock(StringRedisTemplate.class);
@@ -30,6 +31,7 @@ class MessageUnreadServiceImplTest {
         verify(values).increment("message:reply:unread:7", 4L);
     }
 
+    // 测试清理未读时使用归零保护Lua脚本
     @Test
     void clearUnreadShouldUseAtomicFloorAtZeroScript() {
         StringRedisTemplate template = mock(StringRedisTemplate.class);

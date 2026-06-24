@@ -40,6 +40,7 @@ class FeedbackServiceImplTest {
         ReflectionTestUtils.setField(feedbackService, "baseMapper", feedbackMapper);
     }
 
+    // 测试创建反馈时绑定用户并初始化待处理状态
     @Test
     void createFeedbackBindsUserAndInitializesPendingStatus() {
         FeedbackCreateDTO dto = new FeedbackCreateDTO();
@@ -60,6 +61,7 @@ class FeedbackServiceImplTest {
         assertThat(feedback.getUpdateTime()).isNotNull();
     }
 
+    // 测试创建反馈拒绝内容少于10个字符去空格后
     @Test
     void createFeedbackRejectsContentShorterThanTenAfterTrim() {
         FeedbackCreateDTO dto = new FeedbackCreateDTO();
@@ -72,6 +74,7 @@ class FeedbackServiceImplTest {
         verify(feedbackMapper, never()).insert(any(Feedback.class));
     }
 
+    // 测试获取我的反馈返回只分页记录作为用户视图
     @Test
     @SuppressWarnings("unchecked")
     void getMyFeedbacksReturnsOnlyPagedRecordsAsUserView() {
@@ -96,6 +99,7 @@ class FeedbackServiceImplTest {
         verify(feedbackMapper).selectPage(any(Page.class), any(Wrapper.class));
     }
 
+    // 测试获取我的反馈拒绝无效分页
     @Test
     void getMyFeedbacksRejectsInvalidPagination() {
         assertThat(feedbackService.getMyFeedbacks(7, 0, 10)).isNull();

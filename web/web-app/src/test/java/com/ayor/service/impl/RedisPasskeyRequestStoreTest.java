@@ -23,6 +23,7 @@ import static org.mockito.Mockito.when;
 
 class RedisPasskeyRequestStoreTest {
 
+    // 测试往返读写注册挑战快照
     @Test
     void shouldRoundTripRegistrationChallengeSnapshot() throws Exception {
         StringRedisTemplate redisTemplate = mock(StringRedisTemplate.class);
@@ -55,6 +56,7 @@ class RedisPasskeyRequestStoreTest {
         verify(valueOperations).set(anyString(), anyString(), anyLong(), eq(TimeUnit.SECONDS));
     }
 
+    // 测试快照缺失时返回空
     @Test
     void shouldReturnNullWhenSnapshotMissing() {
         RedisPasskeyRequestStore store = new RedisPasskeyRequestStore(mock(StringRedisTemplate.class), new WebAuthnProperties(), new ObjectMapper());
@@ -62,6 +64,7 @@ class RedisPasskeyRequestStoreTest {
         assertNull(store.consume("missing"));
     }
 
+    // 测试只返回挑战一次
     @Test
     void shouldOnlyReturnChallengeOnce() throws Exception {
         StringRedisTemplate redisTemplate = mock(StringRedisTemplate.class);

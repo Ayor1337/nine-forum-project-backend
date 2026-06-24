@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class PasskeyAuthenticationFinishDTOTest {
 
+    // 测试反序列化浏览器断言JSON并解码Base64URL字段
     @Test
     void shouldDeserializeBrowserAssertionJsonAndDecodeBase64UrlFields() throws Exception {
         String json = """

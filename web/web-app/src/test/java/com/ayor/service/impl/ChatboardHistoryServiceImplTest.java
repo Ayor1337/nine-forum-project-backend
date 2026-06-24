@@ -39,6 +39,7 @@ class ChatboardHistoryServiceImplTest {
     @Mock
     private UserRelationService userRelationService;
 
+    // 测试排除拉黑账号从聊天室历史
     @Test
     void shouldExcludeBlockedAccountsFromChatboardHistory() {
         ChatboardHistoryServiceImpl service = new ChatboardHistoryServiceImpl(

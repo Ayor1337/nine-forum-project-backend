@@ -15,6 +15,7 @@ import static org.mockito.Mockito.when;
 
 class JWTAuthorizeFilterTest {
 
+    // 测试Authorization请求头无法解析时返回Token过期
     @Test
     void shouldReturnTokenExpiredWhenAuthorizationHeaderCannotBeResolved() throws Exception {
         JWTAuthorizeFilter filter = new JWTAuthorizeFilter();
@@ -32,6 +33,7 @@ class JWTAuthorizeFilterTest {
         assertThat(result.getString("message")).isEqualTo(ResultCodeEnum.TOKEN_EXPIRED.getMessage());
     }
 
+    // 测试继续过滤链当 Authorization 请求头为缺失
     @Test
     void shouldContinueFilterChainWhenAuthorizationHeaderIsMissing() throws Exception {
         JWTAuthorizeFilter filter = new JWTAuthorizeFilter();

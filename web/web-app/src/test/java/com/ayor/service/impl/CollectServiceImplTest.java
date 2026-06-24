@@ -50,6 +50,7 @@ class CollectServiceImplTest {
     @Mock
     private CacheInvalidationService cacheInvalidationService;
 
+    // 测试拒绝收藏当拉黑带有帖子串作者
     @Test
     void shouldRejectCollectWhenBlockedWithThreadAuthor() {
         CollectServiceImpl service = createService();

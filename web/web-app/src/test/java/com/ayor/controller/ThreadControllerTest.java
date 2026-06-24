@@ -13,6 +13,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ThreadControllerTest {
 
+    // 测试按主题获取帖子串时暴露标签ID和选中状态查询参数
     @Test
     void getThreadsByTopicIdShouldExposeTagIdAndIsSelectedQueryParams() throws NoSuchMethodException {
         Method method = ThreadController.class.getMethod(
@@ -35,6 +36,7 @@ class ThreadControllerTest {
         assertTrue(queryParamNames.contains("is_selected"));
     }
 
+    // 测试主题帖子串排行暴露周期指标和分页查询参数
     @Test
     void getTopicThreadRankingsShouldExposePeriodMetricAndPagingQueryParams() throws NoSuchMethodException {
         Method method = ThreadController.class.getMethod(
@@ -58,6 +60,7 @@ class ThreadControllerTest {
         assertTrue(queryParamNames.contains("page_size"));
     }
 
+    // 测试全站帖子串排行暴露周期指标和分页查询参数
     @Test
     void getThreadRankingsShouldExposePeriodMetricAndPagingQueryParams() throws NoSuchMethodException {
         Method method = ThreadController.class.getMethod(
@@ -80,6 +83,7 @@ class ThreadControllerTest {
         assertTrue(queryParamNames.contains("page_size"));
     }
 
+    // 测试获取全局公告暴露公开路由
     @Test
     void getGlobalAnnouncementsShouldExposePublicRoute() throws NoSuchMethodException {
         Method method = ThreadController.class.getMethod("getGlobalAnnouncements");

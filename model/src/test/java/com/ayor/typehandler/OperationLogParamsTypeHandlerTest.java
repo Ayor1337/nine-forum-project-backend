@@ -13,6 +13,7 @@ class OperationLogParamsTypeHandlerTest {
 
     private final OperationLogParamsTypeHandler typeHandler = new OperationLogParamsTypeHandler();
 
+    // 测试读取 JSON 对象作为 Map
     @Test
     void readsJsonObjectAsMap() throws Exception {
         ResultSet resultSet = mock(ResultSet.class);
@@ -24,6 +25,7 @@ class OperationLogParamsTypeHandlerTest {
         assertThat(params).containsEntry("name", "java");
     }
 
+    // 测试包装旧格式 JSON 数组作为参数
     @Test
     void wrapsLegacyJsonArrayAsArgs() throws Exception {
         ResultSet resultSet = mock(ResultSet.class);
@@ -34,6 +36,7 @@ class OperationLogParamsTypeHandlerTest {
         assertThat(params).containsKey("args");
     }
 
+    // 测试包装旧格式纯文本作为原始值
     @Test
     void wrapsLegacyPlainTextAsRawValue() throws Exception {
         ResultSet resultSet = mock(ResultSet.class);

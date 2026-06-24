@@ -20,6 +20,7 @@ class ImageProcessorTest {
 
     private final ImageProcessor processor = new ImageProcessor();
 
+    // 测试转换表情 PNG 为 WebP 并限制长边到512
     @Test
     void shouldConvertEmojiPngToWebpAndLimitLongEdgeTo512() throws Exception {
         Base64Upload upload = new Base64Upload(toBase64DataUrl("png", 1200, 600), "sample.png");
@@ -35,6 +36,7 @@ class ImageProcessorTest {
         assertTrue(image.getBytes().length > 0);
     }
 
+    // 测试拒绝 GIF 表情上传
     @Test
     void shouldRejectGifEmojiUpload() throws Exception {
         Base64Upload upload = new Base64Upload(toBase64DataUrl("gif", 12, 8), "sample.gif");
@@ -44,6 +46,7 @@ class ImageProcessorTest {
         assertEquals("仅支持 jpg、jpeg、png、webp 静态图片，禁止 GIF 或其他动图", exception.getMessage());
     }
 
+    // 测试保持内容 GIF 原始格式
     @Test
     void shouldKeepContentGifAsOriginalFormat() throws Exception {
         Base64Upload upload = new Base64Upload(toBase64DataUrl("gif", 120, 80), "sample.gif");

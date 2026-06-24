@@ -15,6 +15,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class PermTopicControllerTest {
 
+    // 测试控制器暴露权限主题基础路径
     @Test
     void controllerShouldExposePermissionTopicBasePath() {
         RequestMapping mapping = PermTopicController.class.getAnnotation(RequestMapping.class);
@@ -22,6 +23,7 @@ class PermTopicControllerTest {
         assertEquals("/api/perm/topic", mapping.value()[0]);
     }
 
+    // 测试新增主题使用基础路由
     @Test
     void insertTopicShouldUseBaseRoute() throws NoSuchMethodException {
         Method method = PermTopicController.class.getMethod("insertTopic", TopicDTO.class);
@@ -32,6 +34,7 @@ class PermTopicControllerTest {
         assertOperationLog(method, "CREATE_TOPIC", "topic", "");
     }
 
+    // 测试更新主题使用主题 ID 路由
     @Test
     void updateTopicShouldUseTopicIdRoute() throws NoSuchMethodException {
         Method method = PermTopicController.class.getMethod("updateTopic", Integer.class, TopicDTO.class);
@@ -42,6 +45,7 @@ class PermTopicControllerTest {
         assertOperationLog(method, "UPDATE_TOPIC", "topic", "topicId");
     }
 
+    // 测试删除主题使用主题 ID 路由
     @Test
     void deleteTopicShouldUseTopicIdRoute() throws NoSuchMethodException {
         Method method = PermTopicController.class.getMethod("deleteTopic", Integer.class);

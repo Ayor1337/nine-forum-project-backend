@@ -18,6 +18,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class SearchControllerTest {
 
+    // 测试搜索用户暴露查询并分页参数
     @Test
     void searchUserShouldExposeQueryAndPagingParams() throws NoSuchMethodException {
         Method method = SearchController.class.getMethod(
@@ -38,6 +39,7 @@ class SearchControllerTest {
         assertTrue(queryParamNames.contains("page_size"));
     }
 
+    // 测试搜索用户返回分页用户搜索结果
     @Test
     void searchUserShouldReturnPagedUserSearchResult() throws NoSuchMethodException {
         Method method = SearchController.class.getMethod(

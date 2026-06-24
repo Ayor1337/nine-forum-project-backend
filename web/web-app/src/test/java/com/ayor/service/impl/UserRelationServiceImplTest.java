@@ -37,6 +37,7 @@ class UserRelationServiceImplTest {
     @Mock
     private CacheInvalidationService cacheInvalidationService;
 
+    // 测试创建拉黑关系后停用双方有效关注关系
     @Test
     void shouldDeactivateBothActiveFollowsAfterBlockCreated() {
         UserRelationServiceImpl service = createService();
@@ -57,6 +58,7 @@ class UserRelationServiceImplTest {
         verify(userRelationMapper).updateById(backwardFollow);
     }
 
+    // 测试已拉黑时仍停用残留关注关系
     @Test
     void shouldDeactivateResidualFollowsWhenAlreadyBlocked() {
         UserRelationServiceImpl service = createService();
@@ -74,6 +76,7 @@ class UserRelationServiceImplTest {
         verify(userRelationMapper).updateById(forwardFollow);
     }
 
+    // 测试拒绝关注当拉黑任一方向
     @Test
     void shouldDenyFollowWhenBlockedEitherDirection() {
         UserRelationServiceImpl service = createService();
@@ -86,6 +89,7 @@ class UserRelationServiceImplTest {
         verify(userRelationMapper, never()).insert(any(UserRelation.class));
     }
 
+    // 测试检查单向拉黑关系
     @Test
     void shouldCheckDirectionalBlockedRelation() {
         UserRelationServiceImpl service = createService();
@@ -95,6 +99,7 @@ class UserRelationServiceImplTest {
         assertEquals(true, service.isBlocked(1, 2));
     }
 
+    // 测试列出任一方向的拉黑账号ID
     @Test
     void shouldListBlockedAccountIdsEitherDirection() {
         UserRelationServiceImpl service = createService();
@@ -103,6 +108,7 @@ class UserRelationServiceImplTest {
         assertEquals(List.of(11, 12), service.listBlockedAccountIdsEitherDirection(7));
     }
 
+    // 测试账号ID为空时返回空拉黑账号ID列表
     @Test
     void shouldReturnEmptyBlockedAccountIdsWhenAccountIdIsNull() {
         UserRelationServiceImpl service = createService();

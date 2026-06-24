@@ -9,6 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 
 class TopicControllerTest {
 
+    // 测试后台暴露主题选项接口
     @Test
     void shouldExposeTopicOptionsEndpointInWebAdmin() throws NoSuchMethodException {
         Method method = TopicController.class.getMethod("getTopicsAsOptions", String.class);

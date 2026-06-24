@@ -41,6 +41,7 @@ class UserLoginSessionServiceImplTest {
     @Mock
     private ValueOperations<String, String> valueOperations;
 
+    // 测试创建会话记录并启用Redis键
     @Test
     void shouldCreateSessionRecordAndActiveRedisKey() {
         UserLoginSessionService service = service();
@@ -65,6 +66,7 @@ class UserLoginSessionServiceImplTest {
                 longThat(ttl -> ttl > 0 && ttl <= 60_000L), eq(TimeUnit.MILLISECONDS));
     }
 
+    // 测试列出最近会话时分页并标记当前会话
     @Test
     void shouldPageRecentSessionsAndMarkCurrentSessionWhenListingSessions() {
         UserLoginSessionService service = service();
@@ -83,6 +85,7 @@ class UserLoginSessionServiceImplTest {
         verify(loginSessionMapper).listByAccountId(eq(7), any(Date.class), eq(12), eq(0L));
     }
 
+    // 测试列出会话时使用六个月截断时间和偏移量
     @Test
     void shouldUseSixMonthCutoffAndOffsetWhenListingSessions() {
         UserLoginSessionService service = service();
@@ -102,6 +105,7 @@ class UserLoginSessionServiceImplTest {
         assertTrue(cutoff.before(latestAccepted));
     }
 
+    // 测试撤销归属非当前会话不带保存 Token
     @Test
     void shouldRevokeOwnedNonCurrentSessionWithoutStoringToken() {
         UserLoginSessionService service = service();

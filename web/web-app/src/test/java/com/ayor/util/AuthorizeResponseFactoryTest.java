@@ -26,6 +26,7 @@ class AuthorizeResponseFactoryTest {
     private final UserLoginSessionService loginSessionService = mock(UserLoginSessionService.class);
     private final AuthorizeResponseFactory factory = new AuthorizeResponseFactory(jwtUtils, roleMapper, loginSessionService);
 
+    // 测试创建登录会话支撑的授权响应
     @Test
     void shouldCreateSessionBackedAuthorizeResponse() {
         Account account = new Account();

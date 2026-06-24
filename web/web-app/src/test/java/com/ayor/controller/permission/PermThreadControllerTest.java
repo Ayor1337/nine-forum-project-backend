@@ -17,6 +17,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class PermThreadControllerTest {
 
+    // 测试控制器暴露管理基础路径
     @Test
     void controllerShouldExposeModerationBasePath() {
         RequestMapping mapping = PermThreadController.class.getAnnotation(RequestMapping.class);
@@ -24,6 +25,7 @@ class PermThreadControllerTest {
         assertEquals("/api/perm/thread", mapping.value()[0]);
     }
 
+    // 测试更新标签保持原始路由并查询参数
     @Test
     void updateTagShouldKeepOriginalRouteAndQueryParam() throws NoSuchMethodException {
         Method method = PermThreadController.class.getMethod(
@@ -40,6 +42,7 @@ class PermThreadControllerTest {
         assertOperationLog(method, "UPDATE_THREAD_TAG", "thread", "threadId");
     }
 
+    // 测试删除帖子串标签保持原始路由并查询参数
     @Test
     void deleteThreadTagShouldKeepOriginalRouteAndQueryParam() throws NoSuchMethodException {
         Method method = PermThreadController.class.getMethod(
@@ -55,6 +58,7 @@ class PermThreadControllerTest {
         assertOperationLog(method, "DELETE_THREAD_TAG", "thread", "threadId");
     }
 
+    // 测试移除帖子串按 ID 权限保持原始路由并查询参数
     @Test
     void removeThreadByIdPermissionShouldKeepOriginalRouteAndQueryParam() throws NoSuchMethodException {
         Method method = PermThreadController.class.getMethod(
@@ -70,6 +74,7 @@ class PermThreadControllerTest {
         assertOperationLog(method, "DELETE_THREAD", "thread", "threadId");
     }
 
+    // 测试设置公告暴露权限路由并查询参数
     @Test
     void setAnnouncementShouldExposePermissionRouteAndQueryParam() throws NoSuchMethodException {
         Method method = PermThreadController.class.getMethod(
@@ -85,6 +90,7 @@ class PermThreadControllerTest {
         assertOperationLog(method, "SET_ANNOUNCEMENT", "thread", "threadId");
     }
 
+    // 测试取消设置公告暴露权限路由并查询参数
     @Test
     void unsetAnnouncementShouldExposePermissionRouteAndQueryParam() throws NoSuchMethodException {
         Method method = PermThreadController.class.getMethod(
@@ -100,6 +106,7 @@ class PermThreadControllerTest {
         assertOperationLog(method, "UNSET_ANNOUNCEMENT", "thread", "threadId");
     }
 
+    // 测试设置全局公告暴露权限路由
     @Test
     void setGlobalAnnouncementShouldExposePermissionRoute() throws NoSuchMethodException {
         Method method = PermThreadController.class.getMethod(
@@ -113,6 +120,7 @@ class PermThreadControllerTest {
         assertOperationLog(method, "SET_GLOBAL_ANNOUNCEMENT", "thread", "threadId");
     }
 
+    // 测试取消设置全局公告暴露权限路由
     @Test
     void unsetGlobalAnnouncementShouldExposePermissionRoute() throws NoSuchMethodException {
         Method method = PermThreadController.class.getMethod(
