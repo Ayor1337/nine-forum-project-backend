@@ -16,6 +16,7 @@ import com.ayor.mapper.ThreaddMapper;
 import com.ayor.mapper.TopicMapper;
 import com.ayor.service.AuthorizationService;
 import com.ayor.service.ImageAssetService;
+import com.ayor.service.FollowMessageService;
 import com.ayor.service.MentionMessageService;
 import com.ayor.service.UserRelationService;
 import com.ayor.service.CacheInvalidationService;
@@ -75,6 +76,9 @@ class ThreaddServiceImplTest {
 
     @Mock
     private MentionMessageService mentionMessageService;
+
+    @Mock
+    private FollowMessageService followMessageService;
 
     @Mock
     private ImageAssetService imageAssetService;
@@ -361,6 +365,7 @@ class ThreaddServiceImplTest {
         assertNull(result);
         verify(imageAssetService).syncContentRefs("THREAD", 321, "{\"type\":\"doc\",\"content\":[]}", 8);
         verify(mentionMessageService).createThreadMentionMessages("{\"type\":\"doc\",\"content\":[]}", 8, 321);
+        verify(followMessageService).createThreadFollowMessages(any(Threadd.class));
         verify(cacheInvalidationService).clearThreadRanking();
     }
 
@@ -512,6 +517,7 @@ class ThreaddServiceImplTest {
                 new TipTapUtils(),
                 tagMapper,
                 mentionMessageService,
+                followMessageService,
                 imageAssetService,
                 authorizationService,
                 userRelationService,

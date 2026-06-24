@@ -113,13 +113,15 @@ public class MessageUnreadServiceImpl implements MessageUnreadService {
     public UnreadOverviewVO getUnreadOverviewVO(Integer userId) {
         Long reply = getUnread(userId, UnreadMessageType.REPLY_MESSAGE);
         Long mention = getUnread(userId, UnreadMessageType.MENTION_MESSAGE);
+        Long follow = getUnread(userId, UnreadMessageType.FOLLOW_MESSAGE);
         Long system = getUnread(userId, UnreadMessageType.SYSTEM_MESSAGE);
         Long user = getUnread(userId, UnreadMessageType.USER_MESSAGE);
 
         return UnreadOverviewVO.builder()
-                .total(reply + mention + system + user)
+                .total(reply + mention + follow + system + user)
                 .reply(reply)
                 .mention(mention)
+                .follow(follow)
                 .system(system)
                 .user(user)
                 .build();

@@ -9,6 +9,8 @@ public enum UnreadMessageType {
 
     MENTION_MESSAGE("mention"),
 
+    FOLLOW_MESSAGE("follow"),
+
     SYSTEM_MESSAGE("system"),
 
     USER_MESSAGE("user");

@@ -16,6 +16,7 @@ import com.ayor.entity.pojo.ThreadEditHistory;
 import com.ayor.mapper.*;
 import com.ayor.service.AuthorizationService;
 import com.ayor.service.CacheInvalidationService;
+import com.ayor.service.FollowMessageService;
 import com.ayor.service.ImageAssetService;
 import com.ayor.service.MentionMessageService;
 import com.ayor.service.ThreaddService;
@@ -61,6 +62,8 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
     private final TagMapper tagMapper;
 
     private final MentionMessageService mentionMessageService;
+
+    private final FollowMessageService followMessageService;
 
     private final ImageAssetService imageAssetService;
 
@@ -450,6 +453,7 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
         if (this.save(threadd)) {
             imageAssetService.syncContentRefs("THREAD", threadd.getThreadId(), threadd.getContent(), accountId);
             mentionMessageService.createThreadMentionMessages(threadd.getContent(), accountId, threadd.getThreadId());
+            followMessageService.createThreadFollowMessages(threadd);
             cacheInvalidationService.clearThreadRanking();
             return null;
         }

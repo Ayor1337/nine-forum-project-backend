@@ -41,4 +41,23 @@ class MessageUnreadServiceImplTest {
 
         assertEquals(0, service.clearUnread(7, UnreadMessageType.REPLY_MESSAGE, 20L));
     }
+
+    // 测试未读概览包含关注动态未读
+    @Test
+    void unreadOverviewShouldIncludeFollowUnread() {
+        StringRedisTemplate template = mock(StringRedisTemplate.class);
+        @SuppressWarnings("unchecked")
+        ValueOperations<String, String> values = mock(ValueOperations.class);
+        when(template.opsForValue()).thenReturn(values);
+        when(values.get("message:reply:unread:7")).thenReturn("1");
+        when(values.get("message:mention:unread:7")).thenReturn("2");
+        when(values.get("message:follow:unread:7")).thenReturn("3");
+        when(values.get("message:system:unread:7")).thenReturn("4");
+        when(values.get("message:user:unread:7")).thenReturn("5");
+        MessageUnreadServiceImpl service = new MessageUnreadServiceImpl(template);
+
+        assertEquals(15, service.getUnreadOverviewVO(7).getTotal());
+        assertEquals(3, service.getUnreadOverviewVO(7).getFollow());
+        assertEquals(3, service.getUnreadVO(7, "follow").getUnread());
+    }
 }

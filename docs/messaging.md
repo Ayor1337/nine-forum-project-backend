@@ -44,6 +44,7 @@ NineForum 同时使用 RabbitMQ 和 WebSocket/STOMP。RabbitMQ 负责跨应用�
 | `/verify/{jwtId}` | 注册邮箱验证结果。 |
 | `/user/{accountId}/notif/system` | 用户系统消息。 |
 | `/user/{accountId}/notif/mention` | 提及消息。 |
+| `/user/{accountId}/notif/follow` | 关注用户发布主题帖后的关注动态消息。 |
 | `/user/{accountId}/notif/unread` | 总未读消息。 |
 | `/user/{accountId}/notif/unread/{type}` | 指定类型未读消息。 |
 | `/user/{accountId}/notif/unread-overview` | 未读消息概览。 |

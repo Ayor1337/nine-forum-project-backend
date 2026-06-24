@@ -7,8 +7,7 @@ MySQL 是 NineForum 的主业务数据库。完整本地初始化 schema 主要�
 | 文件 | 用途 |
 | --- | --- |
 | `.docker/image/mysql/nine_forum_schema.sql` | 本地完整初始化 schema，包含主要表、约束和部分初始数据。 |
-| `docs/sql/announcements.sql` | 公告表相关增量 SQL。 |
-| `docs/sql/feedback.sql` | 意见反馈表相关增量 SQL。 |
+| `docs/sql/20260624_follow_message.sql` | 关注动态消息表相关增量 SQL。 |
 
 当前 Docker Compose 使用 `mysql:latest` 镜像，未直接启用 `.docker/image/mysql/Dockerfile` 构建。首次启动容器后如需完整表结构，需要手动导入 schema，或调整 Compose 改用自定义镜像。
 
@@ -20,7 +19,7 @@ MySQL 是 NineForum 的主业务数据库。完整本地初始化 schema 主要�
 | 角色权限 | `role`、`permission`、`permission_operation_log` |
 | 内容结构 | `theme`、`topic`、`topic_stat`、`tag`、`thread`、`thread_edit_history`、`post`、`post_edit_history` |
 | 互动行为 | `like_thread`、`collect`、`history`、`user_relation` |
-| 通知治理 | `mention_message`、`report`、`feedback`、`dashboard_activity` |
+| 通知治理 | `mention_message`、`follow_message`、`report`、`feedback`、`dashboard_activity` |
 | 图片资源 | `image_asset`、`image_asset_favorite`、`content_image_ref` |
 | 安全认证 | `passkey_credential` |
 | 公告 | `announcements` |
@@ -33,6 +32,7 @@ MySQL 是 NineForum 的主业务数据库。完整本地初始化 schema 主要�
 - `thread.topic_id`、`thread.tag_id`、`thread.account_id` 分别关联话题、标签和作者账号。
 - `post.thread_id`、`post.account_id` 分别关联帖子和回复作者。
 - `thread_edit_history`、`post_edit_history` 保存内容编辑历史，并记录编辑者账号。
+- `follow_message` 保存被关注者发布主题帖后生成的关注动态消息。
 - `like_thread`、`collect`、`history` 保存用户与帖子的互动关系。
 - `user_relation` 通过 `(from_account_id, to_account_id, relation_type)` 保持关注/拉黑关系唯一。
 - `image_asset_favorite` 通过 `(account_id, asset_id)` 保持用户收藏图片唯一。
@@ -43,6 +43,7 @@ MySQL 是 NineForum 的主业务数据库。完整本地初始化 schema 主要�
 
 - 唯一约束用于防止重复关系，例如角色权限、图片收藏、用户关系、Passkey credential。
 - `mention_message` 按账号和时间、来源类型和来源 ID 建索引，服务于消息分页和去重查询。
+- `follow_message` 按账号和时间、发帖人和帖子 ID 建索引，服务于关注动态分页和排查。
 - 多数外键使用 `ON DELETE RESTRICT`，删除业务数据前需要先处理依赖数据。
 - 部分图片和会话相关表使用 `ON DELETE CASCADE` 或 `ON DELETE SET NULL`，实现资源或账号删除后的引用处理。
 
