@@ -113,18 +113,57 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
     }
 
     private List<PostVO> toPostVOs(List<Post> posts) {
+        if (posts == null || posts.isEmpty()) {
+            return new ArrayList<>();
+        }
         List<PostVO> postVOList = new ArrayList<>();
+        Map<Integer, PostVO> postVOMap = new HashMap<>();
+        Map<Integer, Integer> postReplyToMap = new HashMap<>();
+        Set<Integer> replyToIds = new HashSet<>();
         posts.forEach(post -> {
-            PostVO postVO = new PostVO();
-            BeanUtils.copyProperties(post, postVO);
-            Account account = accountMapper.getAccountById(post.getAccountId());
-            postVO.setNickname(account.getNickname());
-            postVO.setAccountId(account.getAccountId());
-            postVO.setAvatarUrl(account.getAvatarUrl());
-            postVO.setEditCount(countEdits(post.getPostId()));
+            PostVO postVO = toPostVO(post);
             postVOList.add(postVO);
+            postVOMap.put(post.getPostId(), postVO);
+            postReplyToMap.put(post.getPostId(), post.getReplyTo());
+            if (post.getReplyTo() != null) {
+                replyToIds.add(post.getReplyTo());
+            }
+        });
+        if (replyToIds.isEmpty()) {
+            return postVOList;
+        }
+        List<Post> replyToPosts = this.baseMapper.selectBatchIds(replyToIds);
+        Map<Integer, PostVO> replyToVOMap = new HashMap<>();
+        replyToPosts.forEach(replyToPost -> {
+            if (!Boolean.TRUE.equals(replyToPost.getIsDeleted())) {
+                PostVO replyToVO = toPostVO(replyToPost);
+                replyToVO.setReplyTo(null);
+                replyToVOMap.put(replyToPost.getPostId(), replyToVO);
+            }
+        });
+        postVOList.forEach(postVO -> {
+            Integer replyToId = postReplyToMap.get(postVO.getPostId());
+            postVO.setReplyTo(replyToVOMap.get(replyToId));
+            PostVO samePageVO = postVOMap.get(replyToId);
+            if (samePageVO != null) {
+                PostVO replyToVO = new PostVO();
+                BeanUtils.copyProperties(samePageVO, replyToVO);
+                replyToVO.setReplyTo(null);
+                postVO.setReplyTo(replyToVO);
+            }
         });
         return postVOList;
+    }
+
+    private PostVO toPostVO(Post post) {
+        PostVO postVO = new PostVO();
+        BeanUtils.copyProperties(post, postVO);
+        Account account = accountMapper.getAccountById(post.getAccountId());
+        postVO.setNickname(account.getNickname());
+        postVO.setAccountId(account.getAccountId());
+        postVO.setAvatarUrl(account.getAvatarUrl());
+        postVO.setEditCount(countEdits(post.getPostId()));
+        return postVO;
     }
 
     @Override
@@ -155,6 +194,10 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
                 && userRelationService.isBlockedEitherDirection(userId, threadAuthorId)) {
             return "已拉黑，不能回复";
         }
+        String replyToError = validateReplyTo(postDTO);
+        if (replyToError != null) {
+            return replyToError;
+        }
         Integer topicId = threaddMapper.getTopicIdByThreadId(postDTO.getThreadId());
         post.setAccountId(userId)   ;
         try {
@@ -179,6 +222,20 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
             return null;
         }
         return "发布失败, 未知异常";
+    }
+
+    private String validateReplyTo(PostDTO postDTO) {
+        if (postDTO.getReplyTo() == null) {
+            return null;
+        }
+        Post replyTo = this.getById(postDTO.getReplyTo());
+        if (replyTo == null || Boolean.TRUE.equals(replyTo.getIsDeleted())) {
+            return "回复对象不存在";
+        }
+        if (!Objects.equals(replyTo.getThreadId(), postDTO.getThreadId())) {
+            return "回复对象不属于当前帖子";
+        }
+        return null;
     }
 
     private boolean shouldPushReplyNotification(Integer threadAuthorId, Integer senderId, Integer threadId) {

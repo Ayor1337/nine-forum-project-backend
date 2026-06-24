@@ -1,5 +1,6 @@
 package com.ayor.entity.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -15,5 +16,8 @@ public class PostDTO {
 
     @NotNull(message = "未知的发送")
     private Integer threadId;
+
+    @JsonProperty("reply_to")
+    private Integer replyTo;
 
 }

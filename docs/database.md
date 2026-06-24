@@ -30,7 +30,7 @@ MySQL 是 NineForum 的主业务数据库。完整本地初始化 schema 主要�
 - `permission.role_id` 关联 `role.role_id`，并通过 `(role_id, permission)` 保持角色权限唯一。
 - `topic.theme_id` 关联 `theme.theme_id`。
 - `thread.topic_id`、`thread.tag_id`、`thread.account_id` 分别关联话题、标签和作者账号。
-- `post.thread_id`、`post.account_id` 分别关联帖子和回复作者。
+- `post.thread_id`、`post.account_id` 分别关联帖子和回复作者；`post.reply_to` 可为空，引用被回复的 `post.post_id`，业务层限制只能引用同一帖子下的未删除回复。
 - `thread_edit_history`、`post_edit_history` 保存内容编辑历史，并记录编辑者账号。
 - `follow_message` 保存被关注者发布主题帖后生成的关注动态消息。
 - `like_thread`、`collect`、`history` 保存用户与帖子的互动关系。

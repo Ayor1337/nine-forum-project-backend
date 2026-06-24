@@ -35,6 +35,7 @@ import java.util.Date;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -109,6 +110,9 @@ class PostServiceImplTest {
         account.setNickname("reply-user");
         account.setAvatarUrl("avatar.png");
 
+        when(threaddMapper.getAccountIdByThreadIdInteger(9)).thenReturn(11);
+        when(userRelationService.isBlockedEitherDirection(5, 11)).thenReturn(false);
+        when(userRelationService.listBlockedAccountIdsEitherDirection(5)).thenReturn(List.of());
         when(postMapper.selectPage(any(Page.class), any(Wrapper.class))).thenReturn(page);
         when(accountMapper.getAccountById(3)).thenReturn(account);
 
@@ -121,6 +125,63 @@ class PostServiceImplTest {
         assertEquals("avatar.png", result.getData().get(0).getAvatarUrl());
         assertEquals(0, result.getData().get(0).getEditCount());
         verify(postMapper).selectPage(any(Page.class), any(Wrapper.class));
+    }
+
+    // 测试分页回复返回一层被回复的帖子
+    @Test
+    void shouldIncludeSingleLevelReplyToPostWhenPagingPosts() {
+        PostServiceImpl service = createService();
+
+        Post post = new Post();
+        post.setPostId(21);
+        post.setThreadId(9);
+        post.setReplyTo(20);
+        post.setAccountId(3);
+        post.setTopicId(7);
+        post.setContent("{\"type\":\"doc\",\"content\":[]}");
+        post.setIsDeleted(false);
+        post.setCreateTime(new Date());
+
+        Post replyTo = new Post();
+        replyTo.setPostId(20);
+        replyTo.setThreadId(9);
+        replyTo.setReplyTo(19);
+        replyTo.setAccountId(4);
+        replyTo.setTopicId(7);
+        replyTo.setContent("{\"type\":\"doc\",\"content\":[{\"type\":\"paragraph\"}]}");
+        replyTo.setIsDeleted(false);
+        replyTo.setCreateTime(new Date());
+
+        Page<Post> page = Page.of(1, 10);
+        page.setRecords(List.of(post));
+        page.setTotal(1);
+
+        Account account = new Account();
+        account.setAccountId(3);
+        account.setNickname("reply-user");
+        account.setAvatarUrl("avatar.png");
+
+        Account replyToAccount = new Account();
+        replyToAccount.setAccountId(4);
+        replyToAccount.setNickname("target-user");
+        replyToAccount.setAvatarUrl("target.png");
+
+        when(threaddMapper.getAccountIdByThreadIdInteger(9)).thenReturn(11);
+        when(userRelationService.isBlockedEitherDirection(5, 11)).thenReturn(false);
+        when(userRelationService.listBlockedAccountIdsEitherDirection(5)).thenReturn(List.of());
+        when(postMapper.selectPage(any(Page.class), any(Wrapper.class))).thenReturn(page);
+        when(postMapper.selectBatchIds(any())).thenReturn(List.of(replyTo));
+        when(accountMapper.getAccountById(3)).thenReturn(account);
+        when(accountMapper.getAccountById(4)).thenReturn(replyToAccount);
+
+        PageEntity<PostVO> result = service.getPostsByThreadId(5, 9, 1, 10);
+
+        PostVO postVO = result.getData().get(0);
+        assertNotNull(postVO.getReplyTo());
+        assertEquals(20, postVO.getReplyTo().getPostId());
+        assertEquals("target-user", postVO.getReplyTo().getNickname());
+        assertEquals("target.png", postVO.getReplyTo().getAvatarUrl());
+        assertNull(postVO.getReplyTo().getReplyTo());
     }
 
     // 测试排除拉黑账号从帖子分页
@@ -177,6 +238,107 @@ class PostServiceImplTest {
         verify(imageAssetService).syncContentRefs("POST", 123, "{\"type\":\"doc\",\"content\":[]}", 5);
         verify(forumRealtimeService).publishPostCreated(any(Post.class));
         verify(messagingTemplate, never()).convertAndSendToUser(any(), any(), any());
+    }
+
+    // 测试创建回复时保存同帖子下的 reply_to
+    @Test
+    void shouldSaveReplyToWhenTargetPostBelongsToSameThread() {
+        PostServiceImpl service = createService();
+
+        PostDTO dto = new PostDTO();
+        dto.setThreadId(9);
+        dto.setReplyTo(20);
+        dto.setContent("{\"type\":\"doc\",\"content\":[]}");
+
+        Post replyTo = new Post();
+        replyTo.setPostId(20);
+        replyTo.setThreadId(9);
+        replyTo.setIsDeleted(false);
+
+        when(threaddMapper.getTopicIdByThreadId(9)).thenReturn(7);
+        when(threaddMapper.getAccountIdByThreadIdInteger(9)).thenReturn(11);
+        when(postMapper.selectById(20)).thenReturn(replyTo);
+        when(stompUtils.isUserSubscribed("11", "/notif/reply")).thenReturn(false);
+        doAnswer(invocation -> {
+            Post post = invocation.getArgument(0);
+            post.setPostId(123);
+            return 1;
+        }).when(postMapper).insert(any(Post.class));
+
+        String result = service.insertPost(dto, 5);
+
+        ArgumentCaptor<Post> postCaptor = ArgumentCaptor.forClass(Post.class);
+        assertNull(result);
+        verify(postMapper).insert(postCaptor.capture());
+        assertEquals(20, postCaptor.getValue().getReplyTo());
+        assertEquals(9, postCaptor.getValue().getThreadId());
+    }
+
+    // 测试创建回复时拒绝不存在的 reply_to
+    @Test
+    void shouldRejectMissingReplyToWhenCreatingPost() {
+        PostServiceImpl service = createService();
+
+        PostDTO dto = new PostDTO();
+        dto.setThreadId(9);
+        dto.setReplyTo(88);
+        dto.setContent("{\"type\":\"doc\",\"content\":[]}");
+
+        when(threaddMapper.getAccountIdByThreadIdInteger(9)).thenReturn(11);
+        when(postMapper.selectById(88)).thenReturn(null);
+
+        String result = service.insertPost(dto, 5);
+
+        assertEquals("回复对象不存在", result);
+        verify(postMapper, never()).insert(any(Post.class));
+    }
+
+    // 测试创建回复时拒绝已删除的 reply_to
+    @Test
+    void shouldRejectDeletedReplyToWhenCreatingPost() {
+        PostServiceImpl service = createService();
+
+        PostDTO dto = new PostDTO();
+        dto.setThreadId(9);
+        dto.setReplyTo(20);
+        dto.setContent("{\"type\":\"doc\",\"content\":[]}");
+
+        Post replyTo = new Post();
+        replyTo.setPostId(20);
+        replyTo.setThreadId(9);
+        replyTo.setIsDeleted(true);
+
+        when(threaddMapper.getAccountIdByThreadIdInteger(9)).thenReturn(11);
+        when(postMapper.selectById(20)).thenReturn(replyTo);
+
+        String result = service.insertPost(dto, 5);
+
+        assertEquals("回复对象不存在", result);
+        verify(postMapper, never()).insert(any(Post.class));
+    }
+
+    // 测试创建回复时拒绝其他帖子下的 reply_to
+    @Test
+    void shouldRejectReplyToFromDifferentThreadWhenCreatingPost() {
+        PostServiceImpl service = createService();
+
+        PostDTO dto = new PostDTO();
+        dto.setThreadId(9);
+        dto.setReplyTo(20);
+        dto.setContent("{\"type\":\"doc\",\"content\":[]}");
+
+        Post replyTo = new Post();
+        replyTo.setPostId(20);
+        replyTo.setThreadId(10);
+        replyTo.setIsDeleted(false);
+
+        when(threaddMapper.getAccountIdByThreadIdInteger(9)).thenReturn(11);
+        when(postMapper.selectById(20)).thenReturn(replyTo);
+
+        String result = service.insertPost(dto, 5);
+
+        assertEquals("回复对象不属于当前帖子", result);
+        verify(postMapper, never()).insert(any(Post.class));
     }
 
     // 测试楼主正在当前帖子详情页时不额外推送 reply 实时消息

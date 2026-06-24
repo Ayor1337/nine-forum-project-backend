@@ -154,11 +154,14 @@ CREATE TABLE IF NOT EXISTS `post`  (
                             `create_time` datetime NULL DEFAULT NULL,
                             `update_time` datetime NULL DEFAULT NULL,
                             `thread_id` int NULL DEFAULT NULL,
+                            `reply_to` int NULL DEFAULT NULL,
                             PRIMARY KEY (`post_id`) USING BTREE,
                             INDEX `account_id`(`account_id` ASC) USING BTREE,
                             INDEX `thread_id`(`thread_id` ASC) USING BTREE,
+                            INDEX `idx_post_reply_to`(`reply_to` ASC) USING BTREE,
                             CONSTRAINT `db_post_ibfk_1` FOREIGN KEY (`account_id`) REFERENCES `account` (`account_id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
-                            CONSTRAINT `db_post_ibfk_2` FOREIGN KEY (`thread_id`) REFERENCES `thread` (`thread_id`) ON DELETE RESTRICT ON UPDATE RESTRICT
+                            CONSTRAINT `db_post_ibfk_2` FOREIGN KEY (`thread_id`) REFERENCES `thread` (`thread_id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
+                            CONSTRAINT `db_post_ibfk_3` FOREIGN KEY (`reply_to`) REFERENCES `post` (`post_id`) ON DELETE RESTRICT ON UPDATE RESTRICT
 ) ENGINE = InnoDB AUTO_INCREMENT = 2 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------

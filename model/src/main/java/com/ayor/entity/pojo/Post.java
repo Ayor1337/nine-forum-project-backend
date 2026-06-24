@@ -1,6 +1,7 @@
 package com.ayor.entity.pojo;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -36,6 +37,10 @@ public class Post {
 
     @Field(type = FieldType.Integer, index = false)
     private Integer threadId;
+
+    @TableField("reply_to")
+    @Field(type = FieldType.Integer, index = false)
+    private Integer replyTo;
 
     @Field(type = FieldType.Integer, index = false)
     private Integer topicId;

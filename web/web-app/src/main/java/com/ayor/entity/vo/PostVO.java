@@ -1,5 +1,6 @@
 package com.ayor.entity.vo;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -34,6 +35,10 @@ public class PostVO implements Serializable {
     private Integer threadId;
 
     private Integer topicId;
+
+    @JsonProperty("reply_to")
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private PostVO replyTo;
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private Integer editCount;
