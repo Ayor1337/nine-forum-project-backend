@@ -113,7 +113,7 @@ class ConversationServiceImplTest {
 
         assertNull(result);
         verify(authorizationService).assertCanClearConversationUnread(1, 7, 2);
-        verify(chatUnreadService).clearUnread(7, 2);
+        verify(chatUnreadService).clearUnreadAndTotal(7, 1);
     }
 
     @Test

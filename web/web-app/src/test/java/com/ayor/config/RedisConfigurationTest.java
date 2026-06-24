@@ -11,13 +11,20 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class RedisConfigurationTest {
 
     @Test
-    void threadRankingCacheShouldUseLongTtl() {
+    void cachesShouldUseExplicitTtl() {
         RedisCacheConfiguration defaultCacheConfiguration = RedisCacheConfiguration.defaultCacheConfig()
+                .entryTtl(Duration.ofMinutes(30))
                 .disableCachingNullValues();
-        RedisCacheConfiguration cacheConfiguration = RedisConfiguration.cacheConfigurations(defaultCacheConfiguration)
-                .get("threadRanking");
+        var configurations = RedisConfiguration.cacheConfigurations(defaultCacheConfiguration);
 
-        assertEquals(Duration.ofHours(6), cacheConfiguration.getTtl());
-        assertTrue(RedisConfiguration.cacheConfigurations(defaultCacheConfiguration).containsKey("threadRanking"));
+        assertEquals(Duration.ofMinutes(30), defaultCacheConfiguration.getTtl());
+        assertEquals(Duration.ofMinutes(15), configurations.get("userPrivacySetting").getTtl());
+        assertEquals(Duration.ofMinutes(15), configurations.get("userRelationBlocked").getTtl());
+        assertEquals(Duration.ofMinutes(15), configurations.get("conversation").getTtl());
+        assertEquals(Duration.ofMinutes(30), configurations.get("userInfo").getTtl());
+        assertEquals(Duration.ofHours(1), configurations.get("themeList").getTtl());
+        assertEquals(Duration.ofHours(1), configurations.get("topicList").getTtl());
+        assertEquals(Duration.ofMinutes(30), configurations.get("threadRanking").getTtl());
+        assertTrue(configurations.containsKey("threadRanking"));
     }
 }

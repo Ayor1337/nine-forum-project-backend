@@ -9,6 +9,7 @@ import com.ayor.mapper.AccountMapper;
 import com.ayor.mapper.LikeThreadMapper;
 import com.ayor.mapper.ThreaddMapper;
 import com.ayor.service.LikeThreadService;
+import com.ayor.service.CacheInvalidationService;
 import com.ayor.service.PrivacyPolicyService;
 import com.ayor.service.UserRelationService;
 import com.ayor.util.TipTapUtils;
@@ -38,6 +39,8 @@ public class LikeThreadServiceImpl extends ServiceImpl<LikeThreadMapper, LikeThr
     private final PrivacyPolicyService privacyPolicyService;
 
     private final UserRelationService userRelationService;
+
+    private final CacheInvalidationService cacheInvalidationService;
     /**
      * 为指定帖子记录一次点赞。
      */
@@ -63,7 +66,11 @@ public class LikeThreadServiceImpl extends ServiceImpl<LikeThreadMapper, LikeThr
         likeThread.setThreadId(threadId);
         likeThread.setAccountId(account.getAccountId());
 
-        return this.save(likeThread) ? null : "点赞失败";
+        if (!this.save(likeThread)) {
+            return "点赞失败";
+        }
+        cacheInvalidationService.clearThreadRanking();
+        return null;
     }
     /**
      * 删除指定帖子上的点赞记录。
@@ -84,7 +91,11 @@ public class LikeThreadServiceImpl extends ServiceImpl<LikeThreadMapper, LikeThr
         if (likeThread == null) {
             return "不能取消未点赞的内容";
         }
-        return this.removeById(likeThread) ? null : "取消点赞失败";
+        if (!this.removeById(likeThread)) {
+            return "取消点赞失败";
+        }
+        cacheInvalidationService.clearThreadRanking();
+        return null;
     }
     /**
      * 分页获取用户点赞过的帖子列表。

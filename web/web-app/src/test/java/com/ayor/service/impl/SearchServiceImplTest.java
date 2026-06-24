@@ -18,6 +18,7 @@ import org.springframework.data.elasticsearch.core.SearchHits;
 import org.springframework.data.elasticsearch.core.SearchHitsImpl;
 import org.springframework.data.elasticsearch.core.TotalHitsRelation;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.script.RedisScript;
 
 import java.time.Duration;
 import java.util.List;
@@ -25,6 +26,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -104,6 +106,23 @@ class SearchServiceImplTest {
         BoolQuery boolQuery = capturedBoolQuery();
         assertTrue(boolQuery.mustNot().stream().anyMatch(query -> query.isTerms()
                 && "accountId".equals(query.terms().field())));
+    }
+
+    @Test
+    void searchHistoryShouldBeAtomicallyTrimmedAndExpired() {
+        SearchServiceImpl service = createService();
+        when(operations.search(any(NativeQuery.class), eq(ThreadDoc.class))).thenReturn(emptyHits());
+
+        service.searchThreads("spring", 5, null, true, false, null, null, "rel", 1, 10);
+
+        verify(redisTemplate).execute(
+                any(RedisScript.class),
+                eq(List.of("search:history:5")),
+                anyString(),
+                eq("spring"),
+                eq("50"),
+                eq("7776000")
+        );
     }
 
     private SearchServiceImpl createService() {

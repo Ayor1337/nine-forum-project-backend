@@ -2,28 +2,20 @@ package com.ayor.config;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.autoconfigure.cache.RedisCacheManagerBuilderCustomizer;
 import org.springframework.boot.autoconfigure.data.redis.RedisProperties;
-import org.springframework.cache.Cache;
-import org.springframework.cache.CacheManager;
-import org.springframework.cache.interceptor.CacheErrorHandler;
-import org.springframework.cache.support.NoOpCacheManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.cache.RedisCacheManager;
-import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.RedisPassword;
 import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
-import org.springframework.data.redis.connection.lettuce.LettuceConnectionProvider;
 import org.springframework.data.redis.core.StringRedisTemplate;
 
 import java.time.Duration;
 import java.util.Map;
-import java.util.Objects;
 
 @Configuration
 @Slf4j
@@ -41,7 +33,13 @@ public class RedisConfiguration {
      *
      * 当前榜单不要求实时刷新，6 小时 TTL 可以减少重复排序查询，同时避免长期展示旧数据。
      */
-    private static final Duration THREAD_RANKING_CACHE_TTL = Duration.ofHours(6);
+    private static final Duration DEFAULT_CACHE_TTL = Duration.ofMinutes(30);
+
+    private static final Duration SHORT_CACHE_TTL = Duration.ofMinutes(15);
+
+    private static final Duration CONTENT_CACHE_TTL = Duration.ofHours(1);
+
+    private static final Duration THREAD_RANKING_CACHE_TTL = Duration.ofMinutes(30);
 
     /**
      * 创建默认 Redis 连接工厂。
@@ -115,6 +113,7 @@ public class RedisConfiguration {
     @Bean
     public RedisCacheManager cacheManager(@Qualifier("cacheRedisConnectionFactory") RedisConnectionFactory redisConnectionFactory) {
         RedisCacheConfiguration defaultCacheConfiguration = RedisCacheConfiguration.defaultCacheConfig()
+                .entryTtl(DEFAULT_CACHE_TTL)
                 .disableCachingNullValues();
         return RedisCacheManager.builder(redisConnectionFactory)
                 .cacheDefaults(defaultCacheConfiguration)
@@ -133,9 +132,19 @@ public class RedisConfiguration {
      * @return 按缓存名区分的 Redis 缓存配置
      */
     static Map<String, RedisCacheConfiguration> cacheConfigurations(RedisCacheConfiguration defaultCacheConfiguration) {
-        return Map.of(
-                THREAD_RANKING_CACHE,
-                defaultCacheConfiguration.entryTtl(THREAD_RANKING_CACHE_TTL)
+        return Map.ofEntries(
+                Map.entry("userPrivacySetting", defaultCacheConfiguration.entryTtl(SHORT_CACHE_TTL)),
+                Map.entry("userRelationFollowing", defaultCacheConfiguration.entryTtl(SHORT_CACHE_TTL)),
+                Map.entry("userRelationMutualFollowing", defaultCacheConfiguration.entryTtl(SHORT_CACHE_TTL)),
+                Map.entry("userRelationBlocked", defaultCacheConfiguration.entryTtl(SHORT_CACHE_TTL)),
+                Map.entry("conversation", defaultCacheConfiguration.entryTtl(SHORT_CACHE_TTL)),
+                Map.entry("conversationList", defaultCacheConfiguration.entryTtl(SHORT_CACHE_TTL)),
+                Map.entry("userInfo", defaultCacheConfiguration.entryTtl(DEFAULT_CACHE_TTL)),
+                Map.entry("themeList", defaultCacheConfiguration.entryTtl(CONTENT_CACHE_TTL)),
+                Map.entry("themeTopicList", defaultCacheConfiguration.entryTtl(CONTENT_CACHE_TTL)),
+                Map.entry("topicList", defaultCacheConfiguration.entryTtl(CONTENT_CACHE_TTL)),
+                Map.entry("topicName", defaultCacheConfiguration.entryTtl(CONTENT_CACHE_TTL)),
+                Map.entry(THREAD_RANKING_CACHE, defaultCacheConfiguration.entryTtl(THREAD_RANKING_CACHE_TTL))
         );
     }
 

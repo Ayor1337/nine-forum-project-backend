@@ -19,6 +19,7 @@ import com.ayor.mapper.PermissionMapper;
 import com.ayor.mapper.RoleMapper;
 import com.ayor.service.UserProfileService;
 import com.ayor.service.AccountService;
+import com.ayor.service.CacheInvalidationService;
 import com.ayor.service.PrivacyPolicyService;
 import com.ayor.service.UserPrivacySettingService;
 import com.ayor.type.AccountStatus;
@@ -28,7 +29,6 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
-import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.userdetails.User;
@@ -74,6 +74,8 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
     private final UserProfileService userProfileService;
 
     private final ImageStorageService imageStorageService;
+
+    private final CacheInvalidationService cacheInvalidationService;
 
     /**
      * 根据用户名加载 Spring Security 登录信息。
@@ -230,7 +232,6 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
      */
 
     @Override
-    @CacheEvict(value = "userInfo", key = "#accountId")
     public String updateUserAvatar(Integer accountId, Base64Upload dto) {
         Account account = this.getById(accountId);
         if (account == null) {
@@ -241,14 +242,18 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         } catch (RuntimeException e) {
             return "资源服务器异常";
         }
-        return this.baseMapper.updateById(account) > 0 ? null : "更新失败, 未知异常";
+        if (this.baseMapper.updateById(account) <= 0) {
+            return "更新失败, 未知异常";
+        }
+        cacheInvalidationService.evict("userInfo", accountId);
+        cacheInvalidationService.clearThreadRanking();
+        return null;
     }
     /**
      * 更新用户横幅图并同步到对象存储。
      */
 
     @Override
-    @CacheEvict(value = "userInfo", key = "#accountId")
     public String updateUserBanner(Integer accountId, Base64Upload dto) {
         Account account = this.getById(accountId);
         if (account == null) {
@@ -259,7 +264,11 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         } catch (RuntimeException e) {
             return "资源服务器异常";
         }
-        return this.baseMapper.updateById(account) > 0 ? null : "更新失败, 未知异常";
+        if (this.baseMapper.updateById(account) <= 0) {
+            return "更新失败, 未知异常";
+        }
+        cacheInvalidationService.evict("userInfo", accountId);
+        return null;
     }
     /**
      * 校验邮箱验证 token 后创建新账户。
@@ -296,7 +305,6 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
      * 更新用户个人资料
      */
     @Override
-    @CacheEvict(value = "userInfo", key = "#accountId")
     public String updateUserProfile(Integer accountId, UserProfileDTO profileDTO) {
         if (Objects.isNull(profileDTO)) {
             return "上传的用户信息为空";
@@ -332,7 +340,12 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         if (!this.updateById(accountById)) {
             return "修改失败";
         }
-        return userProfileMapper.updateById(userProfile) > 0 ? null : "修改失败";
+        if (userProfileMapper.updateById(userProfile) <= 0) {
+            return "修改失败";
+        }
+        cacheInvalidationService.evict("userInfo", accountId);
+        cacheInvalidationService.clearThreadRanking();
+        return null;
     }
 
     /**

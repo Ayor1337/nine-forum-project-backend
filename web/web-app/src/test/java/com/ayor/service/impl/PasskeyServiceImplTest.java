@@ -76,7 +76,7 @@ class PasskeyServiceImplTest {
         PasskeyCredential credential = credential(7);
         PasskeyRequestStore.ChallengeSnapshot snapshot = authenticationSnapshot();
 
-        when(requestStore.load("req-1")).thenReturn(snapshot);
+        when(requestStore.consume("req-1")).thenReturn(snapshot);
         when(credentialMapper.findByCredentialId("AQID")).thenReturn(credential);
 
         assertNull(service.authenticate(dto, null));
@@ -92,7 +92,7 @@ class PasskeyServiceImplTest {
         account.setAccountId(7);
         account.setStatus(3);
 
-        when(requestStore.load("req-1")).thenReturn(snapshot);
+        when(requestStore.consume("req-1")).thenReturn(snapshot);
         when(credentialMapper.findByCredentialId("AQID")).thenReturn(credential);
         when(webAuthnAdapter.verifyAuthentication(dto, snapshot, credential)).thenReturn(10L);
         when(accountMapper.getAccountById(7)).thenReturn(account);
@@ -113,7 +113,7 @@ class PasskeyServiceImplTest {
         authorizeVO.setUsername("tester");
         authorizeVO.setToken("jwt-token");
 
-        when(requestStore.load("req-1")).thenReturn(snapshot);
+        when(requestStore.consume("req-1")).thenReturn(snapshot);
         when(credentialMapper.findByCredentialId("AQID")).thenReturn(credential);
         when(webAuthnAdapter.verifyAuthentication(dto, snapshot, credential)).thenReturn(10L);
         when(accountMapper.getAccountById(7)).thenReturn(account);
@@ -124,7 +124,7 @@ class PasskeyServiceImplTest {
         assertEquals("tester", result.getUsername());
         assertEquals("jwt-token", result.getToken());
         verify(credentialMapper).updateAuthenticationState(eq(credential.getId()), eq(10L), any(Date.class));
-        verify(requestStore).remove("req-1");
+        verify(requestStore).consume("req-1");
     }
 
     @Test

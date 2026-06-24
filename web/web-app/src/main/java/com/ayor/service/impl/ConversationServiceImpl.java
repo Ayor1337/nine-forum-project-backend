@@ -285,7 +285,7 @@ public class ConversationServiceImpl extends ServiceImpl<ConversationMapper, Con
             return "无此用户";
         }
         authorizationService.assertCanClearConversationUnread(accountId, conversationId, fromUserId);
-        chatUnreadService.clearUnread(conversationId, fromUserId);
+        chatUnreadService.clearUnreadAndTotal(conversationId, accountId);
         return null;
     }
     private UserInfoVO getConversationUserInfo(Integer accountId) {

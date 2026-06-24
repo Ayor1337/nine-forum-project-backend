@@ -6,6 +6,7 @@ import com.ayor.util.CONST;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -13,6 +14,13 @@ import java.util.concurrent.TimeUnit;
 
 @Service
 public class RedisPasskeyRequestStore implements PasskeyRequestStore {
+
+    private static final DefaultRedisScript<String> CONSUME_SCRIPT = new DefaultRedisScript<>(
+            "local value = redis.call('GET', KEYS[1]); " +
+                    "if value then redis.call('DEL', KEYS[1]); end; " +
+                    "return value;",
+            String.class
+    );
 
     private final StringRedisTemplate redisTemplate;
 
@@ -34,20 +42,12 @@ public class RedisPasskeyRequestStore implements PasskeyRequestStore {
     }
 
     @Override
-    public ChallengeSnapshot load(String requestId) {
-        if (redisTemplate.opsForValue() == null) {
-            return null;
-        }
-        ChallengeSnapshot snapshot = deserialize(redisTemplate.opsForValue().get(key(requestId)));
+    public ChallengeSnapshot consume(String requestId) {
+        ChallengeSnapshot snapshot = deserialize(redisTemplate.execute(CONSUME_SCRIPT, java.util.List.of(key(requestId))));
         if (snapshot == null || snapshot.expiresAt().isBefore(Instant.now())) {
             return null;
         }
         return snapshot;
-    }
-
-    @Override
-    public void remove(String requestId) {
-        redisTemplate.delete(key(requestId));
     }
 
     private String key(String requestId) {

@@ -18,6 +18,7 @@ import com.ayor.service.AuthorizationService;
 import com.ayor.service.ImageAssetService;
 import com.ayor.service.MentionMessageService;
 import com.ayor.service.UserRelationService;
+import com.ayor.service.CacheInvalidationService;
 import com.ayor.type.ThreadOrderType;
 import com.ayor.util.TipTapUtils;
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
@@ -86,6 +87,9 @@ class ThreaddServiceImplTest {
 
     @Mock
     private ThreadEditHistoryMapper threadEditHistoryMapper;
+
+    @Mock
+    private CacheInvalidationService cacheInvalidationService;
 
     @Test
     void threadRankingMethodsShouldUseThreadRankingCache() throws NoSuchMethodException {
@@ -343,6 +347,7 @@ class ThreaddServiceImplTest {
         assertNull(result);
         verify(imageAssetService).syncContentRefs("THREAD", 321, "{\"type\":\"doc\",\"content\":[]}", 8);
         verify(mentionMessageService).createThreadMentionMessages("{\"type\":\"doc\",\"content\":[]}", 8, 321);
+        verify(cacheInvalidationService).clearThreadRanking();
     }
 
     @Test
@@ -489,7 +494,8 @@ class ThreaddServiceImplTest {
                 imageAssetService,
                 authorizationService,
                 userRelationService,
-                threadEditHistoryMapper
+                threadEditHistoryMapper,
+                cacheInvalidationService
         );
         ReflectionTestUtils.setField(service, "baseMapper", threaddMapper);
         return service;

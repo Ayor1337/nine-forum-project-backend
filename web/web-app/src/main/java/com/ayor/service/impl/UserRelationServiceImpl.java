@@ -9,6 +9,7 @@ import com.ayor.mapper.UserProfileMapper;
 import com.ayor.mapper.AccountMapper;
 import com.ayor.mapper.UserRelationMapper;
 import com.ayor.service.UserRelationService;
+import com.ayor.service.CacheInvalidationService;
 import com.ayor.type.RelationStatus;
 import com.ayor.type.RelationType;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -39,6 +40,8 @@ public class UserRelationServiceImpl extends ServiceImpl<UserRelationMapper, Use
     private final AccountMapper accountMapper;
 
     private final UserProfileMapper userProfileMapper;
+
+    private final CacheInvalidationService cacheInvalidationService;
 
     /**
      * 关注指定用户。
@@ -90,6 +93,7 @@ public class UserRelationServiceImpl extends ServiceImpl<UserRelationMapper, Use
         if (result == null || "已拉黑".equals(result)) {
             deactivateFollowIfPresent(fromAccountId, toAccountId);
             deactivateFollowIfPresent(toAccountId, fromAccountId);
+            cacheInvalidationService.clearThreadRanking();
         }
         return result;
     }
@@ -100,7 +104,11 @@ public class UserRelationServiceImpl extends ServiceImpl<UserRelationMapper, Use
     @Override
     @CacheEvict(value = "userRelationBlocked", key = "T(com.ayor.service.impl.UserRelationServiceImpl).symmetricKey(#fromAccountId, #toAccountId)", condition = "#fromAccountId != null && #toAccountId != null")
     public String unblock(Integer fromAccountId, Integer toAccountId) {
-        return deactivateRelation(fromAccountId, toAccountId, RelationType.BLOCK, "尚未拉黑");
+        String result = deactivateRelation(fromAccountId, toAccountId, RelationType.BLOCK, "尚未拉黑");
+        if (result == null) {
+            cacheInvalidationService.clearThreadRanking();
+        }
+        return result;
     }
 
     /**

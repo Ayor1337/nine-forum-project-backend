@@ -18,6 +18,9 @@ package com.ayor.service;
  */
 public interface ChatUnreadService {
 
+    record UnreadCounts(long conversationUnread, long totalUnread) {
+    }
+
     /**
      * 获取对话的未读消息数量
      * @param conversationId 对话ID
@@ -41,4 +44,8 @@ public interface ChatUnreadService {
      * @return 增加后的总未读数量
      */
     long addUnread(Integer conversationId, Integer fromUserId);
+
+    UnreadCounts addUnreadAndTotal(Integer conversationId, Integer userId);
+
+    UnreadCounts clearUnreadAndTotal(Integer conversationId, Integer userId);
 }

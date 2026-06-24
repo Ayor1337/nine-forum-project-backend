@@ -5,6 +5,7 @@ import com.ayor.entity.dto.TopicDTO;
 import com.ayor.entity.pojo.Topic;
 import com.ayor.image.ImageStorageService;
 import com.ayor.image.StoredImage;
+import com.ayor.service.CacheInvalidationService;
 import com.ayor.mapper.ThreaddMapper;
 import com.ayor.mapper.TopicMapper;
 import com.ayor.mapper.TopicStatMapper;
@@ -40,6 +41,9 @@ class TopicServiceImplTest {
 
     @Mock
     private ImageStorageService imageStorageService;
+
+    @Mock
+    private CacheInvalidationService cacheInvalidationService;
 
     @Test
     void shouldUploadNewTopicCoverThroughImageStorageService() throws Exception {
@@ -82,12 +86,34 @@ class TopicServiceImplTest {
         verify(minioService, never()).uploadBase64(topicDTO.getCover(), "topic/");
     }
 
+    @Test
+    void shouldEvictOldAndNewThemeCachesWhenTopicMoves() {
+        TopicServiceImpl service = spy(createService());
+        Topic topic = new Topic();
+        topic.setTopicId(9);
+        topic.setThemeId(2);
+        topic.setCoverUrl("nineforum/topic/old.png");
+        TopicDTO topicDTO = new TopicDTO(
+                9, "话题", new Base64Upload("nineforum/topic/old.png", "cover.png"), "描述", 3
+        );
+        when(service.getById(9)).thenReturn(topic);
+        when(service.updateById(topic)).thenReturn(true);
+
+        assertNull(service.updateTopic(topicDTO));
+
+        verify(cacheInvalidationService).evict("topicName", 9);
+        verify(cacheInvalidationService).evict("topicList", 2);
+        verify(cacheInvalidationService).evict("topicList", 3);
+        verify(cacheInvalidationService).evict("themeTopicList", "all");
+    }
+
     private TopicServiceImpl createService() {
         TopicServiceImpl service = new TopicServiceImpl(
                 topicMapper,
                 threaddMapper,
                 topicStatMapper,
-                imageStorageService
+                imageStorageService,
+                cacheInvalidationService
         );
         ReflectionTestUtils.setField(service, "baseMapper", topicMapper);
         return service;

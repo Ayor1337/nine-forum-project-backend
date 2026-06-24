@@ -87,7 +87,7 @@ public class PasskeyServiceImpl implements PasskeyService {
 
     @Override
     public String registerCredential(Integer accountId, PasskeyRegistrationFinishDTO dto) {
-        PasskeyRequestStore.ChallengeSnapshot snapshot = requestStore.load(dto.getRequestId());
+        PasskeyRequestStore.ChallengeSnapshot snapshot = requestStore.consume(dto.getRequestId());
         if (snapshot == null || snapshot.type() != PasskeyRequestStore.RequestType.REGISTRATION || !accountId.equals(snapshot.accountId())) {
             return "Passkey 注册请求已过期";
         }
@@ -104,8 +104,6 @@ public class PasskeyServiceImpl implements PasskeyService {
         } catch (RuntimeException ex) {
             log.warn("Passkey registration failed, accountId={}, requestId={}", accountId, dto.getRequestId(), ex);
             return "Passkey 注册失败";
-        } finally {
-            requestStore.remove(dto.getRequestId());
         }
     }
 
@@ -156,7 +154,7 @@ public class PasskeyServiceImpl implements PasskeyService {
 
     @Override
     public AuthorizeVO authenticate(PasskeyAuthenticationFinishDTO dto, HttpServletRequest request) {
-        PasskeyRequestStore.ChallengeSnapshot snapshot = requestStore.load(dto.getRequestId());
+        PasskeyRequestStore.ChallengeSnapshot snapshot = requestStore.consume(dto.getRequestId());
         if (snapshot == null || snapshot.type() != PasskeyRequestStore.RequestType.AUTHENTICATION) {
             return null;
         }
@@ -175,8 +173,6 @@ public class PasskeyServiceImpl implements PasskeyService {
         } catch (RuntimeException ex) {
             log.warn("Passkey authentication failed, requestId={}", dto.getRequestId(), ex);
             return null;
-        } finally {
-            requestStore.remove(dto.getRequestId());
         }
     }
 

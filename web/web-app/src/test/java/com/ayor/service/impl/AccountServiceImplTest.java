@@ -16,6 +16,7 @@ import com.ayor.service.UserProfileService;
 import com.ayor.service.PrivacyPolicyService;
 import com.ayor.service.UserPrivacySettingService;
 import com.ayor.service.UserRelationService;
+import com.ayor.service.CacheInvalidationService;
 import com.ayor.util.JWTUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -75,6 +76,9 @@ class AccountServiceImplTest {
 
     @Mock
     private ImageStorageService imageStorageService;
+
+    @Mock
+    private CacheInvalidationService cacheInvalidationService;
 
     @Test
     void shouldUploadAvatarThroughImageStorageService() throws Exception {
@@ -240,7 +244,8 @@ class AccountServiceImplTest {
                 privacyPolicyService,
                 userPrivacySettingService,
                 userProfileService,
-                imageStorageService
+                imageStorageService,
+                cacheInvalidationService
         );
         ReflectionTestUtils.setField(service, "baseMapper", accountMapper);
         return service;

@@ -15,6 +15,7 @@ import com.ayor.entity.pojo.Threadd;
 import com.ayor.entity.pojo.ThreadEditHistory;
 import com.ayor.mapper.*;
 import com.ayor.service.AuthorizationService;
+import com.ayor.service.CacheInvalidationService;
 import com.ayor.service.ImageAssetService;
 import com.ayor.service.MentionMessageService;
 import com.ayor.service.ThreaddService;
@@ -68,6 +69,8 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
     private final UserRelationService userRelationService;
 
     private final ThreadEditHistoryMapper threadEditHistoryMapper;
+
+    private final CacheInvalidationService cacheInvalidationService;
     /**
      * 获取指定主题下的帖子列表或分页结果。
      */
@@ -305,7 +308,11 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
         imageAssetService.clearContentRefs("THREAD", threadId);
         postMapper.getPostsByThreadId(threadId).forEach(post -> imageAssetService.clearContentRefs("POST", post.getPostId()));
         postMapper.removePostsByThreadId(threadId);
-        return this.removeByIdLogical(threadId) ? null : "删除失败";
+        if (!this.removeByIdLogical(threadId)) {
+            return "删除失败";
+        }
+        cacheInvalidationService.clearThreadRanking();
+        return null;
     }
     /**
      * 管理员直接删除帖子。
@@ -322,7 +329,11 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
         imageAssetService.clearContentRefs("THREAD", threadId);
         postMapper.getPostsByThreadId(threadId).forEach(post -> imageAssetService.clearContentRefs("POST", post.getPostId()));
         postMapper.removePostsByThreadId(threadId);
-        return this.removeByIdLogical(threadId) ? null : "删除失败";
+        if (!this.removeByIdLogical(threadId)) {
+            return "删除失败";
+        }
+        cacheInvalidationService.clearThreadRanking();
+        return null;
     }
     /**
      * 将帖子设置为主题公告。
@@ -439,6 +450,7 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
         if (this.save(threadd)) {
             imageAssetService.syncContentRefs("THREAD", threadd.getThreadId(), threadd.getContent(), accountId);
             mentionMessageService.createThreadMentionMessages(threadd.getContent(), accountId, threadd.getThreadId());
+            cacheInvalidationService.clearThreadRanking();
             return null;
         }
         return "添加失败";
@@ -482,6 +494,7 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
 
         imageAssetService.syncContentRefs("THREAD", threadId, newContent, accountId);
         mentionMessageService.createThreadMentionMessages(newContent, accountId, threadId);
+        cacheInvalidationService.clearThreadRanking();
         return null;
     }
 
@@ -568,7 +581,11 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
         }
         threadd.setTagId(tagId);
 
-        return this.updateById(threadd) ? null : "修改失败";
+        if (!this.updateById(threadd)) {
+            return "修改失败";
+        }
+        cacheInvalidationService.clearThreadRanking();
+        return null;
     }
     /**
      * 删除帖子上的标签。
@@ -579,7 +596,11 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
         if (!existsThreadById(threadId)) {
             return "帖子不存在";
         }
-        return this.baseMapper.removeThreadTag(threadId, topicId) ? null : "修改失败";
+        if (!this.baseMapper.removeThreadTag(threadId, topicId)) {
+            return "修改失败";
+        }
+        cacheInvalidationService.clearThreadRanking();
+        return null;
     }
     /**
      * 刷新帖子统计信息。
@@ -589,6 +610,7 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
     public void updateThreadStat() {
         this.baseMapper.updateThreadPostCount();
         this.baseMapper.updateLikeCount();
+        cacheInvalidationService.clearThreadRanking();
     }
     /**
      * 增加帖子的浏览次数。
@@ -603,8 +625,12 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
         Lock lock = new ReentrantLock();
         lock.lock();
         threadd.setViewCount(threadd.getViewCount() + 1);
-        this.updateById(threadd);
+        boolean updated = this.updateById(threadd);
         lock.unlock();
+        if (!updated) {
+            return "更新失败";
+        }
+        cacheInvalidationService.clearThreadRanking();
         return null;
     }
     /**

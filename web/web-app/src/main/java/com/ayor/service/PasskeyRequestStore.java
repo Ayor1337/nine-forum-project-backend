@@ -50,12 +50,5 @@ public interface PasskeyRequestStore {
      * @param requestId 请求 ID
      * @return 快照，不存在或过期时返回 `null`
      */
-    ChallengeSnapshot load(String requestId);
-
-    /**
-     * 删除指定请求 ID 的快照。
-     *
-     * @param requestId 请求 ID
-     */
-    void remove(String requestId);
+    ChallengeSnapshot consume(String requestId);
 }

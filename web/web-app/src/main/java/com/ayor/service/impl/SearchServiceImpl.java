@@ -22,6 +22,7 @@ import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
 import org.springframework.data.elasticsearch.core.SearchHit;
 import org.springframework.data.elasticsearch.core.SearchHits;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,6 +35,19 @@ import java.util.*;
 @Transactional
 @RequiredArgsConstructor
 public class SearchServiceImpl implements SearchService {
+
+    private static final int SEARCH_HISTORY_LIMIT = 50;
+
+    private static final long SEARCH_HISTORY_TTL_SECONDS = Duration.ofDays(90).toSeconds();
+
+    private static final DefaultRedisScript<Long> SAVE_HISTORY_SCRIPT = new DefaultRedisScript<>(
+            "redis.call('ZADD', KEYS[1], ARGV[1], ARGV[2]); " +
+                    "local size = redis.call('ZCARD', KEYS[1]); " +
+                    "local limit = tonumber(ARGV[3]); " +
+                    "if size > limit then redis.call('ZREMRANGEBYRANK', KEYS[1], 0, size - limit - 1); end; " +
+                    "redis.call('EXPIRE', KEYS[1], ARGV[4]); return 1;",
+            Long.class
+    );
 
     private final ThreaddRepository threaddRepository;
 
@@ -181,7 +195,14 @@ public class SearchServiceImpl implements SearchService {
         if (keyword == null || keyword.isEmpty()) {
             return;
         }
-    	redisTemplate.opsForZSet().add(buildKey(userId), keyword, System.currentTimeMillis());
+        redisTemplate.execute(
+                SAVE_HISTORY_SCRIPT,
+                List.of(buildKey(userId)),
+                String.valueOf(System.currentTimeMillis()),
+                keyword,
+                String.valueOf(SEARCH_HISTORY_LIMIT),
+                String.valueOf(SEARCH_HISTORY_TTL_SECONDS)
+        );
     }
     /**
      * 删除用户的指定搜索历史记录。

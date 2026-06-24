@@ -7,6 +7,7 @@ import com.ayor.mapper.AccountMapper;
 import com.ayor.mapper.UserRelationMapper;
 import com.ayor.type.RelationStatus;
 import com.ayor.type.RelationType;
+import com.ayor.service.CacheInvalidationService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -32,6 +33,9 @@ class UserRelationServiceImplTest {
 
     @Mock
     private UserProfileMapper userProfileMapper;
+
+    @Mock
+    private CacheInvalidationService cacheInvalidationService;
 
     @Test
     void shouldDeactivateBothActiveFollowsAfterBlockCreated() {
@@ -109,7 +113,7 @@ class UserRelationServiceImplTest {
     }
 
     private UserRelationServiceImpl createService() {
-        return new UserRelationServiceImpl(userRelationMapper, accountMapper, userProfileMapper);
+        return new UserRelationServiceImpl(userRelationMapper, accountMapper, userProfileMapper, cacheInvalidationService);
     }
 
     private void mockValidPair(Integer firstAccountId, Integer secondAccountId) {

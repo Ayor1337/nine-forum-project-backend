@@ -12,6 +12,7 @@ import com.ayor.mapper.CollectMapper;
 import com.ayor.mapper.TagMapper;
 import com.ayor.mapper.ThreaddMapper;
 import com.ayor.service.CollectService;
+import com.ayor.service.CacheInvalidationService;
 import com.ayor.service.PrivacyPolicyService;
 import com.ayor.service.UserRelationService;
 import com.ayor.util.TipTapUtils;
@@ -45,6 +46,8 @@ public class CollectServiceImpl extends ServiceImpl<CollectMapper, Collect> impl
     private final PrivacyPolicyService privacyPolicyService;
 
     private final UserRelationService userRelationService;
+
+    private final CacheInvalidationService cacheInvalidationService;
     /**
      * 为当前用户收藏指定帖子，重复收藏会被拒绝。
      */
@@ -72,7 +75,11 @@ public class CollectServiceImpl extends ServiceImpl<CollectMapper, Collect> impl
         Collect collect = new Collect();
         collect.setThreadId(threadId);
         collect.setAccountId(account.getAccountId());
-        return this.save(collect) ? null : "收藏失败";
+        if (!this.save(collect)) {
+            return "收藏失败";
+        }
+        cacheInvalidationService.clearThreadRanking();
+        return null;
     }
     /**
      * 取消当前用户对指定帖子的收藏。
@@ -93,7 +100,11 @@ public class CollectServiceImpl extends ServiceImpl<CollectMapper, Collect> impl
         if (collect == null) {
             return "不能取消未收藏的内容";
         }
-        return this.removeById(collect) ? null : "取消收藏失败";
+        if (!this.removeById(collect)) {
+            return "取消收藏失败";
+        }
+        cacheInvalidationService.clearThreadRanking();
+        return null;
     }
     /**
      * 判断用户是否已经收藏指定帖子。

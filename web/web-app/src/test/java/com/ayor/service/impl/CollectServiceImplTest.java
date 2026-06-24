@@ -9,6 +9,7 @@ import com.ayor.mapper.TagMapper;
 import com.ayor.mapper.ThreaddMapper;
 import com.ayor.service.PrivacyPolicyService;
 import com.ayor.service.UserRelationService;
+import com.ayor.service.CacheInvalidationService;
 import com.ayor.util.TipTapUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -46,6 +47,9 @@ class CollectServiceImplTest {
     @Mock
     private UserRelationService userRelationService;
 
+    @Mock
+    private CacheInvalidationService cacheInvalidationService;
+
     @Test
     void shouldRejectCollectWhenBlockedWithThreadAuthor() {
         CollectServiceImpl service = createService();
@@ -73,7 +77,8 @@ class CollectServiceImplTest {
                 tagMapper,
                 tipTapUtils,
                 privacyPolicyService,
-                userRelationService
+                userRelationService,
+                cacheInvalidationService
         );
         ReflectionTestUtils.setField(service, "baseMapper", collectMapper);
         return service;

@@ -8,6 +8,7 @@ import com.ayor.mapper.LikeThreadMapper;
 import com.ayor.mapper.ThreaddMapper;
 import com.ayor.service.PrivacyPolicyService;
 import com.ayor.service.UserRelationService;
+import com.ayor.service.CacheInvalidationService;
 import com.ayor.util.TipTapUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -39,6 +40,9 @@ class LikeThreadServiceImplTest {
     @Mock
     private UserRelationService userRelationService;
 
+    @Mock
+    private CacheInvalidationService cacheInvalidationService;
+
     @Test
     void shouldRejectLikeWhenBlockedWithThreadAuthor() {
         LikeThreadServiceImpl service = createService();
@@ -65,7 +69,8 @@ class LikeThreadServiceImplTest {
                 threaddMapper,
                 new TipTapUtils(),
                 privacyPolicyService,
-                userRelationService
+                userRelationService,
+                cacheInvalidationService
         );
         ReflectionTestUtils.setField(service, "baseMapper", likeThreadMapper);
         return service;

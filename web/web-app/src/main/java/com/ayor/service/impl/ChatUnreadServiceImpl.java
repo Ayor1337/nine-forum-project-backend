@@ -1,16 +1,36 @@
 package com.ayor.service.impl;
 
 import com.ayor.service.ChatUnreadService;
+import com.ayor.type.UnreadMessageType;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
 public class ChatUnreadServiceImpl implements ChatUnreadService {
+
+    private static final DefaultRedisScript<String> ADD_UNREAD_SCRIPT = new DefaultRedisScript<>(
+            "local conversation = redis.call('INCRBY', KEYS[1], 1); " +
+                    "local total = redis.call('INCRBY', KEYS[2], 1); " +
+                    "return tostring(conversation) .. ':' .. tostring(total);",
+            String.class
+    );
+
+    private static final DefaultRedisScript<String> CLEAR_UNREAD_SCRIPT = new DefaultRedisScript<>(
+            "local consumed = tonumber(redis.call('GET', KEYS[1]) or '0'); " +
+                    "redis.call('DEL', KEYS[1]); " +
+                    "local total = tonumber(redis.call('GET', KEYS[2]) or '0'); " +
+                    "local remaining = total - consumed; " +
+                    "if remaining <= 0 then redis.call('DEL', KEYS[2]); remaining = 0; " +
+                    "else redis.call('SET', KEYS[2], remaining); end; " +
+                    "return tostring(consumed) .. ':' .. tostring(remaining);",
+            String.class
+    );
 
     private final StringRedisTemplate template;
     /**
@@ -25,8 +45,8 @@ public class ChatUnreadServiceImpl implements ChatUnreadService {
      * 判断指定 Redis key 是否存在。
      */
 
-    private boolean existValue(String key) {
-        return template.hasKey(key);
+    private String buildTotalKey(Integer userId) {
+        return "message:" + UnreadMessageType.USER_MESSAGE.getType() + ":unread:" + userId;
     }
     /**
      * 获取指定用户的未读数量。
@@ -43,43 +63,8 @@ public class ChatUnreadServiceImpl implements ChatUnreadService {
      * 初始化指定用户的未读数量。
      */
 
-    public void newUnread(Integer conversationId, Integer fromUserId) {
-        String key = buildKey(conversationId, fromUserId);
-        template.opsForValue().set(key, "1");
-    }
-    /**
-     * 清空指定会话的未读数量，并同步更新总未读数。
-     */
-
-    @Override
     public long clearUnread(Integer conversationId, Integer fromUserId) {
-        String key = buildKey(conversationId, fromUserId);
-        if (!existValue(key)) {
-            return 0;
-        }
-        String consume = template.opsForValue().get(key);
-        template.delete(key);
-        if (consume != null) {
-            return Long.parseLong(consume);
-        }
-        return 0L;
-    }
-    /**
-     * 将指定用户的未读数量加一。
-     */
-
-    public long incrUnread(Integer conversationId, Integer fromUserId) {
-        String key = buildKey(conversationId, fromUserId);
-        Long increment = template.opsForValue().increment(key);
-        return increment == null ? 0 : increment;
-    }
-    /**
-     * 将指定用户的未读数量减一。
-     */
-
-    public void decrUnread(Integer conversationId, Integer fromUserId) {
-        String key = buildKey(conversationId, fromUserId);
-        template.opsForValue().decrement(key);
+        return clearUnreadAndTotal(conversationId, fromUserId).conversationUnread();
     }
     /**
      * 按指定值增加未读数量，并返回最新结果。
@@ -88,10 +73,32 @@ public class ChatUnreadServiceImpl implements ChatUnreadService {
 
     @Override
     public long addUnread(Integer conversationId, Integer fromUserId) {
-        if (getUnread(conversationId, fromUserId) == 0) {
-            newUnread(conversationId, fromUserId);
-            return 1;
+        return addUnreadAndTotal(conversationId, fromUserId).conversationUnread();
+    }
+
+    @Override
+    public UnreadCounts addUnreadAndTotal(Integer conversationId, Integer userId) {
+        String result = template.execute(
+                ADD_UNREAD_SCRIPT,
+                List.of(buildKey(conversationId, userId), buildTotalKey(userId))
+        );
+        return parseCounts(result);
+    }
+
+    @Override
+    public UnreadCounts clearUnreadAndTotal(Integer conversationId, Integer userId) {
+        String result = template.execute(
+                CLEAR_UNREAD_SCRIPT,
+                List.of(buildKey(conversationId, userId), buildTotalKey(userId))
+        );
+        return parseCounts(result);
+    }
+
+    private UnreadCounts parseCounts(String value) {
+        if (value == null || value.isBlank()) {
+            return new UnreadCounts(0, 0);
         }
-        return incrUnread(conversationId, fromUserId);
+        String[] values = value.split(":", 2);
+        return new UnreadCounts(Long.parseLong(values[0]), Long.parseLong(values[1]));
     }
 }
