@@ -1,5 +1,6 @@
-package com.ayor.service;
+package com.ayor.service.impl;
 
+import com.ayor.service.CacheInvalidationService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.cache.Cache;
@@ -12,7 +13,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-class CacheInvalidationServiceTest {
+class CacheInvalidationServiceImplTest {
 
     @AfterEach
     void cleanup() {
@@ -28,7 +29,7 @@ class CacheInvalidationServiceTest {
         CacheManager cacheManager = mock(CacheManager.class);
         Cache cache = mock(Cache.class);
         when(cacheManager.getCache("threadRanking")).thenReturn(cache);
-        CacheInvalidationService service = new CacheInvalidationService(cacheManager);
+        CacheInvalidationService service = new CacheInvalidationServiceImpl(cacheManager);
         TransactionSynchronizationManager.setActualTransactionActive(true);
         TransactionSynchronizationManager.initSynchronization();
 

@@ -1,56 +1,33 @@
 package com.ayor.service;
 
-import lombok.RequiredArgsConstructor;
-import org.springframework.cache.Cache;
-import org.springframework.cache.CacheManager;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.support.TransactionSynchronization;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
+/**
+ * 缓存失效服务
+ *
+ * 业务写操作后统一清除 Spring Cache 缓存。若当前处于事务中，
+ * 清除动作会延迟到事务提交成功后执行，避免旧数据被并发请求
+ * 重新读入缓存，也避免事务回滚导致的无效清理。
+ */
+public interface CacheInvalidationService {
 
-@Service
-@RequiredArgsConstructor
-public class CacheInvalidationService {
+    String THREAD_RANKING_CACHE = "threadRanking";
 
-    public static final String THREAD_RANKING_CACHE = "threadRanking";
+    /**
+     * 删除指定缓存项
+     *
+     * @param cacheName 缓存名称
+     * @param key 缓存键，为 null 时不执行任何操作
+     */
+    void evict(String cacheName, Object key);
 
-    private final CacheManager cacheManager;
+    /**
+     * 清空指定缓存区
+     *
+     * @param cacheName 缓存名称
+     */
+    void clear(String cacheName);
 
-    public void evict(String cacheName, Object key) {
-        if (key == null) {
-            return;
-        }
-        afterCommit(() -> {
-            Cache cache = cacheManager.getCache(cacheName);
-            if (cache != null) {
-                cache.evict(key);
-            }
-        });
-    }
-
-    public void clear(String cacheName) {
-        afterCommit(() -> {
-            Cache cache = cacheManager.getCache(cacheName);
-            if (cache != null) {
-                cache.clear();
-            }
-        });
-    }
-
-    public void clearThreadRanking() {
-        clear(THREAD_RANKING_CACHE);
-    }
-
-    private void afterCommit(Runnable action) {
-        if (TransactionSynchronizationManager.isActualTransactionActive()
-                && TransactionSynchronizationManager.isSynchronizationActive()) {
-            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-                @Override
-                public void afterCommit() {
-                    action.run();
-                }
-            });
-            return;
-        }
-        action.run();
-    }
+    /**
+     * 清空帖子排行缓存（{@value #THREAD_RANKING_CACHE}）
+     */
+    void clearThreadRanking();
 }
