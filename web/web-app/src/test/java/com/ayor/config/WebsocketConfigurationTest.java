@@ -49,5 +49,6 @@ class WebsocketConfigurationTest {
         Map<String, List<String>> whitelist = (Map<String, List<String>>) field.get(null);
 
         assertEquals(List.of("/broadcast"), whitelist.get("/forum"));
+        assertEquals(List.of("/transfer", "/notif", "/app/conversations"), whitelist.get("/chat"));
     }
 }

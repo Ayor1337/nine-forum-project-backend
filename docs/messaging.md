@@ -50,8 +50,18 @@ NineForum 同时使用 RabbitMQ 和 WebSocket/STOMP。RabbitMQ 负责跨应用�
 | `/user/{accountId}/notif/unread/{type}` | 指定类型未读消息。 |
 | `/user/{accountId}/notif/unread-overview` | 未读消息概览。 |
 | `/user/{accountId}/notif/unread/whisper` | 私信未读消息。 |
+| `/user/{accountId}/notif/conversations` | 私信会话列表项更新，消息体为当前用户视角的 `ConversationVO`。 |
+| `/user/{accountId}/notif/presence` | 会话对方在线状态变更，消息体为 `userId`、`online`、`time`。 |
+| `/user/{accountId}/transfer/conversation/{conversationId}` | 私信消息新增或撤回更新，消息体为当前用户视角的 `ConversationMessageVO`。 |
+| `/user/{accountId}/transfer/conversation/{conversationId}/typing` | 私信正在输入事件，只转发给会话对方。 |
 | `/broadcast/forum/topics/{topicId}/threads` | 话题帖子列表新增主题帖事件，消息体只包含 `topicId`、`threadId`、`increment`、`createTime`。 |
 | `/broadcast/forum/threads/{threadId}/posts` | 帖子详情页新增回复事件，消息体只包含 `topicId`、`threadId`、`postId`、`increment`、`createTime`。 |
+
+私信发送、撤回、创建会话时，服务端会向会话双方推送 `/notif/conversations`；隐藏会话恢复和置顶状态变更只推送给操作用户。发送和撤回消息仍沿用 `/transfer/conversation/{conversationId}`；撤回推送保留原 `conversationMessageId`，前端应按 ID 替换本地消息。
+
+会话在线状态由 STOMP 连接事件维护，不持久化在线历史。用户上线或最后一个连接断开时，服务端只向已有私信会话对方推送 `/notif/presence`；`GET /api/conversations` 会同时返回 `partnerOnline`，供首次加载和重连补偿使用。
+
+正在输入由客户端发送 `/app/conversations/{conversationId}/typing`，消息体只需要 `typing: true|false`。服务端补齐 `conversationId`、`fromUserId`、`time` 后转发给对方，不持久化、不计未读；前端自行做短超时隐藏。
 
 页面广播目的地由 `PageBroadcastEventListener` 根据广播作用域生成，调用方应以该监听器实现为准。
 

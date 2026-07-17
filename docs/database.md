@@ -20,6 +20,7 @@ MySQL 是 NineForum 的主业务数据库。完整本地初始化 schema 主要�
 | 内容结构 | `theme`、`topic`、`topic_stat`、`tag`、`thread`、`thread_edit_history`、`post`、`post_edit_history` |
 | 互动行为 | `like_thread`、`collect`、`history`、`user_relation` |
 | 通知治理 | `mention_message`、`follow_message`、`report`、`feedback`、`dashboard_activity` |
+| 私信聊天 | `conversation`、`conversation_message`、`conversation_user_setting` |
 | 图片资源 | `image_asset`、`image_asset_favorite`、`content_image_ref` |
 | 安全认证 | `passkey_credential` |
 | 公告 | `announcements` |
@@ -33,6 +34,9 @@ MySQL 是 NineForum 的主业务数据库。完整本地初始化 schema 主要�
 - `post.thread_id`、`post.account_id` 分别关联帖子和回复作者；`post.reply_to` 可为空，引用被回复的 `post.post_id`，业务层限制只能引用同一帖子下的未删除回复。
 - `thread_edit_history`、`post_edit_history` 保存内容编辑历史，并记录编辑者账号。
 - `follow_message` 保存被关注者发布主题帖后生成的关注动态消息。
+- `conversation` 保存两名用户之间的私信会话，`alpha_account_id` 固定存较小账号 ID、`beta_account_id` 固定存较大账号 ID，`hidden` 表示每一方是否从列表隐藏。
+- `conversation_message` 保存私信纯文本消息，用户撤回时保留记录并设置 `is_deleted = 1`，同时清空 `content`。
+- `conversation_user_setting` 保存账号维度的会话设置，本轮使用 `pinned` 实现跨设备置顶，不迁移现有 `conversation.hidden`。
 - `like_thread`、`collect`、`history` 保存用户与帖子的互动关系。
 - `user_relation` 通过 `(from_account_id, to_account_id, relation_type)` 保持关注/拉黑关系唯一。
 - `image_asset_favorite` 通过 `(account_id, asset_id)` 保持用户收藏图片唯一。
@@ -44,6 +48,9 @@ MySQL 是 NineForum 的主业务数据库。完整本地初始化 schema 主要�
 - 唯一约束用于防止重复关系，例如角色权限、图片收藏、用户关系、Passkey credential。
 - `mention_message` 按账号和时间、来源类型和来源 ID 建索引，服务于消息分页和去重查询。
 - `follow_message` 按账号和时间、发帖人和帖子 ID 建索引，服务于关注动态分页和排查。
+- `conversation` 按双方账号与更新时间建索引，服务于会话列表排序。
+- `conversation_message` 按会话、创建时间和消息 ID 建索引，服务于历史分页与最新摘要查询。
+- `conversation_user_setting` 通过 `(conversation_id, account_id)` 保持单用户单会话设置唯一，并按账号、置顶状态和更新时间建索引。
 - 多数外键使用 `ON DELETE RESTRICT`，删除业务数据前需要先处理依赖数据。
 - 部分图片和会话相关表使用 `ON DELETE CASCADE` 或 `ON DELETE SET NULL`，实现资源或账号删除后的引用处理。
 

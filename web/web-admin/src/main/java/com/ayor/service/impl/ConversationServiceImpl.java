@@ -50,7 +50,24 @@ public class ConversationServiceImpl extends ServiceImpl<ConversationMapper, Con
         if (conversation == null || conversation.getAlphaAccountId() == null || conversation.getBetaAccountId() == null) {
             return "会话参数不完整";
         }
+        normalizeConversationPair(conversation);
+        Conversation existingConversation = baseMapper.selectConversationByUsers(
+                conversation.getAlphaAccountId(),
+                conversation.getBetaAccountId());
         Date now = new Date();
+        if (existingConversation != null) {
+            if (!Boolean.TRUE.equals(existingConversation.getIsDeleted())) {
+                return "会话已存在";
+            }
+            existingConversation.setIsDeleted(false);
+            existingConversation.setHidden(conversation.getHidden() == null ? 0 : conversation.getHidden());
+            existingConversation.setUpdateTime(now);
+            if (!this.updateById(existingConversation)) {
+                return "创建会话失败";
+            }
+            evictConversationCaches(existingConversation);
+            return null;
+        }
         if (conversation.getCreateTime() == null) {
             conversation.setCreateTime(now);
         }
@@ -85,6 +102,7 @@ public class ConversationServiceImpl extends ServiceImpl<ConversationMapper, Con
         if (conversation.getBetaAccountId() != null) {
             exist.setBetaAccountId(conversation.getBetaAccountId());
         }
+        normalizeConversationPair(exist);
         if (conversation.getHidden() != null) {
             exist.setHidden(conversation.getHidden());
         }
@@ -154,5 +172,17 @@ public class ConversationServiceImpl extends ServiceImpl<ConversationMapper, Con
         ConversationVO conversationVO = new ConversationVO();
         BeanUtils.copyProperties(conversation, conversationVO);
         return conversationVO;
+    }
+
+    private void normalizeConversationPair(Conversation conversation) {
+        if (conversation == null
+                || conversation.getAlphaAccountId() == null
+                || conversation.getBetaAccountId() == null) {
+            return;
+        }
+        int first = Math.min(conversation.getAlphaAccountId(), conversation.getBetaAccountId());
+        int second = Math.max(conversation.getAlphaAccountId(), conversation.getBetaAccountId());
+        conversation.setAlphaAccountId(first);
+        conversation.setBetaAccountId(second);
     }
 }

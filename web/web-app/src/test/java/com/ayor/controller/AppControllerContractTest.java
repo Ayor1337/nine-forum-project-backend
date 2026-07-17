@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -77,6 +78,19 @@ class AppControllerContractTest {
         assertThat(clearUnread.getAnnotation(DeleteMapping.class).value()).containsExactly("/{conversation_id}/unread-messages");
         assertPathVariable(clearUnread, 0, "conversation_id");
         assertRequestParam(clearUnread, 1, "from_user_id");
+
+        Method recall = ConversationController.class.getMethod("recallMessage", Integer.class, Integer.class);
+        assertThat(recall.getAnnotation(DeleteMapping.class).value()).containsExactly("/{conversation_id}/messages/{message_id}/recall");
+        assertPathVariable(recall, 0, "conversation_id");
+        assertPathVariable(recall, 1, "message_id");
+
+        Method pin = ConversationController.class.getMethod(
+                "pinConversation",
+                Integer.class,
+                com.ayor.entity.dto.ConversationPinDTO.class);
+        assertThat(pin.getAnnotation(PutMapping.class).value()).containsExactly("/{conversation_id}/pin");
+        assertPathVariable(pin, 0, "conversation_id");
+        assertRequestBody(pin, 1);
     }
 
     // 测试收藏并点赞控制器保持公开路由名称

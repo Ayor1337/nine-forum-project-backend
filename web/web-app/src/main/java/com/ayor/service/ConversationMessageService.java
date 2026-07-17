@@ -36,6 +36,16 @@ public interface ConversationMessageService extends IService<ConversationMessage
     String sendMessage(ConversationMessageDTO conversationMessage, Integer accountId);
 
     /**
+     * 撤回当前用户在指定会话内发送的私信消息。
+     *
+     * @param conversationId 会话 ID
+     * @param messageId 消息 ID
+     * @param accountId 当前用户 ID
+     * @return 操作结果消息;成功返回null,失败返回错误描述
+     */
+    String recallMessage(Integer conversationId, Integer messageId, Integer accountId);
+
+    /**
      * 获取对话的消息列表(分页)
      * @param conversationId 对话ID
      * @param accountId 当前用户ID,用于权限验证

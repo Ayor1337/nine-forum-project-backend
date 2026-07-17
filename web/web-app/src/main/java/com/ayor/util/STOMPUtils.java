@@ -34,4 +34,24 @@ public class STOMPUtils {
         }
         return false;
     }
+
+    /**
+     * 判断用户是否精确订阅指定目的地，避免子目的地误命中父会话。
+     */
+    public boolean isUserSubscribedExactly(String userId, String destination) {
+        SimpUser user = userRegistry.getUser(userId);
+        if (user == null) return false;
+
+        for (SimpSession session : user.getSessions()) {
+            for (SimpSubscription sub : session.getSubscriptions()) {
+                String dest = sub.getDestination();
+                if (destination.equals(dest)
+                        || ("/user" + destination).equals(dest)
+                        || ("/user/" + userId + destination).equals(dest)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
 }

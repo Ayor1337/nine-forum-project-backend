@@ -66,6 +66,16 @@ public interface ConversationService extends IService<Conversation> {
     List<ConversationVO> getConversationList(Integer accountId);
 
     /**
+     * 设置当前用户对会话的置顶状态。
+     *
+     * @param conversationId 会话ID
+     * @param accountId 操作用户ID
+     * @param pinned 是否置顶
+     * @return 当前用户视角的会话视图对象
+     */
+    ConversationVO pinConversation(Integer conversationId, Integer accountId, Boolean pinned);
+
+    /**
      * 获取用户的未读消息列表
      * @param accountId 用户ID
      * @return 未读消息对象列表,包含每个对话的未读数量

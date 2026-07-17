@@ -1,27 +1,30 @@
 package com.ayor.service.impl;
 
 import com.ayor.entity.cache.ConversationListCacheItem;
+import com.ayor.entity.pojo.ConversationUserSetting;
 import com.ayor.entity.vo.ConversationVO;
-import com.ayor.entity.vo.UserInfoVO;
 import com.ayor.entity.pojo.Account;
 import com.ayor.entity.pojo.Conversation;
 import com.ayor.entity.stomp.ChatUnread;
 import com.ayor.mapper.AccountMapper;
 import com.ayor.mapper.ConversationMapper;
-import com.ayor.service.AccountService;
+import com.ayor.mapper.ConversationUserSettingMapper;
 import com.ayor.service.ChatUnreadService;
 import com.ayor.service.ConversationService;
 import com.ayor.service.AuthorizationService;
+import com.ayor.service.PresenceService;
+import com.ayor.service.support.ConversationViewFactory;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.BeanUtils;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 
@@ -40,9 +43,15 @@ public class ConversationServiceImpl extends ServiceImpl<ConversationMapper, Con
 
     private final AuthorizationService authorizationService;
 
-    private final AccountService accountService;
+    private final ConversationUserSettingMapper conversationUserSettingMapper;
+
+    private final PresenceService presenceService;
 
     private final CacheManager cacheManager;
+
+    private final ConversationViewFactory conversationViewFactory;
+
+    private final SimpMessagingTemplate messagingTemplate;
 
     public static String conversationPairKey(Integer accountId, Integer toAccountId) {
         if (accountId == null || toAccountId == null) {
@@ -53,45 +62,45 @@ public class ConversationServiceImpl extends ServiceImpl<ConversationMapper, Con
         return first + ":" + second;
     }
 
+    public static String conversationViewerCacheKey(Integer viewerId, Integer accountId, Integer toAccountId) {
+        return viewerId + ":" + conversationPairKey(accountId, toAccountId);
+    }
+
     /**
      * 获取当前用户与指定用户之间的会话信息。
      */
 
     @Override
     public ConversationVO getConversationByAccountId(Integer accountId, Integer toAccountId) {
-        if (accountId == null) {
+        if (accountId == null || toAccountId == null) {
             return null;
         }
         authorizationService.assertCanStartConversation(accountId, toAccountId);
 
-        String cacheKey = conversationPairKey(accountId, toAccountId);
+        String cacheKey = conversationViewerCacheKey(accountId, accountId, toAccountId);
         ConversationVO cachedConversation = getConversationCache().get(cacheKey, ConversationVO.class);
         if (cachedConversation != null) {
+            refreshViewerState(cachedConversation, accountId);
             return cachedConversation;
         }
 
-        Conversation conversation = this.lambdaQuery()
-                .eq(Conversation::getAlphaAccountId, accountId)
-                .eq(Conversation::getBetaAccountId, toAccountId)
-                .or()
-                .eq(Conversation::getAlphaAccountId, toAccountId)
-                .eq(Conversation::getBetaAccountId, accountId)
-                .one();
-        if (conversation == null) {
+        Conversation conversation = baseMapper.selectConversationByUsers(accountId, toAccountId);
+        if (conversation == null || Boolean.TRUE.equals(conversation.getIsDeleted())) {
             return null;
         }
-        ConversationVO conversationVO = new ConversationVO();
-        conversationVO.setConversationId(conversation.getConversationId());
+        ConversationVO conversationVO = conversationViewFactory.toConversationVO(conversation, accountId);
         // 如果是发起者来查找对话
         if (accountId.equals(conversation.getAlphaAccountId()) ) {
             if(conversation.getHidden() == 1 ) {
                 conversation.setHidden(0);
                 this.updateById( conversation);
+                afterConversationVisibilityRecovered(conversation, accountId);
                 return cacheConversation(cacheKey, conversationVO);
             }
                 if (conversation.getHidden() == 3) {
                 conversation.setHidden(2);
                 this.updateById( conversation);
+                afterConversationVisibilityRecovered(conversation, accountId);
                 return cacheConversation(cacheKey, conversationVO);
             }
             return cacheConversation(cacheKey, conversationVO);
@@ -101,11 +110,13 @@ public class ConversationServiceImpl extends ServiceImpl<ConversationMapper, Con
             if (conversation.getHidden() == 2) {
                 conversation.setHidden(0);
                 this.updateById( conversation);
+                afterConversationVisibilityRecovered(conversation, accountId);
                 return cacheConversation(cacheKey, conversationVO);
             }
             if (conversation.getHidden() == 3) {
                 conversation.setHidden(1);
                 this.updateById( conversation);
+                afterConversationVisibilityRecovered(conversation, accountId);
                 return cacheConversation(cacheKey, conversationVO);
             }
             return cacheConversation(cacheKey, conversationVO);
@@ -167,21 +178,40 @@ public class ConversationServiceImpl extends ServiceImpl<ConversationMapper, Con
             return "接收用户不存在";
         }
         authorizationService.assertCanStartConversation(accountId, toAccount.getAccountId());
-        boolean isConversationExists = baseMapper.existsConversationByUsers(fromAccount.getAccountId(), toAccount.getAccountId());
-        if (isConversationExists) {
-            return "已存在对话";
+        Conversation existingConversation = baseMapper.selectConversationByUsers(fromAccount.getAccountId(), toAccount.getAccountId());
+        if (existingConversation != null) {
+            if (!Boolean.TRUE.equals(existingConversation.getIsDeleted())) {
+                return "已存在对话";
+            }
+            existingConversation.setIsDeleted(false);
+            existingConversation.setHidden(0);
+            existingConversation.setUpdateTime(new Date());
+            normalizeConversationPair(existingConversation);
+            if (!updateById(existingConversation)) {
+                return "创建失败";
+            }
+            evictConversationCache(existingConversation);
+            evictConversationListCache(fromAccount.getAccountId());
+            evictConversationListCache(toAccount.getAccountId());
+            pushConversationToParticipants(existingConversation);
+            return null;
         }
         Conversation conversation = new Conversation();
-        conversation.setCreateTime(new Date());
+        Date now = new Date();
+        conversation.setCreateTime(now);
         conversation.setAlphaAccountId(fromAccount.getAccountId());
         conversation.setBetaAccountId(toAccount.getAccountId());
-        conversation.setUpdateTime(new Date());
+        normalizeConversationPair(conversation);
+        conversation.setUpdateTime(now);
+        conversation.setIsDeleted(false);
+        conversation.setHidden(0);
         if (!save(conversation)) {
             return "创建失败";
         }
         evictConversationCache(conversation);
         evictConversationListCache(fromAccount.getAccountId());
         evictConversationListCache(toAccount.getAccountId());
+        pushConversationToParticipants(conversation);
         return null;
     }
     /**
@@ -199,24 +229,28 @@ public class ConversationServiceImpl extends ServiceImpl<ConversationMapper, Con
             cacheItems = buildConversationListCacheItems(account);
             putConversationListCache(account.getAccountId(), cacheItems);
         }
-        return toConversationVOs(cacheItems);
+        return toConversationVOs(cacheItems, account.getAccountId());
     }
 
     private List<ConversationListCacheItem> buildConversationListCacheItems(Account account) {
         List<ConversationListCacheItem> cacheItems = new ArrayList<>();
         List<Conversation> initiativeConversations = this.baseMapper.selectList(Wrappers.<Conversation>lambdaQuery()
                 .eq(Conversation::getAlphaAccountId, account.getAccountId())
+                .and(wrapper -> wrapper.eq(Conversation::getIsDeleted, false).or().isNull(Conversation::getIsDeleted))
         );
         List<Conversation> reactiveConversations = this.baseMapper.selectList(Wrappers.<Conversation>lambdaQuery()
                 .eq(Conversation::getBetaAccountId, account.getAccountId())
+                .and(wrapper -> wrapper.eq(Conversation::getIsDeleted, false).or().isNull(Conversation::getIsDeleted))
         );
 
         initiativeConversations.forEach(conversation -> {
             if (conversation.getHidden() != 1 && conversation.getHidden() != 3) {
                 cacheItems.add(new ConversationListCacheItem(
                         conversation.getConversationId(),
+                        account.getAccountId(),
                         conversation.getBetaAccountId(),
-                        conversation.getUpdateTime()
+                        conversation.getUpdateTime(),
+                        resolvePinned(conversation.getConversationId(), account.getAccountId())
                 ));
             }
         });
@@ -224,24 +258,63 @@ public class ConversationServiceImpl extends ServiceImpl<ConversationMapper, Con
             if (conversation.getHidden() != 2 && conversation.getHidden() != 3) {
                 cacheItems.add(new ConversationListCacheItem(
                         conversation.getConversationId(),
+                        account.getAccountId(),
                         conversation.getAlphaAccountId(),
-                        conversation.getUpdateTime()
+                        conversation.getUpdateTime(),
+                        resolvePinned(conversation.getConversationId(), account.getAccountId())
                 ));
             }
         });
+        sortConversationListCacheItems(cacheItems);
         return cacheItems;
     }
 
-    private List<ConversationVO> toConversationVOs(List<ConversationListCacheItem> cacheItems) {
+    private List<ConversationVO> toConversationVOs(List<ConversationListCacheItem> cacheItems, Integer viewerId) {
         List<ConversationVO> conversationVOs = new ArrayList<>();
         for (ConversationListCacheItem cacheItem : cacheItems) {
-            conversationVOs.add(ConversationVO.builder()
-                    .conversationId(cacheItem.getConversationId())
-                    .userInfo(getConversationUserInfo(cacheItem.getPartnerAccountId()))
-                    .updateTime(cacheItem.getUpdateTime())
-                    .build());
+            Conversation conversation = this.getById(cacheItem.getConversationId());
+            if (conversation == null || Boolean.TRUE.equals(conversation.getIsDeleted())) {
+                continue;
+            }
+            conversationVOs.add(conversationViewFactory.toConversationVO(
+                    conversation,
+                    cacheItem.getViewerAccountId() == null ? viewerId : cacheItem.getViewerAccountId(),
+                    cacheItem.getPartnerAccountId()));
         }
         return conversationVOs;
+    }
+
+    @Override
+    public ConversationVO pinConversation(Integer conversationId, Integer accountId, Boolean pinned) {
+        authorizationService.assertCanAccessConversation(accountId, conversationId);
+        Conversation conversation = this.getById(conversationId);
+        if (conversation == null || Boolean.TRUE.equals(conversation.getIsDeleted())) {
+            return null;
+        }
+        ConversationUserSetting setting = conversationUserSettingMapper.selectOne(
+                Wrappers.<ConversationUserSetting>lambdaQuery()
+                        .eq(ConversationUserSetting::getConversationId, conversationId)
+                        .eq(ConversationUserSetting::getAccountId, accountId)
+                        .last("LIMIT 1"));
+        Date now = new Date();
+        if (setting == null) {
+            setting = new ConversationUserSetting();
+            setting.setConversationId(conversationId);
+            setting.setAccountId(accountId);
+            setting.setPinned(Boolean.TRUE.equals(pinned));
+            setting.setCreateTime(now);
+            setting.setUpdateTime(now);
+            conversationUserSettingMapper.insert(setting);
+        } else {
+            setting.setPinned(Boolean.TRUE.equals(pinned));
+            setting.setUpdateTime(now);
+            conversationUserSettingMapper.updateById(setting);
+        }
+        evictConversationCache(conversation);
+        evictConversationListCache(accountId);
+        ConversationVO conversationVO = conversationViewFactory.toConversationVO(conversation, accountId);
+        messagingTemplate.convertAndSendToUser(accountId.toString(), "/notif/conversations", conversationVO);
+        return conversationVO;
     }
     /**
      * 获取当前用户的未读会话摘要。
@@ -252,9 +325,11 @@ public class ConversationServiceImpl extends ServiceImpl<ConversationMapper, Con
         Account account = accountMapper.getAccountById(accountId);
         List<Conversation> alphCconversationList = this.lambdaQuery()
                 .eq(Conversation::getAlphaAccountId, account.getAccountId())
+                .and(wrapper -> wrapper.eq(Conversation::getIsDeleted, false).or().isNull(Conversation::getIsDeleted))
                 .list();
         List<Conversation> betaCconversationList = this.lambdaQuery()
                 .eq(Conversation::getBetaAccountId, account.getAccountId())
+                .and(wrapper -> wrapper.eq(Conversation::getIsDeleted, false).or().isNull(Conversation::getIsDeleted))
                 .list();
         List<ChatUnread> chatUnreadList = new ArrayList<>();
         alphCconversationList.forEach(con -> {
@@ -288,16 +363,6 @@ public class ConversationServiceImpl extends ServiceImpl<ConversationMapper, Con
         chatUnreadService.clearUnreadAndTotal(conversationId, accountId);
         return null;
     }
-    private UserInfoVO getConversationUserInfo(Integer accountId) {
-        UserInfoVO userInfo = accountService.getUserInfo(accountId);
-        if (userInfo == null) {
-            return null;
-        }
-        UserInfoVO conversationUserInfo = new UserInfoVO();
-        BeanUtils.copyProperties(userInfo, conversationUserInfo);
-        conversationUserInfo.setPermission(null);
-        return conversationUserInfo;
-    }
 
     private ConversationVO cacheConversation(String cacheKey, ConversationVO conversationVO) {
         getConversationCache().put(cacheKey, conversationVO);
@@ -305,8 +370,20 @@ public class ConversationServiceImpl extends ServiceImpl<ConversationMapper, Con
     }
 
     private void evictConversationCache(Conversation conversation) {
-        String cacheKey = conversationPairKey(conversation.getAlphaAccountId(), conversation.getBetaAccountId());
-        getConversationCache().evict(cacheKey);
+        Cache cache = getConversationCache();
+        if (cache == null) {
+            return;
+        }
+        String pairKey = conversationPairKey(conversation.getAlphaAccountId(), conversation.getBetaAccountId());
+        cache.evict(pairKey);
+        cache.evict(conversationViewerCacheKey(
+                conversation.getAlphaAccountId(),
+                conversation.getAlphaAccountId(),
+                conversation.getBetaAccountId()));
+        cache.evict(conversationViewerCacheKey(
+                conversation.getBetaAccountId(),
+                conversation.getAlphaAccountId(),
+                conversation.getBetaAccountId()));
     }
 
     private List<ConversationListCacheItem> getConversationListCacheItems(Integer accountId) {
@@ -352,5 +429,64 @@ public class ConversationServiceImpl extends ServiceImpl<ConversationMapper, Con
         return cacheManager.getCache(CONVERSATION_LIST_CACHE);
     }
 
+    private void afterConversationVisibilityRecovered(Conversation conversation, Integer viewerId) {
+        evictConversationCache(conversation);
+        evictConversationListCache(conversation.getAlphaAccountId());
+        evictConversationListCache(conversation.getBetaAccountId());
+        pushConversation(viewerId, conversation);
+    }
+
+    private void pushConversationToParticipants(Conversation conversation) {
+        pushConversation(conversation.getAlphaAccountId(), conversation);
+        pushConversation(conversation.getBetaAccountId(), conversation);
+    }
+
+    private void pushConversation(Integer viewerId, Conversation conversation) {
+        if (viewerId == null) {
+            return;
+        }
+        ConversationVO conversationVO = conversationViewFactory.toConversationVO(conversation, viewerId);
+        messagingTemplate.convertAndSendToUser(viewerId.toString(), "/notif/conversations", conversationVO);
+    }
+
+    private Boolean resolvePinned(Integer conversationId, Integer accountId) {
+        ConversationUserSetting setting = conversationUserSettingMapper.selectOne(
+                Wrappers.<ConversationUserSetting>lambdaQuery()
+                        .eq(ConversationUserSetting::getConversationId, conversationId)
+                        .eq(ConversationUserSetting::getAccountId, accountId)
+                        .last("LIMIT 1"));
+        return setting != null && Boolean.TRUE.equals(setting.getPinned());
+    }
+
+    private void refreshViewerState(ConversationVO conversationVO, Integer viewerId) {
+        if (conversationVO == null) {
+            return;
+        }
+        conversationVO.setPinned(resolvePinned(conversationVO.getConversationId(), viewerId));
+        if (conversationVO.getUserInfo() != null) {
+            conversationVO.setPartnerOnline(presenceService.isOnline(conversationVO.getUserInfo().getAccountId()));
+        }
+    }
+
+    private void sortConversationListCacheItems(List<ConversationListCacheItem> cacheItems) {
+        cacheItems.sort(Comparator
+                .comparing((ConversationListCacheItem item) -> Boolean.TRUE.equals(item.getPinned()))
+                .reversed()
+                .thenComparing(
+                        ConversationListCacheItem::getUpdateTime,
+                        Comparator.nullsLast(Comparator.reverseOrder())));
+    }
+
+    private void normalizeConversationPair(Conversation conversation) {
+        if (conversation == null
+                || conversation.getAlphaAccountId() == null
+                || conversation.getBetaAccountId() == null) {
+            return;
+        }
+        int first = Math.min(conversation.getAlphaAccountId(), conversation.getBetaAccountId());
+        int second = Math.max(conversation.getAlphaAccountId(), conversation.getBetaAccountId());
+        conversation.setAlphaAccountId(first);
+        conversation.setBetaAccountId(second);
+    }
 
 }

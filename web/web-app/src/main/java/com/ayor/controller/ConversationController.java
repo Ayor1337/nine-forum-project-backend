@@ -2,6 +2,7 @@ package com.ayor.controller;
 
 import com.ayor.entity.PageEntity;
 import com.ayor.entity.dto.ConversationMessageDTO;
+import com.ayor.entity.dto.ConversationPinDTO;
 import com.ayor.entity.vo.ConversationMessageVO;
 import com.ayor.entity.vo.ConversationVO;
 import com.ayor.entity.stomp.ChatUnread;
@@ -60,6 +61,16 @@ public class ConversationController {
         Integer userId = securityUtils.getSecurityUserId();
         return Result.dataMessageHandler(() -> conversationService.getConversationList(userId), "获取聊天列表失败");
     }
+
+    @PutMapping("/{conversation_id}/pin")
+    public Result<ConversationVO> pinConversation(@PathVariable("conversation_id") Integer conversationId,
+                                                  @RequestBody ConversationPinDTO conversationPin) {
+        Integer userId = securityUtils.getSecurityUserId();
+        Boolean pinned = conversationPin != null && Boolean.TRUE.equals(conversationPin.getPinned());
+        return Result.dataMessageHandler(
+                () -> conversationService.pinConversation(conversationId, userId, pinned),
+                "设置会话置顶失败");
+    }
     /**
      * 发送私聊消息。
      */
@@ -70,6 +81,16 @@ public class ConversationController {
         conversationMessage.setConversationId(conversationId);
         Integer userId = securityUtils.getSecurityUserId();
         return Result.messageHandler(() -> conversationMessageService.sendMessage(conversationMessage, userId));
+    }
+    /**
+     * 撤回当前用户发送的私聊消息。
+     */
+
+    @DeleteMapping("/{conversation_id}/messages/{message_id}/recall")
+    public Result<Void> recallMessage(@PathVariable("conversation_id") Integer conversationId,
+                                      @PathVariable("message_id") Integer messageId) {
+        Integer userId = securityUtils.getSecurityUserId();
+        return Result.messageHandler(() -> conversationMessageService.recallMessage(conversationId, messageId, userId));
     }
     /**
      * 获取会话消息列表。

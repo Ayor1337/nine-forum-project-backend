@@ -70,6 +70,15 @@ HTTP 接口统一返回 `Result<T>`：
 | 资源与反馈 | `StickerController`、`FeedbackController`、`PageBroadcastController` | 贴纸、意见反馈、页面广播。 |
 | 权限操作 | `controller/permission/*` | 主题、话题、标签、帖子等权限相关管理动作。 |
 
+### 私信接口约定
+
+- `GET /api/conversations` 返回当前用户会话列表，排序为 `pinned desc, updateTime desc`。`ConversationVO` 包含 `conversationId`、`userInfo`、`updateTime`、`lastMessageId`、`lastMessageContent`、`lastMessageTime`、`lastMessageSenderId`、`pinned`、`partnerOnline`。
+- `PUT /api/conversations/{conversation_id}/pin` 设置当前用户对会话的置顶状态，请求体为 `{ "pinned": true|false }`，成功返回当前用户视角的 `ConversationVO` 并推送会话列表项更新。
+- `POST /api/conversations/{conversation_id}/messages` 发送纯文本私信，只使用请求体 `content`。服务端会 `trim` 内容，空内容或超过 1000 字符返回业务失败。
+- `GET /api/conversations/{conversation_id}/messages?page_num=1` 每页返回 20 条消息。`ConversationMessageVO` 包含 `conversationId`、`isDeleted`、`deletedBySender`、`displayContent`；已撤回消息不会返回原始 `content`。
+- `DELETE /api/conversations/{conversation_id}/messages/{message_id}/recall` 撤回当前用户在该会话内 2 分钟内发送的消息。撤回后消息记录保留，摘要显示为“消息已撤回”。
+- 用户端撤回能力只使用上述受权限约束接口；后台管理端消息删除接口不作为普通用户撤回入口。
+
 ## 管理端接口分组
 
 | 分组 | 控制器范围 | 说明 |

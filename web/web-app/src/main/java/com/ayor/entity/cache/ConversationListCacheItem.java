@@ -18,7 +18,18 @@ public class ConversationListCacheItem implements Serializable {
 
     private Integer conversationId;
 
+    private Integer viewerAccountId;
+
     private Integer partnerAccountId;
 
     private Date updateTime;
+
+    private Boolean pinned;
+
+    public ConversationListCacheItem(Integer conversationId, Integer partnerAccountId, Date updateTime) {
+        this.conversationId = conversationId;
+        this.partnerAccountId = partnerAccountId;
+        this.updateTime = updateTime;
+        this.pinned = false;
+    }
 }

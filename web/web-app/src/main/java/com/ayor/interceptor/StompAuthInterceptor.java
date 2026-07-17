@@ -39,13 +39,15 @@ public class StompAuthInterceptor implements ChannelInterceptor {
 
     private static final Map<String, List<String>> ENDPOINT_DEST_WHITELIST = Map.of(
             "/chatboard", List.of("/broadcast"),
-            "/chat", List.of("/transfer", "/notif"),
+            "/chat", List.of("/transfer", "/notif", "/app/conversations"),
             "/system", List.of("/notif", "/verify"),
             "/forum", List.of("/broadcast")
     );
 
     private static final Pattern CONVERSATION_DESTINATION =
-            Pattern.compile("^/user(?:/[^/]+)?/transfer/conversation/(\\d+)$|^/transfer/conversation/(\\d+)$");
+            Pattern.compile("^/user(?:/[^/]+)?/transfer/conversation/(\\d+)(?:/typing)?$"
+                    + "|^/transfer/conversation/(\\d+)(?:/typing)?$"
+                    + "|^/app/conversations/(\\d+)/typing$");
 
     /**
      * 在 STOMP 连接、订阅和发送阶段执行鉴权。
@@ -71,6 +73,9 @@ public class StompAuthInterceptor implements ChannelInterceptor {
                     UsernamePasswordAuthenticationToken authentication =
                             new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
                     acc.setUser(authentication);
+                    if (acc.getSessionAttributes() != null) {
+                        acc.getSessionAttributes().put("accountId", user.getUsername());
+                    }
                     SecurityContextHolder.getContext().setAuthentication(authentication);
                 }
             }
@@ -150,6 +155,17 @@ public class StompAuthInterceptor implements ChannelInterceptor {
             return false;
         }
         if (!destination.contains("/transfer")) {
+            if (destination.startsWith("/app/conversations/")) {
+                Integer userId = resolveUserId(p);
+                if (userId == null) {
+                    return false;
+                }
+                Integer conversationId = resolveConversationId(destination);
+                if (conversationId == null) {
+                    return false;
+                }
+                authorizationService.assertCanAccessConversation(userId, conversationId);
+            }
             return true;
         }
         Integer userId = resolveUserId(p);
@@ -210,7 +226,9 @@ public class StompAuthInterceptor implements ChannelInterceptor {
         }
         String directMatch = matcher.group(1);
         String userMatch = matcher.group(2);
+        String typingMatch = matcher.group(3);
         String value = directMatch != null ? directMatch : userMatch;
+        value = value != null ? value : typingMatch;
         return value == null ? null : Integer.parseInt(value);
     }
 

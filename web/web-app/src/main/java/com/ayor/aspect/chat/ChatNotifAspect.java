@@ -124,7 +124,7 @@ public class ChatNotifAspect {
         Integer toUserId = conversationMapper.getChatPartnerId(account.getAccountId(), conversationId);
 
         // 如果用户不在订阅中, 则不会发送未读消息的通知
-        if (stompUtils.isUserSubscribed(toUserId.toString(), "/transfer/conversation/"+conversationId)) {
+        if (stompUtils.isUserSubscribedExactly(toUserId.toString(), "/transfer/conversation/"+conversationId)) {
             chatUnreadService.clearUnreadAndTotal(conversationId, toUserId);
         } else {
             ChatUnreadService.UnreadCounts counts = chatUnreadService.addUnreadAndTotal(conversationId, toUserId);

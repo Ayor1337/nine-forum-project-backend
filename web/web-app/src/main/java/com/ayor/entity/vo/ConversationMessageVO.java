@@ -18,6 +18,8 @@ public class ConversationMessageVO implements Serializable {
 
     private Integer conversationMessageId;
 
+    private Integer conversationId;
+
     private String content;
 
     private Integer accountId;
@@ -27,6 +29,12 @@ public class ConversationMessageVO implements Serializable {
     private Date createTime;
 
     private Date updateTime;
+
+    private Boolean isDeleted;
+
+    private Boolean deletedBySender;
+
+    private String displayContent;
 
     private Boolean isEdit;
 
