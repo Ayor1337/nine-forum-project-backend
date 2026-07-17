@@ -13,7 +13,7 @@ import com.ayor.service.AuthorizationService;
 import com.ayor.entity.cache.ConversationListCacheItem;
 import com.ayor.entity.vo.UserPermissionVO;
 import com.ayor.service.PresenceService;
-import com.ayor.service.support.ConversationViewFactory;
+import com.ayor.util.ConversationViewUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -71,7 +71,7 @@ class ConversationServiceImplTest {
     private Cache conversationListCache;
 
     @Mock
-    private ConversationViewFactory conversationViewFactory;
+    private ConversationViewUtils conversationViewUtils;
 
     @Mock
     private SimpMessagingTemplate messagingTemplate;
@@ -180,7 +180,7 @@ class ConversationServiceImplTest {
                 .updateTime(updateTime)
                 .build();
         when(conversationMapper.selectById(9)).thenReturn(conversation);
-        when(conversationViewFactory.toConversationVO(conversation, 1, 2)).thenReturn(vo);
+        when(conversationViewUtils.toConversationVO(conversation, 1, 2)).thenReturn(vo);
 
         List<ConversationVO> result = service.getConversationList(1);
 
@@ -298,7 +298,7 @@ class ConversationServiceImplTest {
                 .userInfo(partnerUserInfo)
                 .build();
         when(conversationMapper.selectById(9)).thenReturn(conversation);
-        when(conversationViewFactory.toConversationVO(conversation, 1, 2)).thenReturn(conversationVO);
+        when(conversationViewUtils.toConversationVO(conversation, 1, 2)).thenReturn(conversationVO);
 
         List<ConversationVO> result = service.getConversationList(1);
 
@@ -327,7 +327,7 @@ class ConversationServiceImplTest {
         when(conversationUserSettingMapper.insert(any(ConversationUserSetting.class))).thenReturn(1);
         when(cacheManager.getCache("conversation")).thenReturn(conversationCache);
         when(cacheManager.getCache("conversationList")).thenReturn(conversationListCache);
-        when(conversationViewFactory.toConversationVO(conversation, 1)).thenReturn(conversationVO);
+        when(conversationViewUtils.toConversationVO(conversation, 1)).thenReturn(conversationVO);
 
         ConversationVO result = service.pinConversation(9, 1, true);
 
@@ -383,7 +383,7 @@ class ConversationServiceImplTest {
         when(conversationCache.get("1:1:2", ConversationVO.class)).thenReturn(null);
         when(conversationMapper.selectConversationByUsers(1, 2)).thenReturn(conversation);
         when(conversationMapper.updateById(conversation)).thenReturn(1);
-        when(conversationViewFactory.toConversationVO(conversation, 1)).thenReturn(conversationVO);
+        when(conversationViewUtils.toConversationVO(conversation, 1)).thenReturn(conversationVO);
 
         ConversationVO result = service.getConversationByAccountId(1, 2);
 
@@ -403,7 +403,7 @@ class ConversationServiceImplTest {
                 conversationUserSettingMapper,
                 presenceService,
                 cacheManager,
-                conversationViewFactory,
+                conversationViewUtils,
                 messagingTemplate
         );
         ReflectionTestUtils.setField(service, "baseMapper", conversationMapper);

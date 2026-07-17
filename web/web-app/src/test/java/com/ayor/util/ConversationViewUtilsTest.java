@@ -1,4 +1,4 @@
-package com.ayor.service.support;
+package com.ayor.util;
 
 import com.ayor.entity.pojo.Conversation;
 import com.ayor.entity.pojo.ConversationMessage;
@@ -21,7 +21,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-class ConversationViewFactoryTest {
+class ConversationViewUtilsTest {
 
     // 测试已撤回消息对发送者隐藏原文并显示发送者视角文案
     @Test
@@ -29,10 +29,10 @@ class ConversationViewFactoryTest {
         AccountMapper accountMapper = mock(AccountMapper.class);
         AccountService accountService = mock(AccountService.class);
         ConversationMessageMapper messageMapper = mock(ConversationMessageMapper.class);
-        ConversationViewFactory factory = factory(accountMapper, accountService, messageMapper);
+        ConversationViewUtils viewUtils = viewUtils(accountMapper, accountService, messageMapper);
         ConversationMessage message = recalledMessage(9, 7, 10);
 
-        ConversationMessageVO result = factory.toMessageVO(message, 10);
+        ConversationMessageVO result = viewUtils.toMessageVO(message, 10);
 
         assertNull(result.getContent());
         assertTrue(result.getIsDeleted());
@@ -46,10 +46,10 @@ class ConversationViewFactoryTest {
         AccountMapper accountMapper = mock(AccountMapper.class);
         AccountService accountService = mock(AccountService.class);
         ConversationMessageMapper messageMapper = mock(ConversationMessageMapper.class);
-        ConversationViewFactory factory = factory(accountMapper, accountService, messageMapper);
+        ConversationViewUtils viewUtils = viewUtils(accountMapper, accountService, messageMapper);
         ConversationMessage message = recalledMessage(9, 7, 10);
 
-        ConversationMessageVO result = factory.toMessageVO(message, 22);
+        ConversationMessageVO result = viewUtils.toMessageVO(message, 22);
 
         assertNull(result.getContent());
         assertEquals(false, result.getDeletedBySender());
@@ -62,7 +62,7 @@ class ConversationViewFactoryTest {
         AccountMapper accountMapper = mock(AccountMapper.class);
         AccountService accountService = mock(AccountService.class);
         ConversationMessageMapper messageMapper = mock(ConversationMessageMapper.class);
-        ConversationViewFactory factory = factory(accountMapper, accountService, messageMapper);
+        ConversationViewUtils viewUtils = viewUtils(accountMapper, accountService, messageMapper);
         Conversation conversation = new Conversation();
         conversation.setConversationId(7);
         conversation.setAlphaAccountId(10);
@@ -75,7 +75,7 @@ class ConversationViewFactoryTest {
         when(accountService.getUserInfo(22)).thenReturn(partner);
         when(messageMapper.selectOne(any())).thenReturn(latest);
 
-        ConversationVO result = factory.toConversationVO(conversation, 10);
+        ConversationVO result = viewUtils.toConversationVO(conversation, 10);
 
         assertEquals(9, result.getLastMessageId());
         assertEquals("消息已撤回", result.getLastMessageContent());
@@ -90,7 +90,7 @@ class ConversationViewFactoryTest {
         ConversationMessageMapper messageMapper = mock(ConversationMessageMapper.class);
         ConversationUserSettingMapper settingMapper = mock(ConversationUserSettingMapper.class);
         PresenceService presenceService = mock(PresenceService.class);
-        ConversationViewFactory factory = new ConversationViewFactory(
+        ConversationViewUtils viewUtils = new ConversationViewUtils(
                 accountMapper,
                 accountService,
                 messageMapper,
@@ -109,7 +109,7 @@ class ConversationViewFactoryTest {
         when(settingMapper.selectOne(any())).thenReturn(setting);
         when(presenceService.isOnline(22)).thenReturn(true);
 
-        ConversationVO result = factory.toConversationVO(conversation, 10);
+        ConversationVO result = viewUtils.toConversationVO(conversation, 10);
 
         assertEquals(true, result.getPinned());
         assertEquals(true, result.getPartnerOnline());
@@ -126,11 +126,11 @@ class ConversationViewFactoryTest {
         return message;
     }
 
-    private ConversationViewFactory factory(AccountMapper accountMapper,
+    private ConversationViewUtils viewUtils(AccountMapper accountMapper,
                                             AccountService accountService,
                                             ConversationMessageMapper messageMapper) {
         ConversationUserSettingMapper settingMapper = mock(ConversationUserSettingMapper.class);
         PresenceService presenceService = mock(PresenceService.class);
-        return new ConversationViewFactory(accountMapper, accountService, messageMapper, settingMapper, presenceService);
+        return new ConversationViewUtils(accountMapper, accountService, messageMapper, settingMapper, presenceService);
     }
 }

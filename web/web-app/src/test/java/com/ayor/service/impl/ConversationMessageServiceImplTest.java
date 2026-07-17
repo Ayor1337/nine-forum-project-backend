@@ -10,7 +10,7 @@ import com.ayor.mapper.AccountMapper;
 import com.ayor.mapper.ConversationMapper;
 import com.ayor.mapper.ConversationMessageMapper;
 import com.ayor.service.AuthorizationService;
-import com.ayor.service.support.ConversationViewFactory;
+import com.ayor.util.ConversationViewUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -54,7 +54,7 @@ class ConversationMessageServiceImplTest {
     private AuthorizationService authorizationService;
 
     @Mock
-    private ConversationViewFactory conversationViewFactory;
+    private ConversationViewUtils conversationViewUtils;
 
     @Mock
     private CacheManager cacheManager;
@@ -125,8 +125,8 @@ class ConversationMessageServiceImplTest {
         when(accountMapper.getAccountById(10)).thenReturn(account);
         when(conversationMapper.selectById(7)).thenReturn(conversation);
         when(conversationMessageMapper.insert(any(ConversationMessage.class))).thenReturn(1);
-        when(conversationViewFactory.toMessageVO(any(ConversationMessage.class), eq(10))).thenReturn(messageVO);
-        when(conversationViewFactory.toMessageVO(any(ConversationMessage.class), eq(22))).thenReturn(messageVO);
+        when(conversationViewUtils.toMessageVO(any(ConversationMessage.class), eq(10))).thenReturn(messageVO);
+        when(conversationViewUtils.toMessageVO(any(ConversationMessage.class), eq(22))).thenReturn(messageVO);
         when(cacheManager.getCache("conversation")).thenReturn(conversationCache);
         when(cacheManager.getCache("conversationList")).thenReturn(conversationListCache);
 
@@ -205,8 +205,8 @@ class ConversationMessageServiceImplTest {
         when(conversationMapper.selectById(7)).thenReturn(conversation);
         when(conversationMessageMapper.selectById(9)).thenReturn(message);
         when(conversationMessageMapper.updateById(message)).thenReturn(1);
-        when(conversationViewFactory.toMessageVO(message, 10)).thenReturn(senderVO);
-        when(conversationViewFactory.toMessageVO(message, 22)).thenReturn(partnerVO);
+        when(conversationViewUtils.toMessageVO(message, 10)).thenReturn(senderVO);
+        when(conversationViewUtils.toMessageVO(message, 22)).thenReturn(partnerVO);
         when(cacheManager.getCache("conversation")).thenReturn(conversationCache);
         when(cacheManager.getCache("conversationList")).thenReturn(conversationListCache);
 
@@ -225,7 +225,7 @@ class ConversationMessageServiceImplTest {
                 conversationMapper,
                 simpMessagingTemplate,
                 authorizationService,
-                conversationViewFactory,
+                conversationViewUtils,
                 cacheManager
         );
         ReflectionTestUtils.setField(service, "baseMapper", conversationMessageMapper);

@@ -1,4 +1,4 @@
-package com.ayor.service.support;
+package com.ayor.util;
 
 import com.ayor.entity.pojo.Conversation;
 import com.ayor.entity.pojo.ConversationMessage;
@@ -21,7 +21,7 @@ import java.util.Objects;
 
 @Component
 @RequiredArgsConstructor
-public class ConversationViewFactory {
+public class ConversationViewUtils {
 
     private static final String RECALL_BY_SELF = "你撤回了一条消息";
 

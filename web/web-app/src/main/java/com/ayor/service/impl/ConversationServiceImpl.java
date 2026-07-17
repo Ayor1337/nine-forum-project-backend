@@ -13,7 +13,7 @@ import com.ayor.service.ChatUnreadService;
 import com.ayor.service.ConversationService;
 import com.ayor.service.AuthorizationService;
 import com.ayor.service.PresenceService;
-import com.ayor.service.support.ConversationViewFactory;
+import com.ayor.util.ConversationViewUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
@@ -49,7 +49,7 @@ public class ConversationServiceImpl extends ServiceImpl<ConversationMapper, Con
 
     private final CacheManager cacheManager;
 
-    private final ConversationViewFactory conversationViewFactory;
+    private final ConversationViewUtils conversationViewUtils;
 
     private final SimpMessagingTemplate messagingTemplate;
 
@@ -88,7 +88,7 @@ public class ConversationServiceImpl extends ServiceImpl<ConversationMapper, Con
         if (conversation == null || Boolean.TRUE.equals(conversation.getIsDeleted())) {
             return null;
         }
-        ConversationVO conversationVO = conversationViewFactory.toConversationVO(conversation, accountId);
+        ConversationVO conversationVO = conversationViewUtils.toConversationVO(conversation, accountId);
         // 如果是发起者来查找对话
         if (accountId.equals(conversation.getAlphaAccountId()) ) {
             if(conversation.getHidden() == 1 ) {
@@ -276,7 +276,7 @@ public class ConversationServiceImpl extends ServiceImpl<ConversationMapper, Con
             if (conversation == null || Boolean.TRUE.equals(conversation.getIsDeleted())) {
                 continue;
             }
-            conversationVOs.add(conversationViewFactory.toConversationVO(
+            conversationVOs.add(conversationViewUtils.toConversationVO(
                     conversation,
                     cacheItem.getViewerAccountId() == null ? viewerId : cacheItem.getViewerAccountId(),
                     cacheItem.getPartnerAccountId()));
@@ -312,7 +312,7 @@ public class ConversationServiceImpl extends ServiceImpl<ConversationMapper, Con
         }
         evictConversationCache(conversation);
         evictConversationListCache(accountId);
-        ConversationVO conversationVO = conversationViewFactory.toConversationVO(conversation, accountId);
+        ConversationVO conversationVO = conversationViewUtils.toConversationVO(conversation, accountId);
         messagingTemplate.convertAndSendToUser(accountId.toString(), "/notif/conversations", conversationVO);
         return conversationVO;
     }
@@ -445,7 +445,7 @@ public class ConversationServiceImpl extends ServiceImpl<ConversationMapper, Con
         if (viewerId == null) {
             return;
         }
-        ConversationVO conversationVO = conversationViewFactory.toConversationVO(conversation, viewerId);
+        ConversationVO conversationVO = conversationViewUtils.toConversationVO(conversation, viewerId);
         messagingTemplate.convertAndSendToUser(viewerId.toString(), "/notif/conversations", conversationVO);
     }
 

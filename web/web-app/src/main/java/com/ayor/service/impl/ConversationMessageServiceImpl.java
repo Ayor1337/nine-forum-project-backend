@@ -13,7 +13,7 @@ import com.ayor.mapper.ConversationMapper;
 import com.ayor.mapper.ConversationMessageMapper;
 import com.ayor.service.ConversationMessageService;
 import com.ayor.service.AuthorizationService;
-import com.ayor.service.support.ConversationViewFactory;
+import com.ayor.util.ConversationViewUtils;
 import com.ayor.type.NotificationType;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -51,7 +51,7 @@ public class ConversationMessageServiceImpl extends ServiceImpl<ConversationMess
 
     private final AuthorizationService authorizationService;
 
-    private final ConversationViewFactory conversationViewFactory;
+    private final ConversationViewUtils conversationViewUtils;
 
     private final CacheManager cacheManager;
 
@@ -152,7 +152,7 @@ public class ConversationMessageServiceImpl extends ServiceImpl<ConversationMess
                 .page(Page.of(pageNum, 20));
         List<ConversationMessageVO> conversationMessageVOS = new ArrayList<>();
         page.getRecords().forEach(message -> {
-            conversationMessageVOS.add(conversationViewFactory.toMessageVO(message, accountId));
+            conversationMessageVOS.add(conversationViewUtils.toMessageVO(message, accountId));
         });
 
         return new PageEntity<>(page.getTotal(), conversationMessageVOS);
@@ -177,7 +177,7 @@ public class ConversationMessageServiceImpl extends ServiceImpl<ConversationMess
         if (viewerId == null) {
             return;
         }
-        ConversationMessageVO messageVO = conversationViewFactory.toMessageVO(message, viewerId);
+        ConversationMessageVO messageVO = conversationViewUtils.toMessageVO(message, viewerId);
         simpMessagingTemplate.convertAndSendToUser(
                 viewerId.toString(),
                 "/transfer/conversation/" + conversation.getConversationId(),
@@ -194,7 +194,7 @@ public class ConversationMessageServiceImpl extends ServiceImpl<ConversationMess
         if (viewerId == null) {
             return;
         }
-        ConversationVO conversationVO = conversationViewFactory.toConversationVO(conversation, viewerId);
+        ConversationVO conversationVO = conversationViewUtils.toConversationVO(conversation, viewerId);
         simpMessagingTemplate.convertAndSendToUser(viewerId.toString(), "/notif/conversations", conversationVO);
     }
 
