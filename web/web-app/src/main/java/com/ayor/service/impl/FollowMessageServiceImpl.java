@@ -34,6 +34,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * 关注消息服务实现
+ */
 @Service
 @Transactional
 @RequiredArgsConstructor

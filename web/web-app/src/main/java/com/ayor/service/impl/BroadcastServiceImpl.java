@@ -14,6 +14,9 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * 广播推送服务实现
+ */
 @Service
 @RequiredArgsConstructor
 @Transactional

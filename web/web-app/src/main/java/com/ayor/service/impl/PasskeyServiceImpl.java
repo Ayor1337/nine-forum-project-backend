@@ -30,6 +30,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+/**
+ * Passkey 认证服务实现
+ */
 @Service
 @Slf4j
 public class PasskeyServiceImpl implements PasskeyService {

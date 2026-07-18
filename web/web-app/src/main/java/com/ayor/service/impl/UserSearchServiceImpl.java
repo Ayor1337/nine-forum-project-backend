@@ -10,6 +10,9 @@ import org.springframework.stereotype.Service;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * 用户搜索服务实现
+ */
 @Service
 @RequiredArgsConstructor
 public class UserSearchServiceImpl implements UserSearchService {

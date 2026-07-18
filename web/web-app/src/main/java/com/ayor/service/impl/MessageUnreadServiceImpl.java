@@ -12,6 +12,9 @@ import org.springframework.stereotype.Service;
 import java.util.Arrays;
 import java.util.Optional;
 
+/**
+ * 消息未读服务实现
+ */
 @Service
 @RequiredArgsConstructor
 public class MessageUnreadServiceImpl implements MessageUnreadService {

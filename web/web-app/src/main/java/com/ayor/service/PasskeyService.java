@@ -10,6 +10,23 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Passkey 认证服务接口
+ *
+ * 处理 WebAuthn Passkey 的注册、认证、凭证管理等操作。
+ *
+ * 主要功能:
+ * - 生成注册 options
+ * - 完成 Passkey 注册
+ * - 生成认证 options（无用户名登录）
+ * - 完成 Passkey 登录
+ * - 列出和删除已绑定凭证
+ *
+ * @see PasskeyCredentialVO Passkey 凭证视图对象
+ * @see PasskeyOptionsVO Passkey options 视图对象
+ * @author ayor
+ * @since 1.0.0
+ */
 public interface PasskeyService {
 
     /**

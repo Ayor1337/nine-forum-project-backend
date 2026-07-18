@@ -11,6 +11,9 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
+/**
+ * 授权服务实现
+ */
 @Service
 @RequiredArgsConstructor
 public class AuthorizeServiceImpl implements AuthorizeService {

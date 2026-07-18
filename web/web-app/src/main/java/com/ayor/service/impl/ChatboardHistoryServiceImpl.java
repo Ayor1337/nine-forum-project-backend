@@ -21,6 +21,9 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+/**
+ * 聊天记录服务实现
+ */
 @Service
 @Transactional
 @RequiredArgsConstructor

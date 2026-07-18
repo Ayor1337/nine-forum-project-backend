@@ -3,6 +3,22 @@ package com.ayor.service;
 import java.time.Instant;
 import java.util.List;
 
+/**
+ * Passkey 请求存储接口
+ *
+ * 为 WebAuthn 注册/认证流程提供 Challenge 快照的临时存储能力。
+ *
+ * 主要功能:
+ * - 保存 Challenge 快照
+ * - 消费（读取并删除）Challenge 快照
+ *
+ * 技术特性:
+ * - 支持注册和认证两种请求类型
+ * - 快照包含 challenge、rpId、origin 等关键信息
+ *
+ * @author ayor
+ * @since 1.0.0
+ */
 public interface PasskeyRequestStore {
 
     /**

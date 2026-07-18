@@ -25,6 +25,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * 点赞服务实现
+ */
 @Service
 @Transactional
 @RequiredArgsConstructor

@@ -12,6 +12,9 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * Redis Passkey 请求存储实现
+ */
 @Service
 public class RedisPasskeyRequestStore implements PasskeyRequestStore {
 

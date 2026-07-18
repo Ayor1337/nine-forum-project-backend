@@ -16,6 +16,9 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
+/**
+ * 在线状态服务实现
+ */
 @Service
 @RequiredArgsConstructor
 public class PresenceServiceImpl implements PresenceService {

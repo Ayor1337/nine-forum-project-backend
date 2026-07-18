@@ -24,6 +24,11 @@ import org.springframework.data.elasticsearch.core.SearchHits;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
+
+/**
+ * 搜索服务实现
+ */
+
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;

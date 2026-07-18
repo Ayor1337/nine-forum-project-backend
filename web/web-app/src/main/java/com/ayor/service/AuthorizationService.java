@@ -1,5 +1,24 @@
 package com.ayor.service;
 
+/**
+ * 权限校验服务接口
+ *
+ * 统一封装论坛系统中的各类权限校验逻辑，包括主题/分区管理、标签操作、
+ * 帖子/评论编辑删除、会话访问等场景的鉴权。
+ *
+ * 主要功能:
+ * - 主题/分区管理权限校验
+ * - 标签操作权限校验
+ * - 帖子/评论编辑删除权限校验
+ * - 会话访问权限校验
+ *
+ * 技术特性:
+ * - 基于角色和权限模型的细粒度访问控制
+ * - 覆盖前台用户和后台管理两种场景
+ *
+ * @author ayor
+ * @since 1.0.0
+ */
 public interface AuthorizationService {
 
     void assertCanManageTheme(Integer actorId);

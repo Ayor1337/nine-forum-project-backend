@@ -14,6 +14,9 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+/**
+ * 标签服务实现
+ */
 @Service
 @Transactional
 public class TagServiceImpl extends ServiceImpl<TagMapper, Tag> implements TagService {

@@ -4,6 +4,19 @@ import com.ayor.entity.dto.PasskeyAuthenticationFinishDTO;
 import com.ayor.entity.dto.PasskeyRegistrationFinishDTO;
 import com.ayor.entity.pojo.PasskeyCredential;
 
+/**
+ * WebAuthn 适配器接口
+ *
+ * 封装 WebAuthn4J 底层库，提供 Passkey 注册结果校验和登录结果校验能力。
+ *
+ * 主要功能:
+ * - 校验注册结果并组装持久化凭证实体
+ * - 校验登录结果并返回更新后的签名计数
+ *
+ * @see PasskeyCredential Passkey 凭证实体
+ * @author ayor
+ * @since 1.0.0
+ */
 public interface PasskeyWebAuthnAdapter {
 
     /**

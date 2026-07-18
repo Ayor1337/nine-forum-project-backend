@@ -14,6 +14,9 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+/**
+ * ES 索引服务实现
+ */
 @Service
 @RequiredArgsConstructor
 @Slf4j

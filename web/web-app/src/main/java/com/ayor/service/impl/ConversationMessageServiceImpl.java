@@ -30,6 +30,9 @@ import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * 会话消息服务实现
+ */
 @Service
 @Transactional
 @RequiredArgsConstructor

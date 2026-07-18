@@ -24,6 +24,11 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
+
+/**
+ * 图片资源服务实现
+ */
+
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;

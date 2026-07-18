@@ -12,6 +12,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
+/**
+ * 论坛实时消息推送服务实现
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor

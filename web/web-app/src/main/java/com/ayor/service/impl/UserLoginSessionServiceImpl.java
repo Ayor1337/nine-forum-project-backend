@@ -19,6 +19,9 @@ import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * 登录会话服务实现
+ */
 @Service
 @RequiredArgsConstructor
 public class UserLoginSessionServiceImpl implements UserLoginSessionService {

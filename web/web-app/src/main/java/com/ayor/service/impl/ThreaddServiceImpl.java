@@ -45,6 +45,9 @@ import java.util.Objects;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+/**
+ * 帖子服务实现
+ */
 @Service
 @Transactional
 @RequiredArgsConstructor

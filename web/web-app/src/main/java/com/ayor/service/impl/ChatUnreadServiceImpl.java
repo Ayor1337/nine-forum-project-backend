@@ -10,6 +10,9 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * 聊天未读服务实现
+ */
 @Service
 @RequiredArgsConstructor
 public class ChatUnreadServiceImpl implements ChatUnreadService {

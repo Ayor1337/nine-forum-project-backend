@@ -28,6 +28,9 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 
+/**
+ * 会话服务实现
+ */
 @Service
 @Transactional
 @RequiredArgsConstructor
