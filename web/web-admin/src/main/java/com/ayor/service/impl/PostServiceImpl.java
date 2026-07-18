@@ -3,6 +3,7 @@ package com.ayor.service.impl;
 import com.ayor.entity.PageEntity;
 import com.ayor.entity.pojo.Post;
 import com.ayor.mapper.PostMapper;
+import com.ayor.service.EsIndexSyncProducer;
 import com.ayor.service.PostService;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -17,6 +18,8 @@ import java.util.Date;
 @Transactional
 @RequiredArgsConstructor
 public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements PostService {
+
+    private final EsIndexSyncProducer esIndexSyncProducer;
 
     /**
      * 分页查询某个帖子的回帖，自动排除已删除记录。
@@ -76,7 +79,11 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         }
         post.setUpdateTime(now);
         post.setIsDeleted(false);
-        return this.save(post) ? null : "创建回帖失败";
+        if (!this.save(post)) {
+            return "创建回帖失败";
+        }
+        esIndexSyncProducer.syncPost(post.getPostId());
+        return null;
     }
 
     /**
@@ -95,7 +102,11 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
             exist.setContent(post.getContent());
         }
         exist.setUpdateTime(new Date());
-        return this.updateById(exist) ? null : "更新回帖失败";
+        if (!this.updateById(exist)) {
+            return "更新回帖失败";
+        }
+        esIndexSyncProducer.syncPost(exist.getPostId());
+        return null;
     }
 
     /**
@@ -111,6 +122,10 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
             return "回复不存在";
         }
         exist.setIsDeleted(true);
-        return this.updateById(exist) ? null : "删除回复失败";
+        if (!this.updateById(exist)) {
+            return "删除回复失败";
+        }
+        esIndexSyncProducer.syncPost(postId);
+        return null;
     }
 }

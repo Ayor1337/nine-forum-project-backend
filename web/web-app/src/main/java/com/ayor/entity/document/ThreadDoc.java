@@ -17,7 +17,7 @@ import java.util.Date;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Document(indexName = "thread")
+@Document(indexName = "thread", createIndex = false)
 public class ThreadDoc implements Serializable {
 
     @Serial
@@ -26,7 +26,7 @@ public class ThreadDoc implements Serializable {
     @Id
     private String id;
 
-    @Field(type = FieldType.Integer, index = false)
+    @Field(type = FieldType.Integer)
     private Integer threadId;
 
     @Field(type = FieldType.Integer)

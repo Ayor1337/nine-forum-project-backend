@@ -21,6 +21,7 @@ import com.ayor.service.ForumRealtimeService;
 import com.ayor.service.MentionMessageService;
 import com.ayor.service.UserRelationService;
 import com.ayor.service.CacheInvalidationService;
+import com.ayor.service.EsIndexSyncProducer;
 import com.ayor.type.ThreadOrderType;
 import com.ayor.util.TipTapUtils;
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
@@ -99,6 +100,9 @@ class ThreaddServiceImplTest {
 
     @Mock
     private CacheInvalidationService cacheInvalidationService;
+
+    @Mock
+    private EsIndexSyncProducer esIndexSyncProducer;
 
     // 测试帖子串排行方法使用帖子串排行缓存
     @Test
@@ -545,7 +549,8 @@ class ThreaddServiceImplTest {
                 authorizationService,
                 userRelationService,
                 threadEditHistoryMapper,
-                cacheInvalidationService
+                cacheInvalidationService,
+                esIndexSyncProducer
         );
         ReflectionTestUtils.setField(service, "baseMapper", threaddMapper);
         return service;

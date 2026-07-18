@@ -1,16 +1,12 @@
 package com.ayor.dao;
 
 import com.ayor.entity.document.ThreadDoc;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.elasticsearch.repository.ElasticsearchRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface ThreaddRepository extends ElasticsearchRepository<ThreadDoc, Integer> {
+public interface ThreaddRepository extends ElasticsearchRepository<ThreadDoc, String> {
 
-    Page<ThreadDoc> findThreaddByTitleOrContentIgnoreCase(String title, String content, Pageable pageable);
-
-
+    void deleteByThreadId(Integer threadId);
 
 }

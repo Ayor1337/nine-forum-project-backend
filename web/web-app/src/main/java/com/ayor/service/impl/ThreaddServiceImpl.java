@@ -16,6 +16,7 @@ import com.ayor.entity.pojo.ThreadEditHistory;
 import com.ayor.mapper.*;
 import com.ayor.service.AuthorizationService;
 import com.ayor.service.CacheInvalidationService;
+import com.ayor.service.EsIndexSyncProducer;
 import com.ayor.service.FollowMessageService;
 import com.ayor.service.ForumRealtimeService;
 import com.ayor.service.ImageAssetService;
@@ -80,6 +81,8 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
     private final ThreadEditHistoryMapper threadEditHistoryMapper;
 
     private final CacheInvalidationService cacheInvalidationService;
+
+    private final EsIndexSyncProducer esIndexSyncProducer;
     /**
      * 获取指定主题下的帖子列表或分页结果。
      */
@@ -321,6 +324,7 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
             return "删除失败";
         }
         cacheInvalidationService.clearThreadRanking();
+        esIndexSyncProducer.syncThread(threadId);
         return null;
     }
     /**
@@ -342,6 +346,7 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
             return "删除失败";
         }
         cacheInvalidationService.clearThreadRanking();
+        esIndexSyncProducer.syncThread(threadId);
         return null;
     }
     /**
@@ -438,7 +443,7 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
                 .eq(Announcement::getIsGlobal, isGlobal));
     }
     /**
-     * 创建帖子并同步写入索引与统计。
+     * 创建帖子并异步同步搜索索引与统计。
      */
 
     @Override
@@ -462,6 +467,7 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
             followMessageService.createThreadFollowMessages(threadd);
             cacheInvalidationService.clearThreadRanking();
             forumRealtimeService.publishThreadCreated(threadd);
+            esIndexSyncProducer.syncThread(threadd.getThreadId());
             return null;
         }
         return "添加失败";
@@ -506,6 +512,7 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
         imageAssetService.syncContentRefs("THREAD", threadId, newContent, accountId);
         mentionMessageService.createThreadMentionMessages(newContent, accountId, threadId);
         cacheInvalidationService.clearThreadRanking();
+        esIndexSyncProducer.syncThread(threadId);
         return null;
     }
 

@@ -15,7 +15,7 @@ import java.time.Instant;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-@Document(indexName = "search_log")
+@Document(indexName = "search_log", createIndex = false)
 public class SearchLogDoc {
 
     @Id

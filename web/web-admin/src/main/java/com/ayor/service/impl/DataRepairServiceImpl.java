@@ -1,6 +1,7 @@
 package com.ayor.service.impl;
 
 import com.ayor.service.DataRepairService;
+import com.ayor.service.EsIndexSyncProducer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
@@ -101,6 +102,8 @@ public class DataRepairServiceImpl implements DataRepairService {
 
     private final CacheManager cacheManager;
 
+    private final EsIndexSyncProducer esIndexSyncProducer;
+
     @Override
     public String initializeMissingRelatedRecords() {
         jdbcTemplate.update(INSERT_MISSING_ACCOUNT_STATS);
@@ -112,6 +115,15 @@ public class DataRepairServiceImpl implements DataRepairService {
         clearCache("themeList");
         clearCache("userPrivacySetting");
         clearCache("userInfo");
+        return null;
+    }
+
+    /**
+     * 发送搜索索引全量重建命令, 由 web-app 异步消费执行。
+     */
+    @Override
+    public String rebuildSearchIndex() {
+        esIndexSyncProducer.rebuildAll();
         return null;
     }
 

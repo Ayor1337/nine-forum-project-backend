@@ -26,4 +26,13 @@ public class DataRepairController {
     public Result<Void> initializeMissingRelatedRecords() {
         return Result.messageHandler(dataRepairService::initializeMissingRelatedRecords);
     }
+
+    /**
+     * 触发搜索索引全量重建（异步执行）。
+     */
+    @Operation(summary = "触发搜索索引全量重建", description = "发送重建命令, 由 web-app 异步执行全量灌入与失效文档清理")
+    @PostMapping("/rebuild_search_index")
+    public Result<Void> rebuildSearchIndex() {
+        return Result.messageHandler(dataRepairService::rebuildSearchIndex);
+    }
 }

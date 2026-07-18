@@ -18,6 +18,7 @@ import com.ayor.mapper.PostEditHistoryMapper;
 import com.ayor.mapper.PostMapper;
 import com.ayor.mapper.ThreaddMapper;
 import com.ayor.service.AuthorizationService;
+import com.ayor.service.EsIndexSyncProducer;
 import com.ayor.service.ForumRealtimeService;
 import com.ayor.service.ImageAssetService;
 import com.ayor.service.MentionMessageService;
@@ -74,6 +75,8 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
     private final UserRelationService userRelationService;
 
     private final PostEditHistoryMapper postEditHistoryMapper;
+
+    private final EsIndexSyncProducer esIndexSyncProducer;
     /**
      * 获取指定帖子下的评论列表。
      */
@@ -175,7 +178,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
             subscribeDest = "/notif/reply",
             type = UnreadMessageType.REPLY_MESSAGE)
     /**
-     * 新增评论并处理相关通知与索引。
+     * 新增评论并处理相关通知与索引异步同步。
      */
     public String insertPost(PostDTO postDTO, Integer userId) {
         if (postDTO.getContent() == null) {
@@ -222,6 +225,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
             }
             mentionMessageService.createPostMentionMessages(post.getContent(), userId, post.getPostId(), post.getThreadId());
             forumRealtimeService.publishPostCreated(post);
+            esIndexSyncProducer.syncPost(post.getPostId());
             return null;
         }
         return "发布失败, 未知异常";
@@ -288,6 +292,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
 
         imageAssetService.syncContentRefs("POST", postId, newContent, accountId);
         mentionMessageService.createPostMentionMessages(newContent, accountId, postId, post.getThreadId());
+        esIndexSyncProducer.syncPost(postId);
         return null;
     }
 
@@ -362,7 +367,11 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         }
         authorizationService.assertCanDeletePost(userId, postId);
         imageAssetService.clearContentRefs("POST", postId);
-        return this.removeByIdLogic(post.getPostId()) ? null : "删除失败, 未知异常";
+        if (!this.removeByIdLogic(post.getPostId())) {
+            return "删除失败, 未知异常";
+        }
+        esIndexSyncProducer.syncPost(postId);
+        return null;
     }
     /**
      * 管理员直接删除评论。
@@ -375,7 +384,11 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
             return "帖子不存在";
         }
         imageAssetService.clearContentRefs("POST", postId);
-        return this.removeByIdLogic(post.getPostId()) ? null : "删除失败, 未知异常";
+        if (!this.removeByIdLogic(post.getPostId())) {
+            return "删除失败, 未知异常";
+        }
+        esIndexSyncProducer.syncPost(postId);
+        return null;
     }
 
     /**

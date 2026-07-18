@@ -15,6 +15,7 @@ import com.ayor.mapper.PostEditHistoryMapper;
 import com.ayor.mapper.PostMapper;
 import com.ayor.mapper.ThreaddMapper;
 import com.ayor.service.AuthorizationService;
+import com.ayor.service.EsIndexSyncProducer;
 import com.ayor.service.ForumRealtimeService;
 import com.ayor.service.ImageAssetService;
 import com.ayor.service.MentionMessageService;
@@ -86,6 +87,9 @@ class PostServiceImplTest {
 
     @Mock
     private PostEditHistoryMapper postEditHistoryMapper;
+
+    @Mock
+    private EsIndexSyncProducer esIndexSyncProducer;
 
     // 测试分页帖子按帖子串 ID
     @Test
@@ -605,7 +609,8 @@ class PostServiceImplTest {
                 imageAssetService,
                 authorizationService,
                 userRelationService,
-                postEditHistoryMapper
+                postEditHistoryMapper,
+                esIndexSyncProducer
         );
         ReflectionTestUtils.setField(service, "baseMapper", postMapper);
         return service;

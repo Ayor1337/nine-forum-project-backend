@@ -9,6 +9,8 @@ import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.jdbc.core.JdbcTemplate;
 
+import com.ayor.service.EsIndexSyncProducer;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.Mockito.inOrder;
@@ -27,11 +29,14 @@ class DataRepairServiceImplTest {
     @Mock
     private Cache cache;
 
+    @Mock
+    private EsIndexSyncProducer esIndexSyncProducer;
+
     // 测试初始化缺失关联记录执行全部修复 SQL 并清理已知缓存
     @Test
     void initializeMissingRelatedRecordsRunsAllRepairSqlAndClearsKnownCaches() {
         when(cacheManager.getCache(org.mockito.ArgumentMatchers.anyString())).thenReturn(cache);
-        DataRepairServiceImpl service = new DataRepairServiceImpl(jdbcTemplate, cacheManager);
+        DataRepairServiceImpl service = new DataRepairServiceImpl(jdbcTemplate, cacheManager, esIndexSyncProducer);
 
         String result = service.initializeMissingRelatedRecords();
 
@@ -52,10 +57,20 @@ class DataRepairServiceImplTest {
     // 测试初始化缺失关联记录忽略缺失缓存
     @Test
     void initializeMissingRelatedRecordsIgnoresMissingCaches() {
-        DataRepairServiceImpl service = new DataRepairServiceImpl(jdbcTemplate, cacheManager);
+        DataRepairServiceImpl service = new DataRepairServiceImpl(jdbcTemplate, cacheManager, esIndexSyncProducer);
 
         assertThat(service.initializeMissingRelatedRecords()).isNull();
 
         verify(cache, org.mockito.Mockito.never()).clear();
+    }
+
+    // 测试重建搜索索引发送重建命令
+    @Test
+    void rebuildSearchIndexSendsRebuildCommand() {
+        DataRepairServiceImpl service = new DataRepairServiceImpl(jdbcTemplate, cacheManager, esIndexSyncProducer);
+
+        assertThat(service.rebuildSearchIndex()).isNull();
+
+        verify(esIndexSyncProducer).rebuildAll();
     }
 }

@@ -97,6 +97,7 @@ class SearchServiceImplTest {
         assertTrue(ThreadDoc.class.getDeclaredField("createTime").getAnnotation(Field.class).index());
         assertTrue(ThreadDoc.class.getDeclaredField("isThreadTopic").getAnnotation(Field.class).index());
         assertTrue(ThreadDoc.class.getDeclaredField("accountId").getAnnotation(Field.class).index());
+        assertTrue(ThreadDoc.class.getDeclaredField("threadId").getAnnotation(Field.class).index());
     }
 
     // 测试搜索帖子串排除拉黑作者
