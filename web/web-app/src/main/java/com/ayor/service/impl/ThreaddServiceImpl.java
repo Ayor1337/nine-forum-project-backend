@@ -16,7 +16,7 @@ import com.ayor.entity.pojo.ThreadEditHistory;
 import com.ayor.mapper.*;
 import com.ayor.service.AuthorizationService;
 import com.ayor.service.CacheInvalidationService;
-import com.ayor.service.EsIndexSyncProducer;
+import com.ayor.mq.EsIndexSyncProducer;
 import com.ayor.service.FollowMessageService;
 import com.ayor.service.ForumRealtimeService;
 import com.ayor.service.ImageAssetService;

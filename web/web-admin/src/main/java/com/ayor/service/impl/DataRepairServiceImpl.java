@@ -1,7 +1,7 @@
 package com.ayor.service.impl;
 
 import com.ayor.service.DataRepairService;
-import com.ayor.service.EsIndexSyncProducer;
+import com.ayor.mq.EsIndexSyncProducer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;

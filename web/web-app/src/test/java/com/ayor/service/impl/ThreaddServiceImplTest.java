@@ -21,7 +21,7 @@ import com.ayor.service.ForumRealtimeService;
 import com.ayor.service.MentionMessageService;
 import com.ayor.service.UserRelationService;
 import com.ayor.service.CacheInvalidationService;
-import com.ayor.service.EsIndexSyncProducer;
+import com.ayor.mq.EsIndexSyncProducer;
 import com.ayor.type.ThreadOrderType;
 import com.ayor.util.TipTapUtils;
 import com.baomidou.mybatisplus.core.conditions.Wrapper;

@@ -4,7 +4,7 @@ import com.ayor.dao.ThreaddRepository;
 import com.ayor.entity.pojo.Post;
 import com.ayor.entity.pojo.Threadd;
 import com.ayor.entity.document.ThreadDoc;
-import com.ayor.service.ESIndexManager;
+import com.ayor.search.ESIndexManager;
 import com.ayor.service.ESIndexService;
 import com.ayor.service.PostService;
 import com.ayor.service.ThreaddService;

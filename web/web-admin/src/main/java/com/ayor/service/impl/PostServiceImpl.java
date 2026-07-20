@@ -3,7 +3,7 @@ package com.ayor.service.impl;
 import com.ayor.entity.PageEntity;
 import com.ayor.entity.pojo.Post;
 import com.ayor.mapper.PostMapper;
-import com.ayor.service.EsIndexSyncProducer;
+import com.ayor.mq.EsIndexSyncProducer;
 import com.ayor.service.PostService;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;

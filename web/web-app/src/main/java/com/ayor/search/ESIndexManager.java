@@ -1,4 +1,4 @@
-package com.ayor.service;
+package com.ayor.search;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;

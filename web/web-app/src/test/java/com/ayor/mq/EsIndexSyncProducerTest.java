@@ -1,4 +1,4 @@
-package com.ayor.service;
+package com.ayor.mq;
 
 import com.ayor.entity.message.EsIndexSyncMessage;
 import com.ayor.type.EsIndexEntityType;

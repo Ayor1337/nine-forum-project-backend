@@ -4,7 +4,7 @@ import com.ayor.dao.ThreaddRepository;
 import com.ayor.entity.document.ThreadDoc;
 import com.ayor.mapper.PostMapper;
 import com.ayor.mapper.ThreaddMapper;
-import com.ayor.service.ESIndexManager;
+import com.ayor.search.ESIndexManager;
 import com.ayor.service.PostService;
 import com.ayor.service.ThreaddService;
 import com.baomidou.mybatisplus.core.conditions.Wrapper;

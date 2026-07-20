@@ -9,7 +9,7 @@ import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.jdbc.core.JdbcTemplate;
 
-import com.ayor.service.EsIndexSyncProducer;
+import com.ayor.mq.EsIndexSyncProducer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.contains;

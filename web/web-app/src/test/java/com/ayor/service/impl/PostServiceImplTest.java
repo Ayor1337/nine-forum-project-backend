@@ -15,7 +15,7 @@ import com.ayor.mapper.PostEditHistoryMapper;
 import com.ayor.mapper.PostMapper;
 import com.ayor.mapper.ThreaddMapper;
 import com.ayor.service.AuthorizationService;
-import com.ayor.service.EsIndexSyncProducer;
+import com.ayor.mq.EsIndexSyncProducer;
 import com.ayor.service.ForumRealtimeService;
 import com.ayor.service.ImageAssetService;
 import com.ayor.service.MentionMessageService;
