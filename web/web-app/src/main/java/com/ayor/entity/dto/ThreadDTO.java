@@ -21,4 +21,9 @@ public class ThreadDTO {
     @NotNull(message = "主题不能为空")
     private Integer topicId;
 
+    /**
+     * 标签 ID，可选；不传或为 null 表示不设置标签（编辑时表示清除标签）
+     */
+    private Integer tagId;
+
 }

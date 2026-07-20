@@ -451,6 +451,10 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
         if (accountId == null) {
             return "用户不存在";
         }
+        String tagError = validateTagBelongsToTopic(threadDTO.getTagId(), threadDTO.getTopicId());
+        if (tagError != null) {
+            return tagError;
+        }
         Threadd threadd = new Threadd();
         BeanUtils.copyProperties(threadDTO, threadd);
         try {
@@ -487,6 +491,12 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
             return "帖子不存在";
         }
 
+        String tagError = validateTagBelongsToTopic(threadDTO.getTagId(), threadd.getTopicId());
+        if (tagError != null) {
+            return tagError;
+        }
+        Integer oldTagId = threadd.getTagId();
+
         String newContent;
         try {
             newContent = tipTapUtils.convertBase64ImagesToUrl(threadDTO.getContent(), "threads/" + threadd.getTopicId() + "/");
@@ -505,14 +515,36 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
         threadd.setTitle(threadDTO.getTitle());
         threadd.setContent(newContent);
         threadd.setUpdateTime(new Date());
+        threadd.setTagId(threadDTO.getTagId());
         if (!this.updateById(threadd)) {
             return "编辑失败";
+        }
+        // updateById 默认忽略 null 字段，清除标签需要单独置空
+        if (threadDTO.getTagId() == null && oldTagId != null) {
+            this.baseMapper.removeThreadTag(threadId, threadd.getTopicId());
         }
 
         imageAssetService.syncContentRefs("THREAD", threadId, newContent, accountId);
         mentionMessageService.createThreadMentionMessages(newContent, accountId, threadId);
         cacheInvalidationService.clearThreadRanking();
         esIndexSyncProducer.syncThread(threadId);
+        return null;
+    }
+
+    /**
+     * 校验标签存在且属于指定话题；tagId 为 null 时视为不设置标签，直接通过。
+     */
+    private String validateTagBelongsToTopic(Integer tagId, Integer topicId) {
+        if (tagId == null) {
+            return null;
+        }
+        Tag tag = tagMapper.getTagById(tagId);
+        if (tag == null) {
+            return "标签不存在";
+        }
+        if (!Objects.equals(tag.getTopicId(), topicId)) {
+            return "标签不属于该主题";
+        }
         return null;
     }
 

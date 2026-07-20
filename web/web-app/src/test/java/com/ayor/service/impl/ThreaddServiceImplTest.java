@@ -3,6 +3,7 @@ package com.ayor.service.impl;
 import com.ayor.entity.PageEntity;
 import com.ayor.entity.pojo.Announcement;
 import com.ayor.entity.pojo.Account;
+import com.ayor.entity.pojo.Tag;
 import com.ayor.entity.pojo.Threadd;
 import com.ayor.entity.dto.ThreadDTO;
 import com.ayor.entity.vo.AnnouncementVO;
@@ -393,6 +394,144 @@ class ThreaddServiceImplTest {
 
         assertEquals("添加失败", result);
         verify(forumRealtimeService, never()).publishThreadCreated(any(Threadd.class));
+    }
+
+    // 测试发帖时携带有效标签则随帖子保存
+    @Test
+    void shouldInsertThreadWithValidTag() {
+        ThreaddServiceImpl service = createService();
+        ThreadDTO dto = new ThreadDTO();
+        dto.setTitle("hello");
+        dto.setTopicId(2);
+        dto.setTagId(3);
+        dto.setContent("{\"type\":\"doc\",\"content\":[]}");
+
+        Tag tag = new Tag();
+        tag.setTagId(3);
+        tag.setTopicId(2);
+        when(tagMapper.getTagById(3)).thenReturn(tag);
+        doAnswer(invocation -> {
+            Threadd threadd = invocation.getArgument(0);
+            threadd.setThreadId(322);
+            return 1;
+        }).when(threaddMapper).insert(any(Threadd.class));
+
+        String result = service.insertThread(dto, 8);
+
+        assertNull(result);
+        ArgumentCaptor<Threadd> captor = ArgumentCaptor.forClass(Threadd.class);
+        verify(threaddMapper).insert(captor.capture());
+        assertEquals(3, captor.getValue().getTagId());
+    }
+
+    // 测试发帖时标签不存在则拒绝
+    @Test
+    void shouldRejectInsertThreadWhenTagMissing() {
+        ThreaddServiceImpl service = createService();
+        ThreadDTO dto = new ThreadDTO();
+        dto.setTitle("hello");
+        dto.setTopicId(2);
+        dto.setTagId(99);
+        dto.setContent("{\"type\":\"doc\",\"content\":[]}");
+        when(tagMapper.getTagById(99)).thenReturn(null);
+
+        String result = service.insertThread(dto, 8);
+
+        assertEquals("标签不存在", result);
+        verify(threaddMapper, never()).insert(any(Threadd.class));
+    }
+
+    // 测试发帖时标签不属于该主题则拒绝
+    @Test
+    void shouldRejectInsertThreadWhenTagNotInTopic() {
+        ThreaddServiceImpl service = createService();
+        ThreadDTO dto = new ThreadDTO();
+        dto.setTitle("hello");
+        dto.setTopicId(2);
+        dto.setTagId(3);
+        dto.setContent("{\"type\":\"doc\",\"content\":[]}");
+
+        Tag tag = new Tag();
+        tag.setTagId(3);
+        tag.setTopicId(9);
+        when(tagMapper.getTagById(3)).thenReturn(tag);
+
+        String result = service.insertThread(dto, 8);
+
+        assertEquals("标签不属于该主题", result);
+        verify(threaddMapper, never()).insert(any(Threadd.class));
+    }
+
+    // 测试编辑帖子时更新为有效标签
+    @Test
+    void shouldUpdateTagWhenEditingThread() {
+        ThreaddServiceImpl service = createService();
+        Threadd thread = createThread();
+        when(threaddMapper.selectById(101)).thenReturn(thread);
+        when(threaddMapper.updateById(any(Threadd.class))).thenReturn(1);
+
+        Tag tag = new Tag();
+        tag.setTagId(5);
+        tag.setTopicId(1);
+        when(tagMapper.getTagById(5)).thenReturn(tag);
+
+        ThreadDTO dto = new ThreadDTO();
+        dto.setTitle("new-title");
+        dto.setTopicId(1);
+        dto.setTagId(5);
+        dto.setContent("{\"type\":\"doc\",\"content\":[]}");
+
+        String result = service.editThread(101, dto, 11);
+
+        assertNull(result);
+        ArgumentCaptor<Threadd> captor = ArgumentCaptor.forClass(Threadd.class);
+        verify(threaddMapper).updateById(captor.capture());
+        assertEquals(5, captor.getValue().getTagId());
+        verify(threaddMapper, never()).removeThreadTag(any(), any());
+    }
+
+    // 测试编辑帖子时不传标签则清除原标签
+    @Test
+    void shouldClearTagWhenEditingThreadWithNullTagId() {
+        ThreaddServiceImpl service = createService();
+        Threadd thread = createThread();
+        when(threaddMapper.selectById(101)).thenReturn(thread);
+        when(threaddMapper.updateById(any(Threadd.class))).thenReturn(1);
+        when(threaddMapper.removeThreadTag(101, 1)).thenReturn(true);
+
+        ThreadDTO dto = new ThreadDTO();
+        dto.setTitle("new-title");
+        dto.setTopicId(1);
+        dto.setContent("{\"type\":\"doc\",\"content\":[]}");
+
+        String result = service.editThread(101, dto, 11);
+
+        assertNull(result);
+        verify(threaddMapper).removeThreadTag(101, 1);
+    }
+
+    // 测试编辑帖子时标签不属于该主题则拒绝
+    @Test
+    void shouldRejectEditThreadWhenTagNotInTopic() {
+        ThreaddServiceImpl service = createService();
+        Threadd thread = createThread();
+        when(threaddMapper.selectById(101)).thenReturn(thread);
+
+        Tag tag = new Tag();
+        tag.setTagId(5);
+        tag.setTopicId(9);
+        when(tagMapper.getTagById(5)).thenReturn(tag);
+
+        ThreadDTO dto = new ThreadDTO();
+        dto.setTitle("new-title");
+        dto.setTopicId(1);
+        dto.setTagId(5);
+        dto.setContent("{\"type\":\"doc\",\"content\":[]}");
+
+        String result = service.editThread(101, dto, 11);
+
+        assertEquals("标签不属于该主题", result);
+        verify(threaddMapper, never()).updateById(any(Threadd.class));
     }
 
     // 测试设置主题公告使用公告表
