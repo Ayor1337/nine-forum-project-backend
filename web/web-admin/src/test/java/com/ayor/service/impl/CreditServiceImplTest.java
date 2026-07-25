@@ -117,13 +117,28 @@ class CreditServiceImplTest {
         verify(accountMapper, never()).selectById(anyInt());
     }
 
-    // 测试备注为空时拒绝
+    // 测试备注为空时允许调整并存为空串
     @Test
-    void shouldRejectBlankRemark() {
-        String result = creditService.adjustCredit(1, adjustDto(7, 100L, "   "));
+    void shouldAllowBlankRemark() {
+        when(accountMapper.selectById(7)).thenReturn(activeAccount(7));
+        when(creditAccountMapper.selectForUpdate(7)).thenReturn(creditAccount(7, 50L));
 
-        assertThat(result).isEqualTo("备注不能为空");
-        verify(accountMapper, never()).selectById(anyInt());
+        String blankResult = creditService.adjustCredit(1, adjustDto(7, 100L, "   "));
+
+        assertThat(blankResult).isNull();
+        assertThat(capturedTransaction().getRemark()).isEmpty();
+    }
+
+    // 测试备注为 null 时允许调整并存为空串
+    @Test
+    void shouldAllowNullRemark() {
+        when(accountMapper.selectById(7)).thenReturn(activeAccount(7));
+        when(creditAccountMapper.selectForUpdate(7)).thenReturn(creditAccount(7, 50L));
+
+        String nullResult = creditService.adjustCredit(1, adjustDto(7, 100L, null));
+
+        assertThat(nullResult).isNull();
+        assertThat(capturedTransaction().getRemark()).isEmpty();
     }
 
     // 测试目标用户不存在或已删除时拒绝

@@ -44,9 +44,6 @@ public class CreditServiceImpl extends ServiceImpl<CreditAccountMapper, CreditAc
         if (operatorId == null || dto == null || dto.getAccountId() == null || dto.getAmount() == null) {
             return "参数错误";
         }
-        if (!StringUtils.hasText(dto.getRemark())) {
-            return "备注不能为空";
-        }
         long amount = dto.getAmount();
         if (amount == 0) {
             return "调整数量不能为 0";
@@ -71,7 +68,7 @@ public class CreditServiceImpl extends ServiceImpl<CreditAccountMapper, CreditAc
         transaction.setDelta(amount);
         transaction.setBalanceAfter(balanceAfter);
         transaction.setChangeType(CreditChangeType.fromAmount(amount).getType());
-        transaction.setRemark(dto.getRemark().trim());
+        transaction.setRemark(dto.getRemark() == null ? "" : dto.getRemark().trim());
         transaction.setOperatorId(operatorId);
         creditTransactionMapper.insert(transaction);
         return null;
