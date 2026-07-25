@@ -8,6 +8,7 @@ MySQL 是 NineForum 的主业务数据库。完整本地初始化 schema 主要�
 | --- | --- |
 | `.docker/image/mysql/nine_forum_schema.sql` | 本地完整初始化 schema，包含主要表、约束和部分初始数据。 |
 | `docs/sql/20260624_follow_message.sql` | 关注动态消息表相关增量 SQL。 |
+| `docs/sql/20260725_credit.sql` | Credit 货币余额表与流水表相关增量 SQL。 |
 
 当前 Docker Compose 使用 `mysql:latest` 镜像，未直接启用 `.docker/image/mysql/Dockerfile` 构建。首次启动容器后如需完整表结构，需要手动导入 schema，或调整 Compose 改用自定义镜像。
 
@@ -24,6 +25,7 @@ MySQL 是 NineForum 的主业务数据库。完整本地初始化 schema 主要�
 | 图片资源 | `image_asset`、`image_asset_favorite`、`content_image_ref` |
 | 安全认证 | `passkey_credential` |
 | 公告 | `announcements` |
+| 货币 | `credit_account`、`credit_transaction` |
 
 ## 主要关系
 
@@ -42,6 +44,8 @@ MySQL 是 NineForum 的主业务数据库。完整本地初始化 schema 主要�
 - `image_asset_favorite` 通过 `(account_id, asset_id)` 保持用户收藏图片唯一。
 - `content_image_ref` 通过 `(asset_id, content_type, content_id)` 记录图片被内容引用的位置。
 - `passkey_credential.account_id` 关联账号，`credential_id` 唯一。
+- `credit_account.account_id` 关联账号，一行代表一个账号的 Credit 余额，`balance` 通过 CHECK 约束保证非负，业务层懒创建。
+- `credit_transaction` 保存 Credit 变动流水，`delta` 为正表示发放、为负表示扣减，`balance_after` 记录变动后余额快照，`operator_id` 记录操作管理员账号。
 
 ## 索引与约束关注点
 
@@ -51,6 +55,8 @@ MySQL 是 NineForum 的主业务数据库。完整本地初始化 schema 主要�
 - `conversation` 按双方账号与更新时间建索引，服务于会话列表排序。
 - `conversation_message` 按会话、创建时间和消息 ID 建索引，服务于历史分页与最新摘要查询。
 - `conversation_user_setting` 通过 `(conversation_id, account_id)` 保持单用户单会话设置唯一，并按账号、置顶状态和更新时间建索引。
+- `credit_account` 通过 `chk_credit_account_balance` 约束保证余额非负，扣减时业务层使用行锁与余额校验防止透支。
+- `credit_transaction` 按账号和时间、操作管理员和时间建索引，服务于用户端流水分页和管理端排查。
 - 多数外键使用 `ON DELETE RESTRICT`，删除业务数据前需要先处理依赖数据。
 - 部分图片和会话相关表使用 `ON DELETE CASCADE` 或 `ON DELETE SET NULL`，实现资源或账号删除后的引用处理。
 
