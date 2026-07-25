@@ -21,6 +21,7 @@ public interface ShopItemMapper extends BaseMapper<ShopItem> {
     @Select("""
             SELECT item_id,
                    name,
+                   item_key,
                    description,
                    item_type,
                    price,

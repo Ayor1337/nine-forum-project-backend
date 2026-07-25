@@ -36,6 +36,7 @@ public interface ShopItemMapper extends BaseMapper<ShopItem> {
             <script>
             SELECT item_id,
                    name,
+                   item_key,
                    description,
                    item_type,
                    price,
@@ -64,4 +65,17 @@ public interface ShopItemMapper extends BaseMapper<ShopItem> {
                                  @Param("name") String name,
                                  @Param("itemType") String itemType,
                                  @Param("status") Integer status);
+
+    @Select("""
+            <script>
+            SELECT COUNT(*)
+            FROM shop_item
+            WHERE item_key = #{itemKey}
+            <if test="excludeItemId != null">
+                AND item_id != #{excludeItemId}
+            </if>
+            </script>
+            """)
+    Long countByItemKey(@Param("itemKey") String itemKey,
+                        @Param("excludeItemId") Integer excludeItemId);
 }

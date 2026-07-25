@@ -46,6 +46,7 @@ class ShopServiceImplTest {
     // 测试创建商品时字段映射正确
     @Test
     void shouldCreateItemWithMappedFields() {
+        when(shopItemMapper.countByItemKey("star_track_frame", null)).thenReturn(0L);
         String result = shopService.createItem(itemDto());
 
         assertThat(result).isNull();
@@ -53,12 +54,22 @@ class ShopServiceImplTest {
         verify(shopItemMapper).insert(captor.capture());
         ShopItem item = captor.getValue();
         assertThat(item.getName()).isEqualTo("头像框·星轨");
+        assertThat(item.getItemKey()).isEqualTo("star_track_frame");
         assertThat(item.getItemType()).isEqualTo("avatar_frame");
         assertThat(item.getPrice()).isEqualTo(200L);
         assertThat(item.getStock()).isEqualTo(100L);
         assertThat(item.getPurchaseLimit()).isEqualTo(0);
         assertThat(item.getStatus()).isEqualTo(ShopItemStatus.LISTED.getCode());
         assertThat(item.getIsDeleted()).isFalse();
+    }
+
+    // 测试创建商品关键字重复时拒绝
+    @Test
+    void shouldRejectCreateWhenItemKeyDuplicated() {
+        when(shopItemMapper.countByItemKey("star_track_frame", null)).thenReturn(1L);
+
+        assertThat(shopService.createItem(itemDto())).isEqualTo("商品关键字已存在");
+        verify(shopItemMapper, never()).insert(any(ShopItem.class));
     }
 
     // 测试创建商品参数缺失时拒绝
@@ -89,6 +100,7 @@ class ShopServiceImplTest {
     @Test
     void shouldUpdateItem() {
         when(shopItemMapper.selectById(3)).thenReturn(existingItem());
+        when(shopItemMapper.countByItemKey("star_track_frame", 3)).thenReturn(0L);
 
         String result = shopService.updateItem(3, itemDto());
 
@@ -96,7 +108,18 @@ class ShopServiceImplTest {
         ArgumentCaptor<ShopItem> captor = ArgumentCaptor.forClass(ShopItem.class);
         verify(shopItemMapper).updateById(captor.capture());
         assertThat(captor.getValue().getName()).isEqualTo("头像框·星轨");
+        assertThat(captor.getValue().getItemKey()).isEqualTo("star_track_frame");
         assertThat(captor.getValue().getStatus()).isEqualTo(ShopItemStatus.LISTED.getCode());
+    }
+
+    // 测试更新商品关键字与其他商品重复时拒绝
+    @Test
+    void shouldRejectUpdateWhenItemKeyDuplicated() {
+        when(shopItemMapper.selectById(3)).thenReturn(existingItem());
+        when(shopItemMapper.countByItemKey("star_track_frame", 3)).thenReturn(1L);
+
+        assertThat(shopService.updateItem(3, itemDto())).isEqualTo("商品关键字已存在");
+        verify(shopItemMapper, never()).updateById(any(ShopItem.class));
     }
 
     // 测试删除商品为软删除
@@ -124,7 +147,7 @@ class ShopServiceImplTest {
     // 测试商品列表筛选与分页参数归一化
     @Test
     void shouldListItemsWithFilters() {
-        ShopItemVO vo = new ShopItemVO(3, "头像框·星轨", "描述", "avatar_frame", 200L, 100L, 0, 1);
+        ShopItemVO vo = new ShopItemVO(3, "头像框·星轨", "star_track_frame", "描述", "avatar_frame", 200L, 100L, 0, 1);
         when(shopItemMapper.countItems("头像框", "avatar_frame", 1)).thenReturn(1L);
         when(shopItemMapper.selectItems(0, 10, "头像框", "avatar_frame", 1)).thenReturn(List.of(vo));
 
@@ -157,6 +180,7 @@ class ShopServiceImplTest {
     private ShopItemDTO itemDto() {
         ShopItemDTO dto = new ShopItemDTO();
         dto.setName("头像框·星轨");
+        dto.setItemKey("star_track_frame");
         dto.setDescription("环绕星轨的头像框");
         dto.setItemType(ShopItemType.AVATAR_FRAME);
         dto.setPrice(200L);
@@ -170,6 +194,7 @@ class ShopServiceImplTest {
         ShopItem item = new ShopItem();
         item.setItemId(3);
         item.setName("旧商品");
+        item.setItemKey("old_badge");
         item.setItemType("badge");
         item.setPrice(100L);
         item.setStock(-1L);

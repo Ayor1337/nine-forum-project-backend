@@ -32,10 +32,13 @@ public class ShopServiceImpl extends ServiceImpl<ShopItemMapper, ShopItem> imple
 
     @Override
     public String createItem(ShopItemDTO dto) {
-        if (dto == null || !StringUtils.hasText(dto.getName())
+        if (dto == null || !StringUtils.hasText(dto.getName()) || !StringUtils.hasText(dto.getItemKey())
                 || dto.getItemType() == null || dto.getPrice() == null
                 || dto.getStock() == null || dto.getPurchaseLimit() == null || dto.getStatus() == null) {
             return "参数错误";
+        }
+        if (baseMapper.countByItemKey(dto.getItemKey().trim(), null) > 0) {
+            return "商品关键字已存在";
         }
         ShopItem item = new ShopItem();
         applyDto(item, dto);
@@ -46,12 +49,15 @@ public class ShopServiceImpl extends ServiceImpl<ShopItemMapper, ShopItem> imple
 
     @Override
     public String updateItem(Integer itemId, ShopItemDTO dto) {
-        if (itemId == null || dto == null) {
+        if (itemId == null || dto == null || !StringUtils.hasText(dto.getItemKey())) {
             return "参数错误";
         }
         ShopItem item = this.getById(itemId);
         if (item == null || Boolean.TRUE.equals(item.getIsDeleted())) {
             return "商品不存在";
+        }
+        if (baseMapper.countByItemKey(dto.getItemKey().trim(), itemId) > 0) {
+            return "商品关键字已存在";
         }
         applyDto(item, dto);
         this.updateById(item);
@@ -106,6 +112,7 @@ public class ShopServiceImpl extends ServiceImpl<ShopItemMapper, ShopItem> imple
 
     private void applyDto(ShopItem item, ShopItemDTO dto) {
         item.setName(dto.getName().trim());
+        item.setItemKey(dto.getItemKey().trim());
         item.setDescription(dto.getDescription());
         item.setItemType(dto.getItemType().getType());
         item.setPrice(dto.getPrice());

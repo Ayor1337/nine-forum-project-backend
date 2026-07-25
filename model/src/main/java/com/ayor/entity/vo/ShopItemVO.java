@@ -19,6 +19,8 @@ public class ShopItemVO implements Serializable {
 
     private String name;
 
+    private String itemKey;
+
     private String description;
 
     private String itemType;

@@ -20,6 +20,8 @@ public class ShopItem {
 
     private String name;
 
+    private String itemKey;
+
     private String description;
 
     private String itemType;

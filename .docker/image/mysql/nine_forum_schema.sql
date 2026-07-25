@@ -658,6 +658,7 @@ CREATE TABLE IF NOT EXISTS `credit_transaction` (
 CREATE TABLE IF NOT EXISTS `shop_item` (
     `item_id` int NOT NULL AUTO_INCREMENT COMMENT '商品ID',
     `name` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '商品名称（title 类型即头衔文本）',
+    `item_key` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '商品关键字（唯一，前端素材映射用）',
     `description` varchar(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '商品描述',
     `item_type` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '类型：badge/avatar_frame/title',
     `price` bigint NOT NULL COMMENT '售价（Credit，整数）',
@@ -668,6 +669,7 @@ CREATE TABLE IF NOT EXISTS `shop_item` (
     `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '更新时间',
     PRIMARY KEY (`item_id`) USING BTREE,
+    UNIQUE KEY `uk_shop_item_item_key` (`item_key`),
     KEY `idx_shop_item_status_type` (`status`, `item_type`),
     CONSTRAINT `chk_shop_item_price` CHECK (`price` >= 0),
     CONSTRAINT `chk_shop_item_stock` CHECK (`stock` >= -1)

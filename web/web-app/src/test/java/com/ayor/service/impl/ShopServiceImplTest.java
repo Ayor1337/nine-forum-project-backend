@@ -156,7 +156,7 @@ class ShopServiceImplTest {
     // 测试在售商品分页参数归一化
     @Test
     void shouldListOnSaleItemsWithNormalizedPaging() {
-        ShopItemVO item = new ShopItemVO(3, "勋章", "描述", "badge", 100L, -1L, 0, 1);
+        ShopItemVO item = new ShopItemVO(3, "勋章", "test_badge", "描述", "badge", 100L, -1L, 0, 1);
         when(shopItemMapper.countOnSaleItems()).thenReturn(1L);
         when(shopItemMapper.selectOnSaleItems(0, 10)).thenReturn(List.of(item));
 
@@ -219,7 +219,7 @@ class ShopServiceImplTest {
     // 测试背包分页与公开装饰查询
     @Test
     void shouldListMyItemsAndEquippedDecorations() {
-        UserItemVO vo = new UserItemVO(11L, 3, "勋章", "badge", 1, true, new Date());
+        UserItemVO vo = new UserItemVO(11L, 3, "勋章", "test_badge", "badge", 1, true, new Date());
         when(userItemMapper.countByAccountId(7)).thenReturn(1L);
         when(userItemMapper.selectByAccountId(7, 0, 10)).thenReturn(List.of(vo));
         when(userItemMapper.selectEquippedByAccountId(7)).thenReturn(List.of(vo));

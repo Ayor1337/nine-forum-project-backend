@@ -22,6 +22,8 @@ public class UserItemVO implements Serializable {
 
     private String name;
 
+    private String itemKey;
+
     private String itemType;
 
     private Integer quantity;
