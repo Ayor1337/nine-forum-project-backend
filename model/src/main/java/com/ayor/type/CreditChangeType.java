@@ -7,7 +7,9 @@ public enum CreditChangeType {
 
     ADMIN_GRANT("admin_grant"),
 
-    ADMIN_DEDUCT("admin_deduct");
+    ADMIN_DEDUCT("admin_deduct"),
+
+    PURCHASE("purchase");
 
     private final String type;
 
