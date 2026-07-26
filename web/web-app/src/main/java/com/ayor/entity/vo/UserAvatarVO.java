@@ -21,4 +21,8 @@ public class UserAvatarVO implements Serializable {
 
     private String avatarFrameName;
 
+    private String badgeKey;
+
+    private String badgeName;
+
 }

@@ -183,15 +183,15 @@ class ShopServiceImplTest {
         assertThat(captor.getValue().getIsEquipped()).isTrue();
     }
 
-    // 测试装备勋章时不影响其他已装备装饰
+    // 测试装备勋章时先卸下同类型旧勋章（勋章为单装备类型）
     @Test
-    void shouldNotUnequipOthersWhenEquippingBadge() {
+    void shouldUnequipSameTypeWhenEquippingBadge() {
         UserItem userItem = userItem(11L, 7, 3);
         when(userItemMapper.selectById(11L)).thenReturn(userItem);
         when(shopItemMapper.selectById(3)).thenReturn(shopItem(3, "勋章", ShopItemType.BADGE, 100L, -1L));
 
         assertThat(shopService.updateEquipment(7, 11L, true)).isNull();
-        verify(userItemMapper, never()).unequipByType(anyInt(), any());
+        verify(userItemMapper).unequipByType(7, "badge");
     }
 
     // 测试卸下装饰

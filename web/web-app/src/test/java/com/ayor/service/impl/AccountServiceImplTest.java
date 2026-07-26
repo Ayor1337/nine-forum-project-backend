@@ -243,9 +243,9 @@ class AccountServiceImplTest {
         assertEquals(Boolean.TRUE, item.getIsFollowed());
     }
 
-    // 测试获取用户头像与已装备头像框
+    // 测试获取用户头像与已装备头像框、徽章
     @Test
-    void getUserAvatarShouldReturnAvatarAndEquippedFrame() {
+    void getUserAvatarShouldReturnAvatarAndEquippedDecorations() {
         AccountServiceImpl service = createService();
         Account account = new Account();
         account.setAccountId(7);
@@ -253,20 +253,26 @@ class AccountServiceImplTest {
         UserItemVO frame = new UserItemVO();
         frame.setItemKey("star_track_frame");
         frame.setName("头像框·星轨");
+        UserItemVO badge = new UserItemVO();
+        badge.setItemKey("gold_medal");
+        badge.setName("金质勋章");
 
         when(accountMapper.selectById(7)).thenReturn(account);
         when(userItemMapper.selectEquippedAvatarFrame(7)).thenReturn(frame);
+        when(userItemMapper.selectEquippedBadge(7)).thenReturn(badge);
 
         UserAvatarVO result = service.getUserAvatar(7);
 
         assertEquals("https://example.com/avatar/7.webp", result.getAvatarUrl());
         assertEquals("star_track_frame", result.getAvatarFrameKey());
         assertEquals("头像框·星轨", result.getAvatarFrameName());
+        assertEquals("gold_medal", result.getBadgeKey());
+        assertEquals("金质勋章", result.getBadgeName());
     }
 
-    // 测试用户未装备头像框时字段为空
+    // 测试用户未装备装饰时字段为空
     @Test
-    void getUserAvatarShouldLeaveFrameNullWhenNotEquipped() {
+    void getUserAvatarShouldLeaveDecorationNullWhenNotEquipped() {
         AccountServiceImpl service = createService();
         Account account = new Account();
         account.setAccountId(7);
@@ -280,6 +286,8 @@ class AccountServiceImplTest {
         assertEquals("https://example.com/avatar/7.webp", result.getAvatarUrl());
         assertNull(result.getAvatarFrameKey());
         assertNull(result.getAvatarFrameName());
+        assertNull(result.getBadgeKey());
+        assertNull(result.getBadgeName());
     }
 
     // 测试用户不存在时返回 null
@@ -292,6 +300,7 @@ class AccountServiceImplTest {
 
         assertNull(result);
         verify(userItemMapper, never()).selectEquippedAvatarFrame(99);
+        verify(userItemMapper, never()).selectEquippedBadge(99);
     }
 
     private AccountServiceImpl createService() {

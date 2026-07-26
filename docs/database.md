@@ -50,7 +50,7 @@ MySQL 是 NineForum 的主业务数据库。完整本地初始化 schema 主要�
 - `credit_account.account_id` 关联账号，一行代表一个账号的 Credit 余额，`balance` 通过 CHECK 约束保证非负，业务层懒创建。
 - `credit_transaction` 保存 Credit 变动流水，`delta` 为正表示发放、为负表示扣减，`balance_after` 记录变动后余额快照，`operator_id` 记录操作管理员账号。
 - `shop_item` 保存商城商品，`item_type` 区分装饰类型（badge/avatar_frame/title），`item_key` 为唯一关键字（前端素材映射用，后端不存图片）；`stock = -1` 表示不限量，`status` 表达上架/下架。
-- `user_item` 保存用户背包，`uk_user_item` 保证同一用户同一装饰仅持有一件，`is_equipped` 标记装备状态，头像框/头衔同类型同时只能装备一件（业务层保证），勋章可多枚佩戴。
+- `user_item` 保存用户背包，`uk_user_item` 保证同一用户同一装饰仅持有一件，`is_equipped` 标记装备状态，勋章/头像框/头衔同类型同时只能装备一件（业务层保证）。
 - `shop_order` 保存购买记录，`price` 为成交单价快照，商品改价/下架/删除不影响历史订单；购买扣款通过 `credit_transaction` 的 `purchase` 变动类型入账。
 
 ## 索引与约束关注点

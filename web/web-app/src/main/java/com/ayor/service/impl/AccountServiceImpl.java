@@ -164,6 +164,11 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
             userAvatarVO.setAvatarFrameKey(avatarFrame.getItemKey());
             userAvatarVO.setAvatarFrameName(avatarFrame.getName());
         }
+        UserItemVO badge = userItemMapper.selectEquippedBadge(accountId);
+        if (badge != null) {
+            userAvatarVO.setBadgeKey(badge.getItemKey());
+            userAvatarVO.setBadgeName(badge.getName());
+        }
         return userAvatarVO;
     }
 

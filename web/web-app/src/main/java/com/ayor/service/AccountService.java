@@ -53,10 +53,10 @@ public interface AccountService extends UserDetailsService, IService<Account> {
     UserInfoVO getPublicUserInfo(Integer viewerId, Integer accountId);
 
     /**
-     * 根据用户 ID 获取头像与已装备的头像框。
+     * 根据用户 ID 获取头像、已装备的头像框与徽章。
      *
      * @param accountId 用户ID
-     * @return 头像与头像框信息；用户不存在时返回 null
+     * @return 头像与装饰信息；用户不存在时返回 null
      */
     UserAvatarVO getUserAvatar(Integer accountId);
 

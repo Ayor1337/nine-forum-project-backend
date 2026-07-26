@@ -33,6 +33,6 @@ public enum ShopItemType {
      * 是否为单装备类型（同类型同时只能装备一件）
      */
     public boolean isSingleEquip() {
-        return this == AVATAR_FRAME || this == TITLE;
+        return true;
     }
 }
