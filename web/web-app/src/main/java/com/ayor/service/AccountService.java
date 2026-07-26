@@ -6,6 +6,7 @@ import com.ayor.entity.dto.AccountDTO;
 import com.ayor.entity.dto.UserProfileDTO;
 import com.ayor.entity.dto.PasswordChangeDTO;
 import com.ayor.entity.vo.UserProfileVO;
+import com.ayor.entity.vo.UserAvatarVO;
 import com.ayor.entity.vo.UserInfoVO;
 import com.ayor.entity.pojo.Account;
 import com.baomidou.mybatisplus.extension.service.IService;
@@ -50,6 +51,14 @@ public interface AccountService extends UserDetailsService, IService<Account> {
      * @return 公开用户资料
      */
     UserInfoVO getPublicUserInfo(Integer viewerId, Integer accountId);
+
+    /**
+     * 根据用户 ID 获取头像与已装备的头像框。
+     *
+     * @param accountId 用户ID
+     * @return 头像与头像框信息；用户不存在时返回 null
+     */
+    UserAvatarVO getUserAvatar(Integer accountId);
 
     UserProfileVO getMyProfile(Integer accountId);
 

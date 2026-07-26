@@ -3,7 +3,9 @@ package com.ayor.service.impl;
 import com.ayor.entity.Base64Upload;
 import com.ayor.entity.PageEntity;
 import com.ayor.entity.pojo.Account;
+import com.ayor.entity.vo.UserAvatarVO;
 import com.ayor.entity.vo.UserInfoVO;
+import com.ayor.entity.vo.UserItemVO;
 import com.ayor.image.ImageStorageService;
 import com.ayor.image.StoredImage;
 import com.ayor.mapper.UserProfileMapper;
@@ -11,6 +13,7 @@ import com.ayor.mapper.AccountMapper;
 import com.ayor.mapper.AccountStatMapper;
 import com.ayor.mapper.PermissionMapper;
 import com.ayor.mapper.RoleMapper;
+import com.ayor.mapper.UserItemMapper;
 import com.ayor.minio.MinioService;
 import com.ayor.service.UserProfileService;
 import com.ayor.service.PrivacyPolicyService;
@@ -73,6 +76,9 @@ class AccountServiceImplTest {
 
     @Mock
     private UserProfileService userProfileService;
+
+    @Mock
+    private UserItemMapper userItemMapper;
 
     @Mock
     private ImageStorageService imageStorageService;
@@ -237,6 +243,57 @@ class AccountServiceImplTest {
         assertEquals(Boolean.TRUE, item.getIsFollowed());
     }
 
+    // 测试获取用户头像与已装备头像框
+    @Test
+    void getUserAvatarShouldReturnAvatarAndEquippedFrame() {
+        AccountServiceImpl service = createService();
+        Account account = new Account();
+        account.setAccountId(7);
+        account.setAvatarUrl("https://example.com/avatar/7.webp");
+        UserItemVO frame = new UserItemVO();
+        frame.setItemKey("star_track_frame");
+        frame.setName("头像框·星轨");
+
+        when(accountMapper.selectById(7)).thenReturn(account);
+        when(userItemMapper.selectEquippedAvatarFrame(7)).thenReturn(frame);
+
+        UserAvatarVO result = service.getUserAvatar(7);
+
+        assertEquals("https://example.com/avatar/7.webp", result.getAvatarUrl());
+        assertEquals("star_track_frame", result.getAvatarFrameKey());
+        assertEquals("头像框·星轨", result.getAvatarFrameName());
+    }
+
+    // 测试用户未装备头像框时字段为空
+    @Test
+    void getUserAvatarShouldLeaveFrameNullWhenNotEquipped() {
+        AccountServiceImpl service = createService();
+        Account account = new Account();
+        account.setAccountId(7);
+        account.setAvatarUrl("https://example.com/avatar/7.webp");
+
+        when(accountMapper.selectById(7)).thenReturn(account);
+        when(userItemMapper.selectEquippedAvatarFrame(7)).thenReturn(null);
+
+        UserAvatarVO result = service.getUserAvatar(7);
+
+        assertEquals("https://example.com/avatar/7.webp", result.getAvatarUrl());
+        assertNull(result.getAvatarFrameKey());
+        assertNull(result.getAvatarFrameName());
+    }
+
+    // 测试用户不存在时返回 null
+    @Test
+    void getUserAvatarShouldReturnNullWhenAccountMissing() {
+        AccountServiceImpl service = createService();
+        when(accountMapper.selectById(99)).thenReturn(null);
+
+        UserAvatarVO result = service.getUserAvatar(99);
+
+        assertNull(result);
+        verify(userItemMapper, never()).selectEquippedAvatarFrame(99);
+    }
+
     private AccountServiceImpl createService() {
         AccountServiceImpl service = new AccountServiceImpl(
                 accountMapper,
@@ -251,6 +308,7 @@ class AccountServiceImplTest {
                 privacyPolicyService,
                 userPrivacySettingService,
                 userProfileService,
+                userItemMapper,
                 imageStorageService,
                 cacheInvalidationService
         );

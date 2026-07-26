@@ -53,6 +53,18 @@ public interface UserItemMapper extends BaseMapper<UserItem> {
             """)
     List<UserItemVO> selectEquippedByAccountId(@Param("accountId") Integer accountId);
 
+    @Select("""
+            SELECT si.name,
+                   si.item_key
+            FROM user_item ui
+            JOIN shop_item si ON ui.item_id = si.item_id
+            WHERE ui.account_id = #{accountId}
+              AND ui.is_equipped = 1
+              AND si.item_type = 'avatar_frame'
+            LIMIT 1
+            """)
+    UserItemVO selectEquippedAvatarFrame(@Param("accountId") Integer accountId);
+
     @Update("""
             UPDATE user_item ui
             JOIN shop_item si ON ui.item_id = si.item_id

@@ -8,6 +8,7 @@ import com.ayor.entity.dto.UserReportDTO;
 import com.ayor.entity.dto.UserPrivacySettingDTO;
 import com.ayor.entity.vo.AccountStatVO;
 import com.ayor.entity.vo.LoginSessionVO;
+import com.ayor.entity.vo.UserAvatarVO;
 import com.ayor.entity.vo.UserProfileVO;
 import com.ayor.entity.vo.UserInfoVO;
 import com.ayor.entity.vo.UserPrivacySettingVO;
@@ -88,6 +89,15 @@ public class UserController {
     public Result<UserInfoVO> getUserInfoByUserId(@Parameter(description = "用户 ID") @PathVariable("user_id") Integer userId) {
         Integer viewerId = security.getOptionalSecurityUserId();
         return Result.dataMessageHandler(() -> accountService.getPublicUserInfo(viewerId, userId), "获取用户信息失败,用户可能不存在");
+    }
+
+    /**
+     * 根据用户 ID 获取头像与已装备的头像框。
+     */
+    @Operation(summary = "根据用户 ID 获取头像与头像框")
+    @GetMapping("/{user_id}/avatar")
+    public Result<UserAvatarVO> getUserAvatar(@Parameter(description = "用户 ID") @PathVariable("user_id") Integer userId) {
+        return Result.dataMessageHandler(() -> accountService.getUserAvatar(userId), "获取用户头像失败,用户可能不存在");
     }
 
     /**

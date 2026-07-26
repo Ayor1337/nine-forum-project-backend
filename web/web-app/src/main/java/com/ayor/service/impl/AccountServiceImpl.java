@@ -7,7 +7,9 @@ import com.ayor.entity.dto.AccountDTO;
 import com.ayor.entity.dto.UserProfileDTO;
 import com.ayor.entity.dto.PasswordChangeDTO;
 import com.ayor.entity.vo.UserProfileVO;
+import com.ayor.entity.vo.UserAvatarVO;
 import com.ayor.entity.vo.UserInfoVO;
+import com.ayor.entity.vo.UserItemVO;
 import com.ayor.entity.vo.UserPermissionVO;
 import com.ayor.image.ImageStorageService;
 import com.ayor.entity.pojo.Account;
@@ -17,6 +19,7 @@ import com.ayor.mapper.AccountMapper;
 import com.ayor.mapper.AccountStatMapper;
 import com.ayor.mapper.PermissionMapper;
 import com.ayor.mapper.RoleMapper;
+import com.ayor.mapper.UserItemMapper;
 import com.ayor.service.UserProfileService;
 import com.ayor.service.AccountService;
 import com.ayor.service.CacheInvalidationService;
@@ -75,6 +78,8 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
     private final UserPrivacySettingService userPrivacySettingService;
 
     private final UserProfileService userProfileService;
+
+    private final UserItemMapper userItemMapper;
 
     private final ImageStorageService imageStorageService;
 
@@ -141,6 +146,25 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         fillFollowRelation(userInfoVO, viewerId);
         fillBlockRelation(userInfoVO, viewerId);
         return userInfoVO;
+    }
+
+    @Override
+    public UserAvatarVO getUserAvatar(Integer accountId) {
+        if (accountId == null) {
+            return null;
+        }
+        Account account = this.getById(accountId);
+        if (account == null) {
+            return null;
+        }
+        UserAvatarVO userAvatarVO = new UserAvatarVO();
+        userAvatarVO.setAvatarUrl(account.getAvatarUrl());
+        UserItemVO avatarFrame = userItemMapper.selectEquippedAvatarFrame(accountId);
+        if (avatarFrame != null) {
+            userAvatarVO.setAvatarFrameKey(avatarFrame.getItemKey());
+            userAvatarVO.setAvatarFrameName(avatarFrame.getName());
+        }
+        return userAvatarVO;
     }
 
     @Override
