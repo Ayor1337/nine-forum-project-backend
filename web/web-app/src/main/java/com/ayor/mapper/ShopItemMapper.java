@@ -38,7 +38,7 @@ public interface ShopItemMapper extends BaseMapper<ShopItem> {
 
     @Update("""
             UPDATE shop_item
-            SET stock = stock - 1, update_time = NOW()
+            SET stock = IF(stock = -1, -1, stock - 1), update_time = NOW()
             WHERE item_id = #{itemId}
               AND status = 1
               AND is_deleted = 0
