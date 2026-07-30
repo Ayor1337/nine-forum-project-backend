@@ -39,6 +39,7 @@ public interface ShopItemMapper extends BaseMapper<ShopItem> {
                    item_key,
                    description,
                    item_type,
+                   decoration_id,
                    price,
                    stock,
                    purchase_limit,

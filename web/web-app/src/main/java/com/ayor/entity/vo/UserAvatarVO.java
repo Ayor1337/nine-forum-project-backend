@@ -21,8 +21,18 @@ public class UserAvatarVO implements Serializable {
 
     private String avatarFrameName;
 
+    /**
+     * 已装备头像框的已发布配置（JSON 文本，未绑定装扮时为空，前端回退 avatarFrameKey 渲染）
+     */
+    private String avatarFrameConfig;
+
     private String badgeKey;
 
     private String badgeName;
+
+    /**
+     * 已装备徽章的已发布配置（JSON 文本，未绑定装扮时为空，前端回退 badgeKey 渲染）
+     */
+    private String badgeConfig;
 
 }

@@ -32,6 +32,9 @@ public class ShopItemDTO {
     @Schema(description = "商品类型")
     private ShopItemType itemType;
 
+    @Schema(description = "绑定的装扮ID（可空，仅可绑定已发布且类型一致的装扮）")
+    private Integer decorationId;
+
     @NotNull(message = "售价不能为空")
     @Min(value = 0, message = "售价不能为负数")
     @Schema(description = "售价（Credit）")

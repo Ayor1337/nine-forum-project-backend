@@ -89,6 +89,7 @@ HTTP 接口统一返回 `Result<T>`：
 | 运营治理 | `ReportController`、`FeedbackController`、`BroadcastController`、`PageBroadcastController` | 举报、反馈、用户广播、页面广播。 |
 | 资源与互动 | `ImageAssetController`、`LikeController`、`CollectController`、`HistoryController` | 图片资源、点赞、收藏、历史。 |
 | 会话与聊天室 | `ConversationController`、`ConversationMessageController`、`ChatboardHistoryController`、`TopicChatController` | 私信会话、消息、聊天室历史、话题聊天。 |
+| 商城与装扮 | `ShopController`、`DecorationController` | 商品与购买记录管理、低代码装扮设计发布与素材上传。 |
 | 数据修复 | `DataRepairController` | 缺失关联数据修复。 |
 
 ## 维护要求

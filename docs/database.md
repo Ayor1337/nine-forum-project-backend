@@ -11,6 +11,7 @@ MySQL 是 NineForum 的主业务数据库。完整本地初始化 schema 主要�
 | `docs/sql/20260725_credit.sql` | Credit 货币余额表与流水表相关增量 SQL。 |
 | `docs/sql/20260725_shop.sql` | 商城商品表、用户背包表与购买记录表相关增量 SQL。 |
 | `docs/sql/20260725_shop_item_key.sql` | 商品表新增唯一关键字 `item_key` 的增量 SQL。 |
+| `docs/sql/20260730_decoration.sql` | 装扮设计表 `decoration` 与商品表绑定列 `decoration_id` 的增量 SQL。 |
 
 当前 Docker Compose 使用 `mysql:latest` 镜像，未直接启用 `.docker/image/mysql/Dockerfile` 构建。首次启动容器后如需完整表结构，需要手动导入 schema，或调整 Compose 改用自定义镜像。
 
@@ -29,6 +30,7 @@ MySQL 是 NineForum 的主业务数据库。完整本地初始化 schema 主要�
 | 公告 | `announcements` |
 | 货币 | `credit_account`、`credit_transaction` |
 | 商城 | `shop_item`、`user_item`、`shop_order` |
+| 装扮 | `decoration` |
 
 ## 主要关系
 
@@ -49,7 +51,8 @@ MySQL 是 NineForum 的主业务数据库。完整本地初始化 schema 主要�
 - `passkey_credential.account_id` 关联账号，`credential_id` 唯一。
 - `credit_account.account_id` 关联账号，一行代表一个账号的 Credit 余额，`balance` 通过 CHECK 约束保证非负，业务层懒创建。
 - `credit_transaction` 保存 Credit 变动流水，`delta` 为正表示发放、为负表示扣减，`balance_after` 记录变动后余额快照，`operator_id` 记录操作管理员账号。
-- `shop_item` 保存商城商品，`item_type` 区分装饰类型（badge/avatar_frame/title），`item_key` 为唯一关键字（前端素材映射用，后端不存图片）；`stock = -1` 表示不限量，`status` 表达上架/下架。
+- `shop_item` 保存商城商品，`item_type` 区分装饰类型（badge/avatar_frame/title），`item_key` 为唯一关键字（前端素材映射用，后端不存图片）；`stock = -1` 表示不限量，`status` 表达上架/下架；`decoration_id` 可空，绑定已发布装扮后用户端按 `decoration.published_config` 渲染，为空时前端回退 `item_key` 硬编码映射。
+- `decoration` 保存低代码平台设计的装扮，`type` 复用装饰类型（badge/avatar_frame/title），`status` 表达 DRAFT/PUBLISHED/ARCHIVED 流转；`draft_config` 为编辑中的结构化 JSON 配置，发布时复制到 `published_config` 供用户端读取；`version` 为乐观锁版本号。
 - `user_item` 保存用户背包，`uk_user_item` 保证同一用户同一装饰仅持有一件，`is_equipped` 标记装备状态，勋章/头像框/头衔同类型同时只能装备一件（业务层保证）。
 - `shop_order` 保存购买记录，`price` 为成交单价快照，商品改价/下架/删除不影响历史订单；购买扣款通过 `credit_transaction` 的 `purchase` 变动类型入账。
 
@@ -64,6 +67,7 @@ MySQL 是 NineForum 的主业务数据库。完整本地初始化 schema 主要�
 - `credit_account` 通过 `chk_credit_account_balance` 约束保证余额非负，扣减时业务层使用行锁与余额校验防止透支。
 - `credit_transaction` 按账号和时间、操作管理员和时间建索引，服务于用户端流水分页和管理端排查。
 - `shop_item` 按状态和类型建索引，服务于用户端在售商品分页，`uk_shop_item_item_key` 保证商品关键字全局唯一。
+- `decoration` 通过 `uk_decoration_key` 保证装扮关键字全局唯一，按状态和类型建索引，服务于管理端装扮分页。
 - `user_item` 通过 `(account_id, item_id)` 保持用户持有唯一，并按账号和装备状态建索引，服务于个人页装饰展示。
 - `shop_order` 按账号和时间、商品和时间建索引，服务于用户购买记录分页和管理端排查。
 - 多数外键使用 `ON DELETE RESTRICT`，删除业务数据前需要先处理依赖数据。

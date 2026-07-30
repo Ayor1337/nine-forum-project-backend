@@ -30,5 +30,10 @@ public class UserItemVO implements Serializable {
 
     private Boolean isEquipped;
 
+    /**
+     * 已发布装扮配置（JSON 文本，商品未绑定装扮时为空，前端回退 itemKey 渲染）
+     */
+    private String decorationConfig;
+
     private Date acquireTime;
 }

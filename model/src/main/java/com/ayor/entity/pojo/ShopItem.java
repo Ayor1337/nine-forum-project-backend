@@ -26,6 +26,11 @@ public class ShopItem {
 
     private String itemType;
 
+    /**
+     * 绑定的装扮ID（可空，空则前端回退 itemKey 硬编码渲染）
+     */
+    private Integer decorationId;
+
     private Long price;
 
     private Long stock;

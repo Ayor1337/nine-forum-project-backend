@@ -21,6 +21,12 @@
 - `docs/sql/*.sql`：增量 SQL 片段，当前包含公告和意见反馈相关 SQL。
 - `.docker/image/mysql/nine_forum_schema.sql`：本地完整初始化 schema 的主要来源。
 
+## 设计方案（未实施）
+
+| 文档 | 用途 |
+| --- | --- |
+| [decoration-lowcode.md](decoration-lowcode.md) | 头像框 / 头衔 / 徽章装扮低代码平台的整体设计方案，实施完成后应拆分合并进现状文档。 |
+
 ## 维护原则
 
 - 文档必须以当前代码、配置和 SQL 为准，不记录猜测性设计。

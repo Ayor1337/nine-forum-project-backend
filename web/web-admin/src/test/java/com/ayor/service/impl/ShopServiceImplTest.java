@@ -2,11 +2,14 @@ package com.ayor.service.impl;
 
 import com.ayor.entity.PageEntity;
 import com.ayor.entity.dto.ShopItemDTO;
+import com.ayor.entity.pojo.Decoration;
 import com.ayor.entity.pojo.ShopItem;
 import com.ayor.entity.vo.ShopItemVO;
 import com.ayor.entity.vo.ShopOrderVO;
+import com.ayor.mapper.DecorationMapper;
 import com.ayor.mapper.ShopItemMapper;
 import com.ayor.mapper.ShopOrderMapper;
+import com.ayor.type.DecorationStatus;
 import com.ayor.type.ShopItemStatus;
 import com.ayor.type.ShopItemType;
 import org.junit.jupiter.api.BeforeEach;
@@ -35,11 +38,14 @@ class ShopServiceImplTest {
     @Mock
     private ShopOrderMapper shopOrderMapper;
 
+    @Mock
+    private DecorationMapper decorationMapper;
+
     private ShopServiceImpl shopService;
 
     @BeforeEach
     void setUp() {
-        shopService = new ShopServiceImpl(shopOrderMapper);
+        shopService = new ShopServiceImpl(shopOrderMapper, decorationMapper);
         ReflectionTestUtils.setField(shopService, "baseMapper", shopItemMapper);
     }
 
@@ -147,7 +153,7 @@ class ShopServiceImplTest {
     // 测试商品列表筛选与分页参数归一化
     @Test
     void shouldListItemsWithFilters() {
-        ShopItemVO vo = new ShopItemVO(3, "头像框·星轨", "star_track_frame", "描述", "avatar_frame", 200L, 100L, 0, 1);
+        ShopItemVO vo = new ShopItemVO(3, "头像框·星轨", "star_track_frame", "描述", "avatar_frame", null, 200L, 100L, 0, 1);
         when(shopItemMapper.countItems("头像框", "avatar_frame", 1)).thenReturn(1L);
         when(shopItemMapper.selectItems(0, 10, "头像框", "avatar_frame", 1)).thenReturn(List.of(vo));
 
@@ -175,6 +181,86 @@ class ShopServiceImplTest {
         when(shopOrderMapper.selectOrders(0, 10, null, null, null)).thenReturn(List.of());
         PageEntity<ShopOrderVO> empty = shopService.listOrders(null, null, null, "  ", null);
         assertThat(empty.getTotalSize()).isEqualTo(0L);
+    }
+
+    // 测试创建商品绑定已发布且类型一致的装扮
+    @Test
+    void shouldCreateItemWithPublishedDecorationBinding() {
+        when(shopItemMapper.countByItemKey("star_track_frame", null)).thenReturn(0L);
+        when(decorationMapper.selectById(8)).thenReturn(publishedDecoration());
+        ShopItemDTO dto = itemDto();
+        dto.setDecorationId(8);
+
+        assertThat(shopService.createItem(dto)).isNull();
+        ArgumentCaptor<ShopItem> captor = ArgumentCaptor.forClass(ShopItem.class);
+        verify(shopItemMapper).insert(captor.capture());
+        assertThat(captor.getValue().getDecorationId()).isEqualTo(8);
+    }
+
+    // 测试绑定不存在的装扮时拒绝
+    @Test
+    void shouldRejectCreateWhenDecorationMissing() {
+        when(shopItemMapper.countByItemKey("star_track_frame", null)).thenReturn(0L);
+        when(decorationMapper.selectById(8)).thenReturn(null);
+        ShopItemDTO dto = itemDto();
+        dto.setDecorationId(8);
+
+        assertThat(shopService.createItem(dto)).isEqualTo("绑定的装扮不存在");
+        verify(shopItemMapper, never()).insert(any(ShopItem.class));
+    }
+
+    // 测试绑定未发布装扮时拒绝
+    @Test
+    void shouldRejectCreateWhenDecorationNotPublished() {
+        when(shopItemMapper.countByItemKey("star_track_frame", null)).thenReturn(0L);
+        Decoration draft = publishedDecoration();
+        draft.setStatus(DecorationStatus.DRAFT.getCode());
+        when(decorationMapper.selectById(8)).thenReturn(draft);
+        ShopItemDTO dto = itemDto();
+        dto.setDecorationId(8);
+
+        assertThat(shopService.createItem(dto)).isEqualTo("绑定的装扮未发布");
+        verify(shopItemMapper, never()).insert(any(ShopItem.class));
+    }
+
+    // 测试绑定类型不一致装扮时拒绝
+    @Test
+    void shouldRejectCreateWhenDecorationTypeMismatch() {
+        when(shopItemMapper.countByItemKey("star_track_frame", null)).thenReturn(0L);
+        Decoration badge = publishedDecoration();
+        badge.setType("badge");
+        when(decorationMapper.selectById(8)).thenReturn(badge);
+        ShopItemDTO dto = itemDto();
+        dto.setDecorationId(8);
+
+        assertThat(shopService.createItem(dto)).isEqualTo("装扮类型与商品类型不一致");
+        verify(shopItemMapper, never()).insert(any(ShopItem.class));
+    }
+
+    // 测试更新商品时同样执行绑定校验
+    @Test
+    void shouldRejectUpdateWhenDecorationNotPublished() {
+        when(shopItemMapper.selectById(3)).thenReturn(existingItem());
+        when(shopItemMapper.countByItemKey("star_track_frame", 3)).thenReturn(0L);
+        Decoration draft = publishedDecoration();
+        draft.setStatus(DecorationStatus.ARCHIVED.getCode());
+        when(decorationMapper.selectById(8)).thenReturn(draft);
+        ShopItemDTO dto = itemDto();
+        dto.setDecorationId(8);
+
+        assertThat(shopService.updateItem(3, dto)).isEqualTo("绑定的装扮未发布");
+        verify(shopItemMapper, never()).updateById(any(ShopItem.class));
+    }
+
+    private Decoration publishedDecoration() {
+        Decoration decoration = new Decoration();
+        decoration.setDecorationId(8);
+        decoration.setDecorationKey("star_track_frame_deco");
+        decoration.setName("头像框·星轨");
+        decoration.setType("avatar_frame");
+        decoration.setStatus(DecorationStatus.PUBLISHED.getCode());
+        decoration.setIsDeleted(false);
+        return decoration;
     }
 
     private ShopItemDTO itemDto() {
