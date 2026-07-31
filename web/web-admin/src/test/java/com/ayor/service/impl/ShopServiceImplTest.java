@@ -153,7 +153,7 @@ class ShopServiceImplTest {
     // 测试商品列表筛选与分页参数归一化
     @Test
     void shouldListItemsWithFilters() {
-        ShopItemVO vo = new ShopItemVO(3, "头像框·星轨", "star_track_frame", "描述", "avatar_frame", null, 200L, 100L, 0, 1);
+        ShopItemVO vo = new ShopItemVO(3, "头像框·星轨", "star_track_frame", "描述", "avatar_frame", null, null, 200L, 100L, 0, 1);
         when(shopItemMapper.countItems("头像框", "avatar_frame", 1)).thenReturn(1L);
         when(shopItemMapper.selectItems(0, 10, "头像框", "avatar_frame", 1)).thenReturn(List.of(vo));
 

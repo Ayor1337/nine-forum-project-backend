@@ -19,18 +19,21 @@ public interface ShopItemMapper extends BaseMapper<ShopItem> {
     Long countOnSaleItems();
 
     @Select("""
-            SELECT item_id,
-                   name,
-                   item_key,
-                   description,
-                   item_type,
-                   price,
-                   stock,
-                   purchase_limit,
-                   status
-            FROM shop_item
-            WHERE status = 1 AND is_deleted = 0
-            ORDER BY create_time DESC, item_id DESC
+            SELECT si.item_id,
+                   si.name,
+                   si.item_key,
+                   si.description,
+                   si.item_type,
+                   si.decoration_id,
+                   d.published_config AS decoration_config,
+                   si.price,
+                   si.stock,
+                   si.purchase_limit,
+                   si.status
+            FROM shop_item si
+            LEFT JOIN decoration d ON si.decoration_id = d.decoration_id
+            WHERE si.status = 1 AND si.is_deleted = 0
+            ORDER BY si.create_time DESC, si.item_id DESC
             LIMIT #{pageSize} OFFSET #{offset}
             """)
     List<ShopItemVO> selectOnSaleItems(@Param("offset") Integer offset,

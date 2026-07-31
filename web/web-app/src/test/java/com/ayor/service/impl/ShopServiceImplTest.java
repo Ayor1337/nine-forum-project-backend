@@ -153,10 +153,11 @@ class ShopServiceImplTest {
         verify(shopOrderMapper, never()).insert(any(ShopOrder.class));
     }
 
-    // 测试在售商品分页参数归一化
+    // 测试在售商品分页参数归一化，未购买也能拿到装扮已发布配置用于预览效果
     @Test
     void shouldListOnSaleItemsWithNormalizedPaging() {
-        ShopItemVO item = new ShopItemVO(3, "勋章", "test_badge", "描述", "badge", null, 100L, -1L, 0, 1);
+        String config = "{\"schemaVersion\": 2, \"mode\": \"icon\", \"iconKey\": \"star\"}";
+        ShopItemVO item = new ShopItemVO(3, "勋章", "test_badge", "描述", "badge", 9, config, 100L, -1L, 0, 1);
         when(shopItemMapper.countOnSaleItems()).thenReturn(1L);
         when(shopItemMapper.selectOnSaleItems(0, 10)).thenReturn(List.of(item));
 
@@ -164,6 +165,7 @@ class ShopServiceImplTest {
 
         assertThat(page.getTotalSize()).isEqualTo(1L);
         assertThat(page.getData()).containsExactly(item);
+        assertThat(page.getData().get(0).getDecorationConfig()).isEqualTo(config);
         verify(shopItemMapper).selectOnSaleItems(0, 10);
     }
 

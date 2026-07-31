@@ -27,6 +27,7 @@ public class ShopItemVO implements Serializable {
 
     private Integer decorationId;
 
+    private String decorationConfig;
     private Long price;
 
     private Long stock;
