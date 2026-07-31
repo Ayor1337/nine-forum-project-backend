@@ -24,7 +24,12 @@ public final class DecorationConfigValidator {
 
     private static final Set<String> BADGE_MODES = Set.of("icon", "image");
 
-    private static final Set<String> BADGE_SHAPES = Set.of("circle", "square", "hex");
+    // 头像框（avatar_frame）与徽章（badge）遵循协议 schemaVersion=2，尺寸为相对头像边长的比例；头衔（title）为 schemaVersion=1
+    private static final int AVATAR_FRAME_SCHEMA_VERSION = 2;
+
+    private static final int BADGE_SCHEMA_VERSION = 2;
+
+    private static final int TITLE_SCHEMA_VERSION = 1;
 
     private DecorationConfigValidator() {
     }
@@ -58,13 +63,16 @@ public final class DecorationConfigValidator {
             return "装扮类型不合法";
         }
         return switch (itemType) {
-            case AVATAR_FRAME -> validateAvatarFrame(root);
-            case TITLE -> validateTitle(root);
-            case BADGE -> validateBadge(root);
+            case AVATAR_FRAME -> validateAvatarFrame(root, schemaVersion.intValue());
+            case TITLE -> validateTitle(root, schemaVersion.intValue());
+            case BADGE -> validateBadge(root, schemaVersion.intValue());
         };
     }
 
-    private static String validateAvatarFrame(JsonNode root) {
+    private static String validateAvatarFrame(JsonNode root, int schemaVersion) {
+        if (schemaVersion != AVATAR_FRAME_SCHEMA_VERSION) {
+            return "schemaVersion 必须为 2";
+        }
         String mode = textOrNull(root, "mode");
         if (mode == null || !FRAME_MODES.contains(mode)) {
             return "mode 必须为 image 或 css";
@@ -82,13 +90,13 @@ public final class DecorationConfigValidator {
                 return "animation.type 必须为 none、rotate 或 pulse";
             }
             JsonNode durationMs = animation.get("durationMs");
-            if (durationMs != null && (!durationMs.isInt() || durationMs.intValue() < 100 || durationMs.intValue() > 10000)) {
-                return "animation.durationMs 必须为 100-10000 的整数";
+            if (durationMs != null && (!durationMs.isInt() || durationMs.intValue() < 300 || durationMs.intValue() > 10000)) {
+                return "animation.durationMs 必须为 300-10000 的整数";
             }
         }
         JsonNode scale = root.get("scale");
-        if (scale != null && (!scale.isNumber() || scale.doubleValue() < 0.5 || scale.doubleValue() > 2.0)) {
-            return "scale 必须为 0.5-2.0 的数字";
+        if (scale != null && (!scale.isNumber() || scale.doubleValue() < 1.0 || scale.doubleValue() > 1.5)) {
+            return "scale 必须为 1.0-1.5 的数字";
         }
         JsonNode border = root.get("border");
         if (border != null) {
@@ -96,10 +104,10 @@ public final class DecorationConfigValidator {
                 return "border 必须是 JSON 对象";
             }
             JsonNode width = border.get("width");
-            if (width != null && (!width.isInt() || width.intValue() < 0 || width.intValue() > 20)) {
-                return "border.width 必须为 0-20 的整数";
+            if (width != null && (!width.isNumber() || width.doubleValue() <= 0 || width.doubleValue() > 0.5)) {
+                return "border.width 必须为大于 0 且不超过 0.5 的数字";
             }
-            String error = validateColorOrGradient(border, "border");
+            String error = validateColorOrGradientValue(border.get("color"), "border.color");
             if (error != null) {
                 return error;
             }
@@ -107,7 +115,10 @@ public final class DecorationConfigValidator {
         return null;
     }
 
-    private static String validateTitle(JsonNode root) {
+    private static String validateTitle(JsonNode root, int schemaVersion) {
+        if (schemaVersion != TITLE_SCHEMA_VERSION) {
+            return "schemaVersion 必须为 1";
+        }
         String color = textOrNull(root, "color");
         if (color == null && root.get("gradient") == null) {
             return "color 与 gradient 至少提供一个";
@@ -150,7 +161,10 @@ public final class DecorationConfigValidator {
         return null;
     }
 
-    private static String validateBadge(JsonNode root) {
+    private static String validateBadge(JsonNode root, int schemaVersion) {
+        if (schemaVersion != BADGE_SCHEMA_VERSION) {
+            return "schemaVersion 必须为 2";
+        }
         String mode = textOrNull(root, "mode");
         if (mode == null || !BADGE_MODES.contains(mode)) {
             return "mode 必须为 icon 或 image";
@@ -161,10 +175,6 @@ public final class DecorationConfigValidator {
         if ("image".equals(mode) && !StringUtils.hasText(textOrNull(root, "imageUrl"))) {
             return "mode 为 image 时 imageUrl 必填";
         }
-        String shape = textOrNull(root, "shape");
-        if (shape == null || !BADGE_SHAPES.contains(shape)) {
-            return "shape 必须为 circle、square 或 hex";
-        }
         String color = textOrNull(root, "color");
         if (color != null && !isHexColor(color)) {
             return "color 必须是十六进制颜色值";
@@ -174,10 +184,22 @@ public final class DecorationConfigValidator {
             return "background 必须是十六进制颜色值";
         }
         JsonNode size = root.get("size");
-        if (size != null && (!size.isInt() || size.intValue() < 8 || size.intValue() > 64)) {
-            return "size 必须为 8-64 的整数";
+        if (size != null && (!size.isNumber() || size.doubleValue() <= 0 || size.doubleValue() > 1)) {
+            return "size 必须为大于 0 且不超过 1 的数字";
         }
         return null;
+    }
+    /**
+     * 校验“纯色 hex 或 Gradient 对象”字段（v2 比例协议中 border.color 的取值形式）。
+     */
+    private static String validateColorOrGradientValue(JsonNode value, String prefix) {
+        if (value == null || value.isNull()) {
+            return null;
+        }
+        if (value.isTextual()) {
+            return isHexColor(value.textValue()) ? null : prefix + " 必须是十六进制颜色值或渐变对象";
+        }
+        return validateGradient(value, prefix);
     }
 
     /**

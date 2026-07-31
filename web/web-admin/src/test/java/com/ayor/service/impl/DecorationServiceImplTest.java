@@ -33,7 +33,7 @@ import static org.mockito.Mockito.when;
 class DecorationServiceImplTest {
 
     private static final String FRAME_CONFIG = """
-            {"schemaVersion": 1, "mode": "css", "border": {"width": 4, "color": "#ffd700", "radius": 999},
+            {"schemaVersion": 2, "mode": "css", "border": {"width": 0.08, "color": "#ffd700"},
              "animation": {"type": "rotate", "durationMs": 2000}, "scale": 1.1}
             """;
 
@@ -103,7 +103,7 @@ class DecorationServiceImplTest {
     @Test
     void shouldUpdateDraftOnlyWhenPublished() {
         Decoration existing = existingDecoration(DecorationStatus.PUBLISHED.getCode());
-        existing.setPublishedConfig("{\"schemaVersion\": 1, \"mode\": \"css\"}");
+        existing.setPublishedConfig("{\"schemaVersion\": 2, \"mode\": \"css\"}");
         when(decorationMapper.selectById(3)).thenReturn(existing);
         when(decorationMapper.countByDecorationKey("star_track_frame", 3)).thenReturn(0L);
 
@@ -113,7 +113,7 @@ class DecorationServiceImplTest {
         ArgumentCaptor<Decoration> captor = ArgumentCaptor.forClass(Decoration.class);
         verify(decorationMapper).updateById(captor.capture());
         assertThat(captor.getValue().getDraftConfig()).isEqualTo(FRAME_CONFIG);
-        assertThat(captor.getValue().getPublishedConfig()).isEqualTo("{\"schemaVersion\": 1, \"mode\": \"css\"}");
+        assertThat(captor.getValue().getPublishedConfig()).isEqualTo("{\"schemaVersion\": 2, \"mode\": \"css\"}");
     }
 
     // 测试更新不存在或已归档装扮时拒绝

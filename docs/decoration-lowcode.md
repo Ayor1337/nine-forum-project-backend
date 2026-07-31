@@ -59,16 +59,16 @@
 
 ## 二、渲染协议（前后端契约，配置 JSON 规范）
 
-所有配置顶层带 `schemaVersion`（从 1 起），便于未来演进。草案结构：
+头像框 / 徽章已升级为 `schemaVersion=2`（尺寸全部改为相对头像边长的比例，形状类配置移除，固定圆形），头衔保持 `schemaVersion=1`；v1 头像框 / 徽章协议已废弃，无兼容 / 迁移逻辑。配置结构：
 
 - **avatar_frame**
 
 ```json
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "mode": "image | css",
   "imageUrl": "可选，mode=image 时必填",
-  "border": { "width": 4, "color": "#ffd700 或 gradient 对象", "radius": 999 },
+  "border": { "width": 0.08, "color": "#ffd700 或 gradient 对象" },
   "animation": { "type": "none | rotate | pulse", "durationMs": 2000 },
   "scale": 1.1
 }
@@ -91,18 +91,16 @@
 
 ```json
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "mode": "icon | image",
   "iconKey": "mode=icon 时必填，前端内置图标集",
   "imageUrl": "mode=image 时必填",
-  "shape": "circle | square | hex",
   "color": "#ffffff",
   "background": "#3b82f6",
-  "size": 20
+  "size": 0.4
 }
-```
 
-服务端对配置做结构校验（按类型校验必填 / 枚举 / 取值范围），不信任前端提交的任意字段；徽章 `iconKey` 图标集由前端内置维护，后端只存 key 不校验取值。字段名与取值范围为初版约定，实施时前后端按本文档对齐后冻结。
+服务端对配置做结构校验（按类型校验必填 / 枚举 / 取值范围），不信任前端提交的任意字段；徽章 `iconKey` 图标集由前端内置维护，后端只存 key 不校验取值。关键取值约束：`avatar_frame.border.width` 为 `0 < width ≤ 0.5` 的比例，`scale` 为 `1.0~1.5`，`animation.durationMs` 为 `300~10000` 毫秒；`badge.size` 为 `0 < size ≤ 1` 的比例；`schemaVersion` 按类型强制精确版本（头像框 / 徽章 = 2，头衔 = 1）。
 
 ## 三、后端 API 设计（web-admin）
 

@@ -253,11 +253,11 @@ class AccountServiceImplTest {
         UserItemVO frame = new UserItemVO();
         frame.setItemKey("star_track_frame");
         frame.setName("头像框·星轨");
-        frame.setDecorationConfig("{\"schemaVersion\": 1, \"mode\": \"css\"}");
+        frame.setDecorationConfig("{\"schemaVersion\": 2, \"mode\": \"css\"}");
         UserItemVO badge = new UserItemVO();
         badge.setItemKey("gold_medal");
         badge.setName("金质勋章");
-        badge.setDecorationConfig("{\"schemaVersion\": 1, \"mode\": \"icon\", \"iconKey\": \"medal\"}");
+        badge.setDecorationConfig("{\"schemaVersion\": 2, \"mode\": \"icon\", \"iconKey\": \"medal\"}");
 
         when(accountMapper.selectById(7)).thenReturn(account);
         when(userItemMapper.selectEquippedAvatarFrame(7)).thenReturn(frame);
@@ -270,8 +270,8 @@ class AccountServiceImplTest {
         assertEquals("头像框·星轨", result.getAvatarFrameName());
         assertEquals("gold_medal", result.getBadgeKey());
         assertEquals("金质勋章", result.getBadgeName());
-        assertEquals("{\"schemaVersion\": 1, \"mode\": \"css\"}", result.getAvatarFrameConfig());
-        assertEquals("{\"schemaVersion\": 1, \"mode\": \"icon\", \"iconKey\": \"medal\"}", result.getBadgeConfig());
+        assertEquals("{\"schemaVersion\": 2, \"mode\": \"css\"}", result.getAvatarFrameConfig());
+        assertEquals("{\"schemaVersion\": 2, \"mode\": \"icon\", \"iconKey\": \"medal\"}", result.getBadgeConfig());
     }
 
     // 测试用户未装备装饰时字段为空
