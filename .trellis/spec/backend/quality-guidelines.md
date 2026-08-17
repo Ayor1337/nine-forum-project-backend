@@ -13,7 +13,7 @@
 
 - Service 规则和副作用：`web/web-app/src/test/java/com/ayor/service/impl/PostServiceImplTest.java`。
 - Controller 合同、认证和校验：`web/web-app/src/test/java/com/ayor/controller/ThreadControllerTest.java`、`controller/exception/ValidateControllerTest.java`。
-- RabbitMQ/STOMP：Mock `RabbitTemplate`、`SimpMessagingTemplate` 并验证 exchange、routing key、目的地与消息体，见 `docs/testing.md`。
+- RabbitMQ/STOMP：Mock `RabbitTemplate`、`SimpMessagingTemplate` 并验证 exchange、routing key、目的地与消息体。
 
 业务代码至少运行受影响模块的 Maven 测试；共享模型、配置、安全或公共工具改动运行根目录测试。常用命令：
 

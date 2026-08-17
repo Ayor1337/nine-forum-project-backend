@@ -32,7 +32,3 @@ build/
 
 ### VS Code ###
 .vscode/
-
-### AGENT DOC ###
-AGENTS.md
-CLAUDE.md

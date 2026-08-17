@@ -9,7 +9,7 @@
 | `web/web-app` | 面向用户端 API、认证、论坛、私信、通知、搜索等实现。 |
 | `web/web-admin` | 面向管理端 API、运营和内容治理实现。 |
 
-`web` 依赖 `common`、`model`，两个 Web 应用不能让公共模块反向依赖自己；参见根 `pom.xml` 和 `docs/architecture.md`。
+`web` 依赖 `common`、`model`，两个 Web 应用不能让公共模块反向依赖自己；以根 `pom.xml` 与 `web/pom.xml` 为准。
 
 ## Web 模块内的局部模式
 
