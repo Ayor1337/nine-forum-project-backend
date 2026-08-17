@@ -1,38 +1,36 @@
-# Backend Development Guidelines
+# NineForum 后端开发规范
 
-> Best practices for backend development in this project.
+本规范描述当前仓库的 Java 17 / Spring Boot 3.5.5 后端实现方式。根 `pom.xml` 聚合 `common`、`model` 和 `web`；其中 `web` 再分为可独立启动的用户端 `web-app` 与管理端 `web-admin`。
 
----
+## 模块边界
 
-## Overview
+| 模块 | 责任 | 代码依据 |
+| --- | --- | --- |
+| `common` | 可复用的结果封装、配置、JWT、图片和 MinIO 工具 | `common/src/main/java/com/ayor/result/Result.java`、`common/src/main/java/com/ayor/image/` |
+| `model` | 两个 Web 应用共享的 POJO、DTO、VO、枚举、消息和 MyBatis 类型处理器 | `model/src/main/java/com/ayor/entity/`、`model/src/main/java/com/ayor/type/` |
+| `web/web-app` | 用户端论坛 API、WebSocket、RabbitMQ、缓存与 Elasticsearch 流程 | `web/web-app/src/main/java/com/ayor/` |
+| `web/web-admin` | 管理端 API、管理统计与后台任务 | `web/web-admin/src/main/java/com/ayor/` |
 
-This directory contains guidelines for backend development. Fill in each file with your project's specific conventions.
+新增能力应先判断是否需要被两个 Web 应用复用：共享数据模型放入 `model`，通用基础设施放入 `common`，端点、业务编排、Mapper 和端侧配置留在对应 Web 应用。不要让 `common` 反向依赖 `web-*`，也不要让一个 Web 应用直接引用另一个 Web 应用的实现。
 
----
+## 主题导航
 
-## Guidelines Index
+| 规范 | 适用问题 |
+| --- | --- |
+| [目录结构](./directory-structure.md) | 功能代码、模型、配置与资源应放在哪里 |
+| [数据库](./database-guidelines.md) | MyBatis-Plus、Mapper、SQL、事务与模式变更 |
+| [错误处理](./error-handling.md) | `Result<T>`、业务失败、参数与安全异常的响应方式 |
+| [日志](./logging-guidelines.md) | Lombok SLF4J 的已有日志方式与敏感信息边界 |
+| [质量](./quality-guidelines.md) | Maven 验证、单元/契约测试与评审重点 |
 
-| Guide | Description | Status |
-|-------|-------------|--------|
-| [Directory Structure](./directory-structure.md) | Module organization and file layout | To fill |
-| [Database Guidelines](./database-guidelines.md) | ORM patterns, queries, migrations | To fill |
-| [Error Handling](./error-handling.md) | Error types, handling strategies | To fill |
-| [Quality Guidelines](./quality-guidelines.md) | Code standards, forbidden patterns | To fill |
-| [Logging Guidelines](./logging-guidelines.md) | Structured logging, log levels | To fill |
+## 基础验证
 
----
+优先使用仓库内置 Wrapper，并从根目录验证受影响模块：
 
-## How to Fill These Guidelines
+```powershell
+.\mvnw.cmd test
+.\mvnw.cmd -pl web/web-app -am test
+.\mvnw.cmd -pl web/web-admin -am test
+```
 
-For each guideline file:
-
-1. Document your project's **actual conventions** (not ideals)
-2. Include **code examples** from your codebase
-3. List **forbidden patterns** and why
-4. Add **common mistakes** your team has made
-
-The goal is to help AI assistants and new team members understand how YOUR project works.
-
----
-
-**Language**: All documentation should be written in **English**.
+最后两条适用于改动只落在一个 Web 应用时；`-am` 会同时构建其依赖模块。

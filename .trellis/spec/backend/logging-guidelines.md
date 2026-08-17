@@ -1,51 +1,21 @@
-# Logging Guidelines
+# 日志与可观测性规范
 
-> How logging is done in this project.
+## 现有做法
 
----
+项目使用 Lombok `@Slf4j` 提供日志，集中出现在基础设施和异步边界，而不是所有业务类强制打日志。可参考：
 
-## Overview
+- `web/web-app/src/main/java/com/ayor/listener/EmailListener.java`：消息消费结果与失败记录。
+- `web/web-app/src/main/java/com/ayor/listener/EsIndexSyncListener.java`：异步索引处理。
+- `web/web-app/src/main/java/com/ayor/initializer/ESIndexInitializer.java`：启动初始化。
+- `common/src/main/java/com/ayor/util/ImageUtils.java`：工具处理中的异常上下文。
 
-<!--
-Document your project's logging conventions here.
+## 写入原则
 
-Questions to answer:
-- What logging library do you use?
-- What are the log levels and when to use each?
-- What should be logged?
-- What should NOT be logged (PII, secrets)?
--->
+- 在异步消费、启动初始化、外部服务调用失败或无法由响应体表达的降级处记录日志；普通可预期业务失败优先走 `Result`/Service 返回约定，避免重复噪声日志。
+- 记录可排障上下文：业务 ID、消息类别、交换机/routing key、操作阶段；使用参数化日志，避免字符串拼接。
+- 捕获异常后若继续抛出或返回失败，应保留异常对象作为最后一个参数，确保堆栈可查。
+- 不记录 JWT、密码、SMTP/MinIO/RabbitMQ 密钥、完整邮件内容、原始 Passkey 凭据或用户隐私内容。配置和运维安全边界见 `docs/operations.md`。
 
-(To be filled by the team)
+## 修改异步链路时
 
----
-
-## Log Levels
-
-<!-- When to use each level: debug, info, warn, error -->
-
-(To be filled by the team)
-
----
-
-## Structured Logging
-
-<!-- Log format, required fields -->
-
-(To be filled by the team)
-
----
-
-## What to Log
-
-<!-- Important events to log -->
-
-(To be filled by the team)
-
----
-
-## What NOT to Log
-
-<!-- Sensitive data, PII, secrets -->
-
-(To be filled by the team)
+RabbitMQ、STOMP、Redis、Elasticsearch 与 MinIO 的改动不能只加日志：同时检查配置、生产者/监听器、消息模型与测试。`docs/architecture.md` 和 `docs/messaging.md` 是当前消息路由的事实来源。
