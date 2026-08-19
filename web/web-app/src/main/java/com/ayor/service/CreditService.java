@@ -21,6 +21,14 @@ public interface CreditService extends IService<CreditAccount> {
     CreditBalanceVO getBalance(Integer accountId);
 
     /**
+     * 当前用户每日签到并领取 Credit。
+     *
+     * @param accountId 用户ID
+     * @return 成功返回 null，失败返回错误消息
+     */
+    String checkIn(Integer accountId);
+
+    /**
      * 分页查询用户本人的 Credit 流水（按时间倒序）
      * @param accountId 用户ID
      * @param pageNum 页码

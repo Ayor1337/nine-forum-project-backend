@@ -22,6 +22,7 @@
 | [错误处理](./error-handling.md) | `Result<T>`、业务失败、参数与安全异常的响应方式 |
 | [日志](./logging-guidelines.md) | Lombok SLF4J 的已有日志方式与敏感信息边界 |
 | [质量](./quality-guidelines.md) | Maven 验证、单元/契约测试与评审重点 |
+| [每日签到](./daily-check-in.md) | 签到 API、东京业务日期、Credit 发放与数据库唯一约束 |
 
 ## 基础验证
 

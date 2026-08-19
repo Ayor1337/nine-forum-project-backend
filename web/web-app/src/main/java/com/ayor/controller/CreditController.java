@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -33,6 +34,16 @@ public class CreditController {
     public Result<CreditBalanceVO> getBalance() {
         Integer userId = security.getSecurityUserId();
         return Result.dataMessageHandler(() -> creditService.getBalance(userId), "获取余额失败");
+    }
+
+    /**
+     * 当前用户每日签到并领取 Credit。
+     */
+    @Operation(summary = "每日签到领取 Credit")
+    @PostMapping("/check-ins")
+    public Result<Void> checkIn() {
+        Integer userId = security.getSecurityUserId();
+        return Result.messageHandler(() -> creditService.checkIn(userId));
     }
 
     /**

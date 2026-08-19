@@ -1,0 +1,4 @@
+{"file": ".trellis/spec/backend/index.md", "reason": "确认模块边界与本任务涉及的用户端、共享模型和验证命令。"}
+{"file": ".trellis/spec/backend/database-guidelines.md", "reason": "要求新表同时同步完整 schema 与增量 SQL，并以数据库约束保证并发幂等。"}
+{"file": ".trellis/spec/backend/error-handling.md", "reason": "保持用户端 Result 响应和业务失败消息约定。"}
+{"file": ".trellis/spec/backend/quality-guidelines.md", "reason": "约束分层、依赖注入和受影响模块测试。"}

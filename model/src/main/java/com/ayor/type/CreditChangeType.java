@@ -9,7 +9,9 @@ public enum CreditChangeType {
 
     ADMIN_DEDUCT("admin_deduct"),
 
-    PURCHASE("purchase");
+    PURCHASE("purchase"),
+
+    DAILY_CHECK_IN("daily_check_in");
 
     private final String type;
 

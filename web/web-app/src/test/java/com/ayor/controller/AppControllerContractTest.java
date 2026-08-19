@@ -117,6 +117,13 @@ class AppControllerContractTest {
         assertRequestParam(likes, 2, "page_size");
     }
 
+    @Test
+    void creditControllerExposesDailyCheckInRoute() throws NoSuchMethodException {
+        Method checkIn = CreditController.class.getMethod("checkIn");
+
+        assertThat(checkIn.getAnnotation(PostMapping.class).value()).containsExactly("/check-ins");
+    }
+
     // 测试贴纸控制器保持校验并资源 ID 路由
     @Test
     void stickerControllerKeepsValidationAndAssetIdRoutes() throws NoSuchMethodException {

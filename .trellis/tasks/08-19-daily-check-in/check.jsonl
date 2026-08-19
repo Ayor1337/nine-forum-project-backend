@@ -1,0 +1,3 @@
+{"file": ".trellis/spec/backend/database-guidelines.md", "reason": "检查 schema、增量 SQL、实体和唯一约束是否完整同步。"}
+{"file": ".trellis/spec/backend/error-handling.md", "reason": "检查认证、Result 响应和重复签到业务失败语义。"}
+{"file": ".trellis/spec/backend/quality-guidelines.md", "reason": "检查分层、测试覆盖和 Maven 验证。"}
