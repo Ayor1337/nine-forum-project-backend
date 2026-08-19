@@ -3,6 +3,7 @@ package com.ayor.controller;
 import com.ayor.entity.PageEntity;
 import com.ayor.entity.vo.CreditBalanceVO;
 import com.ayor.entity.vo.CreditTransactionVO;
+import com.ayor.entity.vo.RecentCheckInUserVO;
 import com.ayor.result.Result;
 import com.ayor.service.CreditService;
 import com.ayor.util.SecurityUtils;
@@ -15,6 +16,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 @RequiredArgsConstructor
 @RestController
@@ -44,6 +47,25 @@ public class CreditController {
     public Result<Void> checkIn() {
         Integer userId = security.getSecurityUserId();
         return Result.messageHandler(() -> creditService.checkIn(userId));
+    }
+
+    /**
+     * 查询最近完成签到的用户。
+     */
+    @Operation(summary = "查询最近签到用户")
+    @GetMapping("/recent-check-ins")
+    public Result<List<RecentCheckInUserVO>> listRecentCheckInUsers() {
+        return Result.dataMessageHandler(creditService::listRecentCheckInUsers, "获取最近签到用户失败");
+    }
+
+    /**
+     * 查询当前用户当天是否已签到。
+     */
+    @Operation(summary = "查询今日签到状态")
+    @GetMapping("/check-ins/status")
+    public Result<Boolean> getCheckInStatus() {
+        Integer userId = security.getSecurityUserId();
+        return Result.dataMessageHandler(() -> creditService.hasCheckedInToday(userId), "获取签到状态失败");
     }
 
     /**

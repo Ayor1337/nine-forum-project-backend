@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ayor.mapper.DailyCheckInMapper">
+
+    <select id="selectRecentCheckInUsers" resultType="com.ayor.entity.vo.RecentCheckInUserVO">
+        SELECT a.account_id,
+               a.username,
+               a.nickname,
+               a.avatar_url,
+               dci.create_time AS check_in_time
+        FROM daily_check_in dci
+                 INNER JOIN account a ON a.account_id = dci.account_id
+        WHERE a.status != 3
+          AND (a.is_deleted = 0 OR a.is_deleted IS NULL)
+        ORDER BY dci.create_time DESC, dci.check_in_id DESC
+        LIMIT #{limit}
+    </select>
+
+    <select id="existsByAccountIdAndCheckInDate" resultType="boolean">
+        SELECT EXISTS(
+            SELECT 1
+            FROM daily_check_in
+            WHERE account_id = #{accountId}
+              AND check_in_date = #{checkInDate}
+        )
+    </select>
+
+</mapper>

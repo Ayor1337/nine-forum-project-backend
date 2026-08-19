@@ -67,3 +67,69 @@ try {
 ```
 
 唯一键是最终仲裁，事务确保成功占位后的 Credit 副作用要么全部提交、要么全部回滚。
+
+---
+
+## Scenario: 最近签到展示与当前签到状态
+
+### 1. Scope / Trigger
+
+- 触发条件：用户端需要展示最近签到用户，并显示当前用户能否继续领取当天签到奖励。
+- 目标：只读查询复用 `daily_check_in` 的精确创建时间和东京业务日期，不干扰既有签到写事务。
+
+### 2. Signatures
+
+- HTTP：`GET /api/credits/recent-check-ins`，返回 `Result<List<RecentCheckInUserVO>>`。
+- HTTP：`GET /api/credits/check-ins/status`，当前用户由 `SecurityUtils#getSecurityUserId()` 获取，返回 `Result<Boolean>`。
+- 服务：`CreditService#listRecentCheckInUsers()` 与 `CreditService#hasCheckedInToday(Integer accountId)`。
+- Mapper：`DailyCheckInMapper#selectRecentCheckInUsers(int limit)` 与 `#existsByAccountIdAndCheckInDate(Integer, LocalDate)`。
+
+### 3. Contracts
+
+- 最近列表最多 5 条，按 `daily_check_in.create_time DESC, check_in_id DESC` 稳定排序。
+- 列表项为 `RecentCheckInUserVO(accountId, username, nickname, avatarUrl, checkInTime)`；查询需联结账号，并排除 `status = 3` 或软删除账号。
+- 当前签到状态按 `LocalDate.now(ZoneId.of("Asia/Tokyo"))` 与 `check_in_date` 判断；服务层收到空账号 ID 时返回 `false`。
+- 两个查询都通过 `Result.dataMessageHandler` 返回；空列表和 `false` 都是有效成功数据，而非业务失败。
+
+### 4. Validation & Error Matrix
+
+| 条件 | 服务结果 | HTTP 响应 |
+| --- | --- | --- |
+| 存在有效签到记录 | 最多 5 个按时间倒序的 VO | `Result<List<...>>` 成功 |
+| 无有效签到记录 | 空列表 | `Result<List<...>>` 成功 |
+| 当前用户当天已签到 | `true` | `Result<Boolean>` 成功 |
+| 当前用户当天未签到或账号 ID 为空 | `false` | `Result<Boolean>` 成功 |
+| 未认证状态请求 | 不进入服务 | 既有 Spring Security 未认证响应 |
+
+### 5. Good / Base / Bad Cases
+
+- Good：查询精确签到时间倒序并以签到记录 ID 处理同一时间的稳定顺序，展示账号的基本信息。
+- Base：少于五个有效用户时返回实际数量；状态查询没有签到记录时返回 `false`。
+- Bad：仅按 `check_in_date` 排序，或用 JVM 默认时区计算“今日”状态；两者都会产生不符合产品含义的结果。
+
+### 6. Tests Required
+
+- Service：断言最近查询固定将限制值 5 传给 Mapper，Mapper 返回空值时转为空列表。
+- Service：断言签到状态使用东京日期、已签到为 `true`、空账号 ID 为 `false` 且不查询 Mapper。
+- Controller：断言最近列表的统一成功响应，以及当前用户 ID 被传入状态查询。
+- Mapper：解析 Mapper XML 并断言两个查询语句已注册，防止接口声明与 XML 漂移。
+
+### 7. Wrong vs Correct
+
+#### Wrong
+
+```java
+return dailyCheckInMapper.existsByAccountIdAndCheckInDate(accountId, LocalDate.now());
+```
+
+这会依赖部署机器默认时区，并可能在东京日期边界返回错误状态。
+
+#### Correct
+
+```java
+return accountId != null
+        && dailyCheckInMapper.existsByAccountIdAndCheckInDate(
+                accountId, LocalDate.now(ZoneId.of("Asia/Tokyo")));
+```
+
+业务日期与写入签到记录的日期保持一致，空账号也不会触发无意义的数据库查询。

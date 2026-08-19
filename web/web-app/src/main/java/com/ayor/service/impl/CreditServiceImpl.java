@@ -6,6 +6,7 @@ import com.ayor.entity.pojo.CreditTransaction;
 import com.ayor.entity.pojo.DailyCheckIn;
 import com.ayor.entity.vo.CreditBalanceVO;
 import com.ayor.entity.vo.CreditTransactionVO;
+import com.ayor.entity.vo.RecentCheckInUserVO;
 import com.ayor.mapper.CreditAccountMapper;
 import com.ayor.mapper.CreditTransactionMapper;
 import com.ayor.mapper.DailyCheckInMapper;
@@ -19,6 +20,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Credit 货币查询服务实现（用户端）
@@ -33,6 +36,8 @@ public class CreditServiceImpl extends ServiceImpl<CreditAccountMapper, CreditAc
     private static final int DEFAULT_PAGE_SIZE = 10;
 
     private static final long DAILY_CHECK_IN_REWARD = 5L;
+
+    private static final int RECENT_CHECK_IN_USER_LIMIT = 5;
 
     private static final ZoneId CHECK_IN_ZONE_ID = ZoneId.of("Asia/Tokyo");
 
@@ -78,6 +83,18 @@ public class CreditServiceImpl extends ServiceImpl<CreditAccountMapper, CreditAc
         transaction.setOperatorId(accountId);
         creditTransactionMapper.insert(transaction);
         return null;
+    }
+
+    @Override
+    public List<RecentCheckInUserVO> listRecentCheckInUsers() {
+        List<RecentCheckInUserVO> users = dailyCheckInMapper.selectRecentCheckInUsers(RECENT_CHECK_IN_USER_LIMIT);
+        return users == null ? Collections.emptyList() : users;
+    }
+
+    @Override
+    public boolean hasCheckedInToday(Integer accountId) {
+        return accountId != null
+                && dailyCheckInMapper.existsByAccountIdAndCheckInDate(accountId, LocalDate.now(CHECK_IN_ZONE_ID));
     }
 
     @Override

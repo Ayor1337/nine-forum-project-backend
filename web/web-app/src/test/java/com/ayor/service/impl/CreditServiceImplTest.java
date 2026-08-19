@@ -6,6 +6,7 @@ import com.ayor.entity.pojo.CreditTransaction;
 import com.ayor.entity.pojo.DailyCheckIn;
 import com.ayor.entity.vo.CreditBalanceVO;
 import com.ayor.entity.vo.CreditTransactionVO;
+import com.ayor.entity.vo.RecentCheckInUserVO;
 import com.ayor.mapper.CreditAccountMapper;
 import com.ayor.mapper.CreditTransactionMapper;
 import com.ayor.mapper.DailyCheckInMapper;
@@ -25,6 +26,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -149,6 +151,44 @@ class CreditServiceImplTest {
 
         assertEquals("参数错误", service.checkIn(null));
         verifyNoInteractions(dailyCheckInMapper, creditAccountMapper, creditTransactionMapper);
+    }
+
+    @Test
+    void shouldListRecentCheckInUsersWithFixedLimit() {
+        CreditServiceImpl service = createService();
+        RecentCheckInUserVO user = new RecentCheckInUserVO(7, "ayor", "阿尧", "avatar", new Date());
+        when(dailyCheckInMapper.selectRecentCheckInUsers(5)).thenReturn(List.of(user));
+
+        List<RecentCheckInUserVO> users = service.listRecentCheckInUsers();
+
+        assertEquals(List.of(user), users);
+        verify(dailyCheckInMapper).selectRecentCheckInUsers(5);
+    }
+
+    @Test
+    void shouldReturnEmptyListWhenRecentCheckInQueryReturnsNull() {
+        CreditServiceImpl service = createService();
+        when(dailyCheckInMapper.selectRecentCheckInUsers(5)).thenReturn(null);
+
+        assertEquals(List.of(), service.listRecentCheckInUsers());
+    }
+
+    @Test
+    void shouldReturnTodayCheckInStatusUsingTokyoBusinessDate() {
+        CreditServiceImpl service = createService();
+        LocalDate today = LocalDate.now(ZoneId.of("Asia/Tokyo"));
+        when(dailyCheckInMapper.existsByAccountIdAndCheckInDate(7, today)).thenReturn(true);
+
+        assertEquals(true, service.hasCheckedInToday(7));
+        verify(dailyCheckInMapper).existsByAccountIdAndCheckInDate(eq(7), eq(today));
+    }
+
+    @Test
+    void shouldReturnFalseForMissingAccountIdCheckInStatus() {
+        CreditServiceImpl service = createService();
+
+        assertEquals(false, service.hasCheckedInToday(null));
+        verifyNoInteractions(dailyCheckInMapper);
     }
 
     private CreditServiceImpl createService() {

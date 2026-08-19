@@ -118,10 +118,14 @@ class AppControllerContractTest {
     }
 
     @Test
-    void creditControllerExposesDailyCheckInRoute() throws NoSuchMethodException {
+    void creditControllerExposesCheckInRoutes() throws NoSuchMethodException {
         Method checkIn = CreditController.class.getMethod("checkIn");
+        Method listRecentCheckInUsers = CreditController.class.getMethod("listRecentCheckInUsers");
+        Method getCheckInStatus = CreditController.class.getMethod("getCheckInStatus");
 
         assertThat(checkIn.getAnnotation(PostMapping.class).value()).containsExactly("/check-ins");
+        assertThat(listRecentCheckInUsers.getAnnotation(GetMapping.class).value()).containsExactly("/recent-check-ins");
+        assertThat(getCheckInStatus.getAnnotation(GetMapping.class).value()).containsExactly("/check-ins/status");
     }
 
     // 测试贴纸控制器保持校验并资源 ID 路由
