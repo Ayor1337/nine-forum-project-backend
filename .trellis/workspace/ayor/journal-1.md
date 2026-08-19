@@ -59,3 +59,24 @@
 ### Next Steps
 
 - 后续开发任务开始前按 trellis-before-dev 加载相关规范
+
+
+## Session 3: 新增签到查询接口
+
+**Date**: 2026-08-19
+**Task**: 新增签到查询接口
+**Branch**: `develope`
+
+### Summary
+
+新增最近签到五人列表与当前用户东京业务日签到状态查询，补齐 Mapper XML、接口契约、单元测试及每日签到规范。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `77b106b` | (see git log) |
+
+### Status
+
+[OK] **Completed**
