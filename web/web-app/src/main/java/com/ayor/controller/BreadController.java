@@ -1,6 +1,7 @@
 package com.ayor.controller;
 
 import com.ayor.result.Result;
+import com.ayor.entity.vo.ThreadBreadcrumbVO;
 import com.ayor.service.ThreaddService;
 import com.ayor.service.TopicService;
 import lombok.RequiredArgsConstructor;
@@ -34,8 +35,8 @@ public class BreadController {
      */
     @Operation(summary = "获取帖子面包屑")
     @GetMapping("/threads/{thread_id}/breadcrumb")
-    public Result<String> getThreadInfo(@Parameter(description = "帖子 ID") @PathVariable(name = "thread_id") Integer threadId) {
-        return Result.dataMessageHandler(() -> threaddService.getThreadTitleById(threadId), "获取帖子信息失败");
+    public Result<ThreadBreadcrumbVO> getThreadInfo(@Parameter(description = "帖子 ID") @PathVariable(name = "thread_id") Integer threadId) {
+        return Result.dataMessageHandler(() -> threaddService.getThreadBreadcrumbById(threadId), "获取帖子信息失败");
     }
 
 

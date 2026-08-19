@@ -6,6 +6,7 @@ import com.ayor.entity.dto.ThreadDTO;
 import com.ayor.entity.vo.AnnouncementVO;
 import com.ayor.entity.vo.ThreadEditHistoryDetailVO;
 import com.ayor.entity.vo.ThreadEditHistoryVO;
+import com.ayor.entity.vo.ThreadBreadcrumbVO;
 import com.ayor.entity.vo.ThreadVO;
 import com.ayor.entity.pojo.Threadd;
 import com.baomidou.mybatisplus.extension.service.IService;
@@ -83,6 +84,14 @@ public interface ThreaddService extends IService<Threadd> {
      * @return 帖子标题字符串
      */
     String getThreadTitleById(Integer threadId);
+
+    /**
+     * 获取帖子及所属主题名称，用于面包屑展示。
+     *
+     * @param threadId 帖子 ID
+     * @return 包含帖子名称和主题名称的面包屑视图对象；帖子或主题不存在时返回 {@code null}
+     */
+    ThreadBreadcrumbVO getThreadBreadcrumbById(Integer threadId);
 
     /**
      * 获取帖子详细信息

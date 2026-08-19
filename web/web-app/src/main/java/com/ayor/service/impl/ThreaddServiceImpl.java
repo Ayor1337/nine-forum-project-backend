@@ -8,10 +8,12 @@ import com.ayor.entity.vo.AnnouncementVO;
 import com.ayor.entity.vo.TagVO;
 import com.ayor.entity.vo.ThreadEditHistoryDetailVO;
 import com.ayor.entity.vo.ThreadEditHistoryVO;
+import com.ayor.entity.vo.ThreadBreadcrumbVO;
 import com.ayor.entity.vo.ThreadVO;
 import com.ayor.entity.pojo.Account;
 import com.ayor.entity.pojo.Tag;
 import com.ayor.entity.pojo.Threadd;
+import com.ayor.entity.pojo.Topic;
 import com.ayor.entity.pojo.ThreadEditHistory;
 import com.ayor.mapper.*;
 import com.ayor.service.AuthorizationService;
@@ -163,6 +165,22 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
         }
         Threadd threadd = this.baseMapper.selectById(threadId);
         return threadd.getTitle();
+    }
+
+    @Override
+    public ThreadBreadcrumbVO getThreadBreadcrumbById(Integer threadId) {
+        if (threadId == null) {
+            return null;
+        }
+        Threadd threadd = this.baseMapper.selectById(threadId);
+        if (threadd == null || Boolean.TRUE.equals(threadd.getIsDeleted())) {
+            return null;
+        }
+        Topic topic = topicMapper.selectById(threadd.getTopicId());
+        if (topic == null || Boolean.TRUE.equals(topic.getIsDeleted())) {
+            return null;
+        }
+        return new ThreadBreadcrumbVO(threadd.getTitle(), topic.getTitle());
     }
     /**
      * 根据帖子 ID 获取帖子详情。

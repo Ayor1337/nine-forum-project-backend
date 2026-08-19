@@ -8,6 +8,8 @@ import com.ayor.entity.pojo.Threadd;
 import com.ayor.entity.dto.ThreadDTO;
 import com.ayor.entity.vo.AnnouncementVO;
 import com.ayor.entity.vo.ThreadVO;
+import com.ayor.entity.vo.ThreadBreadcrumbVO;
+import com.ayor.entity.pojo.Topic;
 import com.ayor.mapper.AccountMapper;
 import com.ayor.mapper.AnnouncementMapper;
 import com.ayor.mapper.PostMapper;
@@ -353,6 +355,39 @@ class ThreaddServiceImplTest {
 
         assertNull(result);
         verifyNoInteractions(topicMapper, threaddMapper);
+    }
+
+    // 测试面包屑返回帖子与所属主题名称
+    @Test
+    void shouldReturnThreadAndTopicNamesForBreadcrumb() {
+        ThreaddServiceImpl service = createService();
+        Threadd thread = createThread();
+        Topic topic = new Topic();
+        topic.setTopicId(1);
+        topic.setTitle("技术交流");
+        topic.setIsDeleted(false);
+        when(threaddMapper.selectById(101)).thenReturn(thread);
+        when(topicMapper.selectById(1)).thenReturn(topic);
+
+        ThreadBreadcrumbVO result = service.getThreadBreadcrumbById(101);
+
+        assertNotNull(result);
+        assertEquals("hot-thread", result.getThreadName());
+        assertEquals("技术交流", result.getTopicName());
+    }
+
+    // 测试面包屑不暴露已删除的帖子或主题
+    @Test
+    void shouldReturnNullForBreadcrumbWhenTopicIsDeleted() {
+        ThreaddServiceImpl service = createService();
+        Threadd thread = createThread();
+        Topic topic = new Topic();
+        topic.setTopicId(1);
+        topic.setIsDeleted(true);
+        when(threaddMapper.selectById(101)).thenReturn(thread);
+        when(topicMapper.selectById(1)).thenReturn(topic);
+
+        assertNull(service.getThreadBreadcrumbById(101));
     }
 
     // 测试保存帖子后同步图片引用串
