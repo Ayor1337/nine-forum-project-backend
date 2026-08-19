@@ -26,3 +26,36 @@
 ### Status
 
 [OK] **Completed**
+
+
+## Session 2: 完成 Trellis 后端规范引导任务
+
+**Date**: 2026-08-19
+**Task**: 完成 Trellis 后端规范引导任务
+**Branch**: `develope`
+
+### Summary
+
+核对并归档后端开发规范引导任务，规范文档已包含目录结构、数据库、错误处理、日志与质量要求。
+
+### Main Changes
+
+- 完成并归档 00-bootstrap-guidelines
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `8a468cc` | (see git log) |
+
+### Testing
+
+- [OK] 文档规范任务：检查已提交的后端规范文件及任务清单
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- 后续开发任务开始前按 trellis-before-dev 加载相关规范
