@@ -23,6 +23,7 @@
 | [日志](./logging-guidelines.md) | Lombok SLF4J 的已有日志方式与敏感信息边界 |
 | [质量](./quality-guidelines.md) | Maven 验证、单元/契约测试与评审重点 |
 | [每日签到](./daily-check-in.md) | 签到 API、东京业务日期、Credit 发放与数据库唯一约束 |
+| [帖子正文图片](./thread-content-images.md) | 帖子图片数量限制、列表投影与失败副作用边界 |
 
 ## 基础验证
 

@@ -56,6 +56,9 @@ import java.util.concurrent.locks.ReentrantLock;
 @RequiredArgsConstructor
 public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> implements ThreaddService {
 
+    private static final int MAX_THREAD_IMAGE_COUNT = 7;
+    private static final String THREAD_IMAGE_LIMIT_ERROR = "帖子最多只能包含7张图片";
+
     private final AccountMapper accountMapper;
 
     private final AnnouncementMapper announcementMapper;
@@ -260,7 +263,7 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
                 threadVO.setTag(tagVO);
                 threadVO.setAccountName(account.getNickname());
                 threadVO.setContent(tipTapUtils.filterNonImage(threadd.getContent()));
-                threadVO.setImageUrls(tipTapUtils.extractImageUrls(threadd.getContent()));
+                threadVO.setImageUrls(tipTapUtils.extractAllImageUrls(threadd.getContent()));
                 threadVO.setAvatarUrl(account.getAvatarUrl());
                 threadVO.setAccountId(account.getAccountId());
 
@@ -469,6 +472,10 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
         if (accountId == null) {
             return "用户不存在";
         }
+        String contentError = validateThreadContent(threadDTO.getContent());
+        if (contentError != null) {
+            return contentError;
+        }
         String tagError = validateTagBelongsToTopic(threadDTO.getTagId(), threadDTO.getTopicId());
         if (tagError != null) {
             return tagError;
@@ -509,6 +516,10 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
             return "帖子不存在";
         }
 
+        String contentError = validateThreadContent(threadDTO.getContent());
+        if (contentError != null) {
+            return contentError;
+        }
         String tagError = validateTagBelongsToTopic(threadDTO.getTagId(), threadd.getTopicId());
         if (tagError != null) {
             return tagError;
@@ -547,6 +558,20 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
         cacheInvalidationService.clearThreadRanking();
         esIndexSyncProducer.syncThread(threadId);
         return null;
+    }
+
+    /**
+     * 校验帖子正文格式及图片节点上限。
+     */
+    private String validateThreadContent(String content) {
+        try {
+            if (tipTapUtils.countImageNodes(content) > MAX_THREAD_IMAGE_COUNT) {
+                return THREAD_IMAGE_LIMIT_ERROR;
+            }
+            return null;
+        } catch (IllegalArgumentException exception) {
+            return exception.getMessage();
+        }
     }
 
     /**

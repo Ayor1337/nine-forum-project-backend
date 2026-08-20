@@ -93,6 +93,16 @@ public class TipTapUtils {
     }
 
     /**
+     * 统计 TipTap JSON 中的图片节点数量。
+     *
+     * @param content TipTap doc JSON 字符串
+     * @return type=image 节点数量
+     */
+    public int countImageNodes(String content) {
+        return countImageNodes(parseDoc(content));
+    }
+
+    /**
      * 解析并校验 TipTap 文档 JSON。
      *
      * @param content TipTap doc JSON 字符串
@@ -246,6 +256,26 @@ public class TipTapUtils {
                 collectImageUrls(childNode, imageUrls, limit);
             }
         }
+    }
+
+    /**
+     * 递归统计图片节点数量。
+     *
+     * @param node 当前 JSON 节点
+     * @return 当前节点及其子节点中的图片节点数量
+     */
+    private int countImageNodes(JSONObject node) {
+        int count = isImageNode(node) ? 1 : 0;
+        JSONArray content = node.getJSONArray("content");
+        if (content == null) {
+            return count;
+        }
+        for (Object child : content) {
+            if (child instanceof JSONObject childNode) {
+                count += countImageNodes(childNode);
+            }
+        }
+        return count;
     }
 
     /**

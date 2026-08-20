@@ -5,11 +5,13 @@ import com.ayor.entity.pojo.Announcement;
 import com.ayor.entity.pojo.Account;
 import com.ayor.entity.pojo.Tag;
 import com.ayor.entity.pojo.Threadd;
+import com.ayor.entity.pojo.ThreadEditHistory;
 import com.ayor.entity.dto.ThreadDTO;
 import com.ayor.entity.vo.AnnouncementVO;
 import com.ayor.entity.vo.ThreadVO;
 import com.ayor.entity.vo.ThreadBreadcrumbVO;
 import com.ayor.entity.pojo.Topic;
+import com.ayor.image.ImageStorageService;
 import com.ayor.mapper.AccountMapper;
 import com.ayor.mapper.AnnouncementMapper;
 import com.ayor.mapper.PostMapper;
@@ -34,6 +36,8 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.apache.ibatis.builder.MapperBuilderAssistant;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -54,6 +58,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -172,6 +177,31 @@ class ThreaddServiceImplTest {
         String targetSql = wrapperCaptor.getValue().getTargetSql();
         assertTrue(targetSql.contains("tag_id"), targetSql);
         assertTrue(targetSql.contains("is_selected"), targetSql);
+    }
+
+    // 测试帖子串列表返回正文中的全部图片URL
+    @Test
+    void shouldReturnAllImageUrlsInThreadList() {
+        ThreaddServiceImpl service = createService();
+        when(topicMapper.isTopicDelete(1)).thenReturn(false);
+
+        Threadd thread = createThread();
+        thread.setContent(imageDocument(8));
+        Page<Threadd> page = Page.of(1, 10);
+        page.setRecords(List.of(thread));
+        page.setTotal(1);
+
+        Account account = new Account();
+        account.setAccountId(11);
+        account.setNickname("tester");
+        account.setAvatarUrl("avatar");
+        when(accountMapper.getAccountById(11)).thenReturn(account);
+        when(threaddMapper.selectPage(any(Page.class), any(Wrapper.class))).thenReturn(page);
+
+        PageEntity<ThreadVO> result = service.getThreadVOsByTopicId(7, 1, null, null, "latest", 1, 10);
+
+        assertNotNull(result);
+        assertEquals(expectedImageUrls(8), result.getData().get(0).getImageUrls());
     }
 
     // 测试排除拉黑账号从主题帖子串分页
@@ -415,6 +445,53 @@ class ThreaddServiceImplTest {
         verify(forumRealtimeService).publishThreadCreated(any(Threadd.class));
     }
 
+    // 测试创建帖子允许0、1、7张图片
+    @ParameterizedTest
+    @ValueSource(ints = {0, 1, 7})
+    void shouldInsertThreadWithUpToSevenImages(int imageCount) {
+        ThreaddServiceImpl service = createService();
+        ThreadDTO dto = new ThreadDTO();
+        dto.setTitle("hello");
+        dto.setTopicId(2);
+        dto.setContent(imageDocument(imageCount));
+        when(threaddMapper.insert(any(Threadd.class))).thenReturn(1);
+
+        String result = service.insertThread(dto, 8);
+
+        assertNull(result);
+        verify(threaddMapper).insert(any(Threadd.class));
+    }
+
+    // 测试创建帖子超过7张时在上传和任何写入副作用前拒绝
+    @Test
+    void shouldRejectInsertThreadWithEightImagesBeforeSideEffects() {
+        ImageStorageService storageService = mock(ImageStorageService.class);
+        TipTapUtils tipTapUtils = new TipTapUtils();
+        ReflectionTestUtils.setField(tipTapUtils, "imageStorageService", storageService);
+        ThreaddServiceImpl service = createService(tipTapUtils);
+        ThreadDTO dto = new ThreadDTO();
+        dto.setTitle("hello");
+        dto.setTopicId(2);
+        dto.setContent(imageDocument(8).replace(
+                "https://example.com/0.png",
+                "data:image/png;base64,AA=="
+        ));
+
+        String result = service.insertThread(dto, 8);
+
+        assertEquals("帖子最多只能包含7张图片", result);
+        verifyNoInteractions(storageService);
+        verify(threaddMapper, never()).insert(any(Threadd.class));
+        verifyNoInteractions(
+                imageAssetService,
+                mentionMessageService,
+                followMessageService,
+                cacheInvalidationService,
+                forumRealtimeService,
+                esIndexSyncProducer
+        );
+    }
+
     // 测试保存帖子串失败时不推送实时事件
     @Test
     void shouldNotPublishRealtimeEventWhenInsertThreadFails() {
@@ -523,6 +600,56 @@ class ThreaddServiceImplTest {
         verify(threaddMapper).updateById(captor.capture());
         assertEquals(5, captor.getValue().getTagId());
         verify(threaddMapper, never()).removeThreadTag(any(), any());
+    }
+
+    // 测试编辑帖子允许7张图片
+    @Test
+    void shouldEditThreadWithSevenImages() {
+        ThreaddServiceImpl service = createService();
+        Threadd thread = createThread();
+        when(threaddMapper.selectById(101)).thenReturn(thread);
+        when(threaddMapper.updateById(any(Threadd.class))).thenReturn(1);
+
+        ThreadDTO dto = new ThreadDTO();
+        dto.setTitle("new-title");
+        dto.setTopicId(1);
+        dto.setTagId(3);
+        dto.setContent(imageDocument(7));
+        Tag tag = new Tag();
+        tag.setTagId(3);
+        tag.setTopicId(1);
+        when(tagMapper.getTagById(3)).thenReturn(tag);
+
+        String result = service.editThread(101, dto, 11);
+
+        assertNull(result);
+        verify(threadEditHistoryMapper).insert(any(ThreadEditHistory.class));
+        verify(threaddMapper).updateById(any(Threadd.class));
+    }
+
+    // 测试编辑帖子超过7张时在上传、历史快照和更新副作用前拒绝
+    @Test
+    void shouldRejectEditThreadWithEightImagesBeforeSideEffects() {
+        ImageStorageService storageService = mock(ImageStorageService.class);
+        TipTapUtils tipTapUtils = new TipTapUtils();
+        ReflectionTestUtils.setField(tipTapUtils, "imageStorageService", storageService);
+        ThreaddServiceImpl service = createService(tipTapUtils);
+        when(threaddMapper.selectById(101)).thenReturn(createThread());
+
+        ThreadDTO dto = new ThreadDTO();
+        dto.setTitle("new-title");
+        dto.setTopicId(1);
+        dto.setContent(imageDocument(8).replace(
+                "https://example.com/0.png",
+                "data:image/png;base64,AA=="
+        ));
+
+        String result = service.editThread(101, dto, 11);
+
+        assertEquals("帖子最多只能包含7张图片", result);
+        verifyNoInteractions(storageService, threadEditHistoryMapper);
+        verify(threaddMapper, never()).updateById(any(Threadd.class));
+        verifyNoInteractions(imageAssetService, mentionMessageService, cacheInvalidationService, esIndexSyncProducer);
     }
 
     // 测试编辑帖子时不传标签则清除原标签
@@ -709,12 +836,16 @@ class ThreaddServiceImplTest {
     }
 
     private ThreaddServiceImpl createService() {
+        return createService(new TipTapUtils());
+    }
+
+    private ThreaddServiceImpl createService(TipTapUtils tipTapUtils) {
         ThreaddServiceImpl service = new ThreaddServiceImpl(
                 accountMapper,
                 announcementMapper,
                 topicMapper,
                 postMapper,
-                new TipTapUtils(),
+                tipTapUtils,
                 tagMapper,
                 mentionMessageService,
                 followMessageService,
@@ -728,5 +859,26 @@ class ThreaddServiceImplTest {
         );
         ReflectionTestUtils.setField(service, "baseMapper", threaddMapper);
         return service;
+    }
+
+    private String imageDocument(int imageCount) {
+        StringBuilder builder = new StringBuilder("{\"type\":\"doc\",\"content\":[");
+        for (int index = 0; index < imageCount; index++) {
+            if (index > 0) {
+                builder.append(',');
+            }
+            builder.append("{\"type\":\"image\",\"attrs\":{\"src\":\"https://example.com/")
+                    .append(index)
+                    .append(".png\"}}");
+        }
+        return builder.append("]}").toString();
+    }
+
+    private List<String> expectedImageUrls(int imageCount) {
+        List<String> urls = new java.util.ArrayList<>(imageCount);
+        for (int index = 0; index < imageCount; index++) {
+            urls.add("https://example.com/" + index + ".png");
+        }
+        return urls;
     }
 }

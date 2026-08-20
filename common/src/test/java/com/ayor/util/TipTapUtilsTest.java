@@ -121,4 +121,54 @@ class TipTapUtilsTest {
 
         verify(storageService).storeImageBase64Image(new Base64Upload("data:image/gif;base64,R0lGODlhAQABAIAAAAUEBA==", "image.gif"), "posts/1/");
     }
+
+    // 测试图片节点计数的 0、7、8 张边界
+    @Test
+    void shouldCountImageNodesAtThreadLimitBoundaries() {
+        assertEquals(0, tipTapUtils.countImageNodes(imageDocument(0)));
+        assertEquals(List.of(), tipTapUtils.extractAllImageUrls(imageDocument(0)));
+        assertEquals(7, tipTapUtils.countImageNodes(imageDocument(7)));
+        assertEquals(8, tipTapUtils.countImageNodes(imageDocument(8)));
+    }
+
+    // 测试图片节点计数包含URL与Base64、保留重复节点且不统计sticker
+    @Test
+    void shouldCountOnlyImageNodesRegardlessOfSource() {
+        String content = """
+                {
+                  "type": "doc",
+                  "content": [
+                    {"type": "image", "attrs": {"src": "https://example.com/repeated.png"}},
+                    {"type": "sticker", "attrs": {"src": "https://example.com/sticker.png"}},
+                    {"type": "paragraph", "content": [
+                      {"type": "image", "attrs": {"src": "data:image/png;base64,AA=="}},
+                      {"type": "image", "attrs": {"src": "https://example.com/repeated.png"}}
+                    ]}
+                  ]
+                }
+                """;
+
+        assertEquals(3, tipTapUtils.countImageNodes(content));
+        assertEquals(
+                List.of(
+                        "https://example.com/repeated.png",
+                        "data:image/png;base64,AA==",
+                        "https://example.com/repeated.png"
+                ),
+                tipTapUtils.extractAllImageUrls(content)
+        );
+    }
+
+    private String imageDocument(int imageCount) {
+        StringBuilder builder = new StringBuilder("{\"type\":\"doc\",\"content\":[");
+        for (int index = 0; index < imageCount; index++) {
+            if (index > 0) {
+                builder.append(',');
+            }
+            builder.append("{\"type\":\"image\",\"attrs\":{\"src\":\"https://example.com/")
+                    .append(index)
+                    .append(".png\"}}");
+        }
+        return builder.append("]}").toString();
+    }
 }
