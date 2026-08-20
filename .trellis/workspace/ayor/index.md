@@ -8,8 +8,8 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 3
-- **Last Active**: 2026-08-19
+- **Total Sessions**: 4
+- **Last Active**: 2026-08-20
 <!-- @@@/auto:current-status -->
 
 ---
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~82 | Active |
+| `journal-1.md` | ~103 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 4 | 2026-08-20 | 限制帖子图片数量并完整返回 | `d7e3aaa` | `develope` |
 | 3 | 2026-08-19 | 新增签到查询接口 | `77b106b` | `develope` |
 | 2 | 2026-08-19 | 完成 Trellis 后端规范引导任务 | `8a468cc` | `develope` |
 | 1 | 2026-08-19 | 实现每日签到信用点接口 | `ef09b94` | `develope` |

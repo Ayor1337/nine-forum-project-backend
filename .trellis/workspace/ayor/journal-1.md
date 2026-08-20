@@ -80,3 +80,24 @@
 ### Status
 
 [OK] **Completed**
+
+
+## Session 4: 限制帖子图片数量并完整返回
+
+**Date**: 2026-08-20
+**Task**: 限制帖子图片数量并完整返回
+**Branch**: `develope`
+
+### Summary
+
+限制 thread 正文最多 7 个 image 节点且 sticker 不计；创建和编辑在上传前拦截超限内容；主要帖子列表与收藏列表返回全部图片 URL，并补充边界、兼容和无副作用测试。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `d7e3aaa` | (see git log) |
+
+### Status
+
+[OK] **Completed**
