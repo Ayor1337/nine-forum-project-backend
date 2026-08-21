@@ -12,6 +12,7 @@
 - 编辑：`ThreaddService#editThread(Integer threadId, ThreadDTO threadDTO, Integer accountId)`
 - 图片计数：`TipTapUtils#countImageNodes(String content)`
 - 完整投影：`TipTapUtils#extractAllImageUrls(String content)`
+- 图片丢弃投影：`TipTapUtils#discardImageNodes(String content)`
 - 主要列表投影：`ThreaddServiceImpl#toVOs(List<Threadd> threads)`
 - 收藏列表投影：`CollectServiceImpl#toVO(Threadd thread)`
 
@@ -22,6 +23,7 @@
 - `type=sticker` 不计入图片数量。
 - 创建和编辑必须在 `convertBase64ImagesToUrl(...)`、数据库写入、编辑历史及消息/缓存/索引副作用之前完成数量校验。
 - 主题帖子列表、主题/全站排行榜、用户帖子列表和收藏列表的 `ThreadVO.imageUrls` 必须返回正文内全部非空图片 URL，保持 TipTap 文档顺序且不去重。
+- 上述携带 `imageUrls` 的列表中，`ThreadVO.content` 必须丢弃全部 `image` 节点，不能以 `[图片]` 占位；sticker 继续沿用 `[表情]` 的纯文本摘要投影。
 - 返回层不得按 7 张裁剪：历史超限内容仍需完整读取；写入层负责限制新提交正文。
 
 ## 4. Validation & Error Matrix
@@ -40,6 +42,7 @@
 
 - Good：正文包含 7 个 `image` 和任意数量 `sticker`，允许提交并返回 7 个图片 URL。
 - Base：正文没有图片，列表返回空 `imageUrls`。
+- Projection：正文包含图片时，列表 `content` 不含 `image` 节点或 `[图片]`，图片仅通过 `imageUrls` 交付。
 - Bad：正文包含 8 个 URL/Base64 混合的 `image`，在第一张 Base64 上传前拒绝。
 - Compatibility：历史正文有 8 张图片时列表返回 8 个 URL；再次编辑需将最终正文降至 7 张以内。
 
@@ -48,6 +51,7 @@
 - `TipTapUtilsTest`：断言 0、7、8 张边界；URL/Base64 均计数；重复节点保留；sticker 不计数；全部 URL 顺序不变。
 - `ThreaddServiceImplTest`：断言创建和编辑接受 7 张、拒绝 8 张；拒绝时图片存储、Mapper、编辑历史、图片引用、消息、缓存、实时事件和索引均无副作用。
 - `ThreaddServiceImplTest` 与 `CollectServiceImplTest`：使用历史 8 张正文断言列表返回 8 个 URL，证明返回层未截断。
+- `TipTapUtilsTest`：断言图片丢弃后没有图片 URL或图片节点；带 `imageUrls` 的 thread/收藏列表测试须断言 `content` 不含 `[图片]`。
 - 受影响模块验证：`.\mvnw.cmd -pl web/web-app -am clean test`。
 
 ## 7. Wrong vs Correct
@@ -55,9 +59,9 @@
 ### Wrong
 
 ```java
-// 只统计本次 Base64 上传，URL 图片可绕过；返回层也会截断历史内容。
-threadVO.setImageUrls(tipTapUtils.extractImageUrls(thread.getContent()));
-String converted = tipTapUtils.convertBase64ImagesToUrl(content, path);
+// 已有 imageUrls 时仍将图片替换为文字，前端会同时拿到图片和 [图片]。
+threadVO.setContent(tipTapUtils.filterNonImage(thread.getContent()));
+threadVO.setImageUrls(tipTapUtils.extractAllImageUrls(thread.getContent()));
 ```
 
 ### Correct
@@ -68,4 +72,7 @@ if (tipTapUtils.countImageNodes(content) > MAX_THREAD_IMAGE_COUNT) {
     return THREAD_IMAGE_LIMIT_ERROR;
 }
 threadVO.setImageUrls(tipTapUtils.extractAllImageUrls(thread.getContent()));
+threadVO.setContent(tipTapUtils.filterNonImage(
+        tipTapUtils.discardImageNodes(thread.getContent())
+));
 ```

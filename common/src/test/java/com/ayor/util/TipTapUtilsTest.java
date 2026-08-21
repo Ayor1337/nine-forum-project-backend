@@ -159,6 +159,30 @@ class TipTapUtilsTest {
         );
     }
 
+    // 测试丢弃图片节点时保留其他内容
+    @Test
+    void shouldDiscardImageNodesWithoutAddingImagePlaceholder() {
+        String content = """
+                {
+                  "type": "doc",
+                  "content": [
+                    {"type": "image", "attrs": {"src": "https://example.com/top.png"}},
+                    {"type": "paragraph", "content": [
+                      {"type": "text", "text": "hello"},
+                      {"type": "image", "attrs": {"src": "https://example.com/inline.png"}}
+                    ]},
+                    {"type": "sticker", "attrs": {"src": "https://example.com/sticker.png"}}
+                  ]
+                }
+                """;
+
+        String result = tipTapUtils.discardImageNodes(content);
+
+        assertEquals(0, tipTapUtils.countImageNodes(result));
+        assertEquals(List.of(), tipTapUtils.extractAllImageUrls(result));
+        assertEquals("hello[表情]", tipTapUtils.extractText(tipTapUtils.filterNonImage(result)));
+    }
+
     private String imageDocument(int imageCount) {
         StringBuilder builder = new StringBuilder("{\"type\":\"doc\",\"content\":[");
         for (int index = 0; index < imageCount; index++) {

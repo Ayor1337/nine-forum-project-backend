@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -91,6 +92,8 @@ class CollectServiceImplTest {
         ThreadVO result = ReflectionTestUtils.invokeMethod(service, "toVO", thread);
 
         assertEquals(expectedImageUrls(8), result.getImageUrls());
+        assertFalse(result.getContent().contains("[图片]"));
+        assertFalse(result.getContent().contains("\"type\":\"image\""));
     }
 
     private CollectServiceImpl createService() {

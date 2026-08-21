@@ -45,6 +45,18 @@ public class TipTapUtils {
     }
 
     /**
+     * 丢弃 TipTap JSON 中的图片节点。
+     *
+     * @param content TipTap doc JSON 字符串
+     * @return 移除图片节点后的 TipTap JSON 字符串
+     */
+    public String discardImageNodes(String content) {
+        JSONObject root = parseDoc(content);
+        removeImageNodes(root);
+        return JSON.toJSONString(root);
+    }
+
+    /**
      * 提取 TipTap JSON 中所有文本节点内容并按文档顺序拼接。
      *
      * @param content TipTap doc JSON 字符串
@@ -255,6 +267,30 @@ public class TipTapUtils {
             if (child instanceof JSONObject childNode) {
                 collectImageUrls(childNode, imageUrls, limit);
             }
+        }
+    }
+
+    /**
+     * 递归移除图片节点。
+     *
+     * @param node 当前 JSON 节点
+     */
+    private void removeImageNodes(JSONObject node) {
+        JSONArray content = node.getJSONArray("content");
+        if (content == null) {
+            return;
+        }
+
+        for (int i = content.size() - 1; i >= 0; i--) {
+            Object child = content.get(i);
+            if (!(child instanceof JSONObject childNode)) {
+                continue;
+            }
+            if (isImageNode(childNode)) {
+                content.remove(i);
+                continue;
+            }
+            removeImageNodes(childNode);
         }
     }
 

@@ -262,7 +262,7 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
 
                 threadVO.setTag(tagVO);
                 threadVO.setAccountName(account.getNickname());
-                threadVO.setContent(tipTapUtils.filterNonImage(threadd.getContent()));
+                threadVO.setContent(tipTapUtils.filterNonImage(tipTapUtils.discardImageNodes(threadd.getContent())));
                 threadVO.setImageUrls(tipTapUtils.extractAllImageUrls(threadd.getContent()));
                 threadVO.setAvatarUrl(account.getAvatarUrl());
                 threadVO.setAccountId(account.getAccountId());

@@ -202,6 +202,8 @@ class ThreaddServiceImplTest {
 
         assertNotNull(result);
         assertEquals(expectedImageUrls(8), result.getData().get(0).getImageUrls());
+        assertFalse(result.getData().get(0).getContent().contains("[图片]"));
+        assertFalse(result.getData().get(0).getContent().contains("\"type\":\"image\""));
     }
 
     // 测试排除拉黑账号从主题帖子串分页
