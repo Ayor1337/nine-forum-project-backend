@@ -23,6 +23,8 @@ import com.ayor.mq.EsIndexSyncProducer;
 import com.ayor.service.FollowMessageService;
 import com.ayor.service.ForumRealtimeService;
 import com.ayor.service.ImageAssetService;
+import com.ayor.service.CollectService;
+import com.ayor.service.LikeThreadService;
 import com.ayor.service.MentionMessageService;
 import com.ayor.service.ThreaddService;
 import com.ayor.service.UserRelationService;
@@ -87,6 +89,10 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
 
     private final UserRelationService userRelationService;
 
+    private final LikeThreadService likeThreadService;
+
+    private final CollectService collectService;
+
     private final ThreadEditHistoryMapper threadEditHistoryMapper;
 
     private final CacheInvalidationService cacheInvalidationService;
@@ -128,7 +134,7 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
         applyThreadOrder(queryWrapper, normalizeThreadOrder(order));
         Page<Threadd> threads = this.page(Page.of(pageNum, pageSize), queryWrapper);
 
-        return new PageEntity<>(threads.getTotal(), toVOs(threads.getRecords()));
+        return new PageEntity<>(threads.getTotal(), toVOs(viewerId, threads.getRecords()));
     }
 
     @Override
@@ -251,6 +257,11 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
 
     @NotNull
     private List<ThreadVO> toVOs(List<Threadd> threads) {
+        return toVOs(null, threads);
+    }
+
+    @NotNull
+    private List<ThreadVO> toVOs(Integer viewerId, List<Threadd> threads) {
         List<ThreadVO> threadVOList = new ArrayList<>();
         threads.forEach(threadd -> {
             if (!threadd.getIsDeleted()) {
@@ -270,6 +281,8 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
                 threadVO.setImageUrls(normalizeImageUrls(threadd.getImagesUrls()));
                 threadVO.setAvatarUrl(account.getAvatarUrl());
                 threadVO.setAccountId(account.getAccountId());
+                threadVO.setIsLiked(likeThreadService.isLikedByAccountId(viewerId, threadd.getThreadId()));
+                threadVO.setIsCollected(collectService.isCollectedByAccountId(viewerId, threadd.getThreadId()));
 
                 threadVOList.add(threadVO);
             }

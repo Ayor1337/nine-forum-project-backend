@@ -27,6 +27,8 @@ import com.ayor.service.ForumRealtimeService;
 import com.ayor.service.MentionMessageService;
 import com.ayor.service.UserRelationService;
 import com.ayor.service.CacheInvalidationService;
+import com.ayor.service.CollectService;
+import com.ayor.service.LikeThreadService;
 import com.ayor.mq.EsIndexSyncProducer;
 import com.ayor.type.ThreadOrderType;
 import com.ayor.util.TipTapUtils;
@@ -108,6 +110,12 @@ class ThreaddServiceImplTest {
     private UserRelationService userRelationService;
 
     @Mock
+    private LikeThreadService likeThreadService;
+
+    @Mock
+    private CollectService collectService;
+
+    @Mock
     private ThreadEditHistoryMapper threadEditHistoryMapper;
 
     @Mock
@@ -166,6 +174,8 @@ class ThreaddServiceImplTest {
 
         when(accountMapper.getAccountById(11)).thenReturn(account);
         when(threaddMapper.selectPage(any(Page.class), any(Wrapper.class))).thenReturn(page);
+        when(likeThreadService.isLikedByAccountId(7, 101)).thenReturn(true);
+        when(collectService.isCollectedByAccountId(7, 101)).thenReturn(true);
 
         PageEntity<ThreadVO> result = service.getThreadVOsByTopicId(7, 1, 3, true, "hot", 1, 10);
 
@@ -176,6 +186,10 @@ class ThreaddServiceImplTest {
         assertEquals(1L, result.getTotalSize());
         assertEquals(1, result.getData().size());
         assertEquals(101, result.getData().get(0).getThreadId());
+        assertTrue(result.getData().get(0).getIsLiked());
+        assertTrue(result.getData().get(0).getIsCollected());
+        verify(likeThreadService).isLikedByAccountId(7, 101);
+        verify(collectService).isCollectedByAccountId(7, 101);
         assertNotNull(wrapperCaptor.getValue());
         TableInfoHelper.initTableInfo(new MapperBuilderAssistant(new MybatisConfiguration(), ""), Threadd.class);
         String targetSql = wrapperCaptor.getValue().getTargetSql();
@@ -935,6 +949,8 @@ class ThreaddServiceImplTest {
                 imageStorageService,
                 authorizationService,
                 userRelationService,
+                likeThreadService,
+                collectService,
                 threadEditHistoryMapper,
                 cacheInvalidationService,
                 esIndexSyncProducer

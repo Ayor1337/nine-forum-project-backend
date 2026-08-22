@@ -43,6 +43,10 @@ public class ThreadVO implements Serializable {
 
     private Integer collectCount;
 
+    private Boolean isLiked;
+
+    private Boolean isCollected;
+
     private Integer accountId;
 
     private Integer topicId;
