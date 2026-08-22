@@ -140,7 +140,8 @@ public class LikeThreadServiceImpl extends ServiceImpl<LikeThreadMapper, LikeThr
             }
             ThreadVO threadVO = new ThreadVO();
             BeanUtils.copyProperties(thread, threadVO);
-            threadVO.setContent(tipTapUtils.filterNonImage(thread.getContent()));
+            threadVO.setContent(tipTapUtils.filterStickerNodes(thread.getContent()));
+            threadVO.setImageUrls(thread.getImagesUrls() == null ? new ArrayList<>() : new ArrayList<>(thread.getImagesUrls()));
             threadVOS.add(threadVO);
         }
 

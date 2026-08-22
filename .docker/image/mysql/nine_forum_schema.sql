@@ -150,6 +150,7 @@ CREATE TABLE IF NOT EXISTS `permission`  (
 CREATE TABLE IF NOT EXISTS `post`  (
                             `post_id` int NOT NULL AUTO_INCREMENT,
                             `content` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL,
+                            `images_urls` json NOT NULL DEFAULT (JSON_ARRAY()),
                             `account_id` int NULL DEFAULT NULL,
                             `create_time` datetime NULL DEFAULT NULL,
                             `update_time` datetime NULL DEFAULT NULL,
@@ -418,6 +419,7 @@ CREATE TABLE IF NOT EXISTS `thread`  (
                               `title` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '帖子标题',
                               `cover_url` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '封面连接',
                               `content` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT '内容',
+                              `images_urls` json NOT NULL DEFAULT (JSON_ARRAY()) COMMENT '独立图片 URL 数组',
                               `create_time` datetime NULL DEFAULT NULL COMMENT '创建时间',
                               `update_time` datetime NULL DEFAULT NULL COMMENT '更新时间',
                               `view_count` int NULL DEFAULT NULL COMMENT '观看量',

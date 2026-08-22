@@ -211,6 +211,7 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
             BeanUtils.copyProperties(tag, tagVO);
         }
         BeanUtils.copyProperties(threadd, threadVO);
+        threadVO.setImageUrls(normalizeImageUrls(threadd.getImagesUrls()));
 
 
         threadVO.setTag(tagVO);
@@ -262,8 +263,7 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
 
                 threadVO.setTag(tagVO);
                 threadVO.setAccountName(account.getNickname());
-                threadVO.setContent(tipTapUtils.filterNonImage(tipTapUtils.discardImageNodes(threadd.getContent())));
-                threadVO.setImageUrls(tipTapUtils.extractAllImageUrls(threadd.getContent()));
+                threadVO.setImageUrls(normalizeImageUrls(threadd.getImagesUrls()));
                 threadVO.setAvatarUrl(account.getAvatarUrl());
                 threadVO.setAccountId(account.getAccountId());
 
@@ -476,22 +476,23 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
         if (contentError != null) {
             return contentError;
         }
+        String imageUrlsError = validateThreadImageUrls(threadDTO.getImageUrls());
+        if (imageUrlsError != null) {
+            return imageUrlsError;
+        }
         String tagError = validateTagBelongsToTopic(threadDTO.getTagId(), threadDTO.getTopicId());
         if (tagError != null) {
             return tagError;
         }
         Threadd threadd = new Threadd();
         BeanUtils.copyProperties(threadDTO, threadd);
-        try {
-            threadd.setContent(tipTapUtils.convertBase64ImagesToUrl(threadDTO.getContent(), "threads/" + threadd.getTopicId() + "/"));
-        } catch (IllegalArgumentException exception) {
-            return exception.getMessage();
-        }
+        threadd.setContent(threadDTO.getContent());
+        threadd.setImagesUrls(normalizeImageUrls(threadDTO.getImageUrls()));
         threadd.setAccountId(accountId);
         threadd.setCreateTime(new Date());
 
         if (this.save(threadd)) {
-            imageAssetService.syncContentRefs("THREAD", threadd.getThreadId(), threadd.getContent(), accountId);
+            imageAssetService.syncContentRefs("THREAD", threadd.getThreadId(), threadd.getImagesUrls(), accountId);
             mentionMessageService.createThreadMentionMessages(threadd.getContent(), accountId, threadd.getThreadId());
             followMessageService.createThreadFollowMessages(threadd);
             cacheInvalidationService.clearThreadRanking();
@@ -520,18 +521,17 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
         if (contentError != null) {
             return contentError;
         }
+        String imageUrlsError = validateThreadImageUrls(threadDTO.getImageUrls());
+        if (imageUrlsError != null) {
+            return imageUrlsError;
+        }
         String tagError = validateTagBelongsToTopic(threadDTO.getTagId(), threadd.getTopicId());
         if (tagError != null) {
             return tagError;
         }
         Integer oldTagId = threadd.getTagId();
 
-        String newContent;
-        try {
-            newContent = tipTapUtils.convertBase64ImagesToUrl(threadDTO.getContent(), "threads/" + threadd.getTopicId() + "/");
-        } catch (IllegalArgumentException exception) {
-            return exception.getMessage();
-        }
+        String newContent = threadDTO.getContent();
 
         ThreadEditHistory snapshot = new ThreadEditHistory();
         snapshot.setThreadId(threadId);
@@ -543,6 +543,7 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
 
         threadd.setTitle(threadDTO.getTitle());
         threadd.setContent(newContent);
+        threadd.setImagesUrls(normalizeImageUrls(threadDTO.getImageUrls()));
         threadd.setUpdateTime(new Date());
         threadd.setTagId(threadDTO.getTagId());
         if (!this.updateById(threadd)) {
@@ -553,7 +554,7 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
             this.baseMapper.removeThreadTag(threadId, threadd.getTopicId());
         }
 
-        imageAssetService.syncContentRefs("THREAD", threadId, newContent, accountId);
+        imageAssetService.syncContentRefs("THREAD", threadId, threadd.getImagesUrls(), accountId);
         mentionMessageService.createThreadMentionMessages(newContent, accountId, threadId);
         cacheInvalidationService.clearThreadRanking();
         esIndexSyncProducer.syncThread(threadId);
@@ -561,17 +562,25 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
     }
 
     /**
-     * 校验帖子正文格式及图片节点上限。
+     * 校验帖子正文格式，并拒绝正文中的图片节点。
      */
     private String validateThreadContent(String content) {
         try {
-            if (tipTapUtils.countImageNodes(content) > MAX_THREAD_IMAGE_COUNT) {
-                return THREAD_IMAGE_LIMIT_ERROR;
-            }
+            tipTapUtils.assertNoImageNodes(content);
             return null;
         } catch (IllegalArgumentException exception) {
             return exception.getMessage();
         }
+    }
+
+    private String validateThreadImageUrls(List<String> imageUrls) {
+        return imageUrls != null && imageUrls.size() > MAX_THREAD_IMAGE_COUNT
+                ? THREAD_IMAGE_LIMIT_ERROR
+                : null;
+    }
+
+    private List<String> normalizeImageUrls(List<String> imageUrls) {
+        return imageUrls == null ? new ArrayList<>() : new ArrayList<>(imageUrls);
     }
 
     /**

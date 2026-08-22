@@ -19,7 +19,6 @@ import com.ayor.type.ImageAssetSourceType;
 import com.ayor.type.ImageAssetStatus;
 import com.ayor.type.ImageAssetType;
 import com.ayor.type.ImageAssetVisibility;
-import com.ayor.util.TipTapUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
@@ -54,8 +53,6 @@ public class ImageAssetServiceImpl extends ServiceImpl<ImageAssetMapper, ImageAs
     private final ImageProcessor imageProcessor;
 
     private final MinioService minioService;
-
-    private final TipTapUtils tipTapUtils;
 
     @Override
     public String upload(Integer accountId, Base64Upload upload) {
@@ -156,13 +153,13 @@ public class ImageAssetServiceImpl extends ServiceImpl<ImageAssetMapper, ImageAs
     }
 
     @Override
-    public void syncContentRefs(String contentType, Integer contentId, String content, Integer accountId) {
+    public void syncContentRefs(String contentType, Integer contentId, List<String> imageUrls, Integer accountId) {
         List<Integer> oldAssetIds = new ArrayList<>(contentImageRefMapper.selectAssetIdsByContent(contentType, contentId));
         contentImageRefMapper.deleteByContent(contentType, contentId);
 
         Set<Integer> touchedAssetIds = new LinkedHashSet<>(oldAssetIds);
-        if (content != null && !content.isBlank()) {
-            Set<String> urls = new LinkedHashSet<>(tipTapUtils.extractAllImageUrls(content));
+        if (imageUrls != null && !imageUrls.isEmpty()) {
+            Set<String> urls = new LinkedHashSet<>(imageUrls);
             for (String url : urls) {
                 ImageAsset asset = getOrIngestAssetByUrl(url, accountId);
                 if (asset == null) {

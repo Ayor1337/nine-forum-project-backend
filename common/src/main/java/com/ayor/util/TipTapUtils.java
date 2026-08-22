@@ -4,9 +4,6 @@ import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONException;
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
-import com.ayor.entity.Base64Upload;
-import com.ayor.image.ImageStorageService;
-import jakarta.annotation.Resource;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -16,43 +13,27 @@ import java.util.Objects;
 @Component
 public class TipTapUtils {
 
-    @Resource
-    private ImageStorageService imageStorageService;
-
     /**
-     * 将 TipTap JSON 中的 Base64 图片上传到对象存储，并把图片地址替换为可访问 URL。
+     * 校验 TipTap 文档不包含图片节点。图片必须通过独立的 imageUrls 字段提交。
      *
      * @param content TipTap doc JSON 字符串
-     * @param path 图片存储路径
-     * @return 替换后的 TipTap JSON 字符串
+     * @throws IllegalArgumentException 当文档中存在图片节点时抛出
      */
-    public String convertBase64ImagesToUrl(String content, String path) {
-        JSONObject root = parseDoc(content);
-        replaceBase64Images(root, path);
-        return JSON.toJSONString(root);
+    public void assertNoImageNodes(String content) {
+        if (containsImageNode(parseDoc(content))) {
+            throw new IllegalArgumentException("TipTap 内容不支持图片节点，请使用 imageUrls");
+        }
     }
 
     /**
-     * 将 TipTap JSON 中的图片节点替换为文本占位符。
+     * 将 TipTap JSON 中的贴纸节点转换为文本占位符。
      *
      * @param content TipTap doc JSON 字符串
      * @return 替换后的 TipTap JSON 字符串
      */
-    public String filterNonImage(String content) {
+    public String filterStickerNodes(String content) {
         JSONObject root = parseDoc(content);
-        convertImageNodes(root);
-        return JSON.toJSONString(root);
-    }
-
-    /**
-     * 丢弃 TipTap JSON 中的图片节点。
-     *
-     * @param content TipTap doc JSON 字符串
-     * @return 移除图片节点后的 TipTap JSON 字符串
-     */
-    public String discardImageNodes(String content) {
-        JSONObject root = parseDoc(content);
-        removeImageNodes(root);
+        convertStickerNodes(root);
         return JSON.toJSONString(root);
     }
 
@@ -80,39 +61,6 @@ public class TipTapUtils {
         return mentions;
     }
 
-    /**
-     * 提取 TipTap JSON 中的图片 URL，最多返回 3 个。
-     *
-     * @param content TipTap doc JSON 字符串
-     * @return 图片 URL 列表
-     */
-    public List<String> extractImageUrls(String content) {
-        List<String> imageUrls = new ArrayList<>();
-        collectImageUrls(parseDoc(content), imageUrls, 3);
-        return imageUrls;
-    }
-
-    /**
-     * 提取 TipTap JSON 中的全部图片 URL。
-     *
-     * @param content TipTap doc JSON 字符串
-     * @return 图片 URL 列表
-     */
-    public List<String> extractAllImageUrls(String content) {
-        List<String> imageUrls = new ArrayList<>();
-        collectImageUrls(parseDoc(content), imageUrls, -1);
-        return imageUrls;
-    }
-
-    /**
-     * 统计 TipTap JSON 中的图片节点数量。
-     *
-     * @param content TipTap doc JSON 字符串
-     * @return type=image 节点数量
-     */
-    public int countImageNodes(String content) {
-        return countImageNodes(parseDoc(content));
-    }
 
     /**
      * 解析并校验 TipTap 文档 JSON。
@@ -136,42 +84,11 @@ public class TipTapUtils {
     }
 
     /**
-     * 递归替换 TipTap 图片节点中的 Base64 图片。
-     *
-     * @param node 当前 JSON 节点
-     * @param path 图片存储路径
-     */
-    private void replaceBase64Images(JSONObject node, String path) {
-        if (isImageNode(node)) {
-            JSONObject attrs = node.getJSONObject("attrs");
-            String src = attrs == null ? null : attrs.getString("src");
-            if (isBase64Image(src)) {
-                try {
-                    attrs.put("src", imageStorageService.storeImageBase64Image(new Base64Upload(src, "image." + extractImageExtension(src)), path).getUrl());
-                } catch (IllegalArgumentException e) {
-                    throw e;
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
-            }
-        }
-        JSONArray content = node.getJSONArray("content");
-        if (content == null) {
-            return;
-        }
-        for (Object child : content) {
-            if (child instanceof JSONObject childNode) {
-                replaceBase64Images(childNode, path);
-            }
-        }
-    }
-
-    /**
-     * 将图片节点转换为文本占位符节点。
+     * 将贴纸节点转换为文本占位符节点。
      *
      * @param node 当前 JSON 节点
      */
-    private void convertImageNodes(JSONObject node) {
+    private void convertStickerNodes(JSONObject node) {
         JSONArray content = node.getJSONArray("content");
         if (content == null) {
             return;
@@ -184,14 +101,6 @@ public class TipTapUtils {
                 continue;
             }
 
-            if (isImageNode(childNode)) {
-                JSONObject textNode = new JSONObject();
-                textNode.put("type", "text");
-                textNode.put("text", "[图片]");
-                content.set(i, textNode);
-                continue;
-            }
-
             if (isStickerNode(childNode)) {
                 JSONObject stickerNode = new JSONObject();
                 stickerNode.put("type", "text");
@@ -200,7 +109,7 @@ public class TipTapUtils {
                 continue;
             }
 
-            convertImageNodes(childNode);
+            convertStickerNodes(childNode);
         }
     }
 
@@ -238,80 +147,20 @@ public class TipTapUtils {
         }
     }
 
-    /**
-     * 递归收集图片 URL。
-     *
-     * @param node 当前 JSON 节点
-     * @param imageUrls 图片 URL 结果列表
-     * @param limit 最大收集数量，-1 表示不限制
-     */
-    private void collectImageUrls(JSONObject node, List<String> imageUrls, int limit) {
-        if (limit > 0 && imageUrls.size() >= limit) {
-            return;
-        }
+    private boolean containsImageNode(JSONObject node) {
         if (isImageNode(node)) {
-            JSONObject attrs = node.getJSONObject("attrs");
-            String src = attrs == null ? null : attrs.getString("src");
-            if (src != null && !src.isBlank()) {
-                imageUrls.add(src);
-            }
+            return true;
         }
         JSONArray content = node.getJSONArray("content");
         if (content == null) {
-            return;
+            return false;
         }
         for (Object child : content) {
-            if (limit > 0 && imageUrls.size() >= limit) {
-                return;
-            }
-            if (child instanceof JSONObject childNode) {
-                collectImageUrls(childNode, imageUrls, limit);
+            if (child instanceof JSONObject childNode && containsImageNode(childNode)) {
+                return true;
             }
         }
-    }
-
-    /**
-     * 递归移除图片节点。
-     *
-     * @param node 当前 JSON 节点
-     */
-    private void removeImageNodes(JSONObject node) {
-        JSONArray content = node.getJSONArray("content");
-        if (content == null) {
-            return;
-        }
-
-        for (int i = content.size() - 1; i >= 0; i--) {
-            Object child = content.get(i);
-            if (!(child instanceof JSONObject childNode)) {
-                continue;
-            }
-            if (isImageNode(childNode)) {
-                content.remove(i);
-                continue;
-            }
-            removeImageNodes(childNode);
-        }
-    }
-
-    /**
-     * 递归统计图片节点数量。
-     *
-     * @param node 当前 JSON 节点
-     * @return 当前节点及其子节点中的图片节点数量
-     */
-    private int countImageNodes(JSONObject node) {
-        int count = isImageNode(node) ? 1 : 0;
-        JSONArray content = node.getJSONArray("content");
-        if (content == null) {
-            return count;
-        }
-        for (Object child : content) {
-            if (child instanceof JSONObject childNode) {
-                count += countImageNodes(childNode);
-            }
-        }
-        return count;
+        return false;
     }
 
     /**
@@ -373,31 +222,6 @@ public class TipTapUtils {
      */
     private boolean isMentionNode(JSONObject node) {
         return "mention".equals(node.getString("type"));
-    }
-
-    /**
-     * 判断是否为 Base64 图片地址。
-     *
-     * @param src 图片地址
-     * @return 是否为 Base64 图片
-     */
-    private boolean isBase64Image(String src) {
-        return src != null && src.startsWith("data:image/");
-    }
-
-    /**
-     * 从 data URI 中提取图片扩展名。
-     *
-     * @param src Base64 图片地址
-     * @return 图片扩展名，解析失败时返回 png
-     */
-    private String extractImageExtension(String src) {
-        int slashIndex = src.indexOf('/') + 1;
-        int semicolonIndex = src.indexOf(';');
-        if (slashIndex <= 0 || semicolonIndex <= slashIndex) {
-            return "png";
-        }
-        return src.substring(slashIndex, semicolonIndex).toLowerCase();
     }
 
     /**

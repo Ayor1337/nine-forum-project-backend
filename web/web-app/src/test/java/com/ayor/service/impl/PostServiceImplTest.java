@@ -102,6 +102,7 @@ class PostServiceImplTest {
         post.setAccountId(3);
         post.setTopicId(7);
         post.setContent("{\"type\":\"doc\",\"content\":[]}");
+        post.setImagesUrls(List.of("https://example.com/post.png"));
         post.setIsDeleted(false);
         post.setCreateTime(new Date());
 
@@ -127,6 +128,7 @@ class PostServiceImplTest {
         assertEquals(21, result.getData().get(0).getPostId());
         assertEquals("reply-user", result.getData().get(0).getNickname());
         assertEquals("avatar.png", result.getData().get(0).getAvatarUrl());
+        assertEquals(List.of("https://example.com/post.png"), result.getData().get(0).getImageUrls());
         assertEquals(0, result.getData().get(0).getEditCount());
         verify(postMapper).selectPage(any(Page.class), any(Wrapper.class));
     }
@@ -143,6 +145,7 @@ class PostServiceImplTest {
         post.setAccountId(3);
         post.setTopicId(7);
         post.setContent("{\"type\":\"doc\",\"content\":[]}");
+        post.setImagesUrls(List.of("https://example.com/post.png"));
         post.setIsDeleted(false);
         post.setCreateTime(new Date());
 
@@ -153,6 +156,7 @@ class PostServiceImplTest {
         replyTo.setAccountId(4);
         replyTo.setTopicId(7);
         replyTo.setContent("{\"type\":\"doc\",\"content\":[{\"type\":\"paragraph\"}]}");
+        replyTo.setImagesUrls(List.of("https://example.com/reply-to.png"));
         replyTo.setIsDeleted(false);
         replyTo.setCreateTime(new Date());
 
@@ -185,6 +189,8 @@ class PostServiceImplTest {
         assertEquals(20, postVO.getReplyTo().getPostId());
         assertEquals("target-user", postVO.getReplyTo().getNickname());
         assertEquals("target.png", postVO.getReplyTo().getAvatarUrl());
+        assertEquals(List.of("https://example.com/post.png"), postVO.getImageUrls());
+        assertEquals(List.of("https://example.com/reply-to.png"), postVO.getReplyTo().getImageUrls());
         assertNull(postVO.getReplyTo().getReplyTo());
     }
 
@@ -226,6 +232,7 @@ class PostServiceImplTest {
         PostDTO dto = new PostDTO();
         dto.setThreadId(9);
         dto.setContent("{\"type\":\"doc\",\"content\":[]}");
+        dto.setImageUrls(List.of("https://example.com/post.png"));
 
         when(threaddMapper.getTopicIdByThreadId(9)).thenReturn(7);
         when(threaddMapper.getAccountIdByThreadIdInteger(9)).thenReturn(11);
@@ -239,7 +246,7 @@ class PostServiceImplTest {
         String result = service.insertPost(dto, 5);
 
         assertNull(result);
-        verify(imageAssetService).syncContentRefs("POST", 123, "{\"type\":\"doc\",\"content\":[]}", 5);
+        verify(imageAssetService).syncContentRefs("POST", 123, List.of("https://example.com/post.png"), 5);
         verify(forumRealtimeService).publishPostCreated(any(Post.class));
         verify(messagingTemplate, never()).convertAndSendToUser(any(), any(), any());
     }
@@ -439,6 +446,20 @@ class PostServiceImplTest {
         verify(forumRealtimeService, never()).publishPostCreated(any(Post.class));
     }
 
+    @Test
+    void shouldRejectPostImageNodeBeforePersistenceOrImageSync() {
+        PostServiceImpl service = createService();
+        PostDTO dto = new PostDTO();
+        dto.setThreadId(9);
+        dto.setContent("{\"type\":\"doc\",\"content\":[{\"type\":\"image\",\"attrs\":{\"src\":\"https://example.com/image.png\"}}]}");
+
+        String result = service.insertPost(dto, 5);
+
+        assertEquals("TipTap 内容不支持图片节点，请使用 imageUrls", result);
+        verify(postMapper, never()).insert(any(Post.class));
+        verifyNoInteractions(imageAssetService, mentionMessageService, forumRealtimeService, esIndexSyncProducer);
+    }
+
     // 测试快照并更新帖子当编辑
     @Test
     void shouldSnapshotAndUpdatePostWhenEditing() {
@@ -478,12 +499,27 @@ class PostServiceImplTest {
         when(postMapper.updateById(any(Post.class))).thenReturn(1);
 
         PostEditDTO dto = new PostEditDTO("{\"type\":\"doc\",\"content\":[]}");
+        dto.setImageUrls(List.of("https://example.com/post.png"));
 
         String result = service.editPost(21, dto, 3);
 
         assertNull(result);
-        verify(imageAssetService).syncContentRefs("POST", 21, "{\"type\":\"doc\",\"content\":[]}", 3);
+        verify(imageAssetService).syncContentRefs("POST", 21, List.of("https://example.com/post.png"), 3);
         verify(mentionMessageService).createPostMentionMessages("{\"type\":\"doc\",\"content\":[]}", 3, 21, 9);
+    }
+
+    @Test
+    void shouldRejectPostImageNodeBeforeEditSideEffects() {
+        PostServiceImpl service = createService();
+        when(postMapper.selectById(21)).thenReturn(createPost());
+        PostEditDTO dto = new PostEditDTO("{\"type\":\"doc\",\"content\":[{\"type\":\"image\"}]}");
+
+        String result = service.editPost(21, dto, 3);
+
+        assertEquals("TipTap 内容不支持图片节点，请使用 imageUrls", result);
+        verify(postEditHistoryMapper, never()).insert(any(PostEditHistory.class));
+        verify(postMapper, never()).updateById(any(Post.class));
+        verifyNoInteractions(imageAssetService, mentionMessageService, esIndexSyncProducer);
     }
 
     // 测试返回缺失帖子消息当编辑已删除帖子

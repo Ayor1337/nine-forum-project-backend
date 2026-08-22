@@ -22,7 +22,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -76,14 +75,15 @@ class CollectServiceImplTest {
         verify(collectMapper, never()).insert(any(Collect.class));
     }
 
-    // 测试收藏列表转换返回正文中的全部图片URL
+    // 测试收藏列表转换返回独立图片 URL
     @Test
     void shouldReturnAllImageUrlsInCollectedThread() {
         CollectServiceImpl service = createService(new TipTapUtils());
         Threadd thread = new Threadd();
         thread.setThreadId(9);
         thread.setAccountId(11);
-        thread.setContent(imageDocument(8));
+        thread.setContent("{\"type\":\"doc\",\"content\":[]}");
+        thread.setImagesUrls(expectedImageUrls(8));
         Account account = new Account();
         account.setAccountId(11);
         account.setNickname("author");
@@ -92,8 +92,6 @@ class CollectServiceImplTest {
         ThreadVO result = ReflectionTestUtils.invokeMethod(service, "toVO", thread);
 
         assertEquals(expectedImageUrls(8), result.getImageUrls());
-        assertFalse(result.getContent().contains("[图片]"));
-        assertFalse(result.getContent().contains("\"type\":\"image\""));
     }
 
     private CollectServiceImpl createService() {
@@ -112,19 +110,6 @@ class CollectServiceImplTest {
         );
         ReflectionTestUtils.setField(service, "baseMapper", collectMapper);
         return service;
-    }
-
-    private String imageDocument(int imageCount) {
-        StringBuilder builder = new StringBuilder("{\"type\":\"doc\",\"content\":[");
-        for (int index = 0; index < imageCount; index++) {
-            if (index > 0) {
-                builder.append(',');
-            }
-            builder.append("{\"type\":\"image\",\"attrs\":{\"src\":\"https://example.com/")
-                    .append(index)
-                    .append(".png\"}}");
-        }
-        return builder.append("]}").toString();
     }
 
     private List<String> expectedImageUrls(int imageCount) {

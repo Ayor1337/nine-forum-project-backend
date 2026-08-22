@@ -9,6 +9,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.Date;
+import java.util.List;
 
 @Data
 @AllArgsConstructor
@@ -21,6 +22,8 @@ public class PostVO implements Serializable {
     private Integer postId;
 
     private String content;
+
+    private List<String> imageUrls;
 
     private Integer accountId;
 

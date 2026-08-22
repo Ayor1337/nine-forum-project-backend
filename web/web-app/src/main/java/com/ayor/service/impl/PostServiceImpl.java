@@ -164,6 +164,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
     private PostVO toPostVO(Post post) {
         PostVO postVO = new PostVO();
         BeanUtils.copyProperties(post, postVO);
+        postVO.setImageUrls(normalizeImageUrls(post.getImagesUrls()));
         Account account = accountMapper.getAccountById(post.getAccountId());
         postVO.setNickname(account.getNickname());
         postVO.setAccountId(account.getAccountId());
@@ -187,6 +188,10 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         if (postDTO.getThreadId() == null) {
             return "未知的发送";
         }
+        String contentError = validatePostContent(postDTO.getContent());
+        if (contentError != null) {
+            return contentError;
+        }
         Post post = new Post();
         BeanUtils.copyProperties(postDTO, post);
         if (userId == null) {
@@ -206,15 +211,12 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         }
         Integer topicId = threaddMapper.getTopicIdByThreadId(postDTO.getThreadId());
         post.setAccountId(userId)   ;
-        try {
-            post.setContent(tipTapUtils.convertBase64ImagesToUrl(postDTO.getContent(), "posts/" + postDTO.getThreadId() + "/"));
-        } catch (IllegalArgumentException exception) {
-            return exception.getMessage();
-        }
+        post.setContent(postDTO.getContent());
+        post.setImagesUrls(normalizeImageUrls(postDTO.getImageUrls()));
         post.setCreateTime(new Date());
         post.setTopicId(topicId);
         if (this.save(post)) {
-            imageAssetService.syncContentRefs("POST", post.getPostId(), post.getContent(), userId);
+            imageAssetService.syncContentRefs("POST", post.getPostId(), post.getImagesUrls(), userId);
             Integer currentPostAccountId = threadAuthorId;
             if (shouldPushReplyNotification(currentPostAccountId, userId, post.getThreadId())) {
                 messagingTemplate.convertAndSendToUser(
@@ -245,6 +247,19 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         return null;
     }
 
+    private String validatePostContent(String content) {
+        try {
+            tipTapUtils.assertNoImageNodes(content);
+            return null;
+        } catch (IllegalArgumentException exception) {
+            return exception.getMessage();
+        }
+    }
+
+    private List<String> normalizeImageUrls(List<String> imageUrls) {
+        return imageUrls == null ? new ArrayList<>() : new ArrayList<>(imageUrls);
+    }
+
     private boolean shouldPushReplyNotification(Integer threadAuthorId, Integer senderId, Integer threadId) {
         if (threadAuthorId == null || threadAuthorId.equals(senderId)) {
             return false;
@@ -270,12 +285,11 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
             return "回复不存在";
         }
 
-        String newContent;
-        try {
-            newContent = tipTapUtils.convertBase64ImagesToUrl(postEditDTO.getContent(), "posts/" + post.getThreadId() + "/");
-        } catch (IllegalArgumentException exception) {
-            return exception.getMessage();
+        String contentError = validatePostContent(postEditDTO.getContent());
+        if (contentError != null) {
+            return contentError;
         }
+        String newContent = postEditDTO.getContent();
 
         PostEditHistory snapshot = new PostEditHistory();
         snapshot.setPostId(postId);
@@ -285,12 +299,13 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         postEditHistoryMapper.insert(snapshot);
 
         post.setContent(newContent);
+        post.setImagesUrls(normalizeImageUrls(postEditDTO.getImageUrls()));
         post.setUpdateTime(new Date());
         if (!this.updateById(post)) {
             return "编辑失败";
         }
 
-        imageAssetService.syncContentRefs("POST", postId, newContent, accountId);
+        imageAssetService.syncContentRefs("POST", postId, post.getImagesUrls(), accountId);
         mentionMessageService.createPostMentionMessages(newContent, accountId, postId, post.getThreadId());
         esIndexSyncProducer.syncPost(postId);
         return null;
@@ -460,7 +475,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         vo.setPostId(post.getPostId());
         vo.setThreadId(post.getThreadId());
         vo.setThreadTitle(threaddMapper.getThreadTitleById(post.getThreadId()));
-        vo.setContent(tipTapUtils.filterNonImage(post.getContent()));
+        vo.setContent(tipTapUtils.filterStickerNodes(post.getContent()));
         vo.setTopicId(threaddMapper.getTopicIdByThreadId(post.getThreadId()));
         vo.setCreateTime(post.getCreateTime());
         vo.setNickname(accountMapper.getAccountById(post.getAccountId()).getNickname());

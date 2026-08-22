@@ -15,7 +15,6 @@ import com.ayor.mapper.ImageAssetMapper;
 import com.ayor.minio.MinioService;
 import com.ayor.type.ImageAssetStatus;
 import com.ayor.type.ImageAssetType;
-import com.ayor.util.TipTapUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -146,14 +145,32 @@ class ImageAssetServiceImplTest {
         assertFalse(hasResourceDeletionEndpoint);
     }
 
+    // 测试内容图片引用从独立 URL 数组同步，并对重复 URL 去重。
+    @Test
+    void shouldSyncContentRefsFromImageUrls() {
+        ImageAssetServiceImpl service = createService();
+        ImageAsset asset = new ImageAsset();
+        asset.setAssetId(31);
+        String imageUrl = "https://cdn.example.com/threads/1/image.webp";
+
+        when(contentImageRefMapper.selectAssetIdsByContent("THREAD", 10)).thenReturn(List.of());
+        when(minioService.normalizeUrl(imageUrl)).thenReturn(imageUrl);
+        when(imageAssetMapper.findByUrl(imageUrl)).thenReturn(asset);
+
+        service.syncContentRefs("THREAD", 10, List.of(imageUrl, imageUrl), 7);
+
+        verify(contentImageRefMapper).deleteByContent("THREAD", 10);
+        verify(contentImageRefMapper).insertIgnore(any(com.ayor.entity.pojo.ContentImageRef.class));
+        verify(imageAssetMapper).refreshUseCount(31);
+    }
+
     private ImageAssetServiceImpl createService() {
         ImageAssetServiceImpl service = new ImageAssetServiceImpl(
                 imageAssetFavoriteMapper,
                 contentImageRefMapper,
                 imageStorageService,
                 imageProcessor,
-                minioService,
-                new TipTapUtils()
+                minioService
         );
         ReflectionTestUtils.setField(service, "baseMapper", imageAssetMapper);
         return service;

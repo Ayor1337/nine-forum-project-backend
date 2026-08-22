@@ -1,78 +1,74 @@
-# 帖子正文图片契约
+# 主题与评论独立图片契约
 
-## 1. Scope / Trigger
+## 1. 范围
 
-本规范适用于用户端创建、编辑和列表读取 thread 正文图片的流程。评论/回复（post）、sticker、头像、横幅及独立图片资产上传不属于此合同。
+本规范适用于用户端主题（`thread`）与评论（`post`）的创建、编辑、读取投影和图片资源引用。图片不属于 TipTap 正文：正文只保存富文本节点，图片 URL 只保存于数据库 JSON 列 `images_urls`。
 
-该规则必须同时约束 Base64 和普通 URL 图片，避免客户端先上传图片再提交 URL 绕过数量限制。
+适用接口包括主题详情与列表、用户收藏/点赞列表，以及 `GET /api/threads/{threadId}/posts` 的评论及其嵌套 `replyTo`。独立图片上传、MinIO 存储策略、头像、横幅、贴纸和编辑历史快照不在本合同内。
 
-## 2. Signatures
+## 2. 签名
 
-- 创建：`ThreaddService#insertThread(ThreadDTO threadDTO, Integer accountId)`
-- 编辑：`ThreaddService#editThread(Integer threadId, ThreadDTO threadDTO, Integer accountId)`
-- 图片计数：`TipTapUtils#countImageNodes(String content)`
-- 完整投影：`TipTapUtils#extractAllImageUrls(String content)`
-- 图片丢弃投影：`TipTapUtils#discardImageNodes(String content)`
-- 主要列表投影：`ThreaddServiceImpl#toVOs(List<Threadd> threads)`
-- 收藏列表投影：`CollectServiceImpl#toVO(Threadd thread)`
+- 主题写入：`ThreaddService#insertThread(ThreadDTO, Integer)`、`ThreaddService#editThread(Integer, ThreadDTO, Integer)`
+- 评论写入：`PostService#insertPost(PostDTO, Integer)`、`PostService#editPost(Integer, PostEditDTO, Integer)`
+- TipTap 校验：`TipTapUtils#assertNoImageNodes(String)`；列表文本摘要仅可使用 `TipTapUtils#filterStickerNodes(String)` 处理贴纸。
+- 图片引用同步：`ImageAssetService#syncContentRefs(String, Integer, List<String>, Integer)`
+- 主题读取：`ThreaddServiceImpl#getThreadById`、`ThreaddServiceImpl#toVOs`、`CollectServiceImpl#toVO`、`LikeThreadServiceImpl#getLikesByAccountId`
+- 评论读取：`PostServiceImpl#toPostVO`
 
-## 3. Contracts
+## 3. 合同
 
-- 输入 `ThreadDTO.content` 必须是合法的 TipTap `doc` JSON。
-- 单个 thread 最多包含 7 个 `type=image` 节点；节点 `src` 是 Base64、URL 或重复 URL 都计数。
-- `type=sticker` 不计入图片数量。
-- 创建和编辑必须在 `convertBase64ImagesToUrl(...)`、数据库写入、编辑历史及消息/缓存/索引副作用之前完成数量校验。
-- 主题帖子列表、主题/全站排行榜、用户帖子列表和收藏列表的 `ThreadVO.imageUrls` 必须返回正文内全部非空图片 URL，保持 TipTap 文档顺序且不去重。
-- 上述携带 `imageUrls` 的列表中，`ThreadVO.content` 必须丢弃全部 `image` 节点，不能以 `[图片]` 占位；sticker 继续沿用 `[表情]` 的纯文本摘要投影。
-- 返回层不得按 7 张裁剪：历史超限内容仍需完整读取；写入层负责限制新提交正文。
+- HTTP 字段、DTO、VO 与 POJO 均使用 `imageUrls: List<String>`；数据库列使用 `images_urls JSON NOT NULL DEFAULT (JSON_ARRAY())`。
+- `Threadd.imagesUrls` 与 `Post.imagesUrls` 必须使用 `StringListTypeHandler` 映射；读取到 SQL `NULL` 或空值时规范化为 `[]`。
+- 创建或编辑时，`content` 必须是合法 TipTap `doc` JSON，且任意深度均不得有 `type=image` 节点。
+- TipTap 工具不得保留图片节点的提取、计数、丢弃或占位转换 API；贴纸文本摘要不得处理图片节点。
+- 主题图片从请求 `imageUrls` 完整替换当前数组，最多 7 项；评论不设置数量上限。省略或传空数组均表示清空，持久化与响应均返回 `[]`。
+- 主题详情和所有已携带 `ThreadVO` 的列表，以及评论列表项与 `replyTo`，必须从实体 `imagesUrls` 返回完整、有序的 `imageUrls`，不得从 TipTap 正文提取、转换或回填。
+- 保存成功后以独立 URL 数组调用 `syncContentRefs`；仅可归一化的平台内 URL 建立图片资源引用。删除主题/评论仍须清除对应引用。
+- 不迁移、不解析、不回填历史 TipTap `image` 节点；旧正文不是 `images_urls` 的数据来源。
 
-## 4. Validation & Error Matrix
+## 4. 校验矩阵
 
 | 条件 | 结果 |
 | --- | --- |
-| 0–7 个 `image` 节点 | 允许继续创建或编辑 |
-| 8 个及以上 `image` 节点 | 返回 `帖子最多只能包含7张图片` |
-| TipTap JSON 非法 | 返回 `TipTapUtils` 的现有格式错误消息 |
-| 超限正文包含 Base64 图片 | 拒绝且不得调用图片存储 |
-| 编辑历史帖子但最终正文仍超过 7 张 | 拒绝编辑；读取不受影响 |
+| 合法 TipTap doc、主题 0–7 个 URL | 允许写入，并同步数组引用 |
+| 合法 TipTap doc、主题 8 个及以上 URL | 返回 `帖子最多只能包含7张图片`，不得写入或产生副作用 |
+| 合法 TipTap doc、评论任意数量 URL | 允许写入并同步数组引用 |
+| 正文任意层级存在 `type=image` | 返回 `TipTap 内容不支持图片节点，请使用 imageUrls`，不得写入、创建快照、上传或同步引用 |
+| TipTap JSON 非法 | 返回既有 `TipTapUtils` 格式错误消息 |
+| `imageUrls` 省略、为 `null` 或为空 | 保存和返回空数组 |
 
-业务失败继续沿用 Service 返回错误字符串、Controller 使用 `Result.messageHandler(...)` 的现有响应合同。
+## 5. 案例
 
-## 5. Good / Base / Bad Cases
+- Good：主题正文仅含段落与 sticker，`imageUrls` 含 7 个 URL；主题详情返回同顺序的 7 个 URL。
+- Good：评论引用另一条评论；当前评论和 `replyTo` 分别返回各自的独立图片数组。
+- Base：主题或评论不传 `imageUrls`；保存后 API 返回 `[]`。
+- Bad：正文任意嵌套层含 image（无论 `src` 是 Base64、普通 URL 或缺失）；在数据库和图片引用副作用前被拒绝。
+- Migration：存量正文含 image 节点时，不回填 `images_urls`；执行增量 SQL 后该列默认为 `[]`。
 
-- Good：正文包含 7 个 `image` 和任意数量 `sticker`，允许提交并返回 7 个图片 URL。
-- Base：正文没有图片，列表返回空 `imageUrls`。
-- Projection：正文包含图片时，列表 `content` 不含 `image` 节点或 `[图片]`，图片仅通过 `imageUrls` 交付。
-- Bad：正文包含 8 个 URL/Base64 混合的 `image`，在第一张 Base64 上传前拒绝。
-- Compatibility：历史正文有 8 张图片时列表返回 8 个 URL；再次编辑需将最终正文降至 7 张以内。
+## 6. 测试
 
-## 6. Tests Required
+- `TipTapUtilsTest`：无图片的 doc 通过；任意深度 image 节点被拒绝；非法 doc 保持既有报错。
+- `ThreaddServiceImplTest`：主题创建/编辑保存数组、7/8 项边界、图片节点拒绝且无副作用、详情与列表投影数组。
+- `PostServiceImplTest`：评论创建/编辑保存数组、图片节点拒绝且无副作用、列表与嵌套 `replyTo` 投影数组。
+- `ImageAssetServiceImplTest`：引用同步接受 URL 数组，不从正文提取 URL。
+- 结构变更必须同步 `.docker/image/mysql/nine_forum_schema.sql` 与 `.sql/YYYYMMDD_<feature>.sql`；运行 `./mvnw.cmd -pl web/web-app -am test`。
 
-- `TipTapUtilsTest`：断言 0、7、8 张边界；URL/Base64 均计数；重复节点保留；sticker 不计数；全部 URL 顺序不变。
-- `ThreaddServiceImplTest`：断言创建和编辑接受 7 张、拒绝 8 张；拒绝时图片存储、Mapper、编辑历史、图片引用、消息、缓存、实时事件和索引均无副作用。
-- `ThreaddServiceImplTest` 与 `CollectServiceImplTest`：使用历史 8 张正文断言列表返回 8 个 URL，证明返回层未截断。
-- `TipTapUtilsTest`：断言图片丢弃后没有图片 URL或图片节点；带 `imageUrls` 的 thread/收藏列表测试须断言 `content` 不含 `[图片]`。
-- 受影响模块验证：`.\mvnw.cmd -pl web/web-app -am clean test`。
+## 7. 错误与正确示例
 
-## 7. Wrong vs Correct
-
-### Wrong
+### 错误
 
 ```java
-// 已有 imageUrls 时仍将图片替换为文字，前端会同时拿到图片和 [图片]。
-threadVO.setContent(tipTapUtils.filterNonImage(thread.getContent()));
-threadVO.setImageUrls(tipTapUtils.extractAllImageUrls(thread.getContent()));
+// 错误：重新从 TipTap 正文推导图片，绕过独立字段合同。
+List<String> urls = parseImageUrlsFromTipTap(thread.getContent());
+imageAssetService.syncContentRefs("THREAD", threadId, urls, accountId);
 ```
 
-### Correct
+### 正确
 
 ```java
-// 先统计最终正文的全部 image 节点，再允许上传；读取始终完整投影。
-if (tipTapUtils.countImageNodes(content) > MAX_THREAD_IMAGE_COUNT) {
-    return THREAD_IMAGE_LIMIT_ERROR;
-}
-threadVO.setImageUrls(tipTapUtils.extractAllImageUrls(thread.getContent()));
-threadVO.setContent(tipTapUtils.filterNonImage(
-        tipTapUtils.discardImageNodes(thread.getContent())
-));
+// 正确：输入拒绝正文图片；图片数组是唯一持久化、响应和引用来源。
+tipTapUtils.assertNoImageNodes(threadDTO.getContent());
+thread.setImagesUrls(threadDTO.getImageUrls() == null ? new ArrayList<>() : new ArrayList<>(threadDTO.getImageUrls()));
+imageAssetService.syncContentRefs("THREAD", thread.getThreadId(), thread.getImagesUrls(), accountId);
+threadVO.setImageUrls(new ArrayList<>(thread.getImagesUrls()));
 ```

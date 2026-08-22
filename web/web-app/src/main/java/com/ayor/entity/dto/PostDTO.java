@@ -6,6 +6,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -19,5 +21,7 @@ public class PostDTO {
 
     @JsonProperty("reply_to")
     private Integer replyTo;
+
+    private List<String> imageUrls;
 
 }

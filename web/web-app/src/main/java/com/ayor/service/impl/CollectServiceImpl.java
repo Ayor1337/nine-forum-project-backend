@@ -188,8 +188,8 @@ public class CollectServiceImpl extends ServiceImpl<CollectMapper, Collect> impl
             threadVO.setTag(tagVO);
         }
 
-        threadVO.setContent(tipTapUtils.filterNonImage(tipTapUtils.discardImageNodes(thread.getContent())));
-        threadVO.setImageUrls(tipTapUtils.extractAllImageUrls(thread.getContent()));
+        threadVO.setContent(tipTapUtils.filterStickerNodes(thread.getContent()));
+        threadVO.setImageUrls(thread.getImagesUrls() == null ? new ArrayList<>() : new ArrayList<>(thread.getImagesUrls()));
         return threadVO;
     }
 }

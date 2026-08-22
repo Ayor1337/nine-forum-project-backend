@@ -4,6 +4,8 @@ import com.ayor.entity.Base64Upload;
 import com.ayor.entity.PageEntity;
 import com.ayor.entity.vo.StickerVO;
 
+import java.util.List;
+
 /**
  * 图片资源业务接口。
  */
@@ -42,7 +44,7 @@ public interface ImageAssetService {
     /**
      * 同步指定内容中的图片引用关系。
      */
-    void syncContentRefs(String contentType, Integer contentId, String content, Integer accountId);
+    void syncContentRefs(String contentType, Integer contentId, List<String> imageUrls, Integer accountId);
 
     /**
      * 清除指定内容的图片引用关系。
