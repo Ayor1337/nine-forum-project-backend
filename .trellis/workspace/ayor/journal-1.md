@@ -122,3 +122,38 @@
 ### Status
 
 [OK] **Completed**
+
+
+## Session 6: 主题与评论独立图片字段
+
+**Date**: 2026-08-22
+**Task**: 主题与评论独立图片字段
+**Branch**: `develope`
+
+### Summary
+
+将主题与评论图片从 TipTap 正文迁移为 images_urls，并完成存量数据回填和正文节点清理。
+
+### Main Changes
+
+- 新增 images_urls JSON 持久化、DTO/VO 响应字段与图片引用同步
+- 拒绝新的 TipTap image 节点，迁移历史图片到 images_urls 并移除正文节点
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `039d6db` | (see git log) |
+
+### Testing
+
+- [OK] .\\mvnw.cmd -pl web/web-app -am test（357 tests）
+- [OK] 数据库核验：16 条主题/52 条评论正文 image 节点均为 0
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- 部署并重启后端后验证详情与评论接口
