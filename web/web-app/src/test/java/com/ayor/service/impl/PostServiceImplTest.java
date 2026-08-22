@@ -2,6 +2,7 @@ package com.ayor.service.impl;
 
 import com.ayor.entity.dto.PostDTO;
 import com.ayor.entity.dto.PostEditDTO;
+import com.ayor.entity.Base64Upload;
 import com.ayor.entity.PageEntity;
 import com.ayor.entity.pojo.Account;
 import com.ayor.entity.pojo.Post;
@@ -18,6 +19,7 @@ import com.ayor.service.AuthorizationService;
 import com.ayor.mq.EsIndexSyncProducer;
 import com.ayor.service.ForumRealtimeService;
 import com.ayor.service.ImageAssetService;
+import com.ayor.image.ImageStorageService;
 import com.ayor.service.MentionMessageService;
 import com.ayor.service.UserRelationService;
 import com.ayor.util.STOMPUtils;
@@ -78,6 +80,9 @@ class PostServiceImplTest {
 
     @Mock
     private ImageAssetService imageAssetService;
+
+    @Mock
+    private ImageStorageService imageStorageService;
 
     @Mock
     private AuthorizationService authorizationService;
@@ -337,6 +342,7 @@ class PostServiceImplTest {
         dto.setThreadId(9);
         dto.setReplyTo(20);
         dto.setContent("{\"type\":\"doc\",\"content\":[]}");
+        dto.setImages(List.of(new Base64Upload("data:image/png;base64,new", "new.png")));
 
         Post replyTo = new Post();
         replyTo.setPostId(20);
@@ -350,6 +356,7 @@ class PostServiceImplTest {
 
         assertEquals("回复对象不属于当前帖子", result);
         verify(postMapper, never()).insert(any(Post.class));
+        verifyNoInteractions(imageStorageService);
     }
 
     // 测试楼主正在当前帖子详情页时不额外推送 reply 实时消息
@@ -416,6 +423,7 @@ class PostServiceImplTest {
         PostDTO dto = new PostDTO();
         dto.setThreadId(9);
         dto.setContent("{\"type\":\"doc\",\"content\":[]}");
+        dto.setImages(List.of(new Base64Upload("data:image/png;base64,new", "new.png")));
 
         when(threaddMapper.getAccountIdByThreadIdInteger(9)).thenReturn(11);
         when(userRelationService.isBlockedEitherDirection(5, 11)).thenReturn(true);
@@ -424,7 +432,7 @@ class PostServiceImplTest {
 
         assertEquals("已拉黑，不能回复", result);
         verify(postMapper, never()).insert(any(Post.class));
-        verifyNoInteractions(imageAssetService, mentionMessageService, forumRealtimeService);
+        verifyNoInteractions(imageStorageService, imageAssetService, mentionMessageService, forumRealtimeService);
     }
 
     // 测试新增帖子失败时不推送实时事件
@@ -455,9 +463,9 @@ class PostServiceImplTest {
 
         String result = service.insertPost(dto, 5);
 
-        assertEquals("TipTap 内容不支持图片节点，请使用 imageUrls", result);
+        assertEquals("TipTap 内容不支持图片节点，请使用 images", result);
         verify(postMapper, never()).insert(any(Post.class));
-        verifyNoInteractions(imageAssetService, mentionMessageService, forumRealtimeService, esIndexSyncProducer);
+        verifyNoInteractions(imageStorageService, imageAssetService, mentionMessageService, forumRealtimeService, esIndexSyncProducer);
     }
 
     // 测试快照并更新帖子当编辑
@@ -509,6 +517,54 @@ class PostServiceImplTest {
     }
 
     @Test
+    void shouldMergeRetainedAndUploadedPostImagesInOrder() {
+        PostServiceImpl service = createService();
+        PostDTO dto = new PostDTO();
+        dto.setThreadId(9);
+        dto.setContent("{\"type\":\"doc\",\"content\":[]}");
+        dto.setImageUrls(List.of("bucket/old.png"));
+        Base64Upload upload = new Base64Upload("data:image/png;base64,new", "new.png");
+        dto.setImages(List.of(upload));
+        when(threaddMapper.getAccountIdByThreadIdInteger(9)).thenReturn(11);
+        when(threaddMapper.getTopicIdByThreadId(9)).thenReturn(7);
+        when(imageStorageService.storeImageBase64Images(List.of(upload), "posts/9/"))
+                .thenReturn(List.of("bucket/new.png"));
+        doAnswer(invocation -> {
+            invocation.<Post>getArgument(0).setPostId(123);
+            return 1;
+        }).when(postMapper).insert(any(Post.class));
+
+        assertNull(service.insertPost(dto, 5));
+
+        ArgumentCaptor<Post> captor = ArgumentCaptor.forClass(Post.class);
+        verify(postMapper).insert(captor.capture());
+        assertEquals(List.of("bucket/old.png", "bucket/new.png"), captor.getValue().getImagesUrls());
+        verify(imageAssetService).syncContentRefs("POST", 123, List.of("bucket/old.png", "bucket/new.png"), 5);
+    }
+
+    @Test
+    void shouldMergeRetainedAndUploadedPostImagesBeforeCreatingEditSnapshot() {
+        PostServiceImpl service = createService();
+        Post post = createPost();
+        when(postMapper.selectById(21)).thenReturn(post);
+        when(postMapper.updateById(any(Post.class))).thenReturn(1);
+        PostEditDTO dto = new PostEditDTO("{\"type\":\"doc\",\"content\":[]}");
+        dto.setImageUrls(List.of("bucket/old.png"));
+        Base64Upload upload = new Base64Upload("data:image/png;base64,new", "new.png");
+        dto.setImages(List.of(upload));
+        when(imageStorageService.storeImageBase64Images(List.of(upload), "posts/9/"))
+                .thenReturn(List.of("bucket/new.png"));
+
+        assertNull(service.editPost(21, dto, 3));
+
+        InOrder inOrder = inOrder(imageStorageService, postEditHistoryMapper, postMapper);
+        inOrder.verify(imageStorageService).storeImageBase64Images(List.of(upload), "posts/9/");
+        inOrder.verify(postEditHistoryMapper).insert(any(PostEditHistory.class));
+        inOrder.verify(postMapper).updateById(any(Post.class));
+        verify(imageAssetService).syncContentRefs("POST", 21, List.of("bucket/old.png", "bucket/new.png"), 3);
+    }
+
+    @Test
     void shouldRejectPostImageNodeBeforeEditSideEffects() {
         PostServiceImpl service = createService();
         when(postMapper.selectById(21)).thenReturn(createPost());
@@ -516,10 +572,10 @@ class PostServiceImplTest {
 
         String result = service.editPost(21, dto, 3);
 
-        assertEquals("TipTap 内容不支持图片节点，请使用 imageUrls", result);
+        assertEquals("TipTap 内容不支持图片节点，请使用 images", result);
         verify(postEditHistoryMapper, never()).insert(any(PostEditHistory.class));
         verify(postMapper, never()).updateById(any(Post.class));
-        verifyNoInteractions(imageAssetService, mentionMessageService, esIndexSyncProducer);
+        verifyNoInteractions(imageStorageService, imageAssetService, mentionMessageService, esIndexSyncProducer);
     }
 
     // 测试返回缺失帖子消息当编辑已删除帖子
@@ -643,6 +699,7 @@ class PostServiceImplTest {
                 mentionMessageService,
                 forumRealtimeService,
                 imageAssetService,
+                imageStorageService,
                 authorizationService,
                 userRelationService,
                 postEditHistoryMapper,

@@ -105,7 +105,7 @@ class TipTapUtilsTest {
                 () -> tipTapUtils.assertNoImageNodes(imageContent)
         );
 
-        assertEquals("TipTap 内容不支持图片节点，请使用 imageUrls", exception.getMessage());
+        assertEquals("TipTap 内容不支持图片节点，请使用 images", exception.getMessage());
         assertDoesNotThrow(() -> tipTapUtils.assertNoImageNodes("{\"type\":\"doc\",\"content\":[]}"));
     }
 

@@ -1,6 +1,7 @@
 package com.ayor.service.impl;
 
 import com.ayor.entity.PageEntity;
+import com.ayor.entity.Base64Upload;
 import com.ayor.entity.pojo.Announcement;
 import com.ayor.entity.pojo.Account;
 import com.ayor.entity.pojo.Tag;
@@ -20,6 +21,7 @@ import com.ayor.mapper.ThreaddMapper;
 import com.ayor.mapper.TopicMapper;
 import com.ayor.service.AuthorizationService;
 import com.ayor.service.ImageAssetService;
+import com.ayor.image.ImageStorageService;
 import com.ayor.service.FollowMessageService;
 import com.ayor.service.ForumRealtimeService;
 import com.ayor.service.MentionMessageService;
@@ -38,6 +40,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.cache.annotation.Cacheable;
@@ -94,6 +97,9 @@ class ThreaddServiceImplTest {
 
     @Mock
     private ImageAssetService imageAssetService;
+
+    @Mock
+    private ImageStorageService imageStorageService;
 
     @Mock
     private AuthorizationService authorizationService;
@@ -489,10 +495,11 @@ class ThreaddServiceImplTest {
 
         String result = service.insertThread(dto, 8);
 
-        assertEquals("TipTap 内容不支持图片节点，请使用 imageUrls", result);
+        assertEquals("TipTap 内容不支持图片节点，请使用 images", result);
         verify(threaddMapper, never()).insert(any(Threadd.class));
         verifyNoInteractions(
                 imageAssetService,
+                imageStorageService,
                 mentionMessageService,
                 followMessageService,
                 cacheInvalidationService,
@@ -637,9 +644,77 @@ class ThreaddServiceImplTest {
         verify(threaddMapper).updateById(any(Threadd.class));
     }
 
-    // 测试编辑帖子超过 7 个独立图片 URL 时无副作用
     @Test
-    void shouldRejectEditThreadWithEightImagesBeforeSideEffects() {
+    void shouldMergeRetainedAndUploadedThreadImagesInOrder() {
+        ThreaddServiceImpl service = createService();
+        ThreadDTO dto = new ThreadDTO();
+        dto.setTitle("hello");
+        dto.setTopicId(2);
+        dto.setContent("{\"type\":\"doc\",\"content\":[]}");
+        dto.setImageUrls(List.of("bucket/old.png"));
+        Base64Upload first = new Base64Upload("data:image/png;base64,first", "first.png");
+        Base64Upload second = new Base64Upload("data:image/png;base64,second", "second.png");
+        dto.setImages(List.of(first, second));
+        when(imageStorageService.storeImageBase64Images(List.of(first, second), "threads/2/"))
+                .thenReturn(List.of("bucket/new-1.png", "bucket/new-2.png"));
+        doAnswer(invocation -> {
+            invocation.<Threadd>getArgument(0).setThreadId(321);
+            return 1;
+        }).when(threaddMapper).insert(any(Threadd.class));
+
+        assertNull(service.insertThread(dto, 8));
+
+        ArgumentCaptor<Threadd> captor = ArgumentCaptor.forClass(Threadd.class);
+        verify(threaddMapper).insert(captor.capture());
+        assertEquals(List.of("bucket/old.png", "bucket/new-1.png", "bucket/new-2.png"), captor.getValue().getImagesUrls());
+        verify(imageAssetService).syncContentRefs("THREAD", 321,
+                List.of("bucket/old.png", "bucket/new-1.png", "bucket/new-2.png"), 8);
+    }
+
+    @Test
+    void shouldMergeRetainedAndUploadedThreadImagesBeforeCreatingEditSnapshot() {
+        ThreaddServiceImpl service = createService();
+        Threadd thread = createThread();
+        when(threaddMapper.selectById(101)).thenReturn(thread);
+        when(threaddMapper.updateById(any(Threadd.class))).thenReturn(1);
+        ThreadDTO dto = new ThreadDTO();
+        dto.setTitle("updated");
+        dto.setTopicId(1);
+        dto.setContent("{\"type\":\"doc\",\"content\":[]}");
+        dto.setImageUrls(List.of("bucket/old.png"));
+        Base64Upload upload = new Base64Upload("data:image/png;base64,new", "new.png");
+        dto.setImages(List.of(upload));
+        when(imageStorageService.storeImageBase64Images(List.of(upload), "threads/1/"))
+                .thenReturn(List.of("bucket/new.png"));
+
+        assertNull(service.editThread(101, dto, 11));
+
+        InOrder inOrder = org.mockito.Mockito.inOrder(imageStorageService, threadEditHistoryMapper, threaddMapper);
+        inOrder.verify(imageStorageService).storeImageBase64Images(List.of(upload), "threads/1/");
+        inOrder.verify(threadEditHistoryMapper).insert(any(ThreadEditHistory.class));
+        inOrder.verify(threaddMapper).updateById(any(Threadd.class));
+        verify(imageAssetService).syncContentRefs("THREAD", 101, List.of("bucket/old.png", "bucket/new.png"), 11);
+    }
+
+    @Test
+    void shouldRejectThreadWhenRetainedAndNewImagesExceedLimitBeforeUpload() {
+        ThreaddServiceImpl service = createService();
+        ThreadDTO dto = new ThreadDTO();
+        dto.setTitle("hello");
+        dto.setTopicId(2);
+        dto.setContent("{\"type\":\"doc\",\"content\":[]}");
+        dto.setImageUrls(expectedImageUrls(7));
+        dto.setImages(List.of(new Base64Upload("data:image/png;base64,extra", "extra.png")));
+
+        assertEquals("帖子最多只能包含7张图片", service.insertThread(dto, 8));
+
+        verifyNoInteractions(imageStorageService);
+        verify(threaddMapper, never()).insert(any(Threadd.class));
+    }
+
+    // 测试编辑帖子时保留图片与新图片合计超过 7 张且无副作用
+    @Test
+    void shouldRejectEditThreadWhenRetainedAndNewImagesExceedLimitBeforeSideEffects() {
         ThreaddServiceImpl service = createService();
         when(threaddMapper.selectById(101)).thenReturn(createThread());
 
@@ -647,14 +722,15 @@ class ThreaddServiceImplTest {
         dto.setTitle("new-title");
         dto.setTopicId(1);
         dto.setContent("{\"type\":\"doc\",\"content\":[]}");
-        dto.setImageUrls(expectedImageUrls(8));
+        dto.setImageUrls(expectedImageUrls(7));
+        dto.setImages(List.of(new Base64Upload("data:image/png;base64,extra", "extra.png")));
 
         String result = service.editThread(101, dto, 11);
 
         assertEquals("帖子最多只能包含7张图片", result);
         verifyNoInteractions(threadEditHistoryMapper);
         verify(threaddMapper, never()).updateById(any(Threadd.class));
-        verifyNoInteractions(imageAssetService, mentionMessageService, cacheInvalidationService, esIndexSyncProducer);
+        verifyNoInteractions(imageStorageService, imageAssetService, mentionMessageService, cacheInvalidationService, esIndexSyncProducer);
     }
 
     // 测试编辑帖子时不传标签则清除原标签
@@ -856,6 +932,7 @@ class ThreaddServiceImplTest {
                 followMessageService,
                 forumRealtimeService,
                 imageAssetService,
+                imageStorageService,
                 authorizationService,
                 userRelationService,
                 threadEditHistoryMapper,

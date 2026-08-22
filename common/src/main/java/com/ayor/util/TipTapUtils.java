@@ -14,14 +14,14 @@ import java.util.Objects;
 public class TipTapUtils {
 
     /**
-     * 校验 TipTap 文档不包含图片节点。图片必须通过独立的 imageUrls 字段提交。
+     * 校验 TipTap 文档不包含图片节点。图片必须通过独立的 images 字段提交。
      *
      * @param content TipTap doc JSON 字符串
      * @throws IllegalArgumentException 当文档中存在图片节点时抛出
      */
     public void assertNoImageNodes(String content) {
         if (containsImageNode(parseDoc(content))) {
-            throw new IllegalArgumentException("TipTap 内容不支持图片节点，请使用 imageUrls");
+            throw new IllegalArgumentException("TipTap 内容不支持图片节点，请使用 images");
         }
     }
 

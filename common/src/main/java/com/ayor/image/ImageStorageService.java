@@ -5,6 +5,8 @@ import com.ayor.minio.MinioService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -44,6 +46,24 @@ public class ImageStorageService {
         String objectName = buildObjectName(path, processedImage.getOutputExt());
         String url = minioService.uploadObject(processedImage.getBytes(), objectName, processedImage.getMimeType());
         return new StoredImage(processedImage, objectName, url);
+    }
+
+    /**
+     * 按请求顺序以正文图片模式批量上传 Base64 图片，并返回最终 URL。
+     *
+     * @param uploads Base64 图片输入；为 null 时视为空列表
+     * @param path 对象前缀
+     * @return 与输入顺序一致的已上传图片 URL
+     */
+    public List<String> storeImageBase64Images(List<Base64Upload> uploads, String path) {
+        List<String> imageUrls = new ArrayList<>();
+        if (uploads == null) {
+            return imageUrls;
+        }
+        for (Base64Upload upload : uploads) {
+            imageUrls.add(storeImageBase64Image(upload, path).getUrl());
+        }
+        return imageUrls;
     }
 
     private String buildObjectName(String path, String extension) {

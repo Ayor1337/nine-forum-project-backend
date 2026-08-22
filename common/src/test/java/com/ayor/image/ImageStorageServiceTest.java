@@ -61,6 +61,21 @@ class ImageStorageServiceTest {
         assertThat(result.getBytes()).containsExactly(1, 2, 3);
     }
 
+    @Test
+    void storeImagesReturnsUrlsInInputOrder() {
+        ImageStorageService service = new ImageStorageService(imageProcessor, minioService);
+        Base64Upload first = new Base64Upload("data:image/png;base64,first", "first.png");
+        Base64Upload second = new Base64Upload("data:image/png;base64,second", "second.png");
+        ProcessedImage processedImage = processedImage("png");
+        when(imageProcessor.processImage(first)).thenReturn(processedImage);
+        when(imageProcessor.processImage(second)).thenReturn(processedImage);
+        when(minioService.uploadObject(eq(processedImage.getBytes()), org.mockito.ArgumentMatchers.anyString(), eq("image/webp")))
+                .thenReturn("bucket/content/first.png", "bucket/content/second.png");
+
+        assertThat(service.storeImageBase64Images(java.util.List.of(first, second), "content"))
+                .containsExactly("bucket/content/first.png", "bucket/content/second.png");
+    }
+
     private ProcessedImage processedImage(String outputExt) {
         return new ProcessedImage(new byte[]{1, 2, 3}, "png", outputExt, "image/webp", 3, 10, 20, "hash");
     }

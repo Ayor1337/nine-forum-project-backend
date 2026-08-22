@@ -1,6 +1,7 @@
 package com.ayor.service.impl;
 
 import com.ayor.aspect.unread.MessageUnreadNotif;
+import com.ayor.entity.Base64Upload;
 import com.ayor.entity.PageEntity;
 import com.ayor.entity.document.ThreadDoc;
 import com.ayor.entity.dto.PostEditDTO;
@@ -27,6 +28,7 @@ import com.ayor.service.UserRelationService;
 import com.ayor.type.UnreadMessageType;
 import com.ayor.util.STOMPUtils;
 import com.ayor.util.TipTapUtils;
+import com.ayor.image.ImageStorageService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -69,6 +71,8 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
     private final ForumRealtimeService forumRealtimeService;
 
     private final ImageAssetService imageAssetService;
+
+    private final ImageStorageService imageStorageService;
 
     private final AuthorizationService authorizationService;
 
@@ -212,7 +216,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         Integer topicId = threaddMapper.getTopicIdByThreadId(postDTO.getThreadId());
         post.setAccountId(userId)   ;
         post.setContent(postDTO.getContent());
-        post.setImagesUrls(normalizeImageUrls(postDTO.getImageUrls()));
+        post.setImagesUrls(mergeImageUrls(postDTO.getImageUrls(), postDTO.getImages(), postImagePath(postDTO.getThreadId())));
         post.setCreateTime(new Date());
         post.setTopicId(topicId);
         if (this.save(post)) {
@@ -260,6 +264,20 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         return imageUrls == null ? new ArrayList<>() : new ArrayList<>(imageUrls);
     }
 
+    private List<Base64Upload> normalizeImages(List<Base64Upload> images) {
+        return images == null ? new ArrayList<>() : new ArrayList<>(images);
+    }
+
+    private List<String> mergeImageUrls(List<String> imageUrls, List<Base64Upload> images, String path) {
+        List<String> mergedImageUrls = normalizeImageUrls(imageUrls);
+        mergedImageUrls.addAll(imageStorageService.storeImageBase64Images(normalizeImages(images), path));
+        return mergedImageUrls;
+    }
+
+    private String postImagePath(Integer threadId) {
+        return "posts/" + threadId + "/";
+    }
+
     private boolean shouldPushReplyNotification(Integer threadAuthorId, Integer senderId, Integer threadId) {
         if (threadAuthorId == null || threadAuthorId.equals(senderId)) {
             return false;
@@ -290,6 +308,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
             return contentError;
         }
         String newContent = postEditDTO.getContent();
+        List<String> imageUrls = mergeImageUrls(postEditDTO.getImageUrls(), postEditDTO.getImages(), postImagePath(post.getThreadId()));
 
         PostEditHistory snapshot = new PostEditHistory();
         snapshot.setPostId(postId);
@@ -299,7 +318,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         postEditHistoryMapper.insert(snapshot);
 
         post.setContent(newContent);
-        post.setImagesUrls(normalizeImageUrls(postEditDTO.getImageUrls()));
+        post.setImagesUrls(imageUrls);
         post.setUpdateTime(new Date());
         if (!this.updateById(post)) {
             return "编辑失败";

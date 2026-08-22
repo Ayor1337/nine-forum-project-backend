@@ -1,6 +1,7 @@
 package com.ayor.service.impl;
 
 import com.ayor.entity.PageEntity;
+import com.ayor.entity.Base64Upload;
 import com.ayor.entity.document.ThreadDoc;
 import com.ayor.entity.dto.ThreadDTO;
 import com.ayor.entity.pojo.Announcement;
@@ -29,6 +30,7 @@ import com.ayor.type.ThreadOrderType;
 import com.ayor.type.ThreadRankingMetric;
 import com.ayor.type.ThreadRankingPeriod;
 import com.ayor.util.TipTapUtils;
+import com.ayor.image.ImageStorageService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -78,6 +80,8 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
     private final ForumRealtimeService forumRealtimeService;
 
     private final ImageAssetService imageAssetService;
+
+    private final ImageStorageService imageStorageService;
 
     private final AuthorizationService authorizationService;
 
@@ -476,7 +480,7 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
         if (contentError != null) {
             return contentError;
         }
-        String imageUrlsError = validateThreadImageUrls(threadDTO.getImageUrls());
+        String imageUrlsError = validateThreadImageUrls(threadDTO.getImageUrls(), threadDTO.getImages());
         if (imageUrlsError != null) {
             return imageUrlsError;
         }
@@ -487,7 +491,7 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
         Threadd threadd = new Threadd();
         BeanUtils.copyProperties(threadDTO, threadd);
         threadd.setContent(threadDTO.getContent());
-        threadd.setImagesUrls(normalizeImageUrls(threadDTO.getImageUrls()));
+        threadd.setImagesUrls(mergeImageUrls(threadDTO.getImageUrls(), threadDTO.getImages(), threadImagePath(threadDTO.getTopicId())));
         threadd.setAccountId(accountId);
         threadd.setCreateTime(new Date());
 
@@ -521,7 +525,7 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
         if (contentError != null) {
             return contentError;
         }
-        String imageUrlsError = validateThreadImageUrls(threadDTO.getImageUrls());
+        String imageUrlsError = validateThreadImageUrls(threadDTO.getImageUrls(), threadDTO.getImages());
         if (imageUrlsError != null) {
             return imageUrlsError;
         }
@@ -532,6 +536,7 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
         Integer oldTagId = threadd.getTagId();
 
         String newContent = threadDTO.getContent();
+        List<String> imageUrls = mergeImageUrls(threadDTO.getImageUrls(), threadDTO.getImages(), threadImagePath(threadd.getTopicId()));
 
         ThreadEditHistory snapshot = new ThreadEditHistory();
         snapshot.setThreadId(threadId);
@@ -543,7 +548,7 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
 
         threadd.setTitle(threadDTO.getTitle());
         threadd.setContent(newContent);
-        threadd.setImagesUrls(normalizeImageUrls(threadDTO.getImageUrls()));
+        threadd.setImagesUrls(imageUrls);
         threadd.setUpdateTime(new Date());
         threadd.setTagId(threadDTO.getTagId());
         if (!this.updateById(threadd)) {
@@ -573,14 +578,28 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
         }
     }
 
-    private String validateThreadImageUrls(List<String> imageUrls) {
-        return imageUrls != null && imageUrls.size() > MAX_THREAD_IMAGE_COUNT
+    private String validateThreadImageUrls(List<String> imageUrls, List<Base64Upload> images) {
+        return normalizeImageUrls(imageUrls).size() + normalizeImages(images).size() > MAX_THREAD_IMAGE_COUNT
                 ? THREAD_IMAGE_LIMIT_ERROR
                 : null;
     }
 
     private List<String> normalizeImageUrls(List<String> imageUrls) {
         return imageUrls == null ? new ArrayList<>() : new ArrayList<>(imageUrls);
+    }
+
+    private List<Base64Upload> normalizeImages(List<Base64Upload> images) {
+        return images == null ? new ArrayList<>() : new ArrayList<>(images);
+    }
+
+    private List<String> mergeImageUrls(List<String> imageUrls, List<Base64Upload> images, String path) {
+        List<String> mergedImageUrls = normalizeImageUrls(imageUrls);
+        mergedImageUrls.addAll(imageStorageService.storeImageBase64Images(normalizeImages(images), path));
+        return mergedImageUrls;
+    }
+
+    private String threadImagePath(Integer topicId) {
+        return "threads/" + topicId + "/";
     }
 
     /**
