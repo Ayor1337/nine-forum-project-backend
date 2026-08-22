@@ -1,0 +1,4 @@
+{"_example": "Fill with {\"file\": \"<path>\", \"reason\": \"<why>\"}. Put spec/research files only — no code paths. Run `python .trellis/scripts/get_context.py --mode packages` to list available specs. Delete this line once real entries are added."}
+{"file": ".trellis/spec/backend/database-guidelines.md", "reason": "数据库 schema、增量 SQL、共享 POJO 与 MyBatis 映射约束"}
+{"file": ".trellis/spec/backend/thread-content-images.md", "reason": "现有正文图片限制与列表投影合同，迁移到独立图片字段时需保持的业务边界"}
+{"file": ".trellis/spec/backend/quality-guidelines.md", "reason": "Controller、Service、DTO/VO 与测试约定"}
