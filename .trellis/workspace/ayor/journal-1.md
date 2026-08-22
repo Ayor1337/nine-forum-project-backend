@@ -157,3 +157,24 @@
 ### Next Steps
 
 - 部署并重启后端后验证详情与评论接口
+
+
+## Session 7: 主题与评论图片上传接口
+
+**Date**: 2026-08-22
+**Task**: 主题与评论图片上传接口
+**Branch**: `develope`
+
+### Summary
+
+为主题与评论写入接口增加 images Base64 上传数组，保留 imageUrls 作为旧图清单；上传后持久化最终 URL 并同步图片引用，补充规格与全仓测试。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `272ccd4` | (see git log) |
+
+### Status
+
+[OK] **Completed**
