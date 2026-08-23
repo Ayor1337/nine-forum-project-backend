@@ -103,6 +103,67 @@ class ImageAssetServiceImplTest {
         assertTrue(result.getData().get(0).getAvailable());
     }
 
+    // 测试公开表情包可被非上传者加入资源库
+    @Test
+    void shouldAddActiveStickerUploadedByAnotherUser() {
+        ImageAssetServiceImpl service = createService();
+        ImageAsset asset = createStickerAsset(22, 3);
+
+        when(imageAssetMapper.selectById(22)).thenReturn(asset);
+        when(imageAssetFavoriteMapper.findMembership(8, 22)).thenReturn(null);
+
+        assertNull(service.addSticker(8, 22));
+        boolean insertedMembership = mockingDetails(imageAssetFavoriteMapper).getInvocations().stream()
+                .filter(invocation -> "insert".equals(invocation.getMethod().getName()))
+                .map(invocation -> invocation.getArgument(0))
+                .filter(ImageAssetFavorite.class::isInstance)
+                .map(ImageAssetFavorite.class::cast)
+                .anyMatch(relation -> relation.getAccountId().equals(8) && relation.getAssetId().equals(22));
+        assertTrue(insertedMembership);
+    }
+
+    // 测试已下架表情包不返回详情
+    @Test
+    void shouldNotExposeDisabledStickerDetail() {
+        ImageAssetServiceImpl service = createService();
+        ImageAsset asset = createStickerAsset(22, 3);
+        asset.setStatus(ImageAssetStatus.DISABLED.name());
+
+        when(imageAssetMapper.selectById(22)).thenReturn(asset);
+
+        assertNull(service.getDetail(8, 22));
+        verify(imageAssetFavoriteMapper, never()).findMembership(8, 22);
+    }
+
+    // 测试已下架表情包不能加入资源库
+    @Test
+    void shouldNotAddDisabledSticker() {
+        ImageAssetServiceImpl service = createService();
+        ImageAsset asset = createStickerAsset(22, 3);
+        asset.setStatus(ImageAssetStatus.DISABLED.name());
+
+        when(imageAssetMapper.selectById(22)).thenReturn(asset);
+
+        assertEquals("资源不可用", service.addSticker(8, 22));
+        verify(imageAssetFavoriteMapper, never()).insert(any(ImageAssetFavorite.class));
+    }
+
+    // 测试已下架表情包不能按地址添加
+    @Test
+    void shouldNotAddDisabledStickerByUrl() {
+        ImageAssetServiceImpl service = createService();
+        String imageUrl = "https://cdn.example.com/stickers/3/cat.webp";
+        ImageAsset asset = createStickerAsset(22, 3);
+        asset.setStatus(ImageAssetStatus.DISABLED.name());
+
+        when(minioService.normalizeUrl(imageUrl)).thenReturn(imageUrl);
+        when(imageAssetMapper.findByUrl(imageUrl)).thenReturn(asset);
+
+        assertEquals("资源不可用", service.addStickerByUrl(8, imageUrl));
+        verify(minioService, never()).getObjectBytes(imageUrl);
+        verify(imageAssetFavoriteMapper, never()).insert(any(ImageAssetFavorite.class));
+    }
+
     // 测试移除贴纸从当前用户资源库不带删除资源
     @Test
     void shouldRemoveStickerFromCurrentUsersLibraryWithoutDeletingResource() {
@@ -151,6 +212,7 @@ class ImageAssetServiceImplTest {
         ImageAssetServiceImpl service = createService();
         ImageAsset asset = new ImageAsset();
         asset.setAssetId(31);
+        asset.setStatus(ImageAssetStatus.ACTIVE.name());
         String imageUrl = "https://cdn.example.com/threads/1/image.webp";
 
         when(contentImageRefMapper.selectAssetIdsByContent("THREAD", 10)).thenReturn(List.of());
@@ -162,6 +224,25 @@ class ImageAssetServiceImplTest {
         verify(contentImageRefMapper).deleteByContent("THREAD", 10);
         verify(contentImageRefMapper).insertIgnore(any(com.ayor.entity.pojo.ContentImageRef.class));
         verify(imageAssetMapper).refreshUseCount(31);
+    }
+
+    // 测试已下架图片不能被内容引用
+    @Test
+    void shouldNotReferenceDisabledContentImage() {
+        ImageAssetServiceImpl service = createService();
+        String imageUrl = "https://cdn.example.com/threads/1/disabled.webp";
+        ImageAsset asset = new ImageAsset();
+        asset.setAssetId(32);
+        asset.setStatus(ImageAssetStatus.DISABLED.name());
+
+        when(contentImageRefMapper.selectAssetIdsByContent("THREAD", 10)).thenReturn(List.of());
+        when(minioService.normalizeUrl(imageUrl)).thenReturn(imageUrl);
+        when(imageAssetMapper.findByUrl(imageUrl)).thenReturn(asset);
+
+        service.syncContentRefs("THREAD", 10, List.of(imageUrl), 7);
+
+        verify(contentImageRefMapper, never()).insertIgnore(any(com.ayor.entity.pojo.ContentImageRef.class));
+        verify(minioService, never()).getObjectBytes(imageUrl);
     }
 
     private ImageAssetServiceImpl createService() {

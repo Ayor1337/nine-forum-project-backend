@@ -198,7 +198,6 @@ CREATE TABLE IF NOT EXISTS `image_asset` (
     `sha256` char(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
     `source_type` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
     `asset_type` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '资源语义类型: STICKER/IMAGE',
-    `visibility` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
     `status` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
     `favorite_count` int NOT NULL DEFAULT 0 COMMENT '已添加该表情包的用户数',
     `use_count` int NOT NULL DEFAULT 0,

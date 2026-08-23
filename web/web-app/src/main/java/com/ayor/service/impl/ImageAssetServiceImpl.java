@@ -18,7 +18,6 @@ import com.ayor.service.ImageAssetService;
 import com.ayor.type.ImageAssetSourceType;
 import com.ayor.type.ImageAssetStatus;
 import com.ayor.type.ImageAssetType;
-import com.ayor.type.ImageAssetVisibility;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
@@ -60,7 +59,7 @@ public class ImageAssetServiceImpl extends ServiceImpl<ImageAssetMapper, ImageAs
             throw new IllegalArgumentException("用户不存在");
         }
         StoredImage storedImage = imageStorageService.storeStickerBase64Image(upload, "stickers/" + accountId + "/");
-        ImageAsset asset = buildAsset(accountId, storedImage, ImageAssetSourceType.UPLOAD.name(), ImageAssetType.STICKER.name(), ImageAssetVisibility.PRIVATE.name());
+        ImageAsset asset = buildAsset(accountId, storedImage, ImageAssetSourceType.UPLOAD.name(), ImageAssetType.STICKER.name());
         this.save(asset);
         imageAssetFavoriteMapper.insert(new ImageAssetFavorite(null, accountId, asset.getAssetId(), new Date()));
         refreshAddedCount(asset.getAssetId());
@@ -92,7 +91,7 @@ public class ImageAssetServiceImpl extends ServiceImpl<ImageAssetMapper, ImageAs
         if (!ImageAssetType.STICKER.name().equals(asset.getAssetType())) {
             return "该资源不是表情包";
         }
-        if (!ImageAssetStatus.ACTIVE.name().equals(asset.getStatus())) {
+        if (!isAvailable(asset)) {
             return "资源不可用";
         }
         if (imageAssetFavoriteMapper.findMembership(accountId, assetId) != null) {
@@ -144,7 +143,7 @@ public class ImageAssetServiceImpl extends ServiceImpl<ImageAssetMapper, ImageAs
         if (asset == null) {
             return null;
         }
-        if (!ImageAssetType.STICKER.name().equals(asset.getAssetType())) {
+        if (!ImageAssetType.STICKER.name().equals(asset.getAssetType()) || !isAvailable(asset)) {
             return null;
         }
         boolean added = accountId != null
@@ -187,12 +186,12 @@ public class ImageAssetServiceImpl extends ServiceImpl<ImageAssetMapper, ImageAs
         }
         ImageAsset existing = this.baseMapper.findByUrl(normalizedUrl);
         if (existing != null) {
-            return existing;
+            return isAvailable(existing) ? existing : null;
         }
 
         byte[] bytes = minioService.getObjectBytes(normalizedUrl);
         ProcessedImage image = imageProcessor.inspectStoredImage(bytes, normalizedUrl);
-        ImageAsset asset = buildAsset(accountId, image, ImageAssetSourceType.CONTENT.name(), ImageAssetType.IMAGE.name(), ImageAssetVisibility.PUBLIC.name());
+        ImageAsset asset = buildAsset(accountId, image, ImageAssetSourceType.CONTENT.name(), ImageAssetType.IMAGE.name());
         asset.setUrl(normalizedUrl);
         asset.setObjectPath(minioService.extractObjectName(normalizedUrl));
         this.save(asset);
@@ -205,8 +204,13 @@ public class ImageAssetServiceImpl extends ServiceImpl<ImageAssetMapper, ImageAs
             return null;
         }
         ImageAsset existing = this.baseMapper.findByUrl(normalizedUrl);
-        if (existing != null && ImageAssetType.STICKER.name().equals(existing.getAssetType())) {
-            return existing;
+        if (existing != null) {
+            if (!isAvailable(existing)) {
+                throw new IllegalArgumentException("资源不可用");
+            }
+            if (ImageAssetType.STICKER.name().equals(existing.getAssetType())) {
+                return existing;
+            }
         }
 
         byte[] bytes = minioService.getObjectBytes(normalizedUrl);
@@ -220,7 +224,7 @@ public class ImageAssetServiceImpl extends ServiceImpl<ImageAssetMapper, ImageAs
                 new Base64Upload(dataUrl, "sticker." + sourceImage.getOriginalExt()),
                 "stickers/" + accountId + "/"
         );
-        ImageAsset asset = buildAsset(accountId, stickerImage, ImageAssetSourceType.CONTENT.name(), ImageAssetType.STICKER.name(), ImageAssetVisibility.PRIVATE.name());
+        ImageAsset asset = buildAsset(accountId, stickerImage, ImageAssetSourceType.CONTENT.name(), ImageAssetType.STICKER.name());
         this.save(asset);
         return asset;
     }
@@ -228,8 +232,7 @@ public class ImageAssetServiceImpl extends ServiceImpl<ImageAssetMapper, ImageAs
     private ImageAsset buildAsset(Integer accountId,
                                   ProcessedImage image,
                                   String sourceType,
-                                  String assetType,
-                                  String visibility) {
+                                  String assetType) {
         Date now = new Date();
         ImageAsset asset = new ImageAsset();
         asset.setAccountId(accountId);
@@ -242,7 +245,6 @@ public class ImageAssetServiceImpl extends ServiceImpl<ImageAssetMapper, ImageAs
         asset.setSha256(image.getSha256());
         asset.setSourceType(sourceType);
         asset.setAssetType(assetType);
-        asset.setVisibility(visibility);
         asset.setStatus(ImageAssetStatus.ACTIVE.name());
         asset.setFavoriteCount(0);
         asset.setUseCount(0);
@@ -255,12 +257,16 @@ public class ImageAssetServiceImpl extends ServiceImpl<ImageAssetMapper, ImageAs
         return asset;
     }
 
+    private boolean isAvailable(ImageAsset asset) {
+        return ImageAssetStatus.ACTIVE.name().equals(asset.getStatus());
+    }
+
     private StickerVO toVO(ImageAsset asset, boolean added) {
         StickerVO vo = new StickerVO();
         BeanUtils.copyProperties(asset, vo);
         vo.setAddedCount(asset.getFavoriteCount());
         vo.setAdded(added);
-        vo.setAvailable(ImageAssetStatus.ACTIVE.name().equals(asset.getStatus()));
+        vo.setAvailable(isAvailable(asset));
         return vo;
     }
 
