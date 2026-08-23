@@ -21,6 +21,7 @@
 | [数据库](./database-guidelines.md) | MyBatis-Plus、Mapper、SQL、事务与模式变更 |
 | [错误处理](./error-handling.md) | `Result<T>`、业务失败、参数与安全异常的响应方式 |
 | [日志](./logging-guidelines.md) | Lombok SLF4J 的已有日志方式与敏感信息边界 |
+| [本地配置与秘密](./configuration-secrets.md) | 本地 `application.yml`、安全示例、Git 忽略与历史检查契约 |
 | [质量](./quality-guidelines.md) | Maven 验证、单元/契约测试与评审重点 |
 | [用户端 STOMP 安全](./websocket-security.md) | 用户端 WebSocket 握手、CONNECT、订阅与发送目的地授权 |
 | [图片上传资源安全](./image-upload-security.md) | Base64、请求体、ImageIO 元数据、像素/帧数与并发处理边界 |
