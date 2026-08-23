@@ -1,0 +1,7 @@
+{"_example": "Fill with {\"file\": \"<path>\", \"reason\": \"<why>\"}. Put spec/research files only — no code paths. Run `python .trellis/scripts/get_context.py --mode packages` to list available specs. Delete this line once real entries are added."}
+{"file": ".trellis/spec/backend/index.md", "reason": "最终全范围规范检查入口"}
+{"file": ".trellis/spec/backend/quality-guidelines.md", "reason": "跨模块测试与审查要求"}
+{"file": ".trellis/spec/backend/error-handling.md", "reason": "验证安全拒绝不会落为 500 且保持 Result 契约"}
+{"file": ".trellis/spec/backend/thread-content-images.md", "reason": "验证主题评论图片上传兼容性"}
+{"file": ".trellis/tasks/08-23-image-decompression-bomb/research/image-security-boundaries.md", "reason": "核对官方 API 依据和确认的安全边界"}
+{"file": ".trellis/spec/backend/image-upload-security.md", "reason": "最终审查图片上传安全边界和必需测试"}
