@@ -16,9 +16,9 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import java.security.Principal;
-import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -33,21 +33,18 @@ public class StompAuthInterceptor implements ChannelInterceptor {
     @Resource
     private AuthorizationService authorizationService;
 
-    /**
-     * Map.of 方法。
-     */
+    private static final Pattern CONVERSATION_SUBSCRIPTION_DESTINATION =
+            Pattern.compile("^/user/transfer/conversation/(\\d+)(?:/typing)?$");
 
-    private static final Map<String, List<String>> ENDPOINT_DEST_WHITELIST = Map.of(
-            "/chatboard", List.of("/broadcast"),
-            "/chat", List.of("/transfer", "/notif", "/app/conversations"),
-            "/system", List.of("/notif", "/verify"),
-            "/forum", List.of("/broadcast")
-    );
+    private static final Pattern TYPING_SEND_DESTINATION =
+            Pattern.compile("^/app/conversations/(\\d+)/typing$");
 
-    private static final Pattern CONVERSATION_DESTINATION =
-            Pattern.compile("^/user(?:/[^/]+)?/transfer/conversation/(\\d+)(?:/typing)?$"
-                    + "|^/transfer/conversation/(\\d+)(?:/typing)?$"
-                    + "|^/app/conversations/(\\d+)/typing$");
+    private static final Pattern VERIFY_DESTINATION = Pattern.compile("^/verify/[^/]+$");
+
+    private static final String CHATBOARD_ENDPOINT = "/chatboard";
+    private static final String CHAT_ENDPOINT = "/chat";
+    private static final String SYSTEM_ENDPOINT = "/system";
+    private static final String FORUM_ENDPOINT = "/forum";
 
     /**
      * 在 STOMP 连接、订阅和发送阶段执行鉴权。
@@ -66,18 +63,21 @@ public class StompAuthInterceptor implements ChannelInterceptor {
         switch (acc.getCommand()) {
             case CONNECT -> {
                 String authorization = acc.getFirstNativeHeader("Authorization"); // 来自 STOMP connectHeaders
-                DecodedJWT jwt = jwtUtil.resolveJwt(authorization);
-
-                if (jwt != null) {
-                    UserDetails user = jwtUtil.toUser(jwt);
-                    UsernamePasswordAuthenticationToken authentication =
-                            new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
-                    acc.setUser(authentication);
-                    if (acc.getSessionAttributes() != null) {
-                        acc.getSessionAttributes().put("accountId", user.getUsername());
-                    }
-                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                if (!StringUtils.hasText(authorization)) {
+                    return message;
                 }
+                DecodedJWT jwt = jwtUtil.resolveJwt(authorization);
+                if (jwt == null) {
+                    throw new AccessDeniedException("无效的连接令牌");
+                }
+                UserDetails user = jwtUtil.toUser(jwt);
+                UsernamePasswordAuthenticationToken authentication =
+                        new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
+                acc.setUser(authentication);
+                if (acc.getSessionAttributes() != null) {
+                    acc.getSessionAttributes().put("accountId", user.getUsername());
+                }
+                SecurityContextHolder.getContext().setAuthentication(authentication);
             }
             case SUBSCRIBE -> {
                 Principal principal = acc.getUser();
@@ -109,32 +109,36 @@ public class StompAuthInterceptor implements ChannelInterceptor {
      * @return 允许订阅返回 true
      */
     private boolean canSubscribe(Principal p, String destination, StompHeaderAccessor accessor) {
-        if (destination == null) {
+        String endpointPath = endpointPath(accessor);
+        if (destination == null || endpointPath == null) {
             return false;
         }
-        if (!matchEndpointDestination(accessor, destination)) {
-            return false;
+        if (CHATBOARD_ENDPOINT.equals(endpointPath)) {
+            return isDestinationUnder(destination, "/broadcast");
         }
-        if (destination.contains("/verify")) {
-            return true;
+        if (FORUM_ENDPOINT.equals(endpointPath)) {
+            return isDestinationUnder(destination, "/broadcast");
         }
-        if (destination.contains("/broadcast")) {
-            return true;
+        if (SYSTEM_ENDPOINT.equals(endpointPath)) {
+            return VERIFY_DESTINATION.matcher(destination).matches()
+                    || (isAuthenticated(p) && isUserDestinationUnder(destination, "/notif"));
         }
-        if (destination.contains("/transfer")) {
-            Integer userId = resolveUserId(p);
-            if (userId == null) {
-                return false;
+        if (CHAT_ENDPOINT.equals(endpointPath)) {
+            if (isUserDestinationUnder(destination, "/notif")) {
+                return isAuthenticated(p);
             }
-            Integer conversationId = resolveConversationId(destination);
-            if (conversationId == null) {
-                return false;
+            if (isUserDestinationUnder(destination, "/transfer")) {
+                Integer userId = resolveUserId(p);
+                if (userId == null) {
+                    return false;
+                }
+                Integer conversationId = resolveConversationId(destination, CONVERSATION_SUBSCRIPTION_DESTINATION);
+                if (conversationId == null) {
+                    return false;
+                }
+                authorizationService.assertCanAccessConversation(userId, conversationId);
+                return true;
             }
-            authorizationService.assertCanAccessConversation(userId, conversationId);
-            return true;
-        }
-        if (destination.contains("/notif")) {
-            return p instanceof UsernamePasswordAuthenticationToken;
         }
         return false;
     }
@@ -148,31 +152,14 @@ public class StompAuthInterceptor implements ChannelInterceptor {
      * @return 允许发送返回 true
      */
     private boolean canSend(Principal p, String destination, StompHeaderAccessor accessor) {
-        if (destination == null) {
+        if (!CHAT_ENDPOINT.equals(endpointPath(accessor)) || destination == null) {
             return false;
-        }
-        if (!matchEndpointDestination(accessor, destination)) {
-            return false;
-        }
-        if (!destination.contains("/transfer")) {
-            if (destination.startsWith("/app/conversations/")) {
-                Integer userId = resolveUserId(p);
-                if (userId == null) {
-                    return false;
-                }
-                Integer conversationId = resolveConversationId(destination);
-                if (conversationId == null) {
-                    return false;
-                }
-                authorizationService.assertCanAccessConversation(userId, conversationId);
-            }
-            return true;
         }
         Integer userId = resolveUserId(p);
         if (userId == null) {
             return false;
         }
-        Integer conversationId = resolveConversationId(destination);
+        Integer conversationId = resolveConversationId(destination, TYPING_SEND_DESTINATION);
         if (conversationId == null) {
             return false;
         }
@@ -180,32 +167,31 @@ public class StompAuthInterceptor implements ChannelInterceptor {
         return true;
     }
 
-    /**
-     * 校验目的地是否与当前 WebSocket 端点匹配。
-     *
-     * @param accessor STOMP 头访问器
-     * @param destination 目的地
-     * @return 匹配返回 true
-     */
-    private boolean matchEndpointDestination(StompHeaderAccessor accessor, String destination) {
+    private boolean isAuthenticated(Principal principal) {
+        return resolveUserId(principal) != null;
+    }
+
+    private boolean isDestinationUnder(String destination, String prefix) {
+        return destination.equals(prefix) || destination.startsWith(prefix + "/");
+    }
+
+    private boolean isUserDestinationUnder(String destination, String prefix) {
+        return destination.equals("/user" + prefix) || destination.startsWith("/user" + prefix + "/");
+    }
+
+    private String endpointPath(StompHeaderAccessor accessor) {
         Map<String, Object> attributes = accessor.getSessionAttributes();
         if (attributes == null) {
-            return true;
+            return null;
         }
         Object endpointPath = attributes.get("endpointPath");
-        if (endpointPath == null) {
-            return true;
+        if (!(endpointPath instanceof String path)) {
+            return null;
         }
-        List<String> allowed = ENDPOINT_DEST_WHITELIST.get(endpointPath.toString());
-        if (allowed == null || allowed.isEmpty()) {
-            return true;
-        }
-        for (String prefix : allowed) {
-            if (destination.startsWith(prefix) || destination.startsWith("/user" + prefix)) {
-                return true;
-            }
-        }
-        return false;
+        return switch (path) {
+            case CHATBOARD_ENDPOINT, CHAT_ENDPOINT, SYSTEM_ENDPOINT, FORUM_ENDPOINT -> path;
+            default -> null;
+        };
     }
 
     private Integer resolveUserId(Principal principal) {
@@ -219,17 +205,12 @@ public class StompAuthInterceptor implements ChannelInterceptor {
         return null;
     }
 
-    private Integer resolveConversationId(String destination) {
-        Matcher matcher = CONVERSATION_DESTINATION.matcher(destination);
+    private Integer resolveConversationId(String destination, Pattern destinationPattern) {
+        Matcher matcher = destinationPattern.matcher(destination);
         if (!matcher.matches()) {
             return null;
         }
-        String directMatch = matcher.group(1);
-        String userMatch = matcher.group(2);
-        String typingMatch = matcher.group(3);
-        String value = directMatch != null ? directMatch : userMatch;
-        value = value != null ? value : typingMatch;
-        return value == null ? null : Integer.parseInt(value);
+        return Integer.parseInt(matcher.group(1));
     }
 
 }

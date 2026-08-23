@@ -7,12 +7,9 @@ import org.mockito.ArgumentCaptor;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.StompWebSocketEndpointRegistration;
 
-import java.lang.reflect.Field;
 import java.util.List;
-import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -25,7 +22,9 @@ class WebsocketConfigurationTest {
     void shouldRegisterForumEndpoint() {
         StompAuthInterceptor authInterceptor = mock(StompAuthInterceptor.class);
         WebsocketHandshakeInterceptor handshakeInterceptor = mock(WebsocketHandshakeInterceptor.class);
-        WebsocketConfiguration configuration = new WebsocketConfiguration(authInterceptor, handshakeInterceptor);
+        CorsProperties corsProperties = new CorsProperties();
+        corsProperties.setAllowedOrigins(List.of("http://localhost:3000"));
+        WebsocketConfiguration configuration = new WebsocketConfiguration(authInterceptor, handshakeInterceptor, corsProperties);
         StompEndpointRegistry registry = mock(StompEndpointRegistry.class);
         StompWebSocketEndpointRegistration registration = mock(StompWebSocketEndpointRegistration.class);
         when(registry.addEndpoint(any(String[].class))).thenReturn(registration);
@@ -37,18 +36,6 @@ class WebsocketConfigurationTest {
         ArgumentCaptor<String[]> captor = ArgumentCaptor.forClass(String[].class);
         verify(registry).addEndpoint(captor.capture());
         assertArrayEquals(new String[]{"/chatboard", "/chat", "/system", "/forum"}, captor.getValue());
-    }
-
-    // 测试论坛端点只允许广播目的地
-    @Test
-    @SuppressWarnings("unchecked")
-    void shouldAllowOnlyBroadcastDestinationForForumEndpoint() throws Exception {
-        Field field = StompAuthInterceptor.class.getDeclaredField("ENDPOINT_DEST_WHITELIST");
-        field.setAccessible(true);
-
-        Map<String, List<String>> whitelist = (Map<String, List<String>>) field.get(null);
-
-        assertEquals(List.of("/broadcast"), whitelist.get("/forum"));
-        assertEquals(List.of("/transfer", "/notif", "/app/conversations"), whitelist.get("/chat"));
+        verify(registration).setAllowedOrigins("http://localhost:3000");
     }
 }
