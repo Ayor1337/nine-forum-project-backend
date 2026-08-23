@@ -1,0 +1,73 @@
+spring:
+  application:
+    name: nine-forum-project
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: ${DB_USERNAME:}
+    password: ${DB_PASSWORD:}
+    url: jdbc:mysql://localhost:16033/nine_forum
+  data:
+    redis:
+      port: 16379
+      database: 0
+  security:
+    jwt:
+      secret-key: ${JWT_SECRET_KEY:}
+      expire: 7
+    webauthn:
+      rp-id: localhost
+      rp-name: NineForum
+      allowed-origins:
+        - http://localhost:3000
+        - http://localhost:10071
+        - http://localhost:9966
+      challenge-expire-seconds: 300
+  minio:
+    endpoint: http://localhost:9000
+    access-key: ${MINIO_ACCESS_KEY:}
+    secret-key: ${MINIO_SECRET_KEY:}
+    bucket: nineforum
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: ${RABBITMQ_USERNAME:}
+    password: ${RABBITMQ_PASSWORD:}
+    virtual-host: /nine_forum
+    listener:
+      simple:
+        acknowledge-mode: manual
+  mail:
+    host: smtp.163.com
+    username: ${SMTP_USERNAME:}
+    password: ${SMTP_PASSWORD:}
+  elasticsearch:
+    uris: http://localhost:9200
+
+server:
+  port: 9966
+
+nine-forum:
+  public-base-url: http://localhost:9966
+  cors:
+    allowed-origins:
+      - http://10.111.45.135
+      - http://localhost:3000
+      - http://localhost:10071
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    tags-sorter: alpha
+    operations-sorter: alpha
+
+knife4j:
+  enable: true
+
+#logging:
+#  level:
+#    org.springframework.messaging.simp: debug
+#    org.springframework.messaging.simp.user: trace
+#    org.springframework.web.socket.messaging: debug
+#    org.springframework.messaging.simp.broker: debug
