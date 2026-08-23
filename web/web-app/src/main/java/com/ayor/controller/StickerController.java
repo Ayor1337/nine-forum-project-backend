@@ -34,13 +34,9 @@ public class StickerController {
      */
     @Operation(summary = "上传表情包")
     @PostMapping
-    public Result<String> upload(@RequestBody Base64Upload upload) {
+    public Result<String> upload(@RequestBody @Valid Base64Upload upload) {
         Integer accountId = securityUtils.getSecurityUserId();
-        try {
-            return Result.ok(imageAssetService.upload(accountId, upload));
-        } catch (IllegalArgumentException exception) {
-            return Result.fail(500, exception.getMessage());
-        }
+        return Result.ok(imageAssetService.upload(accountId, upload));
     }
 
     /**

@@ -14,7 +14,6 @@ import com.ayor.mapper.AccountStatMapper;
 import com.ayor.mapper.PermissionMapper;
 import com.ayor.mapper.RoleMapper;
 import com.ayor.mapper.UserItemMapper;
-import com.ayor.minio.MinioService;
 import com.ayor.service.UserProfileService;
 import com.ayor.service.PrivacyPolicyService;
 import com.ayor.service.UserPrivacySettingService;
@@ -52,9 +51,6 @@ class AccountServiceImplTest {
 
     @Mock
     private RoleMapper roleMapper;
-
-    @Mock
-    private MinioService minioService;
 
     @Mock
     private PasswordEncoder passwordEncoder;
@@ -104,7 +100,6 @@ class AccountServiceImplTest {
         assertNull(result);
         assertEquals("nineforum/avatar/test.png", account.getAvatarUrl());
         verify(imageStorageService).storeImageBase64Image(upload, "avatar/");
-        verify(minioService, never()).uploadBase64(upload, "avatar/");
     }
 
     // 测试通过图片存储服务上传横幅
@@ -125,7 +120,6 @@ class AccountServiceImplTest {
         assertNull(result);
         assertEquals("nineforum/banner/test.png", account.getBannerUrl());
         verify(imageStorageService).storeImageBase64Image(upload, "banner/");
-        verify(minioService, never()).uploadBase64(upload, "banner/");
     }
 
     // 测试获取公开用户信息填充关系字段用于查看者

@@ -90,7 +90,7 @@ public class DecorationController {
 
     @PostMapping("/assets")
     @Operation(summary = "上传装扮素材图片")
-    public Result<String> uploadAsset(@RequestBody Base64Upload upload) {
+    public Result<String> uploadAsset(@RequestBody @Valid Base64Upload upload) {
         return Result.dataMessageHandler(() -> decorationService.uploadAsset(upload), "上传素材失败");
     }
 }

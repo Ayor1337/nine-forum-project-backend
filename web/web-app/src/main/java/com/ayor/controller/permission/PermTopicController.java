@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -33,7 +34,7 @@ public class PermTopicController {
     @OperationLog(value = "新增话题", save = true, action = "CREATE_TOPIC", targetType = "topic")
     @Operation(summary = "新增话题")
     @PostMapping
-    public Result<Void> insertTopic(@RequestBody TopicDTO topicDTO) {
+    public Result<Void> insertTopic(@RequestBody @Valid TopicDTO topicDTO) {
         authorizationService.assertCanCreateTopic(securityUtils.getSecurityUserId());
         return Result.messageHandler(() -> topicService.insertTopic(topicDTO));
     }
@@ -42,7 +43,7 @@ public class PermTopicController {
     @Operation(summary = "更新话题")
     @PutMapping("/{topic_id}")
     public Result<Void> updateTopic(@Parameter(description = "话题 ID") @PathVariable(name = "topic_id") Integer topicId,
-                                    @RequestBody TopicDTO topicDTO) {
+                                    @RequestBody @Valid TopicDTO topicDTO) {
         authorizationService.assertCanUpdateTopic(securityUtils.getSecurityUserId(), topicId);
         topicDTO.setTopicId(topicId);
         return Result.messageHandler(() -> topicService.updateTopic(topicDTO));

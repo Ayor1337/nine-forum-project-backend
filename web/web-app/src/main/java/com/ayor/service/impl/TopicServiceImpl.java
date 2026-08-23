@@ -4,6 +4,7 @@ import com.ayor.entity.Base64Upload;
 import com.ayor.entity.dto.TopicDTO;
 import com.ayor.entity.vo.TopicVO;
 import com.ayor.image.ImageStorageService;
+import com.ayor.image.ImageUploadException;
 import com.ayor.entity.pojo.Topic;
 import com.ayor.entity.pojo.TopicStat;
 import com.ayor.mapper.ThreaddMapper;
@@ -94,6 +95,8 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
         Base64Upload cover = topicDTO.getCover();
         try {
             topic.setCoverUrl(imageStorageService.storeImageBase64Image(cover, "topic/").getUrl());
+        } catch (ImageUploadException exception) {
+            throw exception;
         } catch (RuntimeException e) {
             return "图片上传失败";
         }
@@ -128,6 +131,8 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
         if (!topicDTO.getCover().getBase64().startsWith("nineforum")) {
             try {
                 topic.setCoverUrl(imageStorageService.storeImageBase64Image(topicDTO.getCover(), "topic/").getUrl());
+            } catch (ImageUploadException exception) {
+                throw exception;
             } catch (RuntimeException e) {
                 return "图片上传失败";
             }

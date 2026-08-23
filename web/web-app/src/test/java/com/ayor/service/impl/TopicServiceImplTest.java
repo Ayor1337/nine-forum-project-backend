@@ -9,7 +9,6 @@ import com.ayor.service.CacheInvalidationService;
 import com.ayor.mapper.ThreaddMapper;
 import com.ayor.mapper.TopicMapper;
 import com.ayor.mapper.TopicStatMapper;
-import com.ayor.minio.MinioService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -32,9 +31,6 @@ class TopicServiceImplTest {
 
     @Mock
     private ThreaddMapper threaddMapper;
-
-    @Mock
-    private MinioService minioService;
 
     @Mock
     private TopicStatMapper topicStatMapper;
@@ -64,7 +60,6 @@ class TopicServiceImplTest {
 
         assertNull(result);
         verify(imageStorageService).storeImageBase64Image(topicDTO.getCover(), "topic/");
-        verify(minioService, never()).uploadBase64(topicDTO.getCover(), "topic/");
     }
 
     // 测试通过图片存储服务上传更新后的主题封面
@@ -85,7 +80,6 @@ class TopicServiceImplTest {
 
         assertNull(result);
         verify(imageStorageService).storeImageBase64Image(topicDTO.getCover(), "topic/");
-        verify(minioService, never()).uploadBase64(topicDTO.getCover(), "topic/");
     }
 
     // 测试清理新旧版块缓存当主题移动

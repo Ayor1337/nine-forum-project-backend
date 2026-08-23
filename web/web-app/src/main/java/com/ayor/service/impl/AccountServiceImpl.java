@@ -12,6 +12,7 @@ import com.ayor.entity.vo.UserInfoVO;
 import com.ayor.entity.vo.UserItemVO;
 import com.ayor.entity.vo.UserPermissionVO;
 import com.ayor.image.ImageStorageService;
+import com.ayor.image.ImageUploadException;
 import com.ayor.entity.pojo.Account;
 import com.ayor.entity.pojo.UserProfile;
 import com.ayor.mapper.UserProfileMapper;
@@ -273,6 +274,8 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         }
         try {
             account.setAvatarUrl(imageStorageService.storeImageBase64Image(dto, "avatar/").getUrl());
+        } catch (ImageUploadException exception) {
+            throw exception;
         } catch (RuntimeException e) {
             return "资源服务器异常";
         }
@@ -295,6 +298,8 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         }
         try {
             account.setBannerUrl(imageStorageService.storeImageBase64Image(dto, "banner/").getUrl());
+        } catch (ImageUploadException exception) {
+            throw exception;
         } catch (RuntimeException e) {
             return "资源服务器异常";
         }

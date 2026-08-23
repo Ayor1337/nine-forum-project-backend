@@ -1,6 +1,7 @@
 package com.ayor.entity.dto;
 
 import com.ayor.entity.Base64Upload;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -29,6 +30,7 @@ public class UserProfileDTO {
     @Size(max = 255)
     private String website;
 
+    @Valid
     private Base64Upload avatar;
 
 }

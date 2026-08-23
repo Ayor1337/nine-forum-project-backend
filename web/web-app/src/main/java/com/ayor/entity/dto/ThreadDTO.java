@@ -1,6 +1,7 @@
 package com.ayor.entity.dto;
 
 import com.ayor.entity.Base64Upload;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -34,6 +35,6 @@ public class ThreadDTO {
     /**
      * 本次新增上传的 Base64 图片；已有图片通过 imageUrls 保留。
      */
-    private List<Base64Upload> images;
+    private List<@Valid Base64Upload> images;
 
 }

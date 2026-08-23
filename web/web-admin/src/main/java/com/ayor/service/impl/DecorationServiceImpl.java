@@ -6,6 +6,7 @@ import com.ayor.entity.dto.DecorationDTO;
 import com.ayor.entity.pojo.Decoration;
 import com.ayor.entity.vo.DecorationVO;
 import com.ayor.image.ImageStorageService;
+import com.ayor.image.ImageUploadException;
 import com.ayor.image.StoredImage;
 import com.ayor.mapper.DecorationMapper;
 import com.ayor.service.DecorationService;
@@ -187,6 +188,8 @@ public class DecorationServiceImpl extends ServiceImpl<DecorationMapper, Decorat
         try {
             StoredImage storedImage = imageStorageService.storeImageBase64Image(upload, "decoration/");
             return storedImage == null ? null : storedImage.getUrl();
+        } catch (ImageUploadException exception) {
+            throw exception;
         } catch (RuntimeException e) {
             return null;
         }

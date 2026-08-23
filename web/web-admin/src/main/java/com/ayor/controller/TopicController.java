@@ -20,6 +20,7 @@ import java.util.List;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 
 @Tag(name = "话题管理", description = "后台话题管理接口")
 @RestController
@@ -66,7 +67,7 @@ public class TopicController {
      */
     @Operation(summary = "创建话题")
     @PostMapping
-    public Result<Void> createTopic(@Parameter(description = "话题信息") @RequestBody TopicDTO topicDTO) {
+    public Result<Void> createTopic(@Parameter(description = "话题信息") @RequestBody @Valid TopicDTO topicDTO) {
         return Result.messageHandler(() -> topicService.createTopic(topicDTO));
     }
 
@@ -75,7 +76,7 @@ public class TopicController {
      */
     @Operation(summary = "更新指定话题")
     @PutMapping("/{topicId}")
-    public Result<Void> updateTopic(@Parameter(description = "话题ID") @PathVariable("topicId") Integer topicId, @RequestBody TopicDTO topicDTO) {
+    public Result<Void> updateTopic(@Parameter(description = "话题ID") @PathVariable("topicId") Integer topicId, @RequestBody @Valid TopicDTO topicDTO) {
         topicDTO.setTopicId(topicId);
         return Result.messageHandler(() -> topicService.updateTopic(topicDTO));
     }

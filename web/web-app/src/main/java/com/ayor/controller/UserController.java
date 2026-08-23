@@ -137,7 +137,7 @@ public class UserController {
      */
     @Operation(summary = "更新当前用户头像")
     @PutMapping("/me/avatar")
-    public Result<Void> updateAvatar(@RequestBody Base64Upload dto) {
+    public Result<Void> updateAvatar(@RequestBody @Valid Base64Upload dto) {
         Integer userId = security.getSecurityUserId();
         return Result.messageHandler(() -> accountService.updateUserAvatar(userId, dto));
     }
@@ -239,7 +239,7 @@ public class UserController {
      */
     @Operation(summary = "更新当前用户横幅图")
     @PutMapping("/me/banner")
-    public Result<Void> updateBanner(@RequestBody Base64Upload dto) {
+    public Result<Void> updateBanner(@RequestBody @Valid Base64Upload dto) {
         Integer userId = security.getSecurityUserId();
         return Result.messageHandler(() -> accountService.updateUserBanner(userId , dto));
     }

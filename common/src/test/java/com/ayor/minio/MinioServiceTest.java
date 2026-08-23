@@ -1,5 +1,7 @@
 package com.ayor.minio;
 
+import com.ayor.entity.ImageUploadLimits;
+import com.ayor.image.ImageValidationException;
 import io.minio.BucketExistsArgs;
 import io.minio.GetObjectArgs;
 import io.minio.GetObjectResponse;
@@ -17,6 +19,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -136,6 +139,25 @@ class MinioServiceTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessage("读取对象存储图片失败")
                 .hasCauseInstanceOf(RuntimeException.class);
+    }
+
+    @Test
+    void getObjectBytesRejectsObjectBeyondImageByteLimit() throws Exception {
+        InputStream oversized = new InputStream() {
+            private int remaining = ImageUploadLimits.MAX_SOURCE_BYTES + 1;
+
+            @Override
+            public int read() {
+                return remaining-- > 0 ? 0 : -1;
+            }
+        };
+        GetObjectResponse response = new GetObjectResponse(
+                Headers.of(), "forum", null, "content/large.png", oversized);
+        when(minioClient.getObject(any(GetObjectArgs.class))).thenReturn(response);
+
+        assertThatThrownBy(() -> minioService.getObjectBytes("forum/content/large.png"))
+                .isInstanceOf(ImageValidationException.class)
+                .hasMessage("图片体积过大");
     }
 
     // 测试删除文件委托到 MinIO 客户端

@@ -3,11 +3,12 @@ package com.ayor.service.impl;
 import com.ayor.entity.PageEntity;
 import com.ayor.entity.Base64Upload;
 import com.ayor.entity.dto.TopicDTO;
+import com.ayor.image.ImageStorageService;
+import com.ayor.image.ImageUploadException;
 import com.ayor.entity.vo.TopicVO;
 import com.ayor.entity.pojo.Topic;
 import com.ayor.mapper.TopicMapper;
 import com.ayor.mapper.TopicStatMapper;
-import com.ayor.minio.MinioService;
 import com.ayor.service.TopicService;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -32,7 +33,7 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
 
     private final CacheManager cacheManager;
 
-    private final MinioService minioService;
+    private final ImageStorageService imageStorageService;
 
     private final TopicStatMapper topicStatMapper;
 
@@ -211,9 +212,12 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
             return null;
         }
         try {
-            topic.setCoverUrl(minioService.uploadBase64(new Base64Upload(topicDTO.getCoverUrl(), "cover.png"), "topic/"));
+            topic.setCoverUrl(imageStorageService.storeImageBase64Image(
+                    new Base64Upload(topicDTO.getCoverUrl(), "cover"), "topic/").getUrl());
             return null;
-        } catch (Exception e) {
+        } catch (ImageUploadException exception) {
+            throw exception;
+        } catch (RuntimeException exception) {
             return "图片上传失败";
         }
     }

@@ -1,5 +1,6 @@
 package com.ayor.entity.dto;
 
+import com.ayor.entity.ImageUploadLimits;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -22,7 +23,7 @@ public class TopicDTO {
     private String title;
 
     @Schema(description = "coverUrl")
-
+    @jakarta.validation.constraints.Size(max = ImageUploadLimits.MAX_BASE64_TEXT_CHARS, message = "图片体积过大")
     private String coverUrl;
 
     @Schema(description = "描述")
