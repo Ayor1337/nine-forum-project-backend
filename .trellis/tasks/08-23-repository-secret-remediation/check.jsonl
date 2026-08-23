@@ -1,0 +1,4 @@
+{"file":".trellis/spec/backend/index.md","reason":"核对后端模块边界与基础验证要求"}
+{"file":".trellis/spec/backend/quality-guidelines.md","reason":"执行完整测试和配置质量检查"}
+{"file":".trellis/spec/backend/logging-guidelines.md","reason":"检查秘密值没有出现在日志、输出或提交信息"}
+{"file":".trellis/tasks/08-23-repository-secret-remediation/research/repository-history-inventory.md","reason":"复核目标引用完整性与隔离重写约束"}
