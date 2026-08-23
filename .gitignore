@@ -34,7 +34,7 @@ build/
 .vscode/
 
 # Local database snapshots created for non-destructive security testing
-/.trellis/tasks/*/backups/
+/.trellis/tasks/**/backups/
 
 # Local web-app configuration (copy from application.example.yml)
 /web/web-app/src/main/resources/application.yml
