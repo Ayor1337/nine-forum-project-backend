@@ -24,6 +24,7 @@
 | [本地配置与秘密](./configuration-secrets.md) | 本地 `application.yml`、安全示例、Git 忽略与历史检查契约 |
 | [质量](./quality-guidelines.md) | Maven 验证、单元/契约测试与评审重点 |
 | [用户端 STOMP 安全](./websocket-security.md) | 用户端 WebSocket 握手、CONNECT、订阅与发送目的地授权 |
+| [注册验证邮件安全](./registration-verification-security.md) | 公开注册邮件的幂等、Redis 配额、JWT TTL、429 与一次性消费合同 |
 | [图片上传资源安全](./image-upload-security.md) | Base64、请求体、ImageIO 元数据、像素/帧数与并发处理边界 |
 | [公开图片资产与表情包](./image-assets.md) | 图片/Sticker 的公开复用、`ACTIVE`/`DISABLED` 状态契约与 schema 同步 |
 | [每日签到](./daily-check-in.md) | 签到 API、东京业务日期、Credit 发放与数据库唯一约束 |
