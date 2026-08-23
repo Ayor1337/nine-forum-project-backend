@@ -43,7 +43,7 @@
 - 影响：读取敏感数据、分配角色与权限、删除账号/内容、修改私信、触发数据修复或搜索重建，可能导致系统完全失陷或大范围数据破坏。
 - 修复：安全链默认 `authenticated()` 或拒绝；仅精确放行登录和必要健康检查。高影响操作使用明确的管理员权限表达式，并在 Service 边界保留授权断言。增加真实 FilterChain/MockMvc 契约：匿名 401、普通用户 403、具备权限的管理员成功。
 
-### SEC-02：私有 Sticker 水平越权
+### SEC-02：私有 Sticker 水平越权 (已修复)
 
 - 类别：CWE-639、CWE-862；置信度：确定。
 - 证据：`web/web-app/src/main/java/com/ayor/service/impl/ImageAssetServiceImpl.java:61-68` 把用户上传资源设为 `PRIVATE`；`87-106` 的收藏链与 `145-155` 的详情链只校验资源存在、类型和状态，不校验 `visibility` 或所有者；入口分别位于 `web/web-app/src/main/java/com/ayor/controller/StickerController.java:61-64,91-94`。
@@ -125,7 +125,7 @@
 - 影响：可放大数据库查询、VO 转换、JSON 序列化内存和 Redis 缓存基数，造成资源耗尽或拒绝服务。
 - 修复与验证：在入口、Service 和分页插件三层规范化，例如 `page_num >= 1`、`1 <= page_size <= 100`，缓存只使用规范化参数并设置容量/TTL；测试极大值、负值和等价参数不会绕过上限或生成额外键。
 
-### SEC-10：图片解压炸弹
+### SEC-10：图片解压炸弹 (已解决)
 
 - 类别：CWE-409、CWE-400；置信度：高；级别：中危。
 - 证据：`model/src/main/java/com/ayor/entity/Base64Upload.java:8-15` 无文本/请求体大小约束；`common/src/main/java/com/ayor/image/ImageProcessor.java:42-44,67-73,101-106,247-268` 在完整 Base64 解码后才检查 10 MiB，并在检查宽高、总像素或帧数前调用 `ImageReader.read(0)`。
