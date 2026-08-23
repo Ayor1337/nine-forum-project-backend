@@ -242,3 +242,28 @@
 ### Status
 
 [OK] **Completed**
+
+
+## Session 11: 清理仓库历史 SMTP 配置
+
+**Date**: 2026-08-23
+**Task**: 清理仓库历史 SMTP 配置
+**Branch**: `develope`
+
+### Summary
+
+将用户端真实 application.yml 改为本地忽略文件，提供安全示例与配置规范；重写并复验三个远端分支历史，移除真实配置路径；保留本地回滚备份且不纳入 Git。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `42cbf92` | (see git log) |
+| `901cfd2` | (see git log) |
+| `c866737` | (see git log) |
+| `dd7417b` | (see git log) |
+| `2e23ae7` | (see git log) |
+
+### Status
+
+[OK] **Completed**

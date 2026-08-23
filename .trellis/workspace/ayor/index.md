@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 10
+- **Total Sessions**: 11
 - **Last Active**: 2026-08-23
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~244 | Active |
+| `journal-1.md` | ~269 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 11 | 2026-08-23 | 清理仓库历史 SMTP 配置 | `42cbf92`, `901cfd2`, `c866737`, `dd7417b`, `2e23ae7` | `develope` |
 | 10 | 2026-08-23 | 修复用户端 STOMP 消息授权 | `fef935f` | `develope` |
 | 9 | 2026-08-23 | 移除图片资源可见性字段 | `b615707`, `e7d97e8` | `develope` |
 | 8 | 2026-08-23 | 修复图片上传解压炸弹 DOS | `d4b8c0d` | `develope` |
