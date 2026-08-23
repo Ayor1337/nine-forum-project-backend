@@ -22,9 +22,9 @@ public interface AuthorizeService {
      * 创建邮箱验证授权令牌
      * @param email 邮箱地址
      * @return 生成的授权令牌字符串
-     * @note 令牌会存储在Redis中,具有过期时间(通常为10-30分钟)
+     * @note 令牌会存储在 Redis 中，并与邮箱验证 JWT 的三小时有效期一致
      */
-    String createAuthorizeToken(String email);
+    String createAuthorizeToken(String email, String remoteAddress);
 
     /**
      * 验证授权令牌是否有效

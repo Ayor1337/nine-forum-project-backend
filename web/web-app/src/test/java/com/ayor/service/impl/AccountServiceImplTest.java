@@ -1,7 +1,10 @@
 package com.ayor.service.impl;
 
+import com.auth0.jwt.interfaces.Claim;
+import com.auth0.jwt.interfaces.DecodedJWT;
 import com.ayor.entity.Base64Upload;
 import com.ayor.entity.PageEntity;
+import com.ayor.entity.dto.AccountDTO;
 import com.ayor.entity.pojo.Account;
 import com.ayor.entity.vo.UserAvatarVO;
 import com.ayor.entity.vo.UserInfoVO;
@@ -19,6 +22,7 @@ import com.ayor.service.PrivacyPolicyService;
 import com.ayor.service.UserPrivacySettingService;
 import com.ayor.service.UserRelationService;
 import com.ayor.service.CacheInvalidationService;
+import com.ayor.service.RegistrationVerificationGate;
 import com.ayor.util.JWTUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -36,6 +40,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.any;
 
 @ExtendWith(MockitoExtension.class)
 class AccountServiceImplTest {
@@ -81,6 +86,9 @@ class AccountServiceImplTest {
 
     @Mock
     private CacheInvalidationService cacheInvalidationService;
+
+    @Mock
+    private RegistrationVerificationGate registrationVerificationGate;
 
     // 测试通过图片存储服务上传头像
     @Test
@@ -303,6 +311,54 @@ class AccountServiceImplTest {
         verify(userItemMapper, never()).selectEquippedBadge(99);
     }
 
+    @Test
+    void insertNewAccountRejectsAlreadyConsumedTokenBeforePersistence() {
+        AccountServiceImpl service = createService();
+        AccountDTO dto = AccountDTO.builder()
+                .username("tester")
+                .password("secret1")
+                .nickname("Tester")
+                .token("consumed-token")
+                .build();
+        when(jwtUtils.consumeEmailJwt("consumed-token")).thenReturn(null);
+
+        assertEquals("验证失败", service.insertNewAccount(dto));
+
+        verify(accountMapper, never()).insert(any(Account.class));
+        verifyNoInteractions(registrationVerificationGate);
+    }
+
+    @Test
+    void insertNewAccountConsumesTokenAndClearsMatchingIdempotencyAfterSuccess() {
+        AccountServiceImpl service = createService();
+        AccountDTO dto = AccountDTO.builder()
+                .username("tester")
+                .password("secret1")
+                .nickname("Tester")
+                .token("valid-token")
+                .build();
+        DecodedJWT decodedJWT = org.mockito.Mockito.mock(DecodedJWT.class);
+        Claim emailClaim = org.mockito.Mockito.mock(Claim.class);
+        when(jwtUtils.consumeEmailJwt("valid-token")).thenReturn(decodedJWT);
+        when(decodedJWT.getClaim("email")).thenReturn(emailClaim);
+        when(emailClaim.asString()).thenReturn("user@example.com");
+        when(decodedJWT.getId()).thenReturn("jwt-id");
+        when(passwordEncoder.encode("secret1")).thenReturn("encoded");
+        when(accountMapper.insert(any(Account.class))).thenAnswer(invocation -> {
+            Account account = invocation.getArgument(0);
+            account.setAccountId(7);
+            return 1;
+        });
+        when(accountStatMapper.insertNewAccountStat(7)).thenReturn(true);
+
+        assertNull(service.insertNewAccount(dto));
+
+        verify(jwtUtils).consumeEmailJwt("valid-token");
+        verify(userProfileService).initDefaultIfAbsent(7);
+        verify(userPrivacySettingService).initDefaultIfAbsent(7);
+        verify(registrationVerificationGate).complete("user@example.com", "jwt-id");
+    }
+
     private AccountServiceImpl createService() {
         AccountServiceImpl service = new AccountServiceImpl(
                 accountMapper,
@@ -319,7 +375,8 @@ class AccountServiceImplTest {
                 userProfileService,
                 userItemMapper,
                 imageStorageService,
-                cacheInvalidationService
+                cacheInvalidationService,
+                registrationVerificationGate
         );
         ReflectionTestUtils.setField(service, "baseMapper", accountMapper);
         return service;

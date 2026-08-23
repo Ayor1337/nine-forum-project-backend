@@ -25,6 +25,7 @@ import com.ayor.service.UserProfileService;
 import com.ayor.service.AccountService;
 import com.ayor.service.CacheInvalidationService;
 import com.ayor.service.PrivacyPolicyService;
+import com.ayor.service.RegistrationVerificationGate;
 import com.ayor.service.UserPrivacySettingService;
 import com.ayor.type.AccountStatus;
 import com.ayor.service.UserRelationService;
@@ -85,6 +86,8 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
     private final ImageStorageService imageStorageService;
 
     private final CacheInvalidationService cacheInvalidationService;
+
+    private final RegistrationVerificationGate registrationVerificationGate;
 
     /**
      * 根据用户名加载 Spring Security 登录信息。
@@ -318,7 +321,7 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         if (existsUserByUsername(accountDTO.getUsername())) {
             return "用户名已存在";
         }
-        DecodedJWT decodedJWT = jwtUtils.resolveEmailJwt(accountDTO.getToken());
+        DecodedJWT decodedJWT = jwtUtils.consumeEmailJwt(accountDTO.getToken());
         if (decodedJWT == null) {
             return "验证失败";
         }
@@ -335,7 +338,11 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         if (this.save(account)) {
             userProfileService.initDefaultIfAbsent(account.getAccountId());
             userPrivacySettingService.initDefaultIfAbsent(account.getAccountId());
-            return accountStatMapper.insertNewAccountStat(account.getAccountId()) ? null : "添加统计数据失败";
+            if (accountStatMapper.insertNewAccountStat(account.getAccountId())) {
+                registrationVerificationGate.complete(account.getEmail(), decodedJWT.getId());
+                return null;
+            }
+            return "添加统计数据失败";
         }
         return "添加失败, 未知异常";
     }

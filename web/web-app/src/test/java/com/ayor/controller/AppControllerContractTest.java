@@ -32,7 +32,10 @@ class AppControllerContractTest {
         assertThat(verify.getAnnotation(GetMapping.class).value()).containsExactly("/register-verifications");
         assertRequestParam(verify, 0, "email");
         assertRequestParam(verify, 1, "token");
-        assertThat(AuthorizeController.class.getMethod("registerVerify", com.ayor.entity.dto.RegDTO.class)
+        assertThat(AuthorizeController.class.getMethod(
+                        "registerVerify",
+                        com.ayor.entity.dto.RegDTO.class,
+                        jakarta.servlet.http.HttpServletRequest.class)
                 .getParameters()[0].isAnnotationPresent(Valid.class)).isTrue();
         assertThat(AuthorizeController.class.getMethod("register", com.ayor.entity.dto.AccountDTO.class)
                 .getParameters()[0].isAnnotationPresent(Valid.class)).isTrue();

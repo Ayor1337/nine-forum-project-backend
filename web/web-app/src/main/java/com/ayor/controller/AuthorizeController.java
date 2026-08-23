@@ -6,6 +6,7 @@ import com.ayor.mail.EmailHtmlTemplates;
 import com.ayor.result.Result;
 import com.ayor.service.AccountService;
 import com.ayor.service.AuthorizeService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import io.swagger.v3.oas.annotations.Operation;
@@ -29,8 +30,11 @@ public class AuthorizeController {
      */
     @Operation(summary = "发送注册验证邮件")
     @PostMapping("/register-verifications")
-    public Result<String> registerVerify(@RequestBody @Valid RegDTO regDTO) {
-        return Result.dataMessageHandler(() -> authorizeService.createAuthorizeToken(regDTO.getEmail()), "邮件发送失败");
+    public Result<String> registerVerify(@RequestBody @Valid RegDTO regDTO, HttpServletRequest request) {
+        return Result.dataMessageHandler(
+                () -> authorizeService.createAuthorizeToken(regDTO.getEmail(), request.getRemoteAddr()),
+                "邮件发送失败"
+        );
     }
     /**
      * 完成注册并创建账户。
