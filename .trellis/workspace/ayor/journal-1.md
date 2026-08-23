@@ -267,3 +267,25 @@
 ### Status
 
 [OK] **Completed**
+
+
+## Session 12: 修复 SEC-07 注册邮件滥用与错误 TTL
+
+**Date**: 2026-08-24
+**Task**: 修复 SEC-07 注册邮件滥用与错误 TTL
+**Branch**: `develope`
+
+### Summary
+
+修正邮箱 JWT Redis TTL，新增邮箱/IP/全局原子限流、短窗口幂等、429 与告警，并在注册时一次性消费 token；补充单元、真实 Redis 边界测试及长期安全规范。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `f24010f` | (see git log) |
+| `7c75d69` | (see git log) |
+
+### Status
+
+[OK] **Completed**
