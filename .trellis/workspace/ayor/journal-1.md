@@ -178,3 +178,24 @@
 ### Status
 
 [OK] **Completed**
+
+
+## Session 8: 修复图片上传解压炸弹 DOS
+
+**Date**: 2026-08-23
+**Task**: 修复图片上传解压炸弹 DOS
+**Branch**: `develope`
+
+### Summary
+
+为全部 Base64 图片入口增加 16 MiB 请求体、10 MiB 原图、8192 边长、16 MP、50 帧与每 JVM 2 槽并发限制；在 ImageIO 完整解码前完成真实格式和元数据校验，移除 MinIO 直传旁路，并通过 548 项全量测试与 128 MiB 堆攻击样本验证。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `d4b8c0d` | (see git log) |
+
+### Status
+
+[OK] **Completed**

@@ -8,8 +8,8 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 7
-- **Last Active**: 2026-08-22
+- **Total Sessions**: 8
+- **Last Active**: 2026-08-23
 <!-- @@@/auto:current-status -->
 
 ---
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~180 | Active |
+| `journal-1.md` | ~201 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 8 | 2026-08-23 | 修复图片上传解压炸弹 DOS | `d4b8c0d` | `develope` |
 | 7 | 2026-08-22 | 主题与评论图片上传接口 | `272ccd4` | `develope` |
 | 6 | 2026-08-22 | 主题与评论独立图片字段 | `039d6db` | `develope` |
 | 5 | 2026-08-20 | 完成 NineForum 后端安全审计 | `d275b6a` | `develope` |
