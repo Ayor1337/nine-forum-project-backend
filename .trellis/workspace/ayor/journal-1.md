@@ -199,3 +199,25 @@
 ### Status
 
 [OK] **Completed**
+
+
+## Session 9: 移除图片资源可见性字段
+
+**Date**: 2026-08-23
+**Task**: 移除图片资源可见性字段
+**Branch**: `develope`
+
+### Summary
+
+将图片与 Sticker 统一为公开可复用资源，删除 visibility 模型与数据库列；补齐 DISABLED 资源在详情、收藏、按 URL 复用和内容引用路径的阻断，并完成 MySQL 容器迁移与模块测试。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `b615707` | (see git log) |
+| `e7d97e8` | (see git log) |
+
+### Status
+
+[OK] **Completed**

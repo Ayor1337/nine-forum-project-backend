@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 8
+- **Total Sessions**: 9
 - **Last Active**: 2026-08-23
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~201 | Active |
+| `journal-1.md` | ~223 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 9 | 2026-08-23 | 移除图片资源可见性字段 | `b615707`, `e7d97e8` | `develope` |
 | 8 | 2026-08-23 | 修复图片上传解压炸弹 DOS | `d4b8c0d` | `develope` |
 | 7 | 2026-08-22 | 主题与评论图片上传接口 | `272ccd4` | `develope` |
 | 6 | 2026-08-22 | 主题与评论独立图片字段 | `039d6db` | `develope` |
