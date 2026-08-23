@@ -93,11 +93,19 @@ MySQL 初始化 SQL 位于：
 
 ## 配置说明
 
-用户端配置：
+用户端真实配置仅保存在本机，不受 Git 跟踪。首次启动前，请先复制示例配置：
 
-```text
-web/web-app/src/main/resources/application.yml
+```bash
+cp web/web-app/src/main/resources/application.example.yml web/web-app/src/main/resources/application.yml
 ```
+
+PowerShell 可使用：
+
+```powershell
+Copy-Item web/web-app/src/main/resources/application.example.yml web/web-app/src/main/resources/application.yml
+```
+
+然后在 `web/web-app/src/main/resources/application.yml` 中填写本机所需的数据库、JWT、MinIO、RabbitMQ 和 SMTP 等配置。不要将该本地文件强制加入 Git。
 
 管理端配置：
 
@@ -105,7 +113,7 @@ web/web-app/src/main/resources/application.yml
 web/web-admin/src/main/resources/application.yml
 ```
 
-这些配置包含数据库、Redis、MinIO、RabbitMQ、JWT、邮件、WebAuthn 和 Elasticsearch 等本地开发参数。提交前不要写入真实生产凭据；生产环境应通过外部配置、环境变量或部署平台注入敏感信息。
+这些配置包含数据库、Redis、MinIO、RabbitMQ、JWT、邮件、WebAuthn 和 Elasticsearch 等本地开发参数。用户端示例文件只提供结构和安全占位值；生产环境应通过外部配置、环境变量或部署平台注入敏感信息。
 
 ## 构建与测试
 
