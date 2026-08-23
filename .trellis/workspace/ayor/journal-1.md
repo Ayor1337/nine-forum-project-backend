@@ -221,3 +221,24 @@
 ### Status
 
 [OK] **Completed**
+
+
+## Session 10: 修复用户端 STOMP 消息授权
+
+**Date**: 2026-08-23
+**Task**: 修复用户端 STOMP 消息授权
+**Branch**: `develope`
+
+### Summary
+
+收紧用户端 STOMP CONNECT、SUBSCRIBE 与 SEND 授权；将 Origin 配置化并升级 Spring Framework 至 6.2.19，完成全仓测试和依赖树核验。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `fef935f` | (see git log) |
+
+### Status
+
+[OK] **Completed**
