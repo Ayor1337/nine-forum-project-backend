@@ -1,6 +1,8 @@
 package com.ayor.service.impl;
 
 import com.ayor.entity.pojo.ChatboardHistory;
+import com.ayor.entity.pojo.Account;
+import com.ayor.entity.vo.ChatboardHistoryVO;
 import com.ayor.mapper.AccountMapper;
 import com.ayor.mapper.ChatboardHistoryMapper;
 import com.ayor.service.UserRelationService;
@@ -21,6 +23,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -63,5 +66,34 @@ class ChatboardHistoryServiceImplTest {
         TableInfoHelper.initTableInfo(new MapperBuilderAssistant(new MybatisConfiguration(), ""), ChatboardHistory.class);
         String targetSql = wrapperCaptor.getValue().getTargetSql();
         assertTrue(targetSql.contains("account_id NOT IN"), targetSql);
+    }
+
+    // 测试实时聊天室消息包含发送者昵称
+    @Test
+    void shouldSendChatboardMessageWithNickname() {
+        ChatboardHistoryServiceImpl service = new ChatboardHistoryServiceImpl(
+                accountMapper,
+                simpMessagingTemplate,
+                userRelationService
+        );
+        ReflectionTestUtils.setField(service, "baseMapper", chatboardHistoryMapper);
+        Account account = new Account();
+        account.setAccountId(7);
+        account.setNickname("测试用户");
+        when(accountMapper.getAccountById(7)).thenReturn(account);
+        when(chatboardHistoryMapper.insert(any(ChatboardHistory.class))).thenAnswer(invocation -> {
+            invocation.getArgument(0, ChatboardHistory.class).setChatboardHistoryId(1);
+            return 1;
+        });
+
+        service.insertChatboardHistory(7, 3, "你好");
+
+        ArgumentCaptor<ChatboardHistoryVO> messageCaptor = ArgumentCaptor.forClass(ChatboardHistoryVO.class);
+        verify(simpMessagingTemplate).convertAndSend(eq("/broadcast/topic/3"), messageCaptor.capture());
+        ChatboardHistoryVO message = messageCaptor.getValue();
+        assertTrue("测试用户".equals(message.getNickname()));
+        assertTrue(message.getAccountId().equals(7));
+        assertTrue(message.getTopicId().equals(3));
+        assertTrue("你好".equals(message.getContent()));
     }
 }

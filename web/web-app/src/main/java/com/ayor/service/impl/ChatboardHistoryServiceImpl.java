@@ -54,7 +54,7 @@ public class ChatboardHistoryServiceImpl extends ServiceImpl<ChatboardHistoryMap
         }
         ChatboardHistory chatboardHistory = new ChatboardHistory(null, account.getAccountId(), topicId, content, new Date());
         if (this.baseMapper.insert(chatboardHistory) > 0) {
-            simpMessagingTemplate.convertAndSend("/broadcast/topic/" + topicId, chatboardHistory);
+            simpMessagingTemplate.convertAndSend("/broadcast/topic/" + topicId, toVO(chatboardHistory, account));
             return null;
         }
         return "发送失败";
@@ -81,17 +81,20 @@ public class ChatboardHistoryServiceImpl extends ServiceImpl<ChatboardHistoryMap
 
         List<ChatboardHistoryVO> chatboardHistoryVOS = new ArrayList<>();
         records.forEach(chatboardHistory -> {
-            ChatboardHistoryVO chatboardHistoryVO = new ChatboardHistoryVO();
-            chatboardHistoryVO.setChatboardHistoryId(chatboardHistory.getChatboardHistoryId());
             Account account = accountMapper.getAccountById(chatboardHistory.getAccountId());
-            chatboardHistoryVO.setNickname(account.getNickname());
-            chatboardHistoryVO.setAvatarUrl(account.getAvatarUrl());
-            chatboardHistoryVO.setBannerUrl(account.getBannerUrl());
-            BeanUtils.copyProperties(chatboardHistory, chatboardHistoryVO);
-            chatboardHistoryVOS.add(chatboardHistoryVO);
+            chatboardHistoryVOS.add(toVO(chatboardHistory, account));
         });
 
         return new PageEntity<>(page.getTotal(), chatboardHistoryVOS);
+    }
+
+    private ChatboardHistoryVO toVO(ChatboardHistory chatboardHistory, Account account) {
+        ChatboardHistoryVO chatboardHistoryVO = new ChatboardHistoryVO();
+        BeanUtils.copyProperties(chatboardHistory, chatboardHistoryVO);
+        chatboardHistoryVO.setNickname(account.getNickname());
+        chatboardHistoryVO.setAvatarUrl(account.getAvatarUrl());
+        chatboardHistoryVO.setBannerUrl(account.getBannerUrl());
+        return chatboardHistoryVO;
     }
 
 }
