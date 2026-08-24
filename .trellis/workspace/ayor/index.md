@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 12
+- **Total Sessions**: 13
 - **Last Active**: 2026-08-24
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~291 | Active |
+| `journal-1.md` | ~312 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 13 | 2026-08-24 | 批量用户头像查询接口 | `8d829d6` | `develope` |
 | 12 | 2026-08-24 | 修复 SEC-07 注册邮件滥用与错误 TTL | `f24010f`, `7c75d69` | `develope` |
 | 11 | 2026-08-23 | 清理仓库历史 SMTP 配置 | `42cbf92`, `901cfd2`, `c866737`, `dd7417b`, `2e23ae7` | `develope` |
 | 10 | 2026-08-23 | 修复用户端 STOMP 消息授权 | `fef935f` | `develope` |

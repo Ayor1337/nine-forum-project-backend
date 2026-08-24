@@ -289,3 +289,24 @@
 ### Status
 
 [OK] **Completed**
+
+
+## Session 13: 批量用户头像查询接口
+
+**Date**: 2026-08-24
+**Task**: 批量用户头像查询接口
+**Branch**: `develope`
+
+### Summary
+
+新增用户 ID 批量头像查询接口，支持去重顺序、缺失用户省略与参数边界校验；补齐接口契约、自动化测试与后端规范。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `8d829d6` | (see git log) |
+
+### Status
+
+[OK] **Completed**
