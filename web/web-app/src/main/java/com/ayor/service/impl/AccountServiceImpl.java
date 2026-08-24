@@ -8,6 +8,7 @@ import com.ayor.entity.dto.UserProfileDTO;
 import com.ayor.entity.dto.PasswordChangeDTO;
 import com.ayor.entity.vo.UserProfileVO;
 import com.ayor.entity.vo.UserAvatarVO;
+import com.ayor.entity.vo.UserAvatarItemVO;
 import com.ayor.entity.vo.UserInfoVO;
 import com.ayor.entity.vo.UserItemVO;
 import com.ayor.entity.vo.UserPermissionVO;
@@ -46,7 +47,11 @@ import org.springframework.transaction.annotation.Transactional;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Date;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -176,6 +181,28 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
             userAvatarVO.setBadgeConfig(badge.getDecorationConfig());
         }
         return userAvatarVO;
+    }
+
+    @Override
+    public List<UserAvatarItemVO> getUserAvatars(List<Integer> accountIds) {
+        if (accountIds == null || accountIds.isEmpty()) {
+            return List.of();
+        }
+
+        List<Integer> uniqueAccountIds = new ArrayList<>(new LinkedHashSet<>(accountIds));
+        Map<Integer, Account> accountMap = new LinkedHashMap<>();
+        for (Account account : accountMapper.getAccountsByIds(uniqueAccountIds)) {
+            accountMap.put(account.getAccountId(), account);
+        }
+
+        List<UserAvatarItemVO> avatars = new ArrayList<>(uniqueAccountIds.size());
+        for (Integer accountId : uniqueAccountIds) {
+            Account account = accountMap.get(accountId);
+            if (account != null) {
+                avatars.add(new UserAvatarItemVO(account.getAccountId(), account.getAvatarUrl()));
+            }
+        }
+        return avatars;
     }
 
     @Override

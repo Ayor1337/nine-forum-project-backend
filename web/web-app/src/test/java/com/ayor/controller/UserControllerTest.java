@@ -3,7 +3,9 @@ package com.ayor.controller;
 import com.ayor.entity.PageEntity;
 import com.ayor.entity.vo.UserInfoVO;
 import com.ayor.entity.vo.LoginSessionVO;
+import com.ayor.entity.vo.UserAvatarItemVO;
 import com.ayor.result.Result;
+import com.ayor.controller.exception.ValidateController;
 import com.ayor.service.AccountService;
 import com.ayor.service.AccountStatService;
 import com.ayor.service.ReportService;
@@ -17,6 +19,8 @@ import com.auth0.jwt.interfaces.DecodedJWT;
 import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.Test;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.lang.reflect.Method;
 import java.util.List;
@@ -24,9 +28,14 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 class UserControllerTest {
 
@@ -61,6 +70,85 @@ class UserControllerTest {
         assertNotNull(result);
         verify(securityUtils).getOptionalSecurityUserId();
         verify(accountService).getPublicUserInfo(null, 18);
+    }
+
+    @Test
+    void getUserAvatarsShouldDelegateAndReturnSuccessfulEmptyList() {
+        when(accountService.getUserAvatars(List.of(7, 18)))
+                .thenReturn(List.of(new UserAvatarItemVO(7, "avatar-7.webp")));
+
+        Result<List<UserAvatarItemVO>> result = controller.getUserAvatars(List.of(7, 18));
+
+        assertEquals(200, result.getCode());
+        assertEquals(1, result.getData().size());
+        assertEquals(7, result.getData().get(0).getAccountId());
+        verify(accountService).getUserAvatars(List.of(7, 18));
+    }
+
+    @Test
+    void getUserAvatarsShouldBindCommaSeparatedParameters() throws Exception {
+        MockMvc mockMvc = MockMvcBuilders.standaloneSetup(controller)
+                .setControllerAdvice(new ValidateController())
+                .build();
+        when(accountService.getUserAvatars(List.of(18, 7)))
+                .thenReturn(List.of(new UserAvatarItemVO(18, "avatar-18.webp")));
+
+        mockMvc.perform(get("/api/users/avatars")
+                        .param("user_ids", "18,7"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.data[0].accountId").value(18))
+                .andExpect(jsonPath("$.data[0].avatarUrl").value("avatar-18.webp"));
+
+        verify(accountService).getUserAvatars(List.of(18, 7));
+    }
+
+    @Test
+    void getUserAvatarsShouldBindRepeatedParameters() throws Exception {
+        MockMvc mockMvc = MockMvcBuilders.standaloneSetup(controller)
+                .setControllerAdvice(new ValidateController())
+                .build();
+        when(accountService.getUserAvatars(List.of(18, 7)))
+                .thenReturn(List.of(new UserAvatarItemVO(18, "avatar-18.webp")));
+
+        mockMvc.perform(get("/api/users/avatars")
+                        .param("user_ids", "18")
+                        .param("user_ids", "7"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200));
+
+        verify(accountService).getUserAvatars(List.of(18, 7));
+    }
+
+    @Test
+    void getUserAvatarsShouldRejectEmptyRequestParameter() throws Exception {
+        MockMvc mockMvc = MockMvcBuilders.standaloneSetup(controller)
+                .setControllerAdvice(new ValidateController())
+                .build();
+
+        mockMvc.perform(get("/api/users/avatars").param("user_ids", ""))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(203));
+
+        verifyNoInteractions(accountService);
+    }
+
+    @Test
+    void getUserAvatarsShouldRejectEmptyAndOversizedInput() {
+        Result<List<UserAvatarItemVO>> emptyResult = controller.getUserAvatars(List.of());
+        Result<List<UserAvatarItemVO>> oversizedResult = controller.getUserAvatars(
+                java.util.stream.IntStream.rangeClosed(1, 101).boxed().toList());
+
+        assertEquals(203, emptyResult.getCode());
+        assertEquals(203, oversizedResult.getCode());
+        verifyNoInteractions(accountService);
+    }
+
+    @Test
+    void userAvatarBatchEndpointShouldUseUserIdsRequestParameter() throws NoSuchMethodException {
+        Method method = UserController.class.getMethod("getUserAvatars", List.class);
+
+        assertArrayEquals(new String[]{"/avatars"}, method.getAnnotation(GetMapping.class).value());
     }
 
     // 测试获取粉丝使用可选查看者 ID

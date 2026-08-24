@@ -1,0 +1,4 @@
+{"file":".trellis/tasks/08-24-batch-user-avatars/prd.md","reason":"已确认的接口合同、输入上限、缺失用户与顺序语义。"}
+{"file":".trellis/spec/backend/directory-structure.md","reason":"用户端 Controller、Service、应用专属 VO 与测试的放置边界。"}
+{"file":".trellis/spec/backend/error-handling.md","reason":"Result<T> 包装与参数错误 code 203 的响应约定。"}
+{"file":".trellis/spec/backend/quality-guidelines.md","reason":"用户端模块测试与控制器/服务职责要求。"}

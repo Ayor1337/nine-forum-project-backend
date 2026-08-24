@@ -29,6 +29,7 @@
 | [公开图片资产与表情包](./image-assets.md) | 图片/Sticker 的公开复用、`ACTIVE`/`DISABLED` 状态契约与 schema 同步 |
 | [每日签到](./daily-check-in.md) | 签到 API、东京业务日期、Credit 发放与数据库唯一约束 |
 | [帖子正文图片](./thread-content-images.md) | 帖子图片数量限制、列表投影与失败副作用边界 |
+| [批量用户头像查询](./batch-user-avatars.md) | 用户 ID 列表、轻量头像映射、去重顺序与参数错误合同 |
 
 ## 基础验证
 

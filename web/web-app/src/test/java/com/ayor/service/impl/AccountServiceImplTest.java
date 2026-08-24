@@ -6,6 +6,7 @@ import com.ayor.entity.Base64Upload;
 import com.ayor.entity.PageEntity;
 import com.ayor.entity.dto.AccountDTO;
 import com.ayor.entity.pojo.Account;
+import com.ayor.entity.vo.UserAvatarItemVO;
 import com.ayor.entity.vo.UserAvatarVO;
 import com.ayor.entity.vo.UserInfoVO;
 import com.ayor.entity.vo.UserItemVO;
@@ -34,6 +35,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Mockito.never;
@@ -309,6 +311,37 @@ class AccountServiceImplTest {
         assertNull(result);
         verify(userItemMapper, never()).selectEquippedAvatarFrame(99);
         verify(userItemMapper, never()).selectEquippedBadge(99);
+    }
+
+    @Test
+    void getUserAvatarsShouldQueryOnceAndKeepFirstRequestOrder() {
+        AccountServiceImpl service = createService();
+        Account account7 = new Account();
+        account7.setAccountId(7);
+        account7.setAvatarUrl("https://example.com/avatar/7.webp");
+        Account account18 = new Account();
+        account18.setAccountId(18);
+        account18.setAvatarUrl("https://example.com/avatar/18.webp");
+        when(accountMapper.getAccountsByIds(List.of(18, 7, 99))).thenReturn(List.of(account7, account18));
+
+        List<UserAvatarItemVO> result = service.getUserAvatars(List.of(18, 7, 18, 99));
+
+        assertEquals(2, result.size());
+        assertEquals(18, result.get(0).getAccountId());
+        assertEquals("https://example.com/avatar/18.webp", result.get(0).getAvatarUrl());
+        assertEquals(7, result.get(1).getAccountId());
+        assertEquals("https://example.com/avatar/7.webp", result.get(1).getAvatarUrl());
+        verify(accountMapper).getAccountsByIds(List.of(18, 7, 99));
+    }
+
+    @Test
+    void getUserAvatarsShouldReturnEmptyWithoutQueryForEmptyInput() {
+        AccountServiceImpl service = createService();
+
+        List<UserAvatarItemVO> result = service.getUserAvatars(List.of());
+
+        assertTrue(result.isEmpty());
+        verifyNoInteractions(accountMapper);
     }
 
     @Test

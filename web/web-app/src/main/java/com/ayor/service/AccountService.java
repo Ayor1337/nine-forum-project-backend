@@ -7,10 +7,13 @@ import com.ayor.entity.dto.UserProfileDTO;
 import com.ayor.entity.dto.PasswordChangeDTO;
 import com.ayor.entity.vo.UserProfileVO;
 import com.ayor.entity.vo.UserAvatarVO;
+import com.ayor.entity.vo.UserAvatarItemVO;
 import com.ayor.entity.vo.UserInfoVO;
 import com.ayor.entity.pojo.Account;
 import com.baomidou.mybatisplus.extension.service.IService;
 import org.springframework.security.core.userdetails.UserDetailsService;
+
+import java.util.List;
 
 /**
  * 用户账户服务接口
@@ -59,6 +62,14 @@ public interface AccountService extends UserDetailsService, IService<Account> {
      * @return 头像与装饰信息；用户不存在时返回 null
      */
     UserAvatarVO getUserAvatar(Integer accountId);
+
+    /**
+     * 批量获取用户头像映射。
+     *
+     * @param accountIds 用户 ID 列表
+     * @return 按首次出现的用户 ID 顺序返回的头像映射，不存在的用户会被省略
+     */
+    List<UserAvatarItemVO> getUserAvatars(List<Integer> accountIds);
 
     UserProfileVO getMyProfile(Integer accountId);
 

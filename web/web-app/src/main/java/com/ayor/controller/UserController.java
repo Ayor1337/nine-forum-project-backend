@@ -9,6 +9,7 @@ import com.ayor.entity.dto.UserPrivacySettingDTO;
 import com.ayor.entity.vo.AccountStatVO;
 import com.ayor.entity.vo.LoginSessionVO;
 import com.ayor.entity.vo.UserAvatarVO;
+import com.ayor.entity.vo.UserAvatarItemVO;
 import com.ayor.entity.vo.UserProfileVO;
 import com.ayor.entity.vo.UserInfoVO;
 import com.ayor.entity.vo.UserPrivacySettingVO;
@@ -31,6 +32,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Objects;
 
 @RequiredArgsConstructor
 @RestController
@@ -98,6 +100,19 @@ public class UserController {
     @GetMapping("/{user_id}/avatar")
     public Result<UserAvatarVO> getUserAvatar(@Parameter(description = "用户 ID") @PathVariable("user_id") Integer userId) {
         return Result.dataMessageHandler(() -> accountService.getUserAvatar(userId), "获取用户头像失败,用户可能不存在");
+    }
+
+    /**
+     * 批量获取用户头像映射。
+     */
+    @Operation(summary = "批量获取用户头像")
+    @GetMapping("/avatars")
+    public Result<List<UserAvatarItemVO>> getUserAvatars(
+            @Parameter(description = "用户 ID 列表，支持逗号分隔或重复参数") @RequestParam("user_ids") List<Integer> userIds) {
+        if (userIds == null || userIds.isEmpty() || userIds.size() > 100 || userIds.stream().anyMatch(Objects::isNull)) {
+            return Result.fail(203, "请求参数内容有误");
+        }
+        return Result.ok(accountService.getUserAvatars(userIds));
     }
 
     /**
