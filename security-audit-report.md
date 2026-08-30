@@ -21,7 +21,7 @@
 | SEC-06 | 高危 | Redis/Elasticsearch 等基础设施绑定宿主所有接口且缺少认证或使用静态凭据 | 配置与运行态确认 |
 | SEC-11 | 高危 | 依赖基线存在可适用公开漏洞，关键组件补丁明显滞后 | OSV、官方公告与依赖树确认 |
 | SEC-07 | 中危 | 注册邮件入口无滥用控制，邮箱 JWT Redis TTL 约为数十年 | 源码确认 |
-| SEC-08 | 中危 | 修改密码只撤销当前 JWT，其他会话继续有效 | 源码确认 |
+| SEC-08 | 修复 | 修改密码只撤销当前 JWT，其他会话继续有效 | 已修复；全会话撤销与参数校验回归测试确认 |
 | SEC-09 | 中危 | 公开分页无最大页大小，任意参数扩大查询与缓存键基数 | 源码确认 |
 | SEC-12 | 低危 | 操作日志无字段脱敏与长度限制 | 源码确认 |
 | SEC-13 | 低危 | 认证/授权失败仍返回 HTTP 200 | 源码与测试确认 |
@@ -81,13 +81,16 @@
 - 影响：攻击者可制造长期 key 堆积、队列压力与 SMTP 费用/信誉损害，持续滥用可降低注册及会话基础设施可用性。
 - 修复与验证：使用剩余 `Duration`；增加 IP、邮箱和全局限流、短窗口幂等、配额告警及注册成功后的原子消费；用单元测试断言 Redis TTL 接近 JWT 剩余寿命，并测试限流边界。
 
-### SEC-08：密码修改未撤销全部会话
+### SEC-08：密码修改未撤销全部会话 (修复)
 
 - 类别：CWE-613；置信度：高；级别：中危。
-- 证据：`web/web-app/src/main/java/com/ayor/service/impl/AccountServiceImpl.java:389-413` 更新密码后只撤销当前 JWT；`common/src/main/java/com/ayor/util/JWTUtils.java:165-170` 仍接受其他具有活跃 `sid` 的 JWT；`web/web-app/src/main/java/com/ayor/controller/UserController.java:251-255` 还缺少 `@Valid`。
-- 攻击前提与数据流：攻击者已持有同账号的另一有效会话，受害者随后修改密码；改密链既不删除其他 `LOGIN_SESSION_ACTIVE + sid`，也没有账号级 token version，因此其他会话继续通过 `resolveJwt`。
-- 影响：被盗会话可在受害者改密后继续使用，默认窗口可达七天；缺少 `@Valid` 还使新密码约束未在该入口执行。
-- 修复与验证：撤销账号全部会话或引入账号级 token version/password-changed-at，Controller 添加 `@Valid`；用至少两个旧 JWT 验证改密后全部失败，并验证新密码约束。
+- 修复前证据：`web/web-app/src/main/java/com/ayor/service/impl/AccountServiceImpl.java` 更新密码后只撤销当前 JWT；`common/src/main/java/com/ayor/util/JWTUtils.java` 仍接受其他具有活跃 `sid` 的 JWT；`web/web-app/src/main/java/com/ayor/controller/UserController.java` 的密码请求体缺少 `@Valid`。
+- 修复前攻击前提与数据流：攻击者已持有同账号的另一有效会话，受害者随后修改密码；改密链既不删除其他 `LOGIN_SESSION_ACTIVE + sid`，也没有账号级 token version，因此其他会话继续通过 `resolveJwt`。
+- 修复前影响：被盗会话可在受害者改密后继续使用，默认窗口可达七天；缺少 `@Valid` 还使新密码约束未在该入口执行。
+- 修复结果：密码持久化成功后查询并撤销该账号全部未撤销且未过期会话，删除每个 `LOGIN_SESSION_ACTIVE + sid`、按原过期时间写入 JWT 黑名单并记录 `revoked_time`；密码入口已添加 `@Valid`，并补齐新密码必填、长度和字符约束。
+- 验证：`UserLoginSessionServiceImplTest` 覆盖同账号两个会话的 Redis 删除、JWT 黑名单和撤销时间；`AccountServiceImplTest` 覆盖持久化成功/失败及旧密码错误副作用；`UserControllerTest` 覆盖非法和缺失新密码返回 code `203` 以及合法请求转发。
+- 残余风险：并发认证已通过旧密码校验，但在 `findActiveByAccountId` 快照完成后才创建登录会话时，该新会话可能漏过本次撤销，继续使用旧密码认证产生的 JWT。
+- 后续建议：引入账号级 token version 或 `password_changed_at`，或将登录与改密按账号串行化，消除该快照与会话创建之间的竞态窗口。
 
 ### SEC-09：公开分页和缓存基数无上限
 

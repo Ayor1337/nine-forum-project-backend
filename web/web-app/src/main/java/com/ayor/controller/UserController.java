@@ -264,7 +264,7 @@ public class UserController {
      */
     @Operation(summary = "通过旧密码更新当前账号密码")
     @PostMapping("/me/password")
-    public Result<Void> updatePassword(@RequestBody PasswordChangeDTO dto,
+    public Result<Void> updatePassword(@RequestBody @Valid PasswordChangeDTO dto,
                                        HttpServletRequest request) {
         String token = request.getHeader("Authorization");
         return Result.messageHandler(() -> accountService.updatePasswordWithOld(token, dto));

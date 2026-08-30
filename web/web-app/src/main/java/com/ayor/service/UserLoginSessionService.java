@@ -15,6 +15,7 @@ import java.util.Date;
  * - 创建登录会话
  * - 查询会话列表
  * - 撤销指定会话
+ * - 撤销账号全部会话
  * - 撤销当前会话
  *
  * @see LoginSessionVO 登录会话视图对象
@@ -28,6 +29,8 @@ public interface UserLoginSessionService {
     PageEntity<LoginSessionVO> listSessions(Integer accountId, String currentSessionId, Integer pageNum, Integer pageSize);
 
     String revokeSession(Integer accountId, String sessionId, String currentSessionId);
+
+    void revokeAllSessions(Integer accountId);
 
     void revokeCurrentSession(String sessionId);
 }

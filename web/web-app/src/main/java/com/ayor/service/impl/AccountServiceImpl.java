@@ -27,6 +27,7 @@ import com.ayor.service.AccountService;
 import com.ayor.service.CacheInvalidationService;
 import com.ayor.service.PrivacyPolicyService;
 import com.ayor.service.RegistrationVerificationGate;
+import com.ayor.service.UserLoginSessionService;
 import com.ayor.service.UserPrivacySettingService;
 import com.ayor.type.AccountStatus;
 import com.ayor.service.UserRelationService;
@@ -75,6 +76,8 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
     private final AccountStatMapper accountStatMapper;
 
     private final JWTUtils jwtUtils;
+
+    private final UserLoginSessionService loginSessionService;
 
     private final PasswordEncoder encoder;
 
@@ -448,7 +451,7 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         account.setPassword(encoder.encode(pwDto.getNewPassword()));
 
         if (this.updateById(account)) {
-            jwtUtils.invalidateJWT(token);
+            loginSessionService.revokeAllSessions(accountId);
             return null;
         } else {
             return "更新密码失败";

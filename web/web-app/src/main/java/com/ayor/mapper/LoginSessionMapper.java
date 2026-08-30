@@ -41,6 +41,16 @@ public interface LoginSessionMapper extends BaseMapper<AccountLoginSession> {
             """)
     AccountLoginSession findBySessionId(@Param("sessionId") String sessionId);
 
+    @Select("""
+            SELECT *
+            FROM account_login_session
+            WHERE account_id = #{accountId}
+              AND revoked_time IS NULL
+              AND expire_time > #{now}
+            """)
+    List<AccountLoginSession> findActiveByAccountId(@Param("accountId") Integer accountId,
+                                                    @Param("now") Date now);
+
     @Update("""
             UPDATE account_login_session
             SET revoked_time = #{revokedTime}
