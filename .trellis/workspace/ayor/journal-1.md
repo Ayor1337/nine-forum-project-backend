@@ -310,3 +310,25 @@
 ### Status
 
 [OK] **Completed**
+
+
+## Session 14: 修复管理端匿名访问漏洞
+
+**Date**: 2026-08-30
+**Task**: 修复管理端匿名访问漏洞
+**Branch**: `develope`
+
+### Summary
+
+修复 SEC-01：管理端 HTTP 仅允许 OWNER 登录和访问，非 OWNER 登录返回 403 权限不足；补充真实 FilterChain、登录、登出和 JWT 契约测试及安全规范。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `69f5534` | (see git log) |
+| `8be0f30` | (see git log) |
+
+### Status
+
+[OK] **Completed**
