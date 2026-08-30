@@ -16,7 +16,7 @@
 
 | 编号 | 级别 | 发现 | 状态 |
 | --- | --- | --- | --- |
-| SEC-01 | 严重 | 管理端 HTTP 全局 `permitAll`，匿名请求可到达系统级管理操作 | 源码与动态确认 |
+| SEC-01 | 修复 | 管理端 HTTP 全局 `permitAll`，匿名请求可到达系统级管理操作 | 源码与动态确认 |
 | SEC-04 | 高危 | 管理端 STOMP 未校验管理员权限，普通用户可订阅实时举报数据 | 已修复；源码与 Spring Messaging 契约测试确认 |
 | SEC-06 | 高危 | Redis/Elasticsearch 等基础设施绑定宿主所有接口且缺少认证或使用静态凭据 | 配置与运行态确认 |
 | SEC-11 | 高危 | 依赖基线存在可适用公开漏洞，关键组件补丁明显滞后 | OSV、官方公告与依赖树确认 |
@@ -30,7 +30,7 @@
 
 ## 最高优先级发现
 
-### SEC-01：管理端 HTTP 全局匿名放行
+### SEC-01：管理端 HTTP 全局匿名放行 (修复)
 
 - 类别：CWE-306、CWE-862；置信度：确定。
 - 证据：`web/web-admin/src/main/java/com/ayor/config/SecurityConfiguration.java:49-54` 对唯一安全链执行 `anyRequest().permitAll()`；角色、权限、账号、私信和数据修复等控制器没有补偿性管理员授权。
