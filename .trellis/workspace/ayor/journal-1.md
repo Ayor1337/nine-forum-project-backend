@@ -332,3 +332,24 @@
 ### Status
 
 [OK] **Completed**
+
+
+## Session 15: 修复管理端 STOMP OWNER 授权
+
+**Date**: 2026-08-30
+**Task**: 修复管理端 STOMP OWNER 授权
+**Branch**: `develope`
+
+### Summary
+
+管理端 STOMP CONNECT 和 SUBSCRIBE 改为查询数据库当前角色，仅允许 OWNER 订阅 /topic/reports；新增帧级与真实 clientInboundChannel 契约测试，确认 Spring Messaging 6.2.19，并同步安全规范和 SEC-04 审计结果。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `0ff305e` | (see git log) |
+
+### Status
+
+[OK] **Completed**

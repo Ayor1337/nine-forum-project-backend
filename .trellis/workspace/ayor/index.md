@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 14
+- **Total Sessions**: 15
 - **Last Active**: 2026-08-30
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~334 | Active |
+| `journal-1.md` | ~355 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 15 | 2026-08-30 | 修复管理端 STOMP OWNER 授权 | `0ff305e` | `develope` |
 | 14 | 2026-08-30 | 修复管理端匿名访问漏洞 | `69f5534`, `8be0f30` | `develope` |
 | 13 | 2026-08-24 | 批量用户头像查询接口 | `8d829d6` | `develope` |
 | 12 | 2026-08-24 | 修复 SEC-07 注册邮件滥用与错误 TTL | `f24010f`, `7c75d69` | `develope` |
