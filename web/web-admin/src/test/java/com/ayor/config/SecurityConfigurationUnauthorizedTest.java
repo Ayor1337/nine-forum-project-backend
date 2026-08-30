@@ -15,7 +15,7 @@ import static org.mockito.Mockito.when;
 
 class SecurityConfigurationUnauthorizedTest {
 
-    // 测试返回未认证状态码当未授权
+    // 测试未授权响应使用真实 HTTP 401，并保持 Result envelope
     @Test
     void shouldReturnUnauthenticatedCodeWhenUnauthorized() throws Exception {
         SecurityConfiguration configuration = new SecurityConfiguration();
@@ -27,7 +27,7 @@ class SecurityConfigurationUnauthorizedTest {
 
         JSONObject result = JSONObject.parseObject(body.toString());
         assertThat(result.getInteger("code")).isEqualTo(401);
-        assertThat(result.getString("message")).isEqualTo("Unauthorized");
-        verify(response).setStatus(200);
+        assertThat(result.getString("message")).isEqualTo("未认证");
+        verify(response).setStatus(HttpServletResponse.SC_UNAUTHORIZED);
     }
 }

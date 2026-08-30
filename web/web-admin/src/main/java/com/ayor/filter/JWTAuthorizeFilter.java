@@ -62,7 +62,7 @@ public class JWTAuthorizeFilter extends OncePerRequestFilter {
         if (authorization != null && jwt == null) {
             response.setCharacterEncoding("UTF-8");
             response.setContentType("application/json");
-            response.setStatus(200);
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.getWriter().write(Result.build(null, ResultCodeEnum.TOKEN_EXPIRED).toJSONString());
             return;
         }

@@ -3,6 +3,7 @@ package com.ayor.filter;
 import com.alibaba.fastjson2.JSONObject;
 import com.ayor.result.ResultCodeEnum;
 import com.ayor.util.JWTUtils;
+import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockFilterChain;
 import org.springframework.mock.web.MockHttpServletRequest;
@@ -31,6 +32,7 @@ class JWTAuthorizeFilterTest {
         JSONObject result = JSONObject.parseObject(response.getContentAsString());
         assertThat(result.getInteger("code")).isEqualTo(ResultCodeEnum.TOKEN_EXPIRED.getCode());
         assertThat(result.getString("message")).isEqualTo(ResultCodeEnum.TOKEN_EXPIRED.getMessage());
+        assertThat(response.getStatus()).isEqualTo(HttpServletResponse.SC_UNAUTHORIZED);
     }
 
     // 测试继续过滤链当 Authorization 请求头为缺失
