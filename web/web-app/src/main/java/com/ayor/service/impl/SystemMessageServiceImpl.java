@@ -18,6 +18,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * 系统消息服务实现
+ */
 @Service
 @Transactional
 @RequiredArgsConstructor

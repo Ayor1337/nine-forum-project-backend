@@ -1,5 +1,8 @@
 package com.ayor.entity.message;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
+@Schema(description = "UserViolationMessageTemplate 数据模型")
 public class UserViolationMessageTemplate {
 
     public static final String NICKNAME_VIOLATION = """

@@ -4,6 +4,9 @@ import com.ayor.entity.PageEntity;
 import com.ayor.entity.document.ThreadDoc;
 import com.ayor.entity.dto.ThreadDTO;
 import com.ayor.entity.vo.AnnouncementVO;
+import com.ayor.entity.vo.ThreadEditHistoryDetailVO;
+import com.ayor.entity.vo.ThreadEditHistoryVO;
+import com.ayor.entity.vo.ThreadBreadcrumbVO;
 import com.ayor.entity.vo.ThreadVO;
 import com.ayor.entity.pojo.Threadd;
 import com.baomidou.mybatisplus.extension.service.IService;
@@ -46,12 +49,34 @@ public interface ThreaddService extends IService<Threadd> {
      * 按分类ID获取帖子列表(分页版本)
      * @param topicId 分类ID
      * @param tagId 标签ID, 可选
+     * @param isSelected 是否精选, 可选
      * @param order 排序方式, 支持 hot/latest
      * @param pageNum 页码,从1开始
      * @param pageSize 每页记录数
      * @return 分页结果,包含ThreadVO列表和总记录数
      */
-    PageEntity<ThreadVO> getThreadVOsByTopicId(Integer topicId, Integer tagId, String order, Integer pageNum, Integer pageSize);
+    PageEntity<ThreadVO> getThreadVOsByTopicId(Integer viewerId, Integer topicId, Integer tagId, Boolean isSelected, String order, Integer pageNum, Integer pageSize);
+
+    /**
+     * 获取指定话题下的帖子榜单。
+     * @param topicId 话题ID
+     * @param period 时间范围, 支持 day/week/month
+     * @param metric 榜单指标, 支持 likes/views/collects
+     * @param pageNum 页码,从1开始
+     * @param pageSize 每页记录数
+     * @return 分页榜单结果
+     */
+    PageEntity<ThreadVO> getThreadRankingsByTopicId(Integer viewerId, Integer topicId, String period, String metric, Integer pageNum, Integer pageSize);
+
+    /**
+     * 获取全站帖子榜单。
+     * @param period 时间范围, 支持 day/week/month
+     * @param metric 榜单指标, 支持 likes/views/collects
+     * @param pageNum 页码,从1开始
+     * @param pageSize 每页记录数
+     * @return 分页榜单结果
+     */
+    PageEntity<ThreadVO> getThreadRankings(Integer viewerId, String period, String metric, Integer pageNum, Integer pageSize);
 
     /**
      * 获取帖子标题
@@ -61,20 +86,29 @@ public interface ThreaddService extends IService<Threadd> {
     String getThreadTitleById(Integer threadId);
 
     /**
+     * 获取帖子及所属主题名称，用于面包屑展示。
+     *
+     * @param threadId 帖子 ID
+     * @return 包含帖子名称和主题名称的面包屑视图对象；帖子或主题不存在时返回 {@code null}
+     */
+    ThreadBreadcrumbVO getThreadBreadcrumbById(Integer threadId);
+
+    /**
      * 获取帖子详细信息
      * @param threadId 帖子ID
      * @return 帖子视图对象,包含完整的帖子信息、作者信息等
      */
-    ThreadVO getThreadById(Integer threadId);
+    ThreadVO getThreadById(Integer viewerId, Integer threadId);
 
     /**
      * 按用户ID获取帖子列表(分页)
+     * @param viewerId 当前访问用户ID;未登录时为空
      * @param accountId 用户账户ID
      * @param currentPage 当前页码,从1开始
      * @param pageSize 每页记录数
      * @return 分页结果,包含该用户发布的所有帖子
      */
-    PageEntity<ThreadVO> getThreadPagesByUserId(Integer accountId, Integer currentPage, Integer pageSize);
+    PageEntity<ThreadVO> getThreadPagesByUserId(Integer viewerId, Integer accountId, Integer currentPage, Integer pageSize);
 
     /**
      * 删除帖子(用户操作,逻辑删除)
@@ -114,11 +148,31 @@ public interface ThreaddService extends IService<Threadd> {
     String removeAnnouncementByThreadId(Integer threadId, Integer topicId);
 
     /**
+     * 设置帖子为全局公告
+     * @param threadId 帖子ID
+     * @return 操作结果消息;成功返回null,失败返回错误描述
+     */
+    String setGlobalAnnouncementByThreadId(Integer threadId);
+
+    /**
+     * 取消帖子的全局公告状态
+     * @param threadId 帖子ID
+     * @return 操作结果消息;成功返回null,失败返回错误描述
+     */
+    String removeGlobalAnnouncementByThreadId(Integer threadId);
+
+    /**
      * 获取指定分类的公告帖子列表
      * @param topicId 分类ID
      * @return 公告视图对象列表
      */
     List<AnnouncementVO> getAnnouncementThreads(Integer topicId);
+
+    /**
+     * 获取全局公告帖子列表
+     * @return 公告视图对象列表
+     */
+    List<AnnouncementVO> getGlobalAnnouncementThreads();
 
     /**
      * 创建新帖子
@@ -127,6 +181,43 @@ public interface ThreaddService extends IService<Threadd> {
      * @return 操作结果消息;成功返回null,失败返回错误描述
      */
     String insertThread(ThreadDTO threadDTO, Integer accountId);
+
+    /**
+     * 编辑已发布的帖子（仅作者）
+     *
+     * 写入快照到 thread_edit_history 后，再用新的标题与正文覆盖当前帖子。
+     *
+     * @param threadId 帖子ID
+     * @param threadDTO 帖子数据传输对象, 只读取 title 与 content
+     * @param accountId 编辑者账号ID, 必须是帖子作者
+     * @return 操作结果消息;成功返回null,失败返回错误描述
+     */
+    String editThread(Integer threadId, ThreadDTO threadDTO, Integer accountId);
+
+    /**
+     * 统计帖子的编辑次数
+     * @param threadId 帖子ID
+     * @return 编辑历史行数
+     */
+    Integer countEdits(Integer threadId);
+
+    /**
+     * 获取帖子的编辑历史（公开）
+     *
+     * 返回的列表不包含标题与正文快照, 仅含编辑时间和编辑者信息。
+     *
+     * @param threadId 帖子ID
+     * @return 编辑历史视图对象列表, 按 editTime 倒序
+     */
+    List<ThreadEditHistoryVO> listEditHistory(Integer threadId);
+
+    /**
+     * 获取帖子的编辑历史（含快照, 仅版主/所有者）
+     *
+     * @param threadId 帖子ID
+     * @return 编辑历史视图对象列表, 含 title 与 content 快照, 按 editTime 倒序
+     */
+    List<ThreadEditHistoryDetailVO> listEditHistoryWithSnapshots(Integer threadId);
 
     /**
      * 更新帖子标签

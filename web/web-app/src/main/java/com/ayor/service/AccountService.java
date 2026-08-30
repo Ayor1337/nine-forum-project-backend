@@ -3,13 +3,17 @@ package com.ayor.service;
 import com.ayor.entity.Base64Upload;
 import com.ayor.entity.PageEntity;
 import com.ayor.entity.dto.AccountDTO;
-import com.ayor.entity.dto.AccountProfileDTO;
+import com.ayor.entity.dto.UserProfileDTO;
 import com.ayor.entity.dto.PasswordChangeDTO;
-import com.ayor.entity.vo.AccountInfoVO;
+import com.ayor.entity.vo.UserProfileVO;
+import com.ayor.entity.vo.UserAvatarVO;
+import com.ayor.entity.vo.UserAvatarItemVO;
 import com.ayor.entity.vo.UserInfoVO;
 import com.ayor.entity.pojo.Account;
 import com.baomidou.mybatisplus.extension.service.IService;
 import org.springframework.security.core.userdetails.UserDetailsService;
+
+import java.util.List;
 
 /**
  * 用户账户服务接口
@@ -51,9 +55,25 @@ public interface AccountService extends UserDetailsService, IService<Account> {
      */
     UserInfoVO getPublicUserInfo(Integer viewerId, Integer accountId);
 
-    AccountInfoVO getMyAccountInfo(Integer accountId);
+    /**
+     * 根据用户 ID 获取头像、已装备的头像框与徽章。
+     *
+     * @param accountId 用户ID
+     * @return 头像与装饰信息；用户不存在时返回 null
+     */
+    UserAvatarVO getUserAvatar(Integer accountId);
 
-    AccountInfoVO getPublicAccountInfo(Integer viewerId, Integer accountId);
+    /**
+     * 批量获取用户头像映射。
+     *
+     * @param accountIds 用户 ID 列表
+     * @return 按首次出现的用户 ID 顺序返回的头像映射，不存在的用户会被省略
+     */
+    List<UserAvatarItemVO> getUserAvatars(List<Integer> accountIds);
+
+    UserProfileVO getMyProfile(Integer accountId);
+
+    UserProfileVO getPublicProfile(Integer viewerId, Integer accountId);
 
     /**
      * 获取指定用户的粉丝列表。
@@ -103,7 +123,7 @@ public interface AccountService extends UserDetailsService, IService<Account> {
      */
     String insertNewAccount(AccountDTO accountDTO);
 
-    String updateUserProfile(Integer accountId, AccountProfileDTO profileDTO);
+    String updateUserProfile(Integer accountId, UserProfileDTO profileDTO);
 
     String updatePasswordWithOld(String token, PasswordChangeDTO pwDto);
 }

@@ -31,6 +31,7 @@ class UserBroadcastServiceImplTest {
     @Mock
     private RabbitTemplate rabbitTemplate;
 
+    // 测试发送系统消息到每个有效账号
     @Test
     void shouldSendSystemMessageToEveryValidAccount() {
         UserBroadcastServiceImpl service = new UserBroadcastServiceImpl(accountMapper, rabbitTemplate);
@@ -50,6 +51,7 @@ class UserBroadcastServiceImplTest {
         assertEquals(List.of(1, 2), captor.getAllValues().stream().map(UserSystemMessage::getSendTo).toList());
     }
 
+    // 测试拒绝整条广播当任一账号为已删除
     @Test
     void shouldRejectWholeBroadcastWhenAnyAccountIsDeleted() {
         UserBroadcastServiceImpl service = new UserBroadcastServiceImpl(accountMapper, rabbitTemplate);

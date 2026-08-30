@@ -30,6 +30,12 @@ public class JWTUtils {
     @Value("${spring.security.jwt.expire}")
     int expire;
 
+    public record LoginJwt(String token, String jwtId, String sessionId, Date expireTime) {
+    }
+
+    public record EmailJwt(String token, String jwtId, Date expireTime) {
+    }
+
     /**
      * 将指定 JWT 加入黑名单，使其失效。
      *
@@ -97,16 +103,27 @@ public class JWTUtils {
      * @return JWT 字符串
      */
     public String createJwt(UserDetails userDetails, int id, String username) {
+        return createLoginJwt(userDetails, id, username, null).token();
+    }
+
+    /**
+     * 创建带会话 ID 的登录态 JWT，并返回 token 元数据。
+     */
+    public LoginJwt createLoginJwt(UserDetails userDetails, int id, String username, String sessionId) {
         Algorithm algorithm = Algorithm.HMAC256(key);
-        Date expire = this.expiredTime();
-        return JWT.create()
-                .withJWTId(UUID.randomUUID().toString())
+        Date expireTime = this.expiredTime();
+        String jwtId = UUID.randomUUID().toString();
+        com.auth0.jwt.JWTCreator.Builder builder = JWT.create()
+                .withJWTId(jwtId)
                 .withClaim("id", id)
                 .withClaim("name", username)
                 .withClaim("authorities", userDetails.getAuthorities().stream().map(GrantedAuthority::getAuthority).toList())
-                .withExpiresAt(expire)
-                .withIssuedAt(new Date())
-                .sign(algorithm);
+                .withExpiresAt(expireTime)
+                .withIssuedAt(new Date());
+        if (sessionId != null) {
+            builder.withClaim("sid", sessionId);
+        }
+        return new LoginJwt(builder.sign(algorithm), jwtId, sessionId, expireTime);
     }
 
     /**
@@ -116,17 +133,37 @@ public class JWTUtils {
      * @return JWT 字符串
      */
     public String createJwt(String email) {
+        return createEmailJwt(email, newEmailJwtId()).token();
+    }
+
+    /**
+     * 生成新的邮箱验证 JWT ID。
+     *
+     * @return 随机 JWT ID
+     */
+    public String newEmailJwtId() {
+        return UUID.randomUUID().toString();
+    }
+
+    /**
+     * 使用预先确定的 JWT ID 创建邮箱验证 JWT。
+     *
+     * @param email 邮箱地址
+     * @param jwtId JWT ID
+     * @return JWT 及其元数据
+     */
+    public EmailJwt createEmailJwt(String email, String jwtId) {
         Algorithm algorithm = Algorithm.HMAC256(key);
         Date expire = this.expiredHourTime();
-        String uuid = UUID.randomUUID().toString();
         String token = JWT.create()
-                .withJWTId(uuid)
+                .withJWTId(jwtId)
                 .withClaim("email", email)
                 .withExpiresAt(expire)
                 .withIssuedAt(new Date())
                 .sign(algorithm);
-        template.opsForValue().set(CONST.JWT_EMAIL_VERIFY + uuid, "", expire.getTime(), TimeUnit.MILLISECONDS);
-        return token;
+        long remainingMillis = Math.max(expire.getTime() - System.currentTimeMillis(), 0);
+        template.opsForValue().set(CONST.JWT_EMAIL_VERIFY + jwtId, "", remainingMillis, TimeUnit.MILLISECONDS);
+        return new EmailJwt(token, jwtId, expire);
     }
 
 
@@ -146,6 +183,10 @@ public class JWTUtils {
         try {
             DecodedJWT verify = jwtVerifier.verify(convertedToken);
             if (this.isInvalidToken(verify.getId())) {
+                return null;
+            }
+            String sessionId = verify.getClaim("sid").asString();
+            if (sessionId != null && Boolean.FALSE.equals(template.hasKey(CONST.LOGIN_SESSION_ACTIVE + sessionId))) {
                 return null;
             }
             Date expiresAt = verify.getExpiresAt();
@@ -187,6 +228,22 @@ public class JWTUtils {
         if (token == null || !token.startsWith("Bearer "))
             return null;
         return token.substring("Bearer ".length());
+    }
+
+    /**
+     * 校验并原子消费邮箱验证 JWT。只有成功删除 Redis key 的调用者能获得解析结果。
+     *
+     * @param token JWT 字符串
+     * @return 首次消费成功返回 JWT 对象，否则返回 null
+     */
+    public DecodedJWT consumeEmailJwt(String token) {
+        DecodedJWT decodedJWT = resolveEmailJwt(token);
+        if (decodedJWT == null) {
+            return null;
+        }
+        return Boolean.TRUE.equals(template.delete(CONST.JWT_EMAIL_VERIFY + decodedJWT.getId()))
+                ? decodedJWT
+                : null;
     }
 
     /**

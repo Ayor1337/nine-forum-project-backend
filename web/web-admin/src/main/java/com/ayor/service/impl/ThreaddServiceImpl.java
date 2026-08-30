@@ -9,6 +9,7 @@ import com.ayor.mapper.AccountMapper;
 import com.ayor.mapper.TagMapper;
 import com.ayor.mapper.ThreaddMapper;
 import com.ayor.mapper.TopicMapper;
+import com.ayor.mq.EsIndexSyncProducer;
 import com.ayor.service.ThreaddService;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -32,6 +33,8 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
     private final TopicMapper topicMapper;
 
     private final TagMapper tagMapper;
+
+    private final EsIndexSyncProducer esIndexSyncProducer;
 
     /**
      * 分页查询帖子列表，并补充发帖人和话题名称。
@@ -83,7 +86,11 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
         }
         threadd.setUpdateTime(now);
         threadd.setIsDeleted(false);
-        return this.save(threadd) ? null : "创建帖子失败";
+        if (!this.save(threadd)) {
+            return "创建帖子失败";
+        }
+        esIndexSyncProducer.syncThread(threadd.getThreadId());
+        return null;
     }
 
     /**
@@ -104,7 +111,11 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
             threadd.setCreateTime(originalCreateTime);
         }
         threadd.setUpdateTime(new Date());
-        return this.updateById(threadd) ? null : "更新帖子失败";
+        if (!this.updateById(threadd)) {
+            return "更新帖子失败";
+        }
+        esIndexSyncProducer.syncThread(threadd.getThreadId());
+        return null;
     }
 
     /**
@@ -120,7 +131,11 @@ public class ThreaddServiceImpl extends ServiceImpl<ThreaddMapper, Threadd> impl
             return "帖子不存在";
         }
         threadd.setIsDeleted(true);
-        return this.updateById(threadd) ? null : "删除帖子失败";
+        if (!this.updateById(threadd)) {
+            return "删除帖子失败";
+        }
+        esIndexSyncProducer.syncThread(threadId);
+        return null;
     }
 
     /**

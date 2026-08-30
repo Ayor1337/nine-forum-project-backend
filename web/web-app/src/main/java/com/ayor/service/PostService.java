@@ -2,7 +2,10 @@ package com.ayor.service;
 
 import com.ayor.entity.PageEntity;
 import com.ayor.entity.document.ThreadDoc;
+import com.ayor.entity.dto.PostEditDTO;
 import com.ayor.entity.dto.PostDTO;
+import com.ayor.entity.vo.PostEditHistoryDetailVO;
+import com.ayor.entity.vo.PostEditHistoryVO;
 import com.ayor.entity.vo.PostVO;
 import com.ayor.entity.vo.ReplyMessageVO;
 import com.ayor.entity.pojo.Post;
@@ -41,7 +44,7 @@ public interface PostService extends IService<Post> {
      * @param pageSize 每页记录数
      * @return 分页结果,包含评论内容、作者信息等
      */
-    PageEntity<PostVO> getPostsByThreadId(Integer threadId, Integer pageNum, Integer pageSize);
+    PageEntity<PostVO> getPostsByThreadId(Integer viewerId, Integer threadId, Integer pageNum, Integer pageSize);
 
     /**
      * 发布新评论
@@ -54,6 +57,43 @@ public interface PostService extends IService<Post> {
      * @note 会触发WebSocket消息推送给被回复用户
      */
     String insertPost(PostDTO postDTO, Integer userId);
+
+    /**
+     * 编辑已发布的评论（仅作者）。
+     *
+     * 写入旧正文快照到 post_edit_history 后，再用新正文覆盖当前评论。
+     *
+     * @param postId 评论ID
+     * @param postEditDTO 评论编辑数据, 只读取 content
+     * @param accountId 编辑者账号ID, 必须是评论作者
+     * @return 操作结果消息;成功返回null,失败返回错误描述
+     */
+    String editPost(Integer postId, PostEditDTO postEditDTO, Integer accountId);
+
+    /**
+     * 统计评论的编辑次数。
+     * @param postId 评论ID
+     * @return 编辑历史行数
+     */
+    Integer countEdits(Integer postId);
+
+    /**
+     * 获取评论的公开编辑历史。
+     *
+     * 返回的列表不包含正文快照, 仅含编辑时间和编辑者信息。
+     *
+     * @param postId 评论ID
+     * @return 编辑历史视图对象列表, 按 editTime 倒序
+     */
+    List<PostEditHistoryVO> listEditHistory(Integer postId);
+
+    /**
+     * 获取评论的编辑历史（含快照, 仅版主）。
+     *
+     * @param postId 评论ID
+     * @return 编辑历史视图对象列表, 含 content 快照, 按 editTime 倒序
+     */
+    List<PostEditHistoryDetailVO> listEditHistoryWithSnapshots(Integer postId);
 
     /**
      * 删除评论(用户操作,逻辑删除)

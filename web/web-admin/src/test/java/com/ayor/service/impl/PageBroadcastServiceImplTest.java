@@ -47,6 +47,7 @@ class PageBroadcastServiceImplTest {
     @Mock
     private TopicMapper topicMapper;
 
+    // 测试存储主题广播并发布创建事件
     @Test
     void shouldStoreTopicBroadcastAndPublishCreatedEvent() {
         PageBroadcastServiceImpl service = new PageBroadcastServiceImpl(
@@ -78,6 +79,7 @@ class PageBroadcastServiceImplTest {
         assertEquals(12, captor.getValue().getScopeId());
     }
 
+    // 测试缺少开始和结束时间时存储无时间限制广播
     @Test
     void shouldStoreBroadcastWithoutTimeLimitWhenStartAndEndTimeAreMissing() {
         PageBroadcastServiceImpl service = new PageBroadcastServiceImpl(

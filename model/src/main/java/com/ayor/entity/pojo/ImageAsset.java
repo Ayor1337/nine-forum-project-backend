@@ -45,8 +45,6 @@ public class ImageAsset {
 
     private String assetType;
 
-    private String visibility;
-
     private String status;
 
     private Integer favoriteCount;

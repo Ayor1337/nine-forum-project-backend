@@ -12,6 +12,9 @@ import org.springframework.stereotype.Service;
 
 import java.util.Objects;
 
+/**
+ * 分区统计服务实现
+ */
 @Service
 @RequiredArgsConstructor
 public class TopicStatServiceImpl extends ServiceImpl<TopicStatMapper, TopicStat> implements TopicStatService {

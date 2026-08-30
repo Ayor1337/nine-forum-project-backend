@@ -18,19 +18,21 @@ import com.ayor.service.ImageAssetService;
 import com.ayor.type.ImageAssetSourceType;
 import com.ayor.type.ImageAssetStatus;
 import com.ayor.type.ImageAssetType;
-import com.ayor.type.ImageAssetVisibility;
-import com.ayor.util.TipTapUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
+
+/**
+ * 图片资源服务实现
+ */
+
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -51,15 +53,13 @@ public class ImageAssetServiceImpl extends ServiceImpl<ImageAssetMapper, ImageAs
 
     private final MinioService minioService;
 
-    private final TipTapUtils tipTapUtils;
-
     @Override
     public String upload(Integer accountId, Base64Upload upload) {
         if (accountId == null) {
             throw new IllegalArgumentException("用户不存在");
         }
         StoredImage storedImage = imageStorageService.storeStickerBase64Image(upload, "stickers/" + accountId + "/");
-        ImageAsset asset = buildAsset(accountId, storedImage, ImageAssetSourceType.UPLOAD.name(), ImageAssetType.STICKER.name(), ImageAssetVisibility.PRIVATE.name());
+        ImageAsset asset = buildAsset(accountId, storedImage, ImageAssetSourceType.UPLOAD.name(), ImageAssetType.STICKER.name());
         this.save(asset);
         imageAssetFavoriteMapper.insert(new ImageAssetFavorite(null, accountId, asset.getAssetId(), new Date()));
         refreshAddedCount(asset.getAssetId());
@@ -91,7 +91,7 @@ public class ImageAssetServiceImpl extends ServiceImpl<ImageAssetMapper, ImageAs
         if (!ImageAssetType.STICKER.name().equals(asset.getAssetType())) {
             return "该资源不是表情包";
         }
-        if (!ImageAssetStatus.ACTIVE.name().equals(asset.getStatus())) {
+        if (!isAvailable(asset)) {
             return "资源不可用";
         }
         if (imageAssetFavoriteMapper.findMembership(accountId, assetId) != null) {
@@ -138,42 +138,12 @@ public class ImageAssetServiceImpl extends ServiceImpl<ImageAssetMapper, ImageAs
     }
 
     @Override
-    public String deleteStickerResource(Integer accountId, Integer assetId) {
-        if (accountId == null) {
-            return "用户不存在";
-        }
-        ImageAsset asset = this.getById(assetId);
-        if (asset == null) {
-            return "资源不存在";
-        }
-        if (!Objects.equals(asset.getAccountId(), accountId)) {
-            return "没有权限";
-        }
-        if (!ImageAssetType.STICKER.name().equals(asset.getAssetType())) {
-            return "只能删除自己的表情包资源";
-        }
-        ImageAssetFavorite ownerMembership = imageAssetFavoriteMapper.findMembership(accountId, assetId);
-        refreshAddedCount(assetId);
-        refreshUseCount(assetId);
-        ImageAsset latestAsset = this.getById(assetId);
-        int selfMembershipCount = ownerMembership == null ? 0 : 1;
-        if (latestAsset.getFavoriteCount() <= selfMembershipCount && latestAsset.getUseCount() == 0) {
-            deleteObjectIfNecessary(latestAsset);
-            this.removeById(assetId);
-            return null;
-        }
-        latestAsset.setStatus(ImageAssetStatus.DISABLED.name());
-        latestAsset.setUpdateTime(new Date());
-        return this.updateById(latestAsset) ? null : "删除资源失败";
-    }
-
-    @Override
     public StickerVO getDetail(Integer accountId, Integer assetId) {
         ImageAsset asset = this.getById(assetId);
         if (asset == null) {
             return null;
         }
-        if (!ImageAssetType.STICKER.name().equals(asset.getAssetType())) {
+        if (!ImageAssetType.STICKER.name().equals(asset.getAssetType()) || !isAvailable(asset)) {
             return null;
         }
         boolean added = accountId != null
@@ -182,13 +152,13 @@ public class ImageAssetServiceImpl extends ServiceImpl<ImageAssetMapper, ImageAs
     }
 
     @Override
-    public void syncContentRefs(String contentType, Integer contentId, String content, Integer accountId) {
+    public void syncContentRefs(String contentType, Integer contentId, List<String> imageUrls, Integer accountId) {
         List<Integer> oldAssetIds = new ArrayList<>(contentImageRefMapper.selectAssetIdsByContent(contentType, contentId));
         contentImageRefMapper.deleteByContent(contentType, contentId);
 
         Set<Integer> touchedAssetIds = new LinkedHashSet<>(oldAssetIds);
-        if (content != null && !content.isBlank()) {
-            Set<String> urls = new LinkedHashSet<>(tipTapUtils.extractAllImageUrls(content));
+        if (imageUrls != null && !imageUrls.isEmpty()) {
+            Set<String> urls = new LinkedHashSet<>(imageUrls);
             for (String url : urls) {
                 ImageAsset asset = getOrIngestAssetByUrl(url, accountId);
                 if (asset == null) {
@@ -216,12 +186,12 @@ public class ImageAssetServiceImpl extends ServiceImpl<ImageAssetMapper, ImageAs
         }
         ImageAsset existing = this.baseMapper.findByUrl(normalizedUrl);
         if (existing != null) {
-            return existing;
+            return isAvailable(existing) ? existing : null;
         }
 
         byte[] bytes = minioService.getObjectBytes(normalizedUrl);
         ProcessedImage image = imageProcessor.inspectStoredImage(bytes, normalizedUrl);
-        ImageAsset asset = buildAsset(accountId, image, ImageAssetSourceType.CONTENT.name(), ImageAssetType.IMAGE.name(), ImageAssetVisibility.PUBLIC.name());
+        ImageAsset asset = buildAsset(accountId, image, ImageAssetSourceType.CONTENT.name(), ImageAssetType.IMAGE.name());
         asset.setUrl(normalizedUrl);
         asset.setObjectPath(minioService.extractObjectName(normalizedUrl));
         this.save(asset);
@@ -234,8 +204,13 @@ public class ImageAssetServiceImpl extends ServiceImpl<ImageAssetMapper, ImageAs
             return null;
         }
         ImageAsset existing = this.baseMapper.findByUrl(normalizedUrl);
-        if (existing != null && ImageAssetType.STICKER.name().equals(existing.getAssetType())) {
-            return existing;
+        if (existing != null) {
+            if (!isAvailable(existing)) {
+                throw new IllegalArgumentException("资源不可用");
+            }
+            if (ImageAssetType.STICKER.name().equals(existing.getAssetType())) {
+                return existing;
+            }
         }
 
         byte[] bytes = minioService.getObjectBytes(normalizedUrl);
@@ -249,7 +224,7 @@ public class ImageAssetServiceImpl extends ServiceImpl<ImageAssetMapper, ImageAs
                 new Base64Upload(dataUrl, "sticker." + sourceImage.getOriginalExt()),
                 "stickers/" + accountId + "/"
         );
-        ImageAsset asset = buildAsset(accountId, stickerImage, ImageAssetSourceType.CONTENT.name(), ImageAssetType.STICKER.name(), ImageAssetVisibility.PRIVATE.name());
+        ImageAsset asset = buildAsset(accountId, stickerImage, ImageAssetSourceType.CONTENT.name(), ImageAssetType.STICKER.name());
         this.save(asset);
         return asset;
     }
@@ -257,8 +232,7 @@ public class ImageAssetServiceImpl extends ServiceImpl<ImageAssetMapper, ImageAs
     private ImageAsset buildAsset(Integer accountId,
                                   ProcessedImage image,
                                   String sourceType,
-                                  String assetType,
-                                  String visibility) {
+                                  String assetType) {
         Date now = new Date();
         ImageAsset asset = new ImageAsset();
         asset.setAccountId(accountId);
@@ -271,7 +245,6 @@ public class ImageAssetServiceImpl extends ServiceImpl<ImageAssetMapper, ImageAs
         asset.setSha256(image.getSha256());
         asset.setSourceType(sourceType);
         asset.setAssetType(assetType);
-        asset.setVisibility(visibility);
         asset.setStatus(ImageAssetStatus.ACTIVE.name());
         asset.setFavoriteCount(0);
         asset.setUseCount(0);
@@ -284,12 +257,16 @@ public class ImageAssetServiceImpl extends ServiceImpl<ImageAssetMapper, ImageAs
         return asset;
     }
 
+    private boolean isAvailable(ImageAsset asset) {
+        return ImageAssetStatus.ACTIVE.name().equals(asset.getStatus());
+    }
+
     private StickerVO toVO(ImageAsset asset, boolean added) {
         StickerVO vo = new StickerVO();
         BeanUtils.copyProperties(asset, vo);
         vo.setAddedCount(asset.getFavoriteCount());
         vo.setAdded(added);
-        vo.setAvailable(ImageAssetStatus.ACTIVE.name().equals(asset.getStatus()));
+        vo.setAvailable(isAvailable(asset));
         return vo;
     }
 
@@ -299,16 +276,6 @@ public class ImageAssetServiceImpl extends ServiceImpl<ImageAssetMapper, ImageAs
 
     private void refreshUseCount(Integer assetId) {
         this.baseMapper.refreshUseCount(assetId);
-    }
-
-    private void deleteObjectIfNecessary(ImageAsset asset) {
-        if (asset.getUrl() == null || !minioService.isOwnObjectUrl(asset.getUrl())) {
-            return;
-        }
-        try {
-            minioService.deleteFile(minioService.extractObjectName(asset.getUrl()));
-        } catch (Exception ignored) {
-        }
     }
 
     private int normalizePage(Integer pageNum) {

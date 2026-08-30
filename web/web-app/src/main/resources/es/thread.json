@@ -1,0 +1,21 @@
+{
+  "settings": {
+    "number_of_shards": 1,
+    "number_of_replicas": 0
+  },
+  "mappings": {
+    "properties": {
+      "threadId": { "type": "integer" },
+      "accountId": { "type": "integer" },
+      "topicId": { "type": "integer" },
+      "title": { "type": "text", "analyzer": "ik_max_word", "search_analyzer": "ik_smart" },
+      "content": { "type": "text", "analyzer": "ik_max_word", "search_analyzer": "ik_smart" },
+      "viewCount": { "type": "integer", "index": false },
+      "likeCount": { "type": "integer", "index": false },
+      "collectCount": { "type": "integer", "index": false },
+      "createTime": { "type": "date", "format": "strict_date_optional_time||epoch_millis" },
+      "updateTime": { "type": "date", "index": false, "format": "strict_date_optional_time||epoch_millis" },
+      "isThreadTopic": { "type": "boolean" }
+    }
+  }
+}

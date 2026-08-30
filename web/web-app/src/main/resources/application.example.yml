@@ -48,6 +48,15 @@ server:
 
 nine-forum:
   public-base-url: http://localhost:9966
+  registration-verification:
+    idempotency-seconds: 60
+    email-limit: 3
+    email-window-seconds: 900
+    ip-limit: 10
+    ip-window-seconds: 900
+    global-limit: 100
+    global-window-seconds: 600
+    global-alert-percent: 80
   cors:
     allowed-origins:
       - http://10.111.45.135

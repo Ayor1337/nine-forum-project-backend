@@ -24,4 +24,16 @@ public class ConversationVO implements Serializable {
 
     private Date updateTime;
 
+    private Integer lastMessageId;
+
+    private String lastMessageContent;
+
+    private Date lastMessageTime;
+
+    private Integer lastMessageSenderId;
+
+    private Boolean pinned;
+
+    private Boolean partnerOnline;
+
 }

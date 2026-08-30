@@ -6,6 +6,8 @@ import com.ayor.type.RelationType;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.util.List;
+
 /**
  * 用户关系数据访问层。
  */
@@ -31,4 +33,9 @@ public interface UserRelationMapper extends BaseMapper<UserRelation> {
      */
     boolean existsBlockedEitherDirection(@Param("firstAccountId") Integer firstAccountId,
                                          @Param("secondAccountId") Integer secondAccountId);
+
+    /**
+     * 查询与指定用户存在任一方向有效拉黑关系的账号 ID。
+     */
+    List<Integer> listBlockedAccountIdsEitherDirection(@Param("accountId") Integer accountId);
 }

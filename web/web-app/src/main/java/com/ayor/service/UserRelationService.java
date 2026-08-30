@@ -5,6 +5,8 @@ import com.ayor.entity.vo.UserInfoVO;
 import com.ayor.entity.pojo.UserRelation;
 import com.baomidou.mybatisplus.extension.service.IService;
 
+import java.util.List;
+
 /**
  * 用户关系服务接口。
  */
@@ -27,6 +29,14 @@ public interface UserRelationService extends IService<UserRelation> {
      * @return 操作结果消息;成功返回null,失败返回错误描述
      */
     String unfollow(Integer fromAccountId, Integer toAccountId);
+
+    /**
+     * 失效指定方向的关注关系。
+     *
+     * @param fromAccountId 发起关注的用户ID
+     * @param toAccountId 被关注用户ID
+     */
+    void deactivateFollowIfPresent(Integer fromAccountId, Integer toAccountId);
 
     /**
      * 拉黑指定用户。
@@ -65,6 +75,15 @@ public interface UserRelationService extends IService<UserRelation> {
     boolean isMutualFollowing(Integer firstAccountId, Integer secondAccountId);
 
     /**
+     * 判断指定方向是否存在拉黑关系。
+     *
+     * @param fromAccountId 发起拉黑的用户ID
+     * @param toAccountId 被拉黑用户ID
+     * @return true=已拉黑,false=未拉黑
+     */
+    boolean isBlocked(Integer fromAccountId, Integer toAccountId);
+
+    /**
      * 判断两个用户之间是否存在任一方向的拉黑关系。
      *
      * @param firstAccountId 第一个用户ID
@@ -72,6 +91,14 @@ public interface UserRelationService extends IService<UserRelation> {
      * @return true=存在拉黑,false=不存在拉黑
      */
     boolean isBlockedEitherDirection(Integer firstAccountId, Integer secondAccountId);
+
+    /**
+     * 获取与指定用户存在任一方向拉黑关系的账号 ID。
+     *
+     * @param accountId 当前账号 ID
+     * @return 被当前用户拉黑或拉黑当前用户的账号 ID 列表
+     */
+    List<Integer> listBlockedAccountIdsEitherDirection(Integer accountId);
 
     /**
      * 获取用户粉丝列表。

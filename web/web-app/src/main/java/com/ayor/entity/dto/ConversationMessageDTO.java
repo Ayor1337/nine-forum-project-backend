@@ -16,7 +16,6 @@ public class ConversationMessageDTO {
     @NotNull
     private String content;
 
-    @NotNull
     private Integer toUserId;
 
 }

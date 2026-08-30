@@ -16,6 +16,7 @@ class DashboardStatisticsServiceImplTest {
     @Mock
     private DashboardMapper dashboardMapper;
 
+    // 测试刷新仪表盘动态通过 Mapper
     @Test
     void shouldRefreshDashboardActivitiesThroughMapper() {
         DashboardStatisticsServiceImpl service = new DashboardStatisticsServiceImpl(dashboardMapper);

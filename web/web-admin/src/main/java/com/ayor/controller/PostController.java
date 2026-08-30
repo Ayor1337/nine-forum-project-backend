@@ -15,7 +15,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
+@Tag(name = "回帖管理", description = "后台回帖管理接口")
 @RestController
 @RequestMapping("/api/posts")
 @RequiredArgsConstructor
@@ -26,11 +30,12 @@ public class PostController {
     /**
      * 分页查询回帖列表，可按帖子或用户过滤。
      */
+    @Operation(summary = "分页查询回帖列表，可按帖子或用户过滤")
     @GetMapping
-    public Result<PageEntity<Post>> listPosts(@RequestParam(value = "thread_id", required = false) Integer threadId,
-                                              @RequestParam(value = "account_id", required = false) Integer accountId,
-                                              @RequestParam("page_num") Integer pageNum,
-                                              @RequestParam(value = "page_size", defaultValue = "10") Integer pageSize) {
+    public Result<PageEntity<Post>> listPosts(@Parameter(description = "帖子ID") @RequestParam(value = "thread_id", required = false) Integer threadId,
+                                              @Parameter(description = "用户ID") @RequestParam(value = "account_id", required = false) Integer accountId,
+                                              @Parameter(description = "页码") @RequestParam("page_num") Integer pageNum,
+                                              @Parameter(description = "每页数量") @RequestParam(value = "page_size", defaultValue = "10") Integer pageSize) {
         if (threadId != null) {
             return Result.dataMessageHandler(() -> postService.getPostsByThreadId(threadId, pageNum, pageSize), "获取帖子回复失败");
         }
@@ -43,24 +48,27 @@ public class PostController {
     /**
      * 读取单条回帖详情。
      */
+    @Operation(summary = "读取单条回帖详情")
     @GetMapping("/{postId}")
-    public Result<Post> getPost(@PathVariable("postId") Integer postId) {
+    public Result<Post> getPost(@Parameter(description = "回帖ID") @PathVariable("postId") Integer postId) {
         return Result.dataMessageHandler(() -> postService.getPostById(postId), "获取回复失败");
     }
 
     /**
      * 创建回帖。
      */
+    @Operation(summary = "创建回帖")
     @PostMapping
-    public Result<Void> createPost(@RequestBody Post post) {
+    public Result<Void> createPost(@Parameter(description = "回帖信息") @RequestBody Post post) {
         return Result.messageHandler(() -> postService.createPost(post));
     }
 
     /**
      * 更新回帖内容。
      */
+    @Operation(summary = "更新回帖内容")
     @PutMapping("/{postId}")
-    public Result<Void> updatePost(@PathVariable("postId") Integer postId, @RequestBody Post post) {
+    public Result<Void> updatePost(@Parameter(description = "回帖ID") @PathVariable("postId") Integer postId, @RequestBody Post post) {
         post.setPostId(postId);
         return Result.messageHandler(() -> postService.updatePost(post));
     }
@@ -68,8 +76,9 @@ public class PostController {
     /**
      * 删除指定回帖。
      */
+    @Operation(summary = "删除指定回帖")
     @DeleteMapping("/{postId}")
-    public Result<Void> deletePost(@PathVariable("postId") Integer postId) {
+    public Result<Void> deletePost(@Parameter(description = "回帖ID") @PathVariable("postId") Integer postId) {
         return Result.messageHandler(() -> postService.deletePost(postId));
     }
 }

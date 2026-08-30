@@ -2,29 +2,42 @@ package com.ayor.controller;
 
 import com.ayor.entity.Base64Upload;
 import com.ayor.entity.PageEntity;
-import com.ayor.entity.dto.AccountProfileDTO;
+import com.ayor.entity.dto.UserProfileDTO;
 import com.ayor.entity.dto.PasswordChangeDTO;
 import com.ayor.entity.dto.UserReportDTO;
 import com.ayor.entity.dto.UserPrivacySettingDTO;
 import com.ayor.entity.vo.AccountStatVO;
-import com.ayor.entity.vo.AccountInfoVO;
+import com.ayor.entity.vo.LoginSessionVO;
+import com.ayor.entity.vo.UserAvatarVO;
+import com.ayor.entity.vo.UserAvatarItemVO;
+import com.ayor.entity.vo.UserProfileVO;
 import com.ayor.entity.vo.UserInfoVO;
 import com.ayor.entity.vo.UserPrivacySettingVO;
 import com.ayor.result.Result;
 import com.ayor.service.AccountService;
 import com.ayor.service.AccountStatService;
 import com.ayor.service.ReportService;
+import com.ayor.service.UserLoginSessionService;
 import com.ayor.service.UserPrivacySettingService;
 import com.ayor.service.UserRelationService;
+import com.ayor.util.JWTUtils;
 import com.ayor.util.SecurityUtils;
+import com.auth0.jwt.interfaces.DecodedJWT;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Objects;
 
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/users")
+@Tag(name = "用户")
 public class UserController {
 
     private final AccountService accountService;
@@ -38,112 +51,140 @@ public class UserController {
     private final UserRelationService userRelationService;
 
     private final ReportService reportService;
+
+    private final UserLoginSessionService loginSessionService;
+
+    private final JWTUtils jwtUtils;
+
     /**
      * 获取当前登录用户的资料。
-     *
-     * @return 当前登录用户资料
      */
+    @Operation(summary = "获取当前登录用户的资料")
     @GetMapping("/me")
     public Result<UserInfoVO> getUserInfo() {
         Integer userId = security.getSecurityUserId();
         return Result.dataMessageHandler(() -> accountService.getUserInfo(userId), "获取用户信息失败,用户可能不存在");
     }
 
+    @Operation(summary = "获取当前用户登录会话列表")
+    @GetMapping("/me/sessions")
+    public Result<PageEntity<LoginSessionVO>> listLoginSessions(HttpServletRequest request,
+                                                                @Parameter(description = "页码") @RequestParam(name = "page_num", defaultValue = "1") Integer pageNum,
+                                                                @Parameter(description = "每页数量") @RequestParam(name = "page_size", defaultValue = "12") Integer pageSize) {
+        Integer userId = security.getSecurityUserId();
+        return Result.dataMessageHandler(() -> loginSessionService.listSessions(userId, currentSessionId(request), pageNum, pageSize), "获取登录会话失败");
+    }
+
+    @Operation(summary = "撤销指定登录会话")
+    @DeleteMapping("/me/sessions/{session_id}")
+    public Result<Void> revokeLoginSession(@Parameter(description = "会话 ID") @PathVariable("session_id") String sessionId,
+                                           HttpServletRequest request) {
+        Integer userId = security.getSecurityUserId();
+        return Result.messageHandler(() -> loginSessionService.revokeSession(userId, sessionId, currentSessionId(request)));
+    }
+
     /**
      * 根据用户 ID 获取公开资料。
-     *
-     * @param userId 目标用户ID
-     * @return 公开用户资料
      */
+    @Operation(summary = "根据用户 ID 获取公开资料")
     @GetMapping("/{user_id}")
-    public Result<UserInfoVO> getUserInfoByUserId(@PathVariable("user_id") Integer userId) {
-        Integer viewerId = security.getSecurityUserId();
+    public Result<UserInfoVO> getUserInfoByUserId(@Parameter(description = "用户 ID") @PathVariable("user_id") Integer userId) {
+        Integer viewerId = security.getOptionalSecurityUserId();
         return Result.dataMessageHandler(() -> accountService.getPublicUserInfo(viewerId, userId), "获取用户信息失败,用户可能不存在");
     }
 
     /**
-     * 根据用户 ID 获取统计概览。
-     *
-     * @param userId 目标用户ID
-     * @return 用户统计数据，包含帖子、主题等聚合信息
+     * 根据用户 ID 获取头像与已装备的头像框。
      */
+    @Operation(summary = "根据用户 ID 获取头像与头像框")
+    @GetMapping("/{user_id}/avatar")
+    public Result<UserAvatarVO> getUserAvatar(@Parameter(description = "用户 ID") @PathVariable("user_id") Integer userId) {
+        return Result.dataMessageHandler(() -> accountService.getUserAvatar(userId), "获取用户头像失败,用户可能不存在");
+    }
+
+    /**
+     * 批量获取用户头像映射。
+     */
+    @Operation(summary = "批量获取用户头像")
+    @GetMapping("/avatars")
+    public Result<List<UserAvatarItemVO>> getUserAvatars(
+            @Parameter(description = "用户 ID 列表，支持逗号分隔或重复参数") @RequestParam("user_ids") List<Integer> userIds) {
+        if (userIds == null || userIds.isEmpty() || userIds.size() > 100 || userIds.stream().anyMatch(Objects::isNull)) {
+            return Result.fail(203, "请求参数内容有误");
+        }
+        return Result.ok(accountService.getUserAvatars(userIds));
+    }
+
+    /**
+     * 根据用户 ID 获取统计概览。
+     */
+    @Operation(summary = "根据用户 ID 获取统计概览")
     @GetMapping("/{user_id}/stats")
-    public Result<AccountStatVO> getAccountStatInfo(@PathVariable("user_id") Integer userId) {
+    public Result<AccountStatVO> getAccountStatInfo(@Parameter(description = "用户 ID") @PathVariable("user_id") Integer userId) {
         return Result.dataMessageHandler(() -> accountStatService.getAccountStatByUserId(userId), "获取用户统计信息失败");
     }
 
     /**
      * 获取指定用户的粉丝列表。
-     *
-     * @param userId 目标用户ID
-     * @param page 当前页码
-     * @param pageSize 每页记录数
-     * @return 粉丝列表分页结果
      */
+    @Operation(summary = "获取指定用户的粉丝列表")
     @GetMapping("/{user_id}/followers")
-    public Result<PageEntity<UserInfoVO>> getFollowers(@PathVariable("user_id") Integer userId,
-                                                       @RequestParam("page") Integer page,
-                                                       @RequestParam("page_size") Integer pageSize) {
-        Integer viewerId = security.getSecurityUserId();
+    public Result<PageEntity<UserInfoVO>> getFollowers(@Parameter(description = "用户 ID") @PathVariable("user_id") Integer userId,
+                                                       @Parameter(description = "页码") @RequestParam("page") Integer page,
+                                                       @Parameter(description = "每页数量") @RequestParam("page_size") Integer pageSize) {
+        Integer viewerId = security.getOptionalSecurityUserId();
         return Result.dataMessageHandler(() -> accountService.getFollowers(viewerId, userId, page, pageSize), "获取粉丝列表失败");
     }
 
     /**
      * 获取指定用户的关注列表。
-     *
-     * @param userId 目标用户ID
-     * @param page 当前页码
-     * @param pageSize 每页记录数
-     * @return 关注列表分页结果
      */
+    @Operation(summary = "获取指定用户的关注列表")
     @GetMapping("/{user_id}/followings")
-    public Result<PageEntity<UserInfoVO>> getFollowings(@PathVariable("user_id") Integer userId,
-                                                        @RequestParam("page") Integer page,
-                                                        @RequestParam("page_size") Integer pageSize) {
-        Integer viewerId = security.getSecurityUserId();
+    public Result<PageEntity<UserInfoVO>> getFollowings(@Parameter(description = "用户 ID") @PathVariable("user_id") Integer userId,
+                                                        @Parameter(description = "页码") @RequestParam("page") Integer page,
+                                                        @Parameter(description = "每页数量") @RequestParam("page_size") Integer pageSize) {
+        Integer viewerId = security.getOptionalSecurityUserId();
         return Result.dataMessageHandler(() -> accountService.getFollowings(viewerId, userId, page, pageSize), "获取关注列表失败");
     }
     /**
      * 更新当前用户头像。
-     *
-     * @param dto 头像上传数据
-     * @return 操作结果
      */
+    @Operation(summary = "更新当前用户头像")
     @PutMapping("/me/avatar")
-    public Result<Void> updateAvatar(@RequestBody Base64Upload dto) {
+    public Result<Void> updateAvatar(@RequestBody @Valid Base64Upload dto) {
         Integer userId = security.getSecurityUserId();
         return Result.messageHandler(() -> accountService.updateUserAvatar(userId, dto));
     }
 
     /**
      * 更新用户个人资料。
-     *
-     * @param dto 个人资料请求体
-     * @return 操作结果
      */
+    @Operation(summary = "更新用户个人资料")
     @PutMapping("/me/profile")
-    public Result<Void> updateProfile(@RequestBody @Valid AccountProfileDTO dto) {
+    public Result<Void> updateProfile(@RequestBody @Valid UserProfileDTO dto) {
         Integer userId = security.getSecurityUserId();
         return Result.messageHandler(() -> accountService.updateUserProfile(userId, dto));
     }
 
-    @GetMapping("/me/account-info")
-    public Result<AccountInfoVO> getMyAccountInfo() {
+    @Operation(summary = "获取当前用户资料详情")
+    @GetMapping("/me/profile")
+    public Result<UserProfileVO> getMyProfile() {
         Integer userId = security.getSecurityUserId();
-        return Result.dataMessageHandler(() -> accountService.getMyAccountInfo(userId), "获取用户扩展资料失败");
+        return Result.dataMessageHandler(() -> accountService.getMyProfile(userId), "获取用户资料失败");
     }
 
-    @GetMapping("/{user_id}/account-info")
-    public Result<AccountInfoVO> getPublicAccountInfo(@PathVariable("user_id") Integer userId) {
+    @Operation(summary = "获取公开用户资料详情")
+    @GetMapping("/{user_id}/profile")
+    public Result<UserProfileVO> getPublicProfile(@Parameter(description = "用户 ID") @PathVariable("user_id") Integer userId) {
         Integer viewerId = security.getSecurityUserId();
-        return Result.dataMessageHandler(() -> accountService.getPublicAccountInfo(viewerId, userId), "获取用户扩展资料失败");
+        return Result.dataMessageHandler(() -> accountService.getPublicProfile(viewerId, userId), "获取用户资料失败");
     }
 
     /**
      * 获取当前登录用户的隐私设置。
-     *
-     * @return 当前用户隐私设置
      */
+    @Operation(summary = "获取当前登录用户的隐私设置")
     @GetMapping("/me/privacy")
     public Result<UserPrivacySettingVO> getPrivacySetting() {
         Integer userId = security.getSecurityUserId();
@@ -152,10 +193,8 @@ public class UserController {
 
     /**
      * 更新当前登录用户的隐私设置。
-     *
-     * @param dto 隐私设置请求体
-     * @return 操作结果
      */
+    @Operation(summary = "更新当前登录用户的隐私设置")
     @PutMapping("/me/privacy")
     public Result<Void> updatePrivacySetting(@RequestBody @Valid UserPrivacySettingDTO dto) {
         Integer userId = security.getSecurityUserId();
@@ -164,54 +203,47 @@ public class UserController {
 
     /**
      * 关注指定用户。
-     *
-     * @param userId 被关注用户ID
-     * @return 操作结果
      */
+    @Operation(summary = "关注指定用户")
     @PostMapping("/{user_id}/follow")
-    public Result<Void> follow(@PathVariable("user_id") Integer userId) {
+    public Result<Void> follow(@Parameter(description = "用户 ID") @PathVariable("user_id") Integer userId) {
         Integer currentUserId = security.getSecurityUserId();
         return Result.messageHandler(() -> userRelationService.follow(currentUserId, userId));
     }
 
     /**
      * 取消关注指定用户。
-     *
-     * @param userId 被取消关注用户ID
-     * @return 操作结果
      */
+    @Operation(summary = "取消关注指定用户")
     @DeleteMapping("/{user_id}/follow")
-    public Result<Void> unfollow(@PathVariable("user_id") Integer userId) {
+    public Result<Void> unfollow(@Parameter(description = "用户 ID") @PathVariable("user_id") Integer userId) {
         Integer currentUserId = security.getSecurityUserId();
         return Result.messageHandler(() -> userRelationService.unfollow(currentUserId, userId));
     }
 
     /**
      * 拉黑指定用户。
-     *
-     * @param userId 被拉黑用户ID
-     * @return 操作结果
      */
+    @Operation(summary = "拉黑指定用户")
     @PostMapping("/{user_id}/block")
-    public Result<Void> block(@PathVariable("user_id") Integer userId) {
+    public Result<Void> block(@Parameter(description = "用户 ID") @PathVariable("user_id") Integer userId) {
         Integer currentUserId = security.getSecurityUserId();
         return Result.messageHandler(() -> userRelationService.block(currentUserId, userId));
     }
 
     /**
      * 取消拉黑指定用户。
-     *
-     * @param userId 被取消拉黑用户ID
-     * @return 操作结果
      */
+    @Operation(summary = "取消拉黑指定用户")
     @DeleteMapping("/{user_id}/block")
-    public Result<Void> unblock(@PathVariable("user_id") Integer userId) {
+    public Result<Void> unblock(@Parameter(description = "用户 ID") @PathVariable("user_id") Integer userId) {
         Integer currentUserId = security.getSecurityUserId();
         return Result.messageHandler(() -> userRelationService.unblock(currentUserId, userId));
     }
 
+    @Operation(summary = "举报用户")
     @PostMapping("/{user_id}/reports")
-    public Result<Void> createUserReport(@PathVariable("user_id") Integer userId,
+    public Result<Void> createUserReport(@Parameter(description = "用户 ID") @PathVariable("user_id") Integer userId,
                                          @RequestBody @Valid UserReportDTO dto) {
         Integer currentUserId = security.getSecurityUserId();
         return Result.messageHandler(() -> reportService.createUserReport(currentUserId, userId, dto));
@@ -219,28 +251,28 @@ public class UserController {
 
     /**
      * 更新当前用户横幅图。
-     *
-     * @param dto 横幅图上传数据
-     * @return 操作结果
      */
+    @Operation(summary = "更新当前用户横幅图")
     @PutMapping("/me/banner")
-    public Result<Void> updateBanner(@RequestBody Base64Upload dto) {
+    public Result<Void> updateBanner(@RequestBody @Valid Base64Upload dto) {
         Integer userId = security.getSecurityUserId();
         return Result.messageHandler(() -> accountService.updateUserBanner(userId , dto));
     }
 
     /**
      * 通过旧密码更新当前账号密码。
-     *
-     * @param dto 密码修改请求体
-     * @param request 当前请求
-     * @return 操作结果
      */
+    @Operation(summary = "通过旧密码更新当前账号密码")
     @PostMapping("/me/password")
     public Result<Void> updatePassword(@RequestBody PasswordChangeDTO dto,
                                        HttpServletRequest request) {
         String token = request.getHeader("Authorization");
         return Result.messageHandler(() -> accountService.updatePasswordWithOld(token, dto));
+    }
+
+    private String currentSessionId(HttpServletRequest request) {
+        DecodedJWT jwt = jwtUtils.resolveJwt(request.getHeader("Authorization"));
+        return jwt == null ? null : jwt.getClaim("sid").asString();
     }
 
 }

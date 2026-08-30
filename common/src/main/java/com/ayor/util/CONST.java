@@ -3,6 +3,7 @@ package com.ayor.util;
 public class CONST {
     public static final String JWT_BLACK_LIST = "jwt:blacklist:";
     public static final String JWT_EMAIL_VERIFY = "jwt:email:verify:";
+    public static final String LOGIN_SESSION_ACTIVE = "login:session:active:";
 
     public static final String VERIFY_EMAIL_LIMIT = "verify:email:limit:";
     public static final String VERIFY_EMAIL_DATA = "verify:email:data:";

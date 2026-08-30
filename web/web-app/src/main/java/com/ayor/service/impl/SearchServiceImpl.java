@@ -2,6 +2,7 @@ package com.ayor.service.impl;
 
 import co.elastic.clients.elasticsearch._types.aggregations.Aggregation;
 import co.elastic.clients.elasticsearch._types.aggregations.StringTermsBucket;
+import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import com.ayor.dao.SearchLogDocRepository;
 import com.ayor.dao.ThreaddRepository;
@@ -10,6 +11,7 @@ import com.ayor.entity.document.SearchLogDoc;
 import com.ayor.entity.document.ThreadDoc;
 import com.ayor.entity.vo.HotKeywordVO;
 import com.ayor.service.SearchService;
+import com.ayor.service.UserRelationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -20,7 +22,13 @@ import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
 import org.springframework.data.elasticsearch.core.SearchHit;
 import org.springframework.data.elasticsearch.core.SearchHits;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
+
+/**
+ * 搜索服务实现
+ */
+
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
@@ -33,6 +41,19 @@ import java.util.*;
 @RequiredArgsConstructor
 public class SearchServiceImpl implements SearchService {
 
+    private static final int SEARCH_HISTORY_LIMIT = 50;
+
+    private static final long SEARCH_HISTORY_TTL_SECONDS = Duration.ofDays(90).toSeconds();
+
+    private static final DefaultRedisScript<Long> SAVE_HISTORY_SCRIPT = new DefaultRedisScript<>(
+            "redis.call('ZADD', KEYS[1], ARGV[1], ARGV[2]); " +
+                    "local size = redis.call('ZCARD', KEYS[1]); " +
+                    "local limit = tonumber(ARGV[3]); " +
+                    "if size > limit then redis.call('ZREMRANGEBYRANK', KEYS[1], 0, size - limit - 1); end; " +
+                    "redis.call('EXPIRE', KEYS[1], ARGV[4]); return 1;",
+            Long.class
+    );
+
     private final ThreaddRepository threaddRepository;
 
     private final SearchLogDocRepository searchLogDocRepository;
@@ -40,6 +61,8 @@ public class SearchServiceImpl implements SearchService {
     private final StringRedisTemplate redisTemplate;
 
     private final ElasticsearchOperations operations;
+
+    private final UserRelationService userRelationService;
 
     static final List<String> ORDER = List.of("asc", "desc", "rel");
     /**
@@ -65,25 +88,23 @@ public class SearchServiceImpl implements SearchService {
                                                int pageNum,
                                                int pageSize) {
         pageNum = Math.max(pageNum, 1);
+        String trimmedKeyword = keyword == null ? "" : keyword.trim();
+        if (trimmedKeyword.isEmpty()) {
+            return new PageEntity<>(0L, List.of());
+        }
 
         // 插入搜索历史
         if (enableHistory && userId != null) {
-            insertSearchHistory(keyword, userId);
+            insertSearchHistory(trimmedKeyword, userId);
         }
 
         BoolQuery.Builder boolQuery = new BoolQuery.Builder();
-        boolQuery.should(m -> m.
-                        match(t -> t
-                                .field("title")
-                                .query(keyword)
-                        )
+        boolQuery.must(m -> m
+                .multiMatch(t -> t
+                        .fields("title", "content")
+                        .query(trimmedKeyword)
                 )
-                .should(m -> m
-                        .match(t -> t
-                                .field("content")
-                                .query(keyword)
-                        )
-                );
+        );
         // 如果有时间范围，则做时间筛选
         if (startTime != null && endTime != null) {
 
@@ -91,7 +112,7 @@ public class SearchServiceImpl implements SearchService {
             String gte = Instant.ofEpochMilli(startTime).toString();
             String lte = Instant.ofEpochMilli(endTime).toString();
 
-            boolQuery.must(m -> m
+            boolQuery.filter(m -> m
                     .range(r -> r
                             .date(d -> d.
                                     field("createTime")
@@ -104,12 +125,24 @@ public class SearchServiceImpl implements SearchService {
 
         // 如果有主题则对主题进行判断
         if (topicId != null) {
-            boolQuery.must(m -> m.match(t -> t.field("topicId").query(topicId)));
+            boolQuery.filter(m -> m.term(t -> t.field("topicId").value(topicId)));
         }
 
         // 如果是只搜索主题帖
         if (onlyThreadTopic) {
-            boolQuery.must(m -> m.match(t -> t.field("isThreadTopic").query(true)));
+            boolQuery.filter(m -> m.term(t -> t.field("isThreadTopic").value(true)));
+        }
+
+        if (userId != null) {
+            List<FieldValue> blockedAccountIds = userRelationService.listBlockedAccountIdsEitherDirection(userId)
+                    .stream()
+                    .map(FieldValue::of)
+                    .toList();
+            if (!blockedAccountIds.isEmpty()) {
+                boolQuery.mustNot(m -> m.terms(t -> t
+                        .field("accountId")
+                        .terms(v -> v.value(blockedAccountIds))));
+            }
         }
 
         // 构建查询
@@ -141,7 +174,7 @@ public class SearchServiceImpl implements SearchService {
         if (userId != null) {
             SearchLogDoc searchLogDoc = SearchLogDoc.builder()
                     .id(null)
-                    .keyword(keyword)
+                    .keyword(trimmedKeyword)
                     .userId(String.valueOf(userId))
                     .ts(Instant.now())
                     .build();
@@ -167,7 +200,14 @@ public class SearchServiceImpl implements SearchService {
         if (keyword == null || keyword.isEmpty()) {
             return;
         }
-    	redisTemplate.opsForZSet().add(buildKey(userId), keyword, System.currentTimeMillis());
+        redisTemplate.execute(
+                SAVE_HISTORY_SCRIPT,
+                List.of(buildKey(userId)),
+                String.valueOf(System.currentTimeMillis()),
+                keyword,
+                String.valueOf(SEARCH_HISTORY_LIMIT),
+                String.valueOf(SEARCH_HISTORY_TTL_SECONDS)
+        );
     }
     /**
      * 删除用户的指定搜索历史记录。

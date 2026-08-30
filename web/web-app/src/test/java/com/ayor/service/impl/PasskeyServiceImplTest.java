@@ -45,6 +45,7 @@ class PasskeyServiceImplTest {
     @Mock
     private PasskeyWebAuthnAdapter webAuthnAdapter;
 
+    // 测试注册选项的用户名称使用用户名
     @Test
     void shouldUseUsernameInRegistrationOptionsUserName() {
         PasskeyServiceImpl service = service();
@@ -61,14 +62,16 @@ class PasskeyServiceImplTest {
         assertEquals("Nw", user.get("id"));
     }
 
+    // 测试拒绝过期认证请求
     @Test
     void shouldRejectExpiredAuthenticationRequest() {
         PasskeyServiceImpl service = service();
         PasskeyAuthenticationFinishDTO dto = authenticationDto("AQID", "Nw");
 
-        assertNull(service.authenticate(dto));
+        assertNull(service.authenticate(dto, null));
     }
 
+    // 测试用户句柄不匹配凭据所有者时拒绝认证
     @Test
     void shouldRejectAuthenticationWhenUserHandleDoesNotMatchCredentialOwner() {
         PasskeyServiceImpl service = service();
@@ -76,12 +79,13 @@ class PasskeyServiceImplTest {
         PasskeyCredential credential = credential(7);
         PasskeyRequestStore.ChallengeSnapshot snapshot = authenticationSnapshot();
 
-        when(requestStore.load("req-1")).thenReturn(snapshot);
+        when(requestStore.consume("req-1")).thenReturn(snapshot);
         when(credentialMapper.findByCredentialId("AQID")).thenReturn(credential);
 
-        assertNull(service.authenticate(dto));
+        assertNull(service.authenticate(dto, null));
     }
 
+    // 测试拒绝封禁账号认证
     @Test
     void shouldRejectBannedAccountAuthentication() {
         PasskeyServiceImpl service = service();
@@ -92,14 +96,15 @@ class PasskeyServiceImplTest {
         account.setAccountId(7);
         account.setStatus(3);
 
-        when(requestStore.load("req-1")).thenReturn(snapshot);
+        when(requestStore.consume("req-1")).thenReturn(snapshot);
         when(credentialMapper.findByCredentialId("AQID")).thenReturn(credential);
         when(webAuthnAdapter.verifyAuthentication(dto, snapshot, credential)).thenReturn(10L);
         when(accountMapper.getAccountById(7)).thenReturn(account);
 
-        assertNull(service.authenticate(dto));
+        assertNull(service.authenticate(dto, null));
     }
 
+    // 测试返回授权 VO 当认证成功
     @Test
     void shouldReturnAuthorizeVoWhenAuthenticationSucceeds() {
         PasskeyServiceImpl service = service();
@@ -113,20 +118,21 @@ class PasskeyServiceImplTest {
         authorizeVO.setUsername("tester");
         authorizeVO.setToken("jwt-token");
 
-        when(requestStore.load("req-1")).thenReturn(snapshot);
+        when(requestStore.consume("req-1")).thenReturn(snapshot);
         when(credentialMapper.findByCredentialId("AQID")).thenReturn(credential);
         when(webAuthnAdapter.verifyAuthentication(dto, snapshot, credential)).thenReturn(10L);
         when(accountMapper.getAccountById(7)).thenReturn(account);
         when(authorizeResponseFactory.create(account)).thenReturn(authorizeVO);
 
-        AuthorizeVO result = service.authenticate(dto);
+        AuthorizeVO result = service.authenticate(dto, null);
 
         assertEquals("tester", result.getUsername());
         assertEquals("jwt-token", result.getToken());
         verify(credentialMapper).updateAuthenticationState(eq(credential.getId()), eq(10L), any(Date.class));
-        verify(requestStore).remove("req-1");
+        verify(requestStore).consume("req-1");
     }
 
+    // 测试拒绝删除其他账号拥有的凭据
     @Test
     void shouldRejectDeletingCredentialOwnedByAnotherAccount() {
         PasskeyServiceImpl service = service();

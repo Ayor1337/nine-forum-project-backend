@@ -1,0 +1,4 @@
+{"file":".trellis/spec/backend/index.md","reason":"遵循后端模块边界与 Maven 验证入口"}
+{"file":".trellis/spec/backend/quality-guidelines.md","reason":"落实配置改动的测试与质量门禁"}
+{"file":".trellis/spec/backend/logging-guidelines.md","reason":"确保秘密值不进入日志、命令输出或任务记录"}
+{"file":".trellis/tasks/08-23-repository-secret-remediation/research/repository-history-inventory.md","reason":"使用已盘点的引用、工具与工作区约束实施隔离历史重写"}

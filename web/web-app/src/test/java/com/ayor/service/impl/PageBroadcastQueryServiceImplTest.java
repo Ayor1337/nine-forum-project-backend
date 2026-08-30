@@ -32,6 +32,7 @@ class PageBroadcastQueryServiceImplTest {
     @Mock
     private TopicMapper topicMapper;
 
+    // 测试返回首页版块并主题广播用于主题分页
     @Test
     void shouldReturnHomeThemeAndTopicBroadcastsForTopicPage() {
         PageBroadcastQueryServiceImpl service = new PageBroadcastQueryServiceImpl(redisTemplate, topicMapper);
@@ -52,6 +53,7 @@ class PageBroadcastQueryServiceImplTest {
         assertEquals(List.of("主页", "主题", "话题"), result.stream().map(PageBroadcastVO::getContent).toList());
     }
 
+    // 测试返回广播不带结束时间作为有效
     @Test
     void shouldReturnBroadcastWithoutEndTimeAsActive() {
         PageBroadcastQueryServiceImpl service = new PageBroadcastQueryServiceImpl(redisTemplate, topicMapper);

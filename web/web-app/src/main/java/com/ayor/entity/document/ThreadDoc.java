@@ -17,7 +17,7 @@ import java.util.Date;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Document(indexName = "thread")
+@Document(indexName = "thread", createIndex = false)
 public class ThreadDoc implements Serializable {
 
     @Serial
@@ -26,10 +26,13 @@ public class ThreadDoc implements Serializable {
     @Id
     private String id;
 
-    @Field(type = FieldType.Integer, index = false)
+    @Field(type = FieldType.Integer)
     private Integer threadId;
 
-    @Field(type = FieldType.Integer, index = false)
+    @Field(type = FieldType.Integer)
+    private Integer accountId;
+
+    @Field(type = FieldType.Integer)
     private Integer topicId;
 
     @Field(type = FieldType.Text, analyzer = "ik_max_word", searchAnalyzer = "ik_smart")
@@ -47,13 +50,13 @@ public class ThreadDoc implements Serializable {
     @Field(type = FieldType.Integer, index = false)
     private Integer collectCount;
 
-    @Field(type = FieldType.Date, index = false)
+    @Field(type = FieldType.Date)
     private Date createTime;
 
     @Field(type = FieldType.Date, index = false)
     private Date updateTime;
 
-    @Field(type = FieldType.Boolean, index = false)
+    @Field(type = FieldType.Boolean)
     private Boolean isThreadTopic;
 
 }

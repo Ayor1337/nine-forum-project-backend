@@ -1,21 +1,19 @@
 package com.ayor.entity.pojo;
 
+import com.ayor.typehandler.StringListTypeHandler;
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.data.annotation.Id;
-import org.springframework.data.elasticsearch.annotations.DateFormat;
-import org.springframework.data.elasticsearch.annotations.Document;
-import org.springframework.data.elasticsearch.annotations.Field;
-import org.springframework.data.elasticsearch.annotations.FieldType;
 
 import java.util.Date;
+import java.util.List;
 
 
-@TableName("thread")
+@TableName(value = "thread", autoResultMap = true)
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -27,6 +25,9 @@ public class Threadd {
     private String title;
 
     private String content;
+
+    @TableField(value = "images_urls", typeHandler = StringListTypeHandler.class)
+    private List<String> imagesUrls;
 
     private Date createTime;
 
@@ -51,7 +52,5 @@ public class Threadd {
     private Boolean isSelected;
 
     private Boolean isDeleted;
-
-    private Boolean isAnnouncement;
 
 }

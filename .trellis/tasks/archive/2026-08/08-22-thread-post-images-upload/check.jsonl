@@ -1,0 +1,4 @@
+{"file":".trellis/spec/backend/quality-guidelines.md","reason":"质量门禁、Maven 验证与跨层审查要求。"}
+{"file":".trellis/spec/backend/error-handling.md","reason":"统一响应与异常边界审查。"}
+{"file":".trellis/spec/backend/thread-content-images.md","reason":"审查请求字段、最终 URL、读取投影与资源引用的一致性。"}
+{"file":".trellis/tasks/08-22-thread-post-images-upload/research/upload-contract.md","reason":"审查顺序、无副作用校验与 MinIO 非事务性边界。"}

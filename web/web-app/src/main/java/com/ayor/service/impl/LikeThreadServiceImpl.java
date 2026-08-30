@@ -9,7 +9,9 @@ import com.ayor.mapper.AccountMapper;
 import com.ayor.mapper.LikeThreadMapper;
 import com.ayor.mapper.ThreaddMapper;
 import com.ayor.service.LikeThreadService;
+import com.ayor.service.CacheInvalidationService;
 import com.ayor.service.PrivacyPolicyService;
+import com.ayor.service.UserRelationService;
 import com.ayor.util.TipTapUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -21,7 +23,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
+/**
+ * 点赞服务实现
+ */
 @Service
 @Transactional
 @RequiredArgsConstructor
@@ -34,6 +40,10 @@ public class LikeThreadServiceImpl extends ServiceImpl<LikeThreadMapper, LikeThr
     private final TipTapUtils tipTapUtils;
 
     private final PrivacyPolicyService privacyPolicyService;
+
+    private final UserRelationService userRelationService;
+
+    private final CacheInvalidationService cacheInvalidationService;
     /**
      * 为指定帖子记录一次点赞。
      */
@@ -48,6 +58,10 @@ public class LikeThreadServiceImpl extends ServiceImpl<LikeThreadMapper, LikeThr
         if (thread == null || Boolean.TRUE.equals(thread.getIsDeleted())) {
             return "帖子不存在";
         }
+        if (!Objects.equals(accountId, thread.getAccountId())
+                && userRelationService.isBlockedEitherDirection(accountId, thread.getAccountId())) {
+            return "已拉黑，不能点赞";
+        }
         if (isLikedByAccountId(accountId, threadId)) {
             return "不能重复点赞";
         }
@@ -55,7 +69,11 @@ public class LikeThreadServiceImpl extends ServiceImpl<LikeThreadMapper, LikeThr
         likeThread.setThreadId(threadId);
         likeThread.setAccountId(account.getAccountId());
 
-        return this.save(likeThread) ? null : "点赞失败";
+        if (!this.save(likeThread)) {
+            return "点赞失败";
+        }
+        cacheInvalidationService.clearThreadRanking();
+        return null;
     }
     /**
      * 删除指定帖子上的点赞记录。
@@ -76,7 +94,11 @@ public class LikeThreadServiceImpl extends ServiceImpl<LikeThreadMapper, LikeThr
         if (likeThread == null) {
             return "不能取消未点赞的内容";
         }
-        return this.removeById(likeThread) ? null : "取消点赞失败";
+        if (!this.removeById(likeThread)) {
+            return "取消点赞失败";
+        }
+        cacheInvalidationService.clearThreadRanking();
+        return null;
     }
     /**
      * 分页获取用户点赞过的帖子列表。
@@ -108,11 +130,18 @@ public class LikeThreadServiceImpl extends ServiceImpl<LikeThreadMapper, LikeThr
             return new PageEntity<>(likePage.getTotal(), new ArrayList<>());
         }
         List<Threadd> threads = threaddMapper.selectByIds(threadIds);
+        List<Integer> blockedAccountIds = viewerId == null
+                ? List.of()
+                : userRelationService.listBlockedAccountIdsEitherDirection(viewerId);
         List<ThreadVO> threadVOS = new ArrayList<>();
         for (Threadd thread : threads) {
+            if (blockedAccountIds.contains(thread.getAccountId())) {
+                continue;
+            }
             ThreadVO threadVO = new ThreadVO();
             BeanUtils.copyProperties(thread, threadVO);
-            threadVO.setContent(tipTapUtils.filterNonImage(thread.getContent()));
+            threadVO.setContent(tipTapUtils.filterStickerNodes(thread.getContent()));
+            threadVO.setImageUrls(thread.getImagesUrls() == null ? new ArrayList<>() : new ArrayList<>(thread.getImagesUrls()));
             threadVOS.add(threadVO);
         }
 

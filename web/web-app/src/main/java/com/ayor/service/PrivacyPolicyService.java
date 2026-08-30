@@ -57,5 +57,5 @@ public interface PrivacyPolicyService {
      * @param ownerId 资料拥有者用户ID
      * @return true=允许查看,false=不允许查看
      */
-    boolean canViewAccountInfo(Integer viewerId, Integer ownerId);
+    boolean canViewUserProfile(Integer viewerId, Integer ownerId);
 }

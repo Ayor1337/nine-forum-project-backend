@@ -9,6 +9,7 @@ import com.ayor.entity.message.UserViolationMessageTemplate;
 import com.ayor.entity.pojo.Account;
 import com.ayor.mapper.AccountMapper;
 import com.ayor.mapper.RoleMapper;
+import com.ayor.security.AdminRoleRequiredException;
 import com.ayor.service.AccountService;
 import com.ayor.type.AccountStatus;
 import com.ayor.type.UserViolationType;
@@ -37,11 +38,12 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
 
     private final RabbitTemplate rabbitTemplate;
 
-    private static final List<String> allowedRoles = List.of("OWNER");
+    private static final String REQUIRED_ROLE = "OWNER";
 
     /**
      * 按用户名加载后台登录所需的认证信息，并校验该账号是否具备进入管理端的角色。
-     * <p>账号不存在或角色不在允许列表中时，直接抛出 {@link UsernameNotFoundException}。</p>
+     * <p>账号不存在时抛出 {@link UsernameNotFoundException}；非 OWNER 账号
+     * 抛出可被管理端安全链识别的角色异常。</p>
      */
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
@@ -50,8 +52,8 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
             throw new UsernameNotFoundException("用户不存在");
         }
         String roleName = roleMapper.getRoleNameById(account.getRoleId());
-        if (!allowedRoles.contains(roleName)) {
-            throw new UsernameNotFoundException("用户权限不足");
+        if (!REQUIRED_ROLE.equals(roleName)) {
+            throw new AdminRoleRequiredException();
         }
 
         return User
@@ -75,6 +77,7 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
             AccountVO accountVO = new AccountVO();
             accountVO.setAccountId(account.getAccountId());
             accountVO.setUsername(account.getUsername());
+            accountVO.setNickname(account.getNickname());
             accountVos.add(accountVO);
         });
 
@@ -99,6 +102,7 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
             AccountVO accountVO = new AccountVO();
             accountVO.setAccountId(account.getAccountId());
             accountVO.setUsername(account.getUsername());
+            accountVO.setNickname(account.getNickname());
             accountVos.add(accountVO);
         });
 
@@ -319,7 +323,6 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         for (Account account : accounts) {
             AccountVO accountVO = new AccountVO();
             BeanUtils.copyProperties(account, accountVO);
-            //TODO 待完善信息获取
             accountVos.add(accountVO);
         }
         return accountVos;

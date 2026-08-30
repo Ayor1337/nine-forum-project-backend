@@ -1,0 +1,13 @@
+{
+  "settings": {
+    "number_of_shards": 1,
+    "number_of_replicas": 0
+  },
+  "mappings": {
+    "properties": {
+      "keyword": { "type": "keyword" },
+      "userId": { "type": "keyword" },
+      "ts": { "type": "date", "format": "strict_date_optional_time||epoch_millis" }
+    }
+  }
+}

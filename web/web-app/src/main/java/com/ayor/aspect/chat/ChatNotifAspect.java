@@ -7,6 +7,7 @@ import com.ayor.mapper.AccountMapper;
 import com.ayor.mapper.ConversationMapper;
 import com.ayor.service.ChatUnreadService;
 import com.ayor.service.MessageUnreadService;
+import com.ayor.type.NotificationType;
 import com.ayor.type.UnreadMessageType;
 import com.ayor.util.STOMPUtils;
 import lombok.RequiredArgsConstructor;
@@ -77,12 +78,17 @@ public class ChatNotifAspect {
         Integer userId = resolve(chatNotif.userId(), ctx, Integer.class);
         Integer conversationId = resolve(chatNotif.conversationId(), ctx, Integer.class);
 
-        switch (chatNotif.type()){
+        Object result = joinPoint.proceed();
+        if (chatNotif.type() == NotificationType.SEND_MSG && result != null) {
+            return result;
+        }
+
+        switch (chatNotif.type()) {
             case SEND_MSG -> chatMessageNotif(userId, conversationId);
             case RECEIVED_MSG -> readChatMessage(conversationId, userId);
         }
 
-        return joinPoint.proceed();
+        return result;
     }
 
     /**
@@ -118,11 +124,11 @@ public class ChatNotifAspect {
         Integer toUserId = conversationMapper.getChatPartnerId(account.getAccountId(), conversationId);
 
         // 如果用户不在订阅中, 则不会发送未读消息的通知
-        if (stompUtils.isUserSubscribed(toUserId.toString(), "/transfer/conversation/"+conversationId)) {
-            chatUnreadService.clearUnread(conversationId, accountId);
+        if (stompUtils.isUserSubscribedExactly(toUserId.toString(), "/transfer/conversation/"+conversationId)) {
+            chatUnreadService.clearUnreadAndTotal(conversationId, toUserId);
         } else {
-            long unreadConversationCount = chatUnreadService.addUnread(conversationId, toUserId);
-            messageUnreadService.addUnread(toUserId, UnreadMessageType.USER_MESSAGE, unreadConversationCount);
+            ChatUnreadService.UnreadCounts counts = chatUnreadService.addUnreadAndTotal(conversationId, toUserId);
+            long unreadConversationCount = counts.conversationUnread();
             ChatUnread chatUnread = ChatUnread
                     .builder()
                     .unread(unreadConversationCount)
@@ -150,8 +156,7 @@ public class ChatNotifAspect {
      */
     private void readChatMessage(Integer conversationId, Integer accountId) {
         ChatUnread emptyUnread = ChatUnread.emptyUnread(conversationId, accountId);
-        long cost = chatUnreadService.clearUnread(conversationId, accountId);
-        messageUnreadService.clearUnread(accountId, UnreadMessageType.USER_MESSAGE, cost);
+        chatUnreadService.clearUnreadAndTotal(conversationId, accountId);
         MessageUnread messageUnread = messageUnreadService.getUnreadVO(accountId);
 
         if(stompUtils.isUserSubscribed(accountId.toString(), "/notif/unread/whisper")) {

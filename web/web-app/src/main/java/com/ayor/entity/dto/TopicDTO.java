@@ -1,6 +1,7 @@
 package com.ayor.entity.dto;
 
 import com.ayor.entity.Base64Upload;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -19,6 +20,7 @@ public class TopicDTO {
     private String title;
 
     @NotNull(message = "封面不能为空")
+    @Valid
     private Base64Upload cover;
 
     @Size(max = 20, message = "描述长度不能超过20")

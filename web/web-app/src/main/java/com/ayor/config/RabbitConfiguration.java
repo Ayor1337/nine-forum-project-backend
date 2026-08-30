@@ -102,6 +102,31 @@ public class RabbitConfiguration {
                 .noargs();
     }
 
+    @Bean("es_index_exchange")
+    public Exchange esIndexExchange() {
+        return ExchangeBuilder
+                .directExchange("es.index.direct")
+                .durable(true)
+                .build();
+    }
+
+    @Bean("es_index_queue")
+    public Queue esIndexQueue() {
+        return QueueBuilder
+                .durable("es.index.queue")
+                .build();
+    }
+
+    @Bean("es_index_binding")
+    public Binding esIndexBinding(@Qualifier("es_index_queue") Queue queue,
+                                  @Qualifier("es_index_exchange") Exchange exchange) {
+        return BindingBuilder
+                .bind(queue)
+                .to(exchange)
+                .with("es.index.sync")
+                .noargs();
+    }
+
     /**
      * 创建 JSON 消息转换器。
      *

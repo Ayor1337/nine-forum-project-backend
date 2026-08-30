@@ -75,6 +75,26 @@ public class AuthorizationServiceImpl implements AuthorizationService {
         assertOwner(actorId);
     }
 
+    @Override
+    public void assertCanCreateTheme(Integer actorId) {
+        assertGlobalPermission(actorId, PermissionType.CREATE_THEME);
+    }
+
+    @Override
+    public void assertCanCreateTopic(Integer actorId) {
+        assertGlobalPermission(actorId, PermissionType.CREATE_TOPIC);
+    }
+
+    @Override
+    public void assertCanUpdateTopic(Integer actorId, Integer topicId) {
+        assertTopicPermission(actorId, topicId, PermissionType.UPDATE_TOPIC);
+    }
+
+    @Override
+    public void assertCanDeleteTopic(Integer actorId, Integer topicId) {
+        assertTopicPermission(actorId, topicId, PermissionType.DELETE_TOPIC);
+    }
+
     /**
      * 断言操作者可以在指定话题下创建标签。
      *
@@ -101,7 +121,7 @@ public class AuthorizationServiceImpl implements AuthorizationService {
     public void assertCanUpdateThreadTag(Integer actorId, Integer threadId, Integer topicId) {
         Threadd thread = requireActiveThread(threadId);
         assertTopicBoundThread(thread, topicId);
-        assertTopicPermission(actorId, topicId, PermissionType.UPDATE_TAG);
+        assertTopicPermission(actorId, topicId, PermissionType.UPDATE_THREAD_TAG);
     }
 
     /**
@@ -118,7 +138,13 @@ public class AuthorizationServiceImpl implements AuthorizationService {
     public void assertCanSetAnnouncement(Integer actorId, Integer threadId, Integer topicId) {
         Threadd thread = requireActiveThread(threadId);
         assertTopicBoundThread(thread, topicId);
-        assertTopicPermission(actorId, topicId, PermissionType.UPDATE_TAG);
+        assertTopicPermission(actorId, topicId, PermissionType.SET_ANNOUNCEMENT);
+    }
+
+    @Override
+    public void assertCanSetGlobalAnnouncement(Integer actorId, Integer threadId) {
+        requireActiveThread(threadId);
+        assertGlobalPermission(actorId, PermissionType.SET_ANNOUNCEMENT);
     }
 
     /**
@@ -138,10 +164,16 @@ public class AuthorizationServiceImpl implements AuthorizationService {
         assertTopicPermission(actorId, topicId, PermissionType.DELETE_THREAD);
     }
 
+    @Override
+    public void assertCanModerateDeletePost(Integer actorId, Integer postId) {
+        Post post = requireActivePost(postId);
+        assertTopicPermission(actorId, post.getTopicId(), PermissionType.DELETE_POST);
+    }
+
     /**
      * 断言操作者可以删除指定帖子。
      *
-     * <p>帖子作者可以删除自己的帖子；非作者需要拥有该帖子所属话题的删帖权限。</p>
+     * <p>普通删除入口只允许帖子作者删除自己的帖子；管理员删帖应使用权限管理入口。</p>
      *
      * @param actorId 操作者账号 ID
      * @param threadId 目标帖子 ID
@@ -154,13 +186,50 @@ public class AuthorizationServiceImpl implements AuthorizationService {
         if (Objects.equals(thread.getAccountId(), actorId)) {
             return;
         }
-        assertTopicPermission(actorId, thread.getTopicId(), PermissionType.DELETE_THREAD);
+        throw new AccessDeniedException(ACCESS_DENIED);
+    }
+
+    /**
+     * 断言操作者可以编辑指定帖子。
+     *
+     * <p>只有帖子作者可以编辑自己的帖子；帖子必须存在且未被删除。</p>
+     *
+     * @param actorId 操作者账号 ID
+     * @param threadId 目标帖子 ID
+     * @throws AccessDeniedException 当操作者无效、帖子无效，或操作者不是帖子作者时抛出
+     */
+    @Override
+    public void assertCanEditThread(Integer actorId, Integer threadId) {
+        requireActor(actorId);
+        Threadd thread = requireActiveThread(threadId);
+        if (Objects.equals(thread.getAccountId(), actorId)) {
+            return;
+        }
+        throw new AccessDeniedException(ACCESS_DENIED);
+    }
+
+    /**
+     * 断言操作者可以查看指定帖子的编辑历史快照（含标题与正文）。
+     *
+     * <p>复用版主删帖权限：必须拥有 {@link PermissionType#DELETE_THREAD} 且话题范围匹配，
+     * 或者是论坛所有者。</p>
+     *
+     * @param actorId 操作者账号 ID
+     * @param threadId 目标帖子 ID
+     * @param topicId 目标话题 ID
+     * @throws AccessDeniedException 当帖子无效、帖子不属于目标话题，或操作者没有删帖权限时抛出
+     */
+    @Override
+    public void assertCanViewThreadEditSnapshots(Integer actorId, Integer threadId, Integer topicId) {
+        Threadd thread = requireActiveThread(threadId);
+        assertTopicBoundThread(thread, topicId);
+        assertTopicPermission(actorId, topicId, PermissionType.DELETE_THREAD);
     }
 
     /**
      * 断言操作者可以删除指定回复。
      *
-     * <p>回复作者可以删除自己的回复；非作者需要拥有该回复所属话题的删帖权限。</p>
+     * <p>普通删除入口只允许回复作者删除自己的回复；管理员删回复应使用权限管理入口。</p>
      *
      * @param actorId 操作者账号 ID
      * @param postId 目标回复 ID
@@ -173,7 +242,42 @@ public class AuthorizationServiceImpl implements AuthorizationService {
         if (Objects.equals(post.getAccountId(), actorId)) {
             return;
         }
-        assertTopicPermission(actorId, post.getTopicId(), PermissionType.DELETE_THREAD);
+        throw new AccessDeniedException(ACCESS_DENIED);
+    }
+
+    /**
+     * 断言操作者可以编辑指定回复。
+     *
+     * <p>只有回复作者可以编辑自己的回复；回复必须存在且未被删除。</p>
+     *
+     * @param actorId 操作者账号 ID
+     * @param postId 目标回复 ID
+     * @throws AccessDeniedException 当操作者无效、回复无效，或操作者不是回复作者时抛出
+     */
+    @Override
+    public void assertCanEditPost(Integer actorId, Integer postId) {
+        requireActor(actorId);
+        Post post = requireActivePost(postId);
+        if (Objects.equals(post.getAccountId(), actorId)) {
+            return;
+        }
+        throw new AccessDeniedException(ACCESS_DENIED);
+    }
+
+    /**
+     * 断言操作者可以查看指定回复的编辑历史快照（含正文）。
+     *
+     * <p>复用版主删回复权限：必须拥有 {@link PermissionType#DELETE_POST} 且话题范围匹配，
+     * 或者是论坛所有者。</p>
+     *
+     * @param actorId 操作者账号 ID
+     * @param postId 目标回复 ID
+     * @throws AccessDeniedException 当回复无效，或操作者没有删回复权限时抛出
+     */
+    @Override
+    public void assertCanViewPostEditSnapshots(Integer actorId, Integer postId) {
+        Post post = requireActivePost(postId);
+        assertTopicPermission(actorId, post.getTopicId(), PermissionType.DELETE_POST);
     }
 
     /**
@@ -217,6 +321,28 @@ public class AuthorizationServiceImpl implements AuthorizationService {
             return;
         }
         throw new AccessDeniedException(ACCESS_DENIED);
+    }
+
+    /**
+     * 断言操作者可以在指定私信会话中发送消息。
+     *
+     * @param actorId 操作者账号 ID
+     * @param conversationId 私信会话 ID
+     * @throws AccessDeniedException 当操作者不是参与者，或双方存在拉黑关系时抛出
+     */
+    @Override
+    public void assertCanSendConversationMessage(Integer actorId, Integer conversationId) {
+        requireActor(actorId);
+        Conversation conversation = requireConversation(conversationId);
+        if (!isParticipant(actorId, conversation)) {
+            throw new AccessDeniedException(ACCESS_DENIED);
+        }
+        Integer partnerId = Objects.equals(actorId, conversation.getAlphaAccountId())
+                ? conversation.getBetaAccountId()
+                : conversation.getAlphaAccountId();
+        if (userRelationService.isBlockedEitherDirection(actorId, partnerId)) {
+            throw new AccessDeniedException(ACCESS_DENIED);
+        }
     }
 
     /**
@@ -268,6 +394,18 @@ public class AuthorizationServiceImpl implements AuthorizationService {
     private void assertOwner(Integer actorId) {
         requireActor(actorId);
         if (!RoleType.isOwner(roleMapper.getRoleNameByUserId(actorId))) {
+            throw new AccessDeniedException(ACCESS_DENIED);
+        }
+    }
+
+    private void assertGlobalPermission(Integer actorId, PermissionType permission) {
+        requireActor(actorId);
+        if (RoleType.isOwner(roleMapper.getRoleNameByUserId(actorId))) {
+            return;
+        }
+        List<String> permissions = permissionMapper.getPermissionsByAccountId(actorId);
+        boolean hasPermission = permissions != null && permissions.contains(permission.dbValue());
+        if (!hasPermission) {
             throw new AccessDeniedException(ACCESS_DENIED);
         }
     }

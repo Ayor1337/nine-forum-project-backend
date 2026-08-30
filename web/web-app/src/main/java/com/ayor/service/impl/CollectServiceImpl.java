@@ -2,26 +2,35 @@ package com.ayor.service.impl;
 
 import com.ayor.entity.PageEntity;
 import com.ayor.entity.vo.ThreadVO;
+import com.ayor.entity.vo.TagVO;
 import com.ayor.entity.pojo.Account;
 import com.ayor.entity.pojo.Collect;
+import com.ayor.entity.pojo.Tag;
 import com.ayor.entity.pojo.Threadd;
 import com.ayor.mapper.AccountMapper;
 import com.ayor.mapper.CollectMapper;
+import com.ayor.mapper.TagMapper;
 import com.ayor.mapper.ThreaddMapper;
 import com.ayor.service.CollectService;
+import com.ayor.service.CacheInvalidationService;
 import com.ayor.service.PrivacyPolicyService;
+import com.ayor.service.UserRelationService;
+import com.ayor.util.TipTapUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
+/**
+ * 收藏服务实现
+ */
 @Service
 @Transactional
 @RequiredArgsConstructor
@@ -33,7 +42,15 @@ public class CollectServiceImpl extends ServiceImpl<CollectMapper, Collect> impl
 
     private final ThreaddMapper threaddMapper;
 
+    private final TagMapper tagMapper;
+
+    private final TipTapUtils tipTapUtils;
+
     private final PrivacyPolicyService privacyPolicyService;
+
+    private final UserRelationService userRelationService;
+
+    private final CacheInvalidationService cacheInvalidationService;
     /**
      * 为当前用户收藏指定帖子，重复收藏会被拒绝。
      */
@@ -51,13 +68,21 @@ public class CollectServiceImpl extends ServiceImpl<CollectMapper, Collect> impl
         if (thread == null || Boolean.TRUE.equals(thread.getIsDeleted())) {
             return "帖子不存在";
         }
+        if (!Objects.equals(accountId, thread.getAccountId())
+                && userRelationService.isBlockedEitherDirection(accountId, thread.getAccountId())) {
+            return "已拉黑，不能收藏";
+        }
         if (isCollectedByAccountId(accountId, threadId)) {
             return "不能重复收藏";
         }
         Collect collect = new Collect();
         collect.setThreadId(threadId);
         collect.setAccountId(account.getAccountId());
-        return this.save(collect) ? null : "收藏失败";
+        if (!this.save(collect)) {
+            return "收藏失败";
+        }
+        cacheInvalidationService.clearThreadRanking();
+        return null;
     }
     /**
      * 取消当前用户对指定帖子的收藏。
@@ -78,7 +103,11 @@ public class CollectServiceImpl extends ServiceImpl<CollectMapper, Collect> impl
         if (collect == null) {
             return "不能取消未收藏的内容";
         }
-        return this.removeById(collect) ? null : "取消收藏失败";
+        if (!this.removeById(collect)) {
+            return "取消收藏失败";
+        }
+        cacheInvalidationService.clearThreadRanking();
+        return null;
     }
     /**
      * 判断用户是否已经收藏指定帖子。
@@ -128,14 +157,39 @@ public class CollectServiceImpl extends ServiceImpl<CollectMapper, Collect> impl
             return new PageEntity<>(page.getTotal(), new ArrayList<>());
         }
         List<Threadd> threads = threaddMapper.selectByIds(threadIds);
+        List<Integer> blockedAccountIds = viewerId == null
+                ? List.of()
+                : userRelationService.listBlockedAccountIdsEitherDirection(viewerId);
         List<ThreadVO> threadVOS = new ArrayList<>();
         threads.forEach(thread -> {
-            ThreadVO threadVO = new ThreadVO();
-            BeanUtils.copyProperties(thread, threadVO);
-            threadVO.setContent(null);
-            threadVO.setImageUrls(null);
-            threadVOS.add(threadVO);
+            if (Boolean.TRUE.equals(thread.getIsDeleted()) || blockedAccountIds.contains(thread.getAccountId())) {
+                return;
+            }
+            threadVOS.add(toVO(thread));
         });
         return new PageEntity<>(page.getTotal(), threadVOS);
+    }
+
+    private ThreadVO toVO(Threadd thread) {
+        ThreadVO threadVO = new ThreadVO();
+        BeanUtils.copyProperties(thread, threadVO);
+
+        Account account = accountMapper.getAccountById(thread.getAccountId());
+        if (account != null) {
+            threadVO.setAccountName(account.getNickname());
+            threadVO.setAvatarUrl(account.getAvatarUrl());
+            threadVO.setAccountId(account.getAccountId());
+        }
+
+        Tag tag = tagMapper.getTagById(thread.getTagId());
+        if (tag != null) {
+            TagVO tagVO = new TagVO();
+            BeanUtils.copyProperties(tag, tagVO);
+            threadVO.setTag(tagVO);
+        }
+
+        threadVO.setContent(tipTapUtils.filterStickerNodes(thread.getContent()));
+        threadVO.setImageUrls(thread.getImagesUrls() == null ? new ArrayList<>() : new ArrayList<>(thread.getImagesUrls()));
+        return threadVO;
     }
 }

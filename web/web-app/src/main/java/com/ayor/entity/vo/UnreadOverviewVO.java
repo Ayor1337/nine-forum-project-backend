@@ -23,6 +23,8 @@ public class UnreadOverviewVO implements Serializable {
 
     private Long mention;
 
+    private Long follow;
+
     private Long system;
 
     private Long user;

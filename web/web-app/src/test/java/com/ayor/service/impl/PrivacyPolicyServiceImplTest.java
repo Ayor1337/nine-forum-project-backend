@@ -24,16 +24,18 @@ class PrivacyPolicyServiceImplTest {
     @Mock
     private UserPrivacySettingService userPrivacySettingService;
 
+    // 测试允许所有者查看资料和用户资料
     @Test
-    void shouldAllowOwnerToViewProfileAndAccountInfo() {
+    void shouldAllowOwnerToViewProfileAndUserProfile() {
         PrivacyPolicyServiceImpl service = createService();
 
         assertTrue(service.canViewProfile(12, 12));
-        assertTrue(service.canViewAccountInfo(12, 12));
+        assertTrue(service.canViewUserProfile(12, 12));
 
         verify(userPrivacySettingService, never()).getByAccountId(12);
     }
 
+    // 测试仅粉丝可见资料拒绝匿名查看者
     @Test
     void shouldDenyAnonymousViewerForFollowerOnlyProfile() {
         PrivacyPolicyServiceImpl service = createService();
@@ -42,6 +44,7 @@ class PrivacyPolicyServiceImplTest {
         assertFalse(service.canViewProfile(null, 18));
     }
 
+    // 测试资料公开时仍拒绝拉黑查看者
     @Test
     void shouldDenyBlockedViewerEvenWhenProfileIsPublic() {
         PrivacyPolicyServiceImpl service = createService();
@@ -51,6 +54,20 @@ class PrivacyPolicyServiceImplTest {
         assertFalse(service.canViewProfile(7, 18));
     }
 
+    // 测试任一方向拉黑时拒绝帖子串关系列表
+    @Test
+    void shouldDenyThreadRelationListsWhenBlockedEitherDirection() {
+        PrivacyPolicyServiceImpl service = createService();
+        when(userPrivacySettingService.getByAccountId(18)).thenReturn(setting(VisibilityScope.PUBLIC));
+        when(userRelationService.isBlockedEitherDirection(7, 18)).thenReturn(true);
+
+        assertFalse(service.canViewLikedThreads(7, 18));
+        assertFalse(service.canViewCollectedThreads(7, 18));
+        assertFalse(service.canViewFollowerList(7, 18));
+        assertFalse(service.canViewFollowingList(7, 18));
+    }
+
+    // 测试允许粉丝当范围为仅粉丝可见
     @Test
     void shouldAllowFollowerWhenScopeIsFollowerOnly() {
         PrivacyPolicyServiceImpl service = createService();
@@ -61,6 +78,7 @@ class PrivacyPolicyServiceImplTest {
         assertTrue(service.canViewFollowingList(7, 18));
     }
 
+    // 测试要求互相关注用于互相关注范围
     @Test
     void shouldRequireMutualFollowForMutualFollowScope() {
         PrivacyPolicyServiceImpl service = createService();

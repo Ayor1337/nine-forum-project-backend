@@ -17,6 +17,7 @@ public class WebsocketConfiguration implements WebSocketMessageBrokerConfigurer 
 
     private final StompAuthInterceptor authInterceptor;
     private final WebsocketHandshakeInterceptor websocketHandshakeInterceptor;
+    private final CorsProperties corsProperties;
 
     /**
      * 注册 WebSocket STOMP 端点。
@@ -25,8 +26,8 @@ public class WebsocketConfiguration implements WebSocketMessageBrokerConfigurer 
      */
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        registry.addEndpoint("/chatboard", "/chat", "/system")
-                .setAllowedOrigins("*")
+        registry.addEndpoint("/chatboard", "/chat", "/system", "/forum")
+                .setAllowedOrigins(corsProperties.getAllowedOrigins().toArray(String[]::new))
                 .addInterceptors(websocketHandshakeInterceptor);
 
     }

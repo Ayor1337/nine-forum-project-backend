@@ -23,6 +23,15 @@ public interface ConversationMapper extends BaseMapper<Conversation> {
             """)
     boolean existsConversationByUsers(Integer accountId, Integer targetAccountId);
 
+    @Select("""
+            select *
+            from conversation
+            where (alpha_account_id = #{accountId} and beta_account_id = #{targetAccountId})
+               or (alpha_account_id = #{targetAccountId} and beta_account_id = #{accountId})
+            limit 1
+            """)
+    Conversation selectConversationByUsers(Integer accountId, Integer targetAccountId);
+
     Integer getChatPartnerId(Integer accountId, Integer conversationId);
 
 }

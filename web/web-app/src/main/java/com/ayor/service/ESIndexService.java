@@ -14,8 +14,8 @@ package com.ayor.service;
 public interface ESIndexService {
 
     /**
-     * 初始化Elasticsearch索引
-     * @note 通常在应用启动时调用,创建必要的索引和映射
+     * 全量重建 Elasticsearch 索引：保障索引结构、灌入全部有效数据并清理失效文档。
+     * @note 应用启动时自动执行, 也可由后台重建命令触发
      */
     void initIndex();
 }

@@ -4,6 +4,8 @@ import com.ayor.entity.Base64Upload;
 import com.ayor.entity.PageEntity;
 import com.ayor.entity.vo.StickerVO;
 
+import java.util.List;
+
 /**
  * 图片资源业务接口。
  */
@@ -35,11 +37,6 @@ public interface ImageAssetService {
     String removeSticker(Integer accountId, Integer assetId);
 
     /**
-     * 删除当前用户上传的表情包资源本体。
-     */
-    String deleteStickerResource(Integer accountId, Integer assetId);
-
-    /**
      * 查询表情包资源详情。
      */
     StickerVO getDetail(Integer accountId, Integer assetId);
@@ -47,7 +44,7 @@ public interface ImageAssetService {
     /**
      * 同步指定内容中的图片引用关系。
      */
-    void syncContentRefs(String contentType, Integer contentId, String content, Integer accountId);
+    void syncContentRefs(String contentType, Integer contentId, List<String> imageUrls, Integer accountId);
 
     /**
      * 清除指定内容的图片引用关系。

@@ -1,11 +1,13 @@
 package com.ayor.config;
 
-import com.ayor.entity.vo.AuthorizeVO;
 import com.ayor.entity.pojo.Account;
+import com.ayor.entity.vo.AuthorizeVO;
 import com.ayor.filter.JWTAuthorizeFilter;
 import com.ayor.mapper.AccountMapper;
 import com.ayor.result.Result;
 import com.ayor.result.ResultCodeEnum;
+import com.ayor.security.AdminRoleRequiredException;
+import com.ayor.service.AccountService;
 import com.ayor.util.JWTUtils;
 import jakarta.annotation.Resource;
 import jakarta.servlet.ServletException;
@@ -14,7 +16,9 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.BeanUtils;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -23,8 +27,9 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.User;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.authentication.logout.LogoutFilter;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -32,6 +37,9 @@ import java.io.PrintWriter;
 @Configuration
 @EnableMethodSecurity
 public class SecurityConfiguration {
+
+    private static final String LOGIN_PATH = "/api/auth/login";
+    private static final String REQUIRED_ROLE = "ROLE_OWNER";
 
     @Resource
     private JWTUtils jwtUtil;
@@ -42,18 +50,33 @@ public class SecurityConfiguration {
     @Resource
     private JWTAuthorizeFilter jwtAuthorizeFilter;
 
+    /**
+     * 管理端专用认证提供者，保留非 OWNER 角色异常以便映射为 403。
+     */
+    @Bean
+    DaoAuthenticationProvider adminAuthenticationProvider(AccountService accountService,
+                                                           PasswordEncoder passwordEncoder) {
+        DaoAuthenticationProvider authenticationProvider = new DaoAuthenticationProvider(accountService);
+        authenticationProvider.setPasswordEncoder(passwordEncoder);
+        authenticationProvider.setHideUserNotFoundExceptions(false);
+        return authenticationProvider;
+    }
 
     /**
      * 构建管理端的安全过滤链，挂载登录、登出、异常处理和 JWT 授权过滤器。
      */
     @Bean
-    SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    SecurityFilterChain filterChain(HttpSecurity http,
+                                    DaoAuthenticationProvider authenticationProvider) throws Exception {
         return http
                 .authorizeHttpRequests(auth -> {
-                    auth.anyRequest().permitAll();
+                    auth.requestMatchers(HttpMethod.POST, LOGIN_PATH).permitAll();
+                    auth.anyRequest().hasAuthority(REQUIRED_ROLE);
                 })
                 .formLogin(auth -> {
-                    auth.loginProcessingUrl("/api/auth/login");
+                    // There is no anonymous HTML login page in the management app.
+                    auth.loginPage(LOGIN_PATH);
+                    auth.loginProcessingUrl(LOGIN_PATH);
                     auth.successHandler(this::onAuthenticationSuccess);
                     auth.failureHandler(this::onAuthenticationFailure);
                 })
@@ -68,7 +91,10 @@ public class SecurityConfiguration {
                     conf.accessDeniedHandler(this::onAccessDeny);
                     conf.authenticationEntryPoint(this::onUnauthorized);
                 })
-                .addFilterBefore(jwtAuthorizeFilter, UsernamePasswordAuthenticationFilter.class)
+                .authenticationProvider(authenticationProvider)
+                // LogoutFilter precedes UsernamePasswordAuthenticationFilter; JWT must
+                // run first so logout can enforce the same OWNER gate.
+                .addFilterBefore(jwtAuthorizeFilter, LogoutFilter.class)
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(Customizer.withDefaults())
                 .build();
@@ -79,7 +105,7 @@ public class SecurityConfiguration {
      */
     public void onAuthenticationSuccess(HttpServletRequest req,
                                         HttpServletResponse resp,
-                                        Authentication  auth) throws IOException {
+                                        Authentication auth) throws IOException {
         resp.setCharacterEncoding("UTF-8");
         resp.setContentType("application/json");
         User user = (User) auth.getPrincipal();
@@ -100,7 +126,13 @@ public class SecurityConfiguration {
                                         AuthenticationException exception) throws IOException, ServletException {
         resp.setContentType("application/json");
         resp.setCharacterEncoding("UTF-8");
-        resp.getWriter().write(Result.fail(401, exception.getMessage()).toJSONString());
+        if (exception instanceof AdminRoleRequiredException) {
+            resp.setStatus(HttpServletResponse.SC_FORBIDDEN);
+            resp.getWriter().write(Result.fail(403, "权限不足").toJSONString());
+            return;
+        }
+        resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        resp.getWriter().write(Result.fail(401, "用户名或密码错误").toJSONString());
     }
 
     /**
@@ -109,6 +141,16 @@ public class SecurityConfiguration {
     public void onLogoutSuccess(HttpServletRequest req,
                                 HttpServletResponse resp,
                                 Authentication auth) throws IOException, ServletException {
+        // LogoutFilter runs before URL authorization, so guard this endpoint here too.
+        if (auth == null) {
+            onUnauthorized(req, resp, null);
+            return;
+        }
+        if (!auth.getAuthorities().stream()
+                .anyMatch(authority -> REQUIRED_ROLE.equals(authority.getAuthority()))) {
+            onAccessDeny(req, resp, new AccessDeniedException("权限不足"));
+            return;
+        }
         resp.setContentType("application/json");
         resp.setCharacterEncoding("utf-8");
         String authorization = req.getHeader("Authorization");
@@ -129,6 +171,7 @@ public class SecurityConfiguration {
                              AccessDeniedException e) throws IOException, ServletException {
         resp.setContentType("application/json");
         resp.setCharacterEncoding("utf-8");
+        resp.setStatus(HttpServletResponse.SC_FORBIDDEN);
         resp.getWriter().write(Result.fail(403, "权限不足, 请联系管理员").toJSONString());
     }
 
@@ -137,11 +180,11 @@ public class SecurityConfiguration {
      */
     public void onUnauthorized(HttpServletRequest req,
                                HttpServletResponse resp,
-                               AuthenticationException e) throws IOException {
+                               AuthenticationException e) throws IOException, ServletException {
         resp.setContentType("application/json");
         resp.setCharacterEncoding("utf-8");
-        resp.setStatus(200);
-        resp.getWriter().write(Result.fail(401, e.getMessage()).toJSONString());
+        resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        resp.getWriter().write(Result.fail(401, "未认证").toJSONString());
     }
 
 }

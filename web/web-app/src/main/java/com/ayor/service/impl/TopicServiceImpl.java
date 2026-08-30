@@ -4,18 +4,18 @@ import com.ayor.entity.Base64Upload;
 import com.ayor.entity.dto.TopicDTO;
 import com.ayor.entity.vo.TopicVO;
 import com.ayor.image.ImageStorageService;
+import com.ayor.image.ImageUploadException;
 import com.ayor.entity.pojo.Topic;
 import com.ayor.entity.pojo.TopicStat;
 import com.ayor.mapper.ThreaddMapper;
 import com.ayor.mapper.TopicMapper;
 import com.ayor.mapper.TopicStatMapper;
 import com.ayor.service.TopicService;
+import com.ayor.service.CacheInvalidationService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
-import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,6 +23,11 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+
+/**
+ * 分区服务实现
+ */
+
 
 @Service
 @Transactional
@@ -36,6 +41,8 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
     private final TopicStatMapper topicStatMapper;
 
     private final ImageStorageService imageStorageService;
+
+    private final CacheInvalidationService cacheInvalidationService;
     /**
      * 根据主题 ID 查询主题名称，用于缓存和面包屑展示。
      */
@@ -74,11 +81,6 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
     }
 
     @Override
-    @Caching(evict = {
-            @CacheEvict(value = "topicName", key = "#topicDTO.topicId", condition = "#topicDTO.topicId != null"),
-            @CacheEvict(value = "topicList", key = "#topicDTO.themeId", condition = "#topicDTO.themeId != null"),
-            @CacheEvict(value = "themeTopicList", key = "'all'")
-    })
     /**
      * 创建新话题，上传封面并初始化话题统计。
      */
@@ -93,22 +95,24 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
         Base64Upload cover = topicDTO.getCover();
         try {
             topic.setCoverUrl(imageStorageService.storeImageBase64Image(cover, "topic/").getUrl());
+        } catch (ImageUploadException exception) {
+            throw exception;
         } catch (RuntimeException e) {
             return "图片上传失败";
         }
         BeanUtils.copyProperties(topicDTO, topic);
         topic.setCreateTime(new Date());
         this.save(topic);
+        cacheInvalidationService.evict("topicList", topicDTO.getThemeId());
+        cacheInvalidationService.evict("themeTopicList", "all");
 
-        return topicStatMapper.initializeNewTopicStat(topic.getTopicId()) > 0 ? null : "添加失败, 未知异常";
+        if (topicStatMapper.initializeNewTopicStat(topic.getTopicId()) <= 0) {
+            return "添加失败, 未知异常";
+        }
+        return null;
     }
 
     @Override
-    @Caching(evict = {
-            @CacheEvict(value = "topicName", key = "#topicDTO.topicId"),
-            @CacheEvict(value = "topicList", key = "#topicDTO.themeId"),
-            @CacheEvict(value = "themeTopicList", key = "'all'")
-    })
     /**
      * 更新话题信息，必要时同步更新封面。
      */
@@ -118,24 +122,34 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
         }
 
         Topic topic = this.getById(topicDTO.getTopicId());
+        if (topic == null) {
+            return "主题不存在";
+        }
+        Integer oldThemeId = topic.getThemeId();
         BeanUtils.copyProperties(topicDTO, topic);
 
         if (!topicDTO.getCover().getBase64().startsWith("nineforum")) {
             try {
                 topic.setCoverUrl(imageStorageService.storeImageBase64Image(topicDTO.getCover(), "topic/").getUrl());
+            } catch (ImageUploadException exception) {
+                throw exception;
             } catch (RuntimeException e) {
                 return "图片上传失败";
             }
         }
-        return this.updateById( topic) ? null : "更新失败, 未知异常";
+        if (!this.updateById(topic)) {
+            return "更新失败, 未知异常";
+        }
+        cacheInvalidationService.evict("topicName", topicDTO.getTopicId());
+        cacheInvalidationService.evict("topicList", oldThemeId);
+        if (!java.util.Objects.equals(oldThemeId, topicDTO.getThemeId())) {
+            cacheInvalidationService.evict("topicList", topicDTO.getThemeId());
+        }
+        cacheInvalidationService.evict("themeTopicList", "all");
+        return null;
     }
 
     @Override
-     @Caching(evict = {
-            @CacheEvict(value = "topicName", key = "#topicId", condition = "#topicId != null "),
-            @CacheEvict(value = "topicList", key = "@themeMapper.getThemeIdByTopicId(#topicId)", condition = "#topicId != null "),
-             @CacheEvict(value = "themeTopicList", key = "'all'")
-     })
     /**
      * 删除话题，并同步删除该话题下的帖子。
      */
@@ -145,8 +159,18 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
             return "主题不存在";
         }
         Integer themeId = topic.getThemeId();
-        threaddMapper.deleteThreadByTopicId(topicId);
-        return this.removeByIdLogical(topicId) ? null : "删除失败, 未知异常";
+        Integer deletedThreads = threaddMapper.deleteThreadByTopicId(topicId);
+        if (!this.removeByIdLogical(topicId)) {
+            if (deletedThreads != null && deletedThreads > 0) {
+                cacheInvalidationService.clearThreadRanking();
+            }
+            return "删除失败, 未知异常";
+        }
+        cacheInvalidationService.evict("topicName", topicId);
+        cacheInvalidationService.evict("topicList", themeId);
+        cacheInvalidationService.evict("themeTopicList", "all");
+        cacheInvalidationService.clearThreadRanking();
+        return null;
     }
     /**
      * 逻辑删除话题，并同步删除该话题下的帖子。
@@ -155,13 +179,7 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
 
 
     public String deleteTopicLogical(Integer topicId) {
-        Topic topic = this.getById(topicId);
-        if (topic == null) {
-            return "主题不存在";
-        }
-        Integer themeId = topic.getThemeId();
-        threaddMapper.deleteThreadByTopicId(topicId);
-        return this.removeByIdLogical(topicId) ? null : "删除失败, 未知异常";
+        return deleteTopic(topicId);
     }
     /**
      * 将帖子标记为逻辑删除。

@@ -6,15 +6,26 @@ import com.ayor.service.MessageUnreadService;
 import com.ayor.type.UnreadMessageType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
 
 import java.util.Arrays;
-import java.util.Objects;
 import java.util.Optional;
 
+/**
+ * 消息未读服务实现
+ */
 @Service
 @RequiredArgsConstructor
 public class MessageUnreadServiceImpl implements MessageUnreadService {
+
+    private static final DefaultRedisScript<Long> DECREMENT_SCRIPT = new DefaultRedisScript<>(
+            "local current = tonumber(redis.call('GET', KEYS[1]) or '0'); " +
+                    "local remaining = current - tonumber(ARGV[1]); " +
+                    "if remaining <= 0 then redis.call('DEL', KEYS[1]); return 0; end; " +
+                    "redis.call('SET', KEYS[1], remaining); return remaining;",
+            Long.class
+    );
 
     private final StringRedisTemplate template;
     /**
@@ -29,13 +40,6 @@ public class MessageUnreadServiceImpl implements MessageUnreadService {
     }
     /**
      * 判断指定 Redis key 是否存在。
-     */
-
-    private boolean existValue(String key) {
-        return template.hasKey(key);
-    }
-    /**
-     * 获取指定用户的未读数量。
      */
 
     @Override
@@ -112,13 +116,15 @@ public class MessageUnreadServiceImpl implements MessageUnreadService {
     public UnreadOverviewVO getUnreadOverviewVO(Integer userId) {
         Long reply = getUnread(userId, UnreadMessageType.REPLY_MESSAGE);
         Long mention = getUnread(userId, UnreadMessageType.MENTION_MESSAGE);
+        Long follow = getUnread(userId, UnreadMessageType.FOLLOW_MESSAGE);
         Long system = getUnread(userId, UnreadMessageType.SYSTEM_MESSAGE);
         Long user = getUnread(userId, UnreadMessageType.USER_MESSAGE);
 
         return UnreadOverviewVO.builder()
-                .total(reply + mention + system + user)
+                .total(reply + mention + follow + system + user)
                 .reply(reply)
                 .mention(mention)
+                .follow(follow)
                 .system(system)
                 .user(user)
                 .build();
@@ -127,33 +133,16 @@ public class MessageUnreadServiceImpl implements MessageUnreadService {
      * 初始化指定用户的未读数量。
      */
 
-    public void newUnread(Integer userId, UnreadMessageType type, Long value) {
-        String key = buildKey(userId, type);
-        template.opsForValue().set(key, value.toString());
-    }
-    /**
-     * 清空指定会话的未读数量，并同步更新总未读数。
-     */
-
-    @Override
     public Long clearUnread(Integer userId, UnreadMessageType type, Long value) {
-        String key = buildKey(userId, type);
-
-        String unreadCount = template.opsForValue().get(key);
-        if (unreadCount == null) {
-            return 0L;
+        if (value == null || value <= 0) {
+            return getUnread(userId, type);
         }
-        if (value >= Long.parseLong(unreadCount)) {
-            template.delete(key);
-        }
-        if (value < Long.parseLong(unreadCount)) {
-           decrUnread(userId, type, value);
-        }
-        if (Objects.equals(unreadCount, "0")) {
-            template.delete(key);
-        }
-        String remaining = template.opsForValue().get(key);
-        return remaining == null ? 0L : Long.parseLong(remaining);
+        Long remaining = template.execute(
+                DECREMENT_SCRIPT,
+                java.util.List.of(buildKey(userId, type)),
+                value.toString()
+        );
+        return remaining == null ? 0L : remaining;
     }
     /**
      * 清空指定会话的未读数量，并同步更新总未读数。
@@ -177,21 +166,11 @@ public class MessageUnreadServiceImpl implements MessageUnreadService {
      * 将指定用户的未读数量减一。
      */
 
-    public void decrUnread(Integer userId, UnreadMessageType type, Long value) {
-        String key = buildKey(userId, type);
-        template.opsForValue().decrement(key, value);
-    }
-    /**
-     * 按指定值增加未读数量，并返回最新结果。
-     */
-
-
     @Override
     public long addUnread(Integer userId, UnreadMessageType type, Long value) {
-        if (getUnread(userId, type) == 0) {
-            newUnread(userId, type, value);
-            return 1;
+        if (value == null || value <= 0) {
+            return getUnread(userId, type);
         }
-        return incrUnread(userId, type, 1L);
+        return incrUnread(userId, type, value);
     }
 }

@@ -19,6 +19,9 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 
+/**
+ * 页面广播查询服务实现
+ */
 @Service
 public class PageBroadcastQueryServiceImpl implements PageBroadcastQueryService {
 

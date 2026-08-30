@@ -1,0 +1,33 @@
+package com.ayor.config;
+
+import com.alibaba.fastjson2.JSONObject;
+import jakarta.servlet.http.HttpServletResponse;
+import org.junit.jupiter.api.Test;
+import org.springframework.security.authentication.BadCredentialsException;
+
+import java.io.PrintWriter;
+import java.io.StringWriter;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+class SecurityConfigurationUnauthorizedTest {
+
+    // 测试未授权响应使用真实 HTTP 401，并保持 Result envelope
+    @Test
+    void shouldReturnUnauthenticatedCodeWhenUnauthorized() throws Exception {
+        SecurityConfiguration configuration = new SecurityConfiguration();
+        HttpServletResponse response = mock(HttpServletResponse.class);
+        StringWriter body = new StringWriter();
+        when(response.getWriter()).thenReturn(new PrintWriter(body));
+
+        configuration.onUnauthorized(null, response, new BadCredentialsException("Unauthorized"));
+
+        JSONObject result = JSONObject.parseObject(body.toString());
+        assertThat(result.getInteger("code")).isEqualTo(401);
+        assertThat(result.getString("message")).isEqualTo("未认证");
+        verify(response).setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+    }
+}

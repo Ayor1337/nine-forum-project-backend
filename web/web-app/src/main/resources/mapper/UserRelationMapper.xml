@@ -38,4 +38,15 @@
         )
     </select>
 
+    <select id="listBlockedAccountIdsEitherDirection" resultType="java.lang.Integer">
+        SELECT CASE
+            WHEN from_account_id = #{accountId} THEN to_account_id
+            ELSE from_account_id
+        END
+        FROM user_relation
+        WHERE relation_type = 'BLOCK'
+          AND status = 'ACTIVE'
+          AND (from_account_id = #{accountId} OR to_account_id = #{accountId})
+    </select>
+
 </mapper>

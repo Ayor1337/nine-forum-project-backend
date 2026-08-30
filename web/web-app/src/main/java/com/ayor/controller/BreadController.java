@@ -1,9 +1,13 @@
 package com.ayor.controller;
 
 import com.ayor.result.Result;
+import com.ayor.entity.vo.ThreadBreadcrumbVO;
 import com.ayor.service.ThreaddService;
 import com.ayor.service.TopicService;
 import lombok.RequiredArgsConstructor;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -12,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/api")
+@Tag(name = "面包屑")
 public class BreadController {
 
     private final TopicService topicService;
@@ -19,25 +24,19 @@ public class BreadController {
     private final ThreaddService threaddService;
     /**
      * 获取主题标题，用于面包屑展示。
-     *
-     * @param topicId 主题 ID
-     * @return 主题标题
      */
-
+    @Operation(summary = "获取主题面包屑")
     @GetMapping("/topics/{topic_id}/breadcrumb")
-    public Result<String> getTopicInfo(@PathVariable(name = "topic_id") Integer topicId) {
+    public Result<String> getTopicInfo(@Parameter(description = "主题 ID") @PathVariable(name = "topic_id") Integer topicId) {
         return Result.dataMessageHandler(() -> topicService.getTopicNameById(topicId), "获取帖子信息失败");
     }
     /**
      * 获取帖子标题，用于面包屑展示。
-     *
-     * @param threadId 帖子 ID
-     * @return 帖子标题
      */
-
+    @Operation(summary = "获取帖子面包屑")
     @GetMapping("/threads/{thread_id}/breadcrumb")
-    public Result<String> getThreadInfo(@PathVariable(name = "thread_id") Integer threadId) {
-        return Result.dataMessageHandler(() -> threaddService.getThreadTitleById(threadId), "获取帖子信息失败");
+    public Result<ThreadBreadcrumbVO> getThreadInfo(@Parameter(description = "帖子 ID") @PathVariable(name = "thread_id") Integer threadId) {
+        return Result.dataMessageHandler(() -> threaddService.getThreadBreadcrumbById(threadId), "获取帖子信息失败");
     }
 
 

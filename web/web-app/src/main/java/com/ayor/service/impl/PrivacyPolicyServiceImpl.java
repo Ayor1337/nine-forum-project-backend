@@ -80,7 +80,7 @@ public class PrivacyPolicyServiceImpl implements PrivacyPolicyService {
     }
 
     @Override
-    public boolean canViewAccountInfo(Integer viewerId, Integer ownerId) {
+    public boolean canViewUserProfile(Integer viewerId, Integer ownerId) {
         if (isSelf(viewerId, ownerId)) {
             return true;
         }

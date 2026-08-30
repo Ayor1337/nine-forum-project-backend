@@ -10,11 +10,13 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 
 class PasskeyCredentialTest {
 
+    // 测试保持普通数据库实体
     @Test
     void shouldRemainPlainDatabaseEntity() {
         assertFalse(CredentialRecord.class.isAssignableFrom(PasskeyCredential.class));
     }
 
+    // 测试布尔字段Getter不会与Java Bean规范冲突
     @Test
     void shouldExposeBooleanFieldsWithoutJavaBeanGetterConflict() {
         Reflector reflector = new Reflector(PasskeyCredential.class);
@@ -25,6 +27,7 @@ class PasskeyCredentialTest {
         assertDoesNotThrow(() -> reflector.getGetInvoker("uvInitialized").invoke(credential, null));
     }
 
+    // 测试支持 Builder 创建
     @Test
     void shouldSupportBuilderCreation() {
         PasskeyCredential credential = PasskeyCredential.builder()

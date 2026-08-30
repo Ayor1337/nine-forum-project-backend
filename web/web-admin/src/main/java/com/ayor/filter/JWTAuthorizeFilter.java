@@ -3,6 +3,8 @@ package com.ayor.filter;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.ayor.mapper.PermissionMapper;
 import com.ayor.mapper.RoleMapper;
+import com.ayor.result.Result;
+import com.ayor.result.ResultCodeEnum;
 import com.ayor.util.JWTUtils;
 import jakarta.annotation.Resource;
 import jakarta.servlet.FilterChain;
@@ -57,6 +59,13 @@ public class JWTAuthorizeFilter extends OncePerRequestFilter {
                     }).orElse( null);
         }
         DecodedJWT jwt = jwtUtil.resolveJwt(authorization);
+        if (authorization != null && jwt == null) {
+            response.setCharacterEncoding("UTF-8");
+            response.setContentType("application/json");
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.getWriter().write(Result.build(null, ResultCodeEnum.TOKEN_EXPIRED).toJSONString());
+            return;
+        }
         if(jwt != null) {
             UserDetails user = jwtUtil.toUser(jwt);
             String username = jwt.getClaim("name").asString();

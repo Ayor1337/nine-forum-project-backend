@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class PasskeyRegistrationFinishDTOTest {
 
+    // 测试反序列化浏览器证明JSON并忽略未知字段
     @Test
     void shouldDeserializeBrowserAttestationJsonAndIgnoreUnknownFields() throws Exception {
         String json = """
@@ -46,6 +47,7 @@ class PasskeyRegistrationFinishDTOTest {
         assertEquals(java.util.List.of("internal", "hybrid"), dto.getCredential().getResponse().getTransports());
     }
 
+    // 测试使用默认标签当缺失
     @Test
     void shouldUseDefaultLabelWhenMissing() {
         PasskeyRegistrationFinishDTO dto = new PasskeyRegistrationFinishDTO();

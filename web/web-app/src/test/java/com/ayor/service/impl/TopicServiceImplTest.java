@@ -5,10 +5,10 @@ import com.ayor.entity.dto.TopicDTO;
 import com.ayor.entity.pojo.Topic;
 import com.ayor.image.ImageStorageService;
 import com.ayor.image.StoredImage;
+import com.ayor.service.CacheInvalidationService;
 import com.ayor.mapper.ThreaddMapper;
 import com.ayor.mapper.TopicMapper;
 import com.ayor.mapper.TopicStatMapper;
-import com.ayor.minio.MinioService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -33,14 +33,15 @@ class TopicServiceImplTest {
     private ThreaddMapper threaddMapper;
 
     @Mock
-    private MinioService minioService;
-
-    @Mock
     private TopicStatMapper topicStatMapper;
 
     @Mock
     private ImageStorageService imageStorageService;
 
+    @Mock
+    private CacheInvalidationService cacheInvalidationService;
+
+    // 测试通过图片存储服务上传新主题封面
     @Test
     void shouldUploadNewTopicCoverThroughImageStorageService() throws Exception {
         TopicServiceImpl service = spy(createService());
@@ -59,9 +60,9 @@ class TopicServiceImplTest {
 
         assertNull(result);
         verify(imageStorageService).storeImageBase64Image(topicDTO.getCover(), "topic/");
-        verify(minioService, never()).uploadBase64(topicDTO.getCover(), "topic/");
     }
 
+    // 测试通过图片存储服务上传更新后的主题封面
     @Test
     void shouldUploadUpdatedTopicCoverThroughImageStorageService() throws Exception {
         TopicServiceImpl service = spy(createService());
@@ -79,7 +80,28 @@ class TopicServiceImplTest {
 
         assertNull(result);
         verify(imageStorageService).storeImageBase64Image(topicDTO.getCover(), "topic/");
-        verify(minioService, never()).uploadBase64(topicDTO.getCover(), "topic/");
+    }
+
+    // 测试清理新旧版块缓存当主题移动
+    @Test
+    void shouldEvictOldAndNewThemeCachesWhenTopicMoves() {
+        TopicServiceImpl service = spy(createService());
+        Topic topic = new Topic();
+        topic.setTopicId(9);
+        topic.setThemeId(2);
+        topic.setCoverUrl("nineforum/topic/old.png");
+        TopicDTO topicDTO = new TopicDTO(
+                9, "话题", new Base64Upload("nineforum/topic/old.png", "cover.png"), "描述", 3
+        );
+        when(service.getById(9)).thenReturn(topic);
+        when(service.updateById(topic)).thenReturn(true);
+
+        assertNull(service.updateTopic(topicDTO));
+
+        verify(cacheInvalidationService).evict("topicName", 9);
+        verify(cacheInvalidationService).evict("topicList", 2);
+        verify(cacheInvalidationService).evict("topicList", 3);
+        verify(cacheInvalidationService).evict("themeTopicList", "all");
     }
 
     private TopicServiceImpl createService() {
@@ -87,7 +109,8 @@ class TopicServiceImplTest {
                 topicMapper,
                 threaddMapper,
                 topicStatMapper,
-                imageStorageService
+                imageStorageService,
+                cacheInvalidationService
         );
         ReflectionTestUtils.setField(service, "baseMapper", topicMapper);
         return service;

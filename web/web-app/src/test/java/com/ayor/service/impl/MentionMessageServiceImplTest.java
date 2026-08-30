@@ -43,6 +43,7 @@ class MentionMessageServiceImplTest {
     @Mock
     private MessageUnreadService messageUnreadService;
 
+    // 测试提及标签不同于用户名时仍创建提及消息
     @Test
     void shouldCreateMentionMessageWhenMentionLabelDiffersFromUsername() {
         MentionMessageServiceImpl service = new MentionMessageServiceImpl(

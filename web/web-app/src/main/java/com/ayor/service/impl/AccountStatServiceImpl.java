@@ -13,6 +13,9 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * 账号统计服务实现
+ */
 @Service
 @Transactional
 @RequiredArgsConstructor

@@ -1,0 +1,5 @@
+{"file":".trellis/tasks/08-23-fix-anonymous-stomp-injection/design.md","reason":"已审核的用户端 STOMP 目的地允许模型和 Spring Framework 升级方案。"}
+{"file":".trellis/tasks/08-23-fix-anonymous-stomp-injection/research/stomp-destination-audit.md","reason":"服务端 destination 家族、唯一客户端 SEND 入口和前端缺失的调研证据。"}
+{"file":".trellis/tasks/08-23-fix-anonymous-stomp-injection/research/cors-configuration-audit.md","reason":"HTTP CORS、WebSocket Origin 与 WebAuthn Origin 的边界调研。"}
+{"file":".trellis/spec/backend/directory-structure.md","reason":"用户端 config 与 interceptor 的模块归属。"}
+{"file":".trellis/spec/backend/quality-guidelines.md","reason":"安全配置和消息消费者变更的测试要求。"}

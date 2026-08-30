@@ -1,5 +1,6 @@
 package com.ayor.service.impl;
 
+import com.ayor.controller.StickerController;
 import com.ayor.entity.Base64Upload;
 import com.ayor.entity.PageEntity;
 import com.ayor.entity.pojo.ImageAsset;
@@ -14,13 +15,14 @@ import com.ayor.mapper.ImageAssetMapper;
 import com.ayor.minio.MinioService;
 import com.ayor.type.ImageAssetStatus;
 import com.ayor.type.ImageAssetType;
-import com.ayor.util.TipTapUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.web.bind.annotation.DeleteMapping;
 
+import java.lang.reflect.Method;
 import java.util.Date;
 import java.util.List;
 
@@ -30,7 +32,6 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mockingDetails;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
@@ -58,6 +59,7 @@ class ImageAssetServiceImplTest {
     @Mock
     private MinioService minioService;
 
+    // 测试新增已上传贴纸到当前用户资源库
     @Test
     void shouldAddUploadedStickerToCurrentUsersLibrary() {
         ImageAssetServiceImpl service = spy(createService());
@@ -84,6 +86,7 @@ class ImageAssetServiceImplTest {
         verify(imageAssetMapper).refreshAddedCount(15);
     }
 
+    // 测试列表当前用户贴纸资源库
     @Test
     void shouldListCurrentUsersStickerLibrary() {
         ImageAssetServiceImpl service = createService();
@@ -100,6 +103,68 @@ class ImageAssetServiceImplTest {
         assertTrue(result.getData().get(0).getAvailable());
     }
 
+    // 测试公开表情包可被非上传者加入资源库
+    @Test
+    void shouldAddActiveStickerUploadedByAnotherUser() {
+        ImageAssetServiceImpl service = createService();
+        ImageAsset asset = createStickerAsset(22, 3);
+
+        when(imageAssetMapper.selectById(22)).thenReturn(asset);
+        when(imageAssetFavoriteMapper.findMembership(8, 22)).thenReturn(null);
+
+        assertNull(service.addSticker(8, 22));
+        boolean insertedMembership = mockingDetails(imageAssetFavoriteMapper).getInvocations().stream()
+                .filter(invocation -> "insert".equals(invocation.getMethod().getName()))
+                .map(invocation -> invocation.getArgument(0))
+                .filter(ImageAssetFavorite.class::isInstance)
+                .map(ImageAssetFavorite.class::cast)
+                .anyMatch(relation -> relation.getAccountId().equals(8) && relation.getAssetId().equals(22));
+        assertTrue(insertedMembership);
+    }
+
+    // 测试已下架表情包不返回详情
+    @Test
+    void shouldNotExposeDisabledStickerDetail() {
+        ImageAssetServiceImpl service = createService();
+        ImageAsset asset = createStickerAsset(22, 3);
+        asset.setStatus(ImageAssetStatus.DISABLED.name());
+
+        when(imageAssetMapper.selectById(22)).thenReturn(asset);
+
+        assertNull(service.getDetail(8, 22));
+        verify(imageAssetFavoriteMapper, never()).findMembership(8, 22);
+    }
+
+    // 测试已下架表情包不能加入资源库
+    @Test
+    void shouldNotAddDisabledSticker() {
+        ImageAssetServiceImpl service = createService();
+        ImageAsset asset = createStickerAsset(22, 3);
+        asset.setStatus(ImageAssetStatus.DISABLED.name());
+
+        when(imageAssetMapper.selectById(22)).thenReturn(asset);
+
+        assertEquals("资源不可用", service.addSticker(8, 22));
+        verify(imageAssetFavoriteMapper, never()).insert(any(ImageAssetFavorite.class));
+    }
+
+    // 测试已下架表情包不能按地址添加
+    @Test
+    void shouldNotAddDisabledStickerByUrl() {
+        ImageAssetServiceImpl service = createService();
+        String imageUrl = "https://cdn.example.com/stickers/3/cat.webp";
+        ImageAsset asset = createStickerAsset(22, 3);
+        asset.setStatus(ImageAssetStatus.DISABLED.name());
+
+        when(minioService.normalizeUrl(imageUrl)).thenReturn(imageUrl);
+        when(imageAssetMapper.findByUrl(imageUrl)).thenReturn(asset);
+
+        assertEquals("资源不可用", service.addStickerByUrl(8, imageUrl));
+        verify(minioService, never()).getObjectBytes(imageUrl);
+        verify(imageAssetFavoriteMapper, never()).insert(any(ImageAssetFavorite.class));
+    }
+
+    // 测试移除贴纸从当前用户资源库不带删除资源
     @Test
     void shouldRemoveStickerFromCurrentUsersLibraryWithoutDeletingResource() {
         ImageAssetServiceImpl service = spy(createService());
@@ -122,28 +187,62 @@ class ImageAssetServiceImplTest {
         verify(imageAssetMapper, never()).updateById(any(ImageAsset.class));
     }
 
+    // 测试用户侧不暴露贴纸资源删除接口
     @Test
-    void shouldDeleteStickerResourceInsteadOfOnlyRemovingMembership() {
-        ImageAssetServiceImpl service = spy(createService());
-        ImageAsset asset = createStickerAsset(22, 8);
-        asset.setFavoriteCount(1);
-        asset.setUseCount(0);
-        asset.setUrl("https://cdn.example.com/stickers/8/cat.webp");
-        ImageAssetFavorite ownerMembership = new ImageAssetFavorite(5, 8, 22, new Date());
+    void shouldNotExposeUserSideStickerResourceDeletionEndpoint() {
+        boolean hasResourceDeletionEndpoint = false;
+        for (Method method : StickerController.class.getDeclaredMethods()) {
+            DeleteMapping mapping = method.getAnnotation(DeleteMapping.class);
+            if (mapping == null) {
+                continue;
+            }
+            for (String path : mapping.value()) {
+                if ("/{assetId}/resource".equals(path)) {
+                    hasResourceDeletionEndpoint = true;
+                }
+            }
+        }
 
-        when(imageAssetMapper.selectById(22)).thenReturn(asset);
-        when(imageAssetFavoriteMapper.findMembership(8, 22)).thenReturn(ownerMembership);
-        when(minioService.isOwnObjectUrl(asset.getUrl())).thenReturn(false);
-        doReturn(true).when(service).removeById(22);
+        assertFalse(hasResourceDeletionEndpoint);
+    }
 
-        String result = service.deleteStickerResource(8, 22);
+    // 测试内容图片引用从独立 URL 数组同步，并对重复 URL 去重。
+    @Test
+    void shouldSyncContentRefsFromImageUrls() {
+        ImageAssetServiceImpl service = createService();
+        ImageAsset asset = new ImageAsset();
+        asset.setAssetId(31);
+        asset.setStatus(ImageAssetStatus.ACTIVE.name());
+        String imageUrl = "https://cdn.example.com/threads/1/image.webp";
 
-        assertNull(result);
-        verify(service).removeById(22);
-        boolean deletedMembership = mockingDetails(imageAssetFavoriteMapper).getInvocations().stream()
-                .anyMatch(invocation -> "deleteById".equals(invocation.getMethod().getName()));
-        assertFalse(deletedMembership);
-        verify(imageAssetFavoriteMapper).findMembership(8, 22);
+        when(contentImageRefMapper.selectAssetIdsByContent("THREAD", 10)).thenReturn(List.of());
+        when(minioService.normalizeUrl(imageUrl)).thenReturn(imageUrl);
+        when(imageAssetMapper.findByUrl(imageUrl)).thenReturn(asset);
+
+        service.syncContentRefs("THREAD", 10, List.of(imageUrl, imageUrl), 7);
+
+        verify(contentImageRefMapper).deleteByContent("THREAD", 10);
+        verify(contentImageRefMapper).insertIgnore(any(com.ayor.entity.pojo.ContentImageRef.class));
+        verify(imageAssetMapper).refreshUseCount(31);
+    }
+
+    // 测试已下架图片不能被内容引用
+    @Test
+    void shouldNotReferenceDisabledContentImage() {
+        ImageAssetServiceImpl service = createService();
+        String imageUrl = "https://cdn.example.com/threads/1/disabled.webp";
+        ImageAsset asset = new ImageAsset();
+        asset.setAssetId(32);
+        asset.setStatus(ImageAssetStatus.DISABLED.name());
+
+        when(contentImageRefMapper.selectAssetIdsByContent("THREAD", 10)).thenReturn(List.of());
+        when(minioService.normalizeUrl(imageUrl)).thenReturn(imageUrl);
+        when(imageAssetMapper.findByUrl(imageUrl)).thenReturn(asset);
+
+        service.syncContentRefs("THREAD", 10, List.of(imageUrl), 7);
+
+        verify(contentImageRefMapper, never()).insertIgnore(any(com.ayor.entity.pojo.ContentImageRef.class));
+        verify(minioService, never()).getObjectBytes(imageUrl);
     }
 
     private ImageAssetServiceImpl createService() {
@@ -152,8 +251,7 @@ class ImageAssetServiceImplTest {
                 contentImageRefMapper,
                 imageStorageService,
                 imageProcessor,
-                minioService,
-                new TipTapUtils()
+                minioService
         );
         ReflectionTestUtils.setField(service, "baseMapper", imageAssetMapper);
         return service;

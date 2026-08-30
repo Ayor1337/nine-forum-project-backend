@@ -1,19 +1,12 @@
 package com.ayor.util;
 
-import com.ayor.entity.Base64Upload;
-import com.ayor.image.ImageStorageService;
-import com.ayor.image.StoredImage;
 import org.junit.jupiter.api.Test;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * TipTapUtils 的单元测试。
@@ -22,6 +15,7 @@ class TipTapUtilsTest {
 
     private final TipTapUtils tipTapUtils = new TipTapUtils();
 
+    // 测试提取提及目标从 TipTap JSON
     @Test
     void shouldExtractMentionTargetsFromTipTapJson() {
         String content = """
@@ -59,6 +53,7 @@ class TipTapUtilsTest {
         assertEquals("alice", mentions.get(0).username());
     }
 
+    // 测试提取纯文本时会包含提及内容
     @Test
     void shouldIncludeMentionsWhenExtractingPlainText() {
         String content = """
@@ -90,32 +85,47 @@ class TipTapUtilsTest {
         assertEquals("hi @bob", text);
     }
 
+    // 测试拒绝任意层级的图片节点
     @Test
-    void shouldPreserveGifExtensionWhenConvertingBase64Images() {
-        ImageStorageService storageService = mock(ImageStorageService.class);
-        ReflectionTestUtils.setField(tipTapUtils, "imageStorageService", storageService);
-        StoredImage storedStaticImage = new StoredImage();
-        storedStaticImage.setObjectName("posts/1/a.gif");
-        storedStaticImage.setUrl("nineforum/posts/1/a.gif");
-        when(storageService.storeImageBase64Image(any(Base64Upload.class), eq("posts/1/")))
-                .thenReturn(storedStaticImage);
-
-        String content = """
+    void shouldRejectImageNodesAtAnyDepth() {
+        String imageContent = """
                 {
                   "type": "doc",
                   "content": [
                     {
-                      "type": "image",
-                      "attrs": {
-                        "src": "data:image/gif;base64,R0lGODlhAQABAIAAAAUEBA=="
-                      }
+                      "type": "paragraph",
+                      "content": [{"type": "image", "attrs": {"src": "https://example.com/a.png"}}]
                     }
                   ]
                 }
                 """;
 
-        tipTapUtils.convertBase64ImagesToUrl(content, "posts/1/");
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> tipTapUtils.assertNoImageNodes(imageContent)
+        );
 
-        verify(storageService).storeImageBase64Image(new Base64Upload("data:image/gif;base64,R0lGODlhAQABAIAAAAUEBA==", "image.gif"), "posts/1/");
+        assertEquals("TipTap 内容不支持图片节点，请使用 images", exception.getMessage());
+        assertDoesNotThrow(() -> tipTapUtils.assertNoImageNodes("{\"type\":\"doc\",\"content\":[]}"));
+    }
+
+    // 测试贴纸节点仍转换为文本占位符
+    @Test
+    void shouldConvertStickerNodesToTextPlaceholders() {
+        String content = """
+                {
+                  "type": "doc",
+                  "content": [
+                    {"type": "sticker", "attrs": {"src": "https://example.com/sticker.png"}},
+                    {"type": "paragraph", "content": [
+                      {"type": "text", "text": "hello"}
+                    ]}
+                  ]
+                }
+                """;
+
+        String result = tipTapUtils.filterStickerNodes(content);
+
+        assertEquals("[表情]hello", tipTapUtils.extractText(result));
     }
 }
