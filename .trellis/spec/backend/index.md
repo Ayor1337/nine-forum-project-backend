@@ -21,6 +21,7 @@
 | [数据库](./database-guidelines.md) | MyBatis-Plus、Mapper、SQL、事务与模式变更 |
 | [错误处理](./error-handling.md) | `Result<T>`、业务失败、参数与安全异常的响应方式 |
 | [管理端 HTTP 安全](./admin-http-security.md) | 管理端 OWNER 门禁、登录角色与 401/403 响应合同 |
+| [管理端 STOMP 安全](./admin-stomp-security.md) | 管理端 STOMP CONNECT/SUBSCRIBE 的 OWNER 查库门禁与举报流目的地 |
 | [日志](./logging-guidelines.md) | Lombok SLF4J 的已有日志方式与敏感信息边界 |
 | [本地配置与秘密](./configuration-secrets.md) | 本地 `application.yml`、安全示例、Git 忽略与历史检查契约 |
 | [质量](./quality-guidelines.md) | Maven 验证、单元/契约测试与评审重点 |

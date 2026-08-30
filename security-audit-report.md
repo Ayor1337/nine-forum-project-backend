@@ -17,7 +17,7 @@
 | 编号 | 级别 | 发现 | 状态 |
 | --- | --- | --- | --- |
 | SEC-01 | 严重 | 管理端 HTTP 全局 `permitAll`，匿名请求可到达系统级管理操作 | 源码与动态确认 |
-| SEC-04 | 高危 | 管理端 STOMP 未校验管理员权限，普通用户可订阅实时举报数据 | 源码确认 |
+| SEC-04 | 高危 | 管理端 STOMP 未校验管理员权限，普通用户可订阅实时举报数据 | 已修复；源码与 Spring Messaging 契约测试确认 |
 | SEC-06 | 高危 | Redis/Elasticsearch 等基础设施绑定宿主所有接口且缺少认证或使用静态凭据 | 配置与运行态确认 |
 | SEC-11 | 高危 | 依赖基线存在可适用公开漏洞，关键组件补丁明显滞后 | OSV、官方公告与依赖树确认 |
 | SEC-07 | 中危 | 注册邮件入口无滥用控制，邮箱 JWT Redis TTL 约为数十年 | 源码确认 |
@@ -39,14 +39,15 @@
 - 影响：读取敏感数据、分配角色与权限、删除账号/内容、修改私信、触发数据修复或搜索重建，可能导致系统完全失陷或大范围数据破坏。
 - 修复：安全链默认 `authenticated()` 或拒绝；仅精确放行登录和必要健康检查。高影响操作使用明确的管理员权限表达式，并在 Service 边界保留授权断言。增加真实 FilterChain/MockMvc 契约：匿名 401、普通用户 403、具备权限的管理员成功。
 
-### SEC-04：管理端 STOMP 未校验管理员权限
+### SEC-04：管理端 STOMP 未校验管理员权限 (修复)
 
 - 类别：CWE-287、CWE-863；置信度：确定。
-- 证据：两端按项目设计共享登录态；管理端 `web/web-admin/src/main/java/com/ayor/interceptor/StompAuthInterceptor.java:30-47` 只验证 JWT 有效性，未校验管理员角色或权限，并允许任何已认证主体订阅 `/topic/reports`。
+- 历史证据：两端按项目设计共享登录态；管理端 `web/web-admin/src/main/java/com/ayor/interceptor/StompAuthInterceptor.java` 曾只验证 JWT 有效性，未校验管理员角色或权限，并允许任何已认证主体订阅 `/topic/reports`。
 - 攻击前提：持有任意普通用户端有效 JWT，能访问管理端 WebSocket。
-- 影响：普通论坛用户可监听包含举报双方标识、目标和内容摘要的实时审核流。
+- 历史影响：普通论坛用户可监听包含举报双方标识、目标和内容摘要的实时审核流。
 - 供应链叠加：CVE-2026-41838 的可预测 WebSocket 会话标识会放大当前授权不足；因此不能仅依赖升级消除本项业务授权缺陷。
-- 修复：在共享登录设计下，管理端 CONNECT 和 SUBSCRIBE 必须查询并校验当前管理员权限；升级 Spring Framework；增加“普通用户 token 必须失败”的集成测试。
+- 修复结果：管理端 `CONNECT` 从 JWT 的 `name` claim 取得账号名，并通过 `RoleMapper` 查询数据库当前角色；只有当前角色精确为 `OWNER` 才建立含 `ROLE_OWNER` 的 Principal。`SUBSCRIBE` 使用 session 账号名重新查询当前角色，并只允许精确目的地 `/topic/reports`；普通用户 token、角色撤销和其他目的地均失败关闭。原始 JWT 不保存到 session 或日志。
+- 验证：`StompAuthInterceptorTest` 覆盖帧级拒绝/放行与连接后角色撤销；`AdminStompSecurityContractTest` 通过实际 `clientInboundChannel` 断言普通用户 token 的 `CONNECT` 失败及 OWNER 的 CONNECT/SUBSCRIBE 成功。Spring Framework 解析版本为 6.2.19，满足 CVE-2026-41838 修复版本要求。
 
 ### SEC-06：基础设施弱保护且绑定所有宿主接口
 
