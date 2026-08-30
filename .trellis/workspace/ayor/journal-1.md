@@ -353,3 +353,24 @@
 ### Status
 
 [OK] **Completed**
+
+
+## Session 16: 修复改密后旧会话未全部撤销
+
+**Date**: 2026-08-30
+**Task**: 修复改密后旧会话未全部撤销
+**Branch**: `develope`
+
+### Summary
+
+修复 SEC-08：改密成功后撤销账号全部既有有效会话，启用密码 DTO 校验，补充双 JWT 回归测试、审计残余风险和账号会话安全规范。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `3335d05` | (see git log) |
+
+### Status
+
+[OK] **Completed**
