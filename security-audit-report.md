@@ -6,7 +6,7 @@
 
 ## 执行摘要
 
-当前版本仍不建议直接暴露到不受信任网络。报告保留 9 项未解决发现：1 项严重、3 项高危、3 项中危、2 项低危。首要风险不是单一依赖漏洞，而是管理端 HTTP 接口全局匿名放行；该问题已通过源码和 localhost 动态请求双重确认。其次是管理端 STOMP 未校验管理员权限、基础设施服务暴露，以及存在可适用公开漏洞且传输安全不足的依赖基线。
+当前版本仍不建议直接暴露到不受信任网络。报告列出 5 项未解决发现，SEC-06 已完成本地基线整改但生产待验证：其中 1 项高危、2 项中危、2 项低危。首要风险不是单一依赖漏洞，而是管理端 HTTP 接口全局匿名放行；该问题已通过源码和 localhost 动态请求双重确认。其次是管理端 STOMP 未校验管理员权限、生产基础设施边界，以及存在可适用公开漏洞的依赖基线。
 
 现有自动化测试全部通过，但未覆盖上述关键安全契约；管理端现有测试甚至固化了“认证失败仍返回 HTTP 200”的行为。根 Maven 打包还因 Spring Boot 插件配置错误而失败。测试通过不能抵消这些安全结论。
 
@@ -16,7 +16,7 @@
 
 | 编号 | 级别 | 发现 | 状态 |
 | --- | --- | --- | --- |
-| SEC-06 | 高危 | Redis/Elasticsearch 等基础设施绑定宿主所有接口且缺少认证或使用静态凭据 | 配置与运行态确认 |
+| SEC-06 | 高危 | Redis/Elasticsearch 等基础设施绑定宿主所有接口且缺少认证或使用静态凭据 | 本地基线已修复；生产待验证 |
 | SEC-11 | 高危 | 依赖基线存在可适用公开漏洞，关键组件补丁明显滞后 | OSV、官方公告与依赖树确认 |
 | SEC-09 | 中危 | 公开分页无最大页大小，任意参数扩大查询与缓存键基数 | 源码确认 |
 | SEC-14 | 中危 | 改密与并发登录存在会话撤销竞态，后置创建的会话可能漏撤销 | 源码时序分析 |
@@ -29,12 +29,15 @@
 
 ### SEC-06：基础设施弱保护且绑定所有宿主接口
 
+整改状态（2026-08-31）：本地 Compose 基线已修复，生产控制待部署验证。
+
 - 类别：CWE-306、CWE-284；置信度：高。
-- 证据：`.docker/docker-compose.yaml:8-14,22-43,53-101` 发布 MySQL、Redis、MinIO、Elasticsearch/Kibana 端口；Redis 未配置认证，Elasticsearch 明确关闭 Security。运行态 `docker port` 确认 MySQL、Redis、MinIO、Elasticsearch 映射到 `0.0.0.0` 和 `[::]`；无密码 Redis PING 返回 PONG，Elasticsearch 根接口匿名返回 200。
-- 传输边界：应用按 5672 端口连接 RabbitMQ，运行日志显示 AMQP 明文连接；SMTP 配置未启用 TLS。Angus Mail 的 SMTP STARTTLS 与 SSL 默认均为关闭，因此邮件凭据和邮件内容可能以明文传输。[Angus Mail SMTP 属性文档](https://eclipse-ee4j.github.io/angus-mail/docs/api/org.eclipse.angus.mail/org/eclipse/angus/mail/smtp/package-summary.html)
+- 原始证据：`.docker/docker-compose.yaml` 曾发布 MySQL、Redis、MinIO、Elasticsearch/Kibana 端口；Redis 无认证，Elasticsearch 关闭 Security，且 RabbitMQ/SMTP 配置未要求加密。此前运行态探测确认宿主端口绑定到 `0.0.0.0`/`[::]`，无密码 Redis PING 返回 PONG，Elasticsearch 根接口匿名返回 200。Angus Mail 的 SMTP STARTTLS 与 SSL 默认均为关闭。[Angus Mail SMTP 属性文档](https://eclipse-ee4j.github.io/angus-mail/docs/api/org.eclipse.angus.mail/org/eclipse/angus/mail/smtp/package-summary.html)
+- 当前修复：Compose 所有宿主端口显式绑定 `127.0.0.1`，删除 Elasticsearch transport `9300` 发布并仅发布回环 RabbitMQ `5672`；Redis 通过命名 ACL 用户认证并禁用 `default` 用户；Elasticsearch Security 开启并由初始化服务创建独立应用身份；MinIO/MySQL/RabbitMQ/Redis/Elasticsearch/Kibana 凭据移至未跟踪 env 文件；镜像改为具体版本标签；两个 Spring 应用的真实配置改为未跟踪文件，示例不含凭据；SMTP 强制 STARTTLS、证书主机名校验和超时。
+- 静态验证：已检查 Compose 端口/镜像/认证配置、示例配置与 Git 忽略规则；未启动当前工作区对应的旧持久化卷。Docker daemon 当时的 `nine-*` 容器来自另一份 WSL 工作区，因此没有用它们做升级或动态安全探测。
 - 攻击前提：攻击者可达宿主端口；实际局域网/公网可达性取决于宿主防火墙与上游网络。
 - 影响：读取或篡改数据库、缓存/会话、对象和搜索索引，可能导致账号接管、数据泄露或服务破坏。
-- 修复：开发环境至少绑定 `127.0.0.1`，不需要宿主访问的服务不发布端口；生产使用私网、TLS、Redis ACL、Elasticsearch Security 和外部注入的强随机凭据；为 SMTP 与 RabbitMQ 开启 TLS、证书链及主机名校验并轮换可能经明文传输的凭据；镜像固定版本或摘要，禁止 `latest`。
+- 残余修复：生产仍必须使用私网、TLS、Redis ACL、Elasticsearch Security、MinIO scoped service account 和外部注入的强随机凭据；为 SMTP 与 RabbitMQ 开启 TLS、证书链及主机名校验，并轮换可能经明文传输或出现在 Git 历史中的凭据。当前仓库没有生产编排、证书生命周期或 registry digest，不能将生产端到端控制标记为已验证。
 
 ### SEC-11：依赖基线存在可适用公开漏洞
 

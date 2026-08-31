@@ -1,4 +1,4 @@
-FROM mysql:latest
+FROM mysql:9.5.0
 ADD ./nine_forum_schema.sql /docker-entrypoint-initdb.d/nine_forum_schema.sql
 RUN chown -R mysql:mysql /docker-entrypoint-initdb.d/nine_forum_schema.sql
 EXPOSE 3306

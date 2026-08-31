@@ -1,0 +1,44 @@
+spring:
+  application:
+    name: nine-forum-project
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    url: jdbc:mysql://127.0.0.1:16033/nine_forum
+  data:
+    redis:
+      host: 127.0.0.1
+      port: 16379
+      database: 0
+      username: ${REDIS_USERNAME}
+      password: ${REDIS_PASSWORD}
+      ssl:
+        enabled: ${REDIS_SSL_ENABLED:false}
+      connect-timeout: 5s
+      timeout: 5s
+  security:
+    jwt:
+      secret-key: ${JWT_SECRET_KEY}
+      expire: 7
+  minio:
+    endpoint: http://127.0.0.1:9000
+    access-key: ${MINIO_ACCESS_KEY}
+    secret-key: ${MINIO_SECRET_KEY}
+    bucket: nineforum
+  rabbitmq:
+    host: 127.0.0.1
+    port: 5672
+    username: ${RABBITMQ_USERNAME}
+    password: ${RABBITMQ_PASSWORD}
+    virtual-host: /nine_forum
+    ssl:
+      enabled: ${RABBITMQ_SSL_ENABLED:false}
+      validate-server-certificate: ${RABBITMQ_SSL_VALIDATE_SERVER_CERTIFICATE:true}
+      verify-hostname: ${RABBITMQ_SSL_VERIFY_HOSTNAME:true}
+    listener:
+      simple:
+        acknowledge-mode: manual
+
+server:
+  port: 9977

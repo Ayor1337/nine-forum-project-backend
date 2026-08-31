@@ -65,55 +65,81 @@ NineForum 是一个基于 Spring Boot 的论坛后端项目，提供面向用户
 
 ## 本地依赖服务
 
-启动 MySQL、Redis、MinIO、RabbitMQ、Elasticsearch 和 Kibana：
+本 Compose 仅用于本机开发：所有宿主端口都绑定 `127.0.0.1`，本地 Redis/Elasticsearch 启用认证但不启用 TLS。不要把它作为跨主机或生产部署文件使用。
+
+首次使用先创建未跟踪的本地凭据文件（并把 `CHANGE_ME` 值替换为随机值）：
 
 ```bash
-docker compose -f .docker/docker-compose.yaml up -d
+for service in mysql redis minio rabbitmq elasticsearch kibana; do
+  cp ".docker/environment/${service}.env.example" ".docker/environment/${service}.env"
+done
 ```
 
-默认端口如下：
+PowerShell：
 
-| 服务 | 端口 | 说明 |
+```powershell
+foreach ($service in "mysql", "redis", "minio", "rabbitmq", "elasticsearch", "kibana") {
+  Copy-Item ".docker/environment/$service.env.example" ".docker/environment/$service.env"
+}
+```
+
+先启动不依赖 Kibana service token 的服务：
+
+```bash
+docker compose -f .docker/docker-compose.yaml up -d mysql redis minio rabbitmq elasticsearch elasticsearch-init
+```
+
+Compose 会先运行凭据预检；任何空值或仍为 `CHANGE_ME` 的基础设施凭据都会阻止依赖服务启动。可在启动前运行不输出配置值的静态检查：
+
+```powershell
+.docker/verify-compose-security.ps1
+```
+
+Elasticsearch 健康后生成 Kibana service token，将输出的 token 写入未跟踪的 `.docker/environment/kibana.env`，再启动 Kibana：
+
+```bash
+docker compose -f .docker/docker-compose.yaml exec elasticsearch \
+  bin/elasticsearch-service-tokens create elastic/kibana nineforum-kibana
+docker compose -f .docker/docker-compose.yaml --profile kibana up -d kibana
+```
+
+Kibana 使用 `kibana` profile，避免在 token 尚未生成时以无效凭据启动。
+
+| 服务 | 回环端口 | 说明 |
 | --- | --- | --- |
-| MySQL | `16033` | 数据库名 `nine_forum` |
-| Redis | `16379` | 缓存与临时数据 |
-| MinIO API | `9000` | 对象存储 API |
-| MinIO Console | `9001` | 对象存储控制台 |
-| RabbitMQ | `5672` | 消息队列 |
-| Elasticsearch | `9200` / `9300` | 搜索服务 |
-| Kibana | `5601` | Elasticsearch 可视化 |
+| MySQL | `127.0.0.1:16033` | 数据库 `nine_forum` |
+| Redis | `127.0.0.1:16379` | ACL 用户 `REDIS_USERNAME`，默认用户已禁用；仅授予连接、读写、键空间、脚本、事务和发布订阅类别 |
+| MinIO API | `127.0.0.1:9000` | 本地 root 凭据仅用于开发/初始化 |
+| MinIO Console | `127.0.0.1:9001` | 本地控制台 |
+| RabbitMQ | `127.0.0.1:5672` | AMQP；管理 UI 不发布到宿主 |
+| Elasticsearch | `127.0.0.1:9200` | Security 开启，仅回环 HTTP；不发布 transport `9300` |
+| Kibana | `127.0.0.1:5601` | 使用独立 service-account token |
 
-MySQL 初始化 SQL 位于：
+Elasticsearch 首次启动后，执行 `kibana.env.example` 中的 service-token 命令，生成 token 后写入未跟踪的 `kibana.env`。`elasticsearch-init` 会用 bootstrap `elastic` 身份创建只允许访问 `thread`/`search_log` 索引的应用角色和用户。应用配置中的 `ELASTICSEARCH_USERNAME`/`ELASTICSEARCH_PASSWORD` 必须与该用户一致。
 
-```text
-.docker/image/mysql/nine_forum_schema.sql
-```
-
-当前 Compose 文件默认使用 `mysql:latest` 镜像；如果需要容器首次启动时自动导入初始化 SQL，需要改用 `.docker/image/mysql/Dockerfile` 构建镜像，或手动导入该 SQL。
+MySQL 初始化 SQL 位于 `.docker/image/mysql/nine_forum_schema.sql`。Compose 镜像已固定为具体版本（MySQL 9.5.0、Redis 8.4.6、RabbitMQ 4.2.1-management、Elasticsearch/Kibana 8.18.8、现有 MinIO release）；当前仓库未锁定 registry digest。现有 MySQL bind volume 已由运行日志确认曾使用 9.5.0，Redis bind volume 已由运行日志确认曾使用 8.4.0，因此本地基线固定为同一主次版本的补丁版本。迁移到其它主版本必须先做逻辑导出，再使用新数据卷导入，禁止将旧数据目录直接挂到不兼容版本。
 
 ## 配置说明
 
-用户端真实配置仅保存在本机，不受 Git 跟踪。首次启动前，请先复制示例配置：
+用户端和管理端真实配置只保存在本机，不受 Git 跟踪。复制示例后填写环境变量引用的本地值：
 
 ```bash
 cp web/web-app/src/main/resources/application.example.yml web/web-app/src/main/resources/application.yml
+cp web/web-admin/src/main/resources/application.example.yml web/web-admin/src/main/resources/application.yml
 ```
 
-PowerShell 可使用：
+PowerShell：
 
 ```powershell
 Copy-Item web/web-app/src/main/resources/application.example.yml web/web-app/src/main/resources/application.yml
+Copy-Item web/web-admin/src/main/resources/application.example.yml web/web-admin/src/main/resources/application.yml
 ```
 
-然后在 `web/web-app/src/main/resources/application.yml` 中填写本机所需的数据库、JWT、MinIO、RabbitMQ 和 SMTP 等配置。不要将该本地文件强制加入 Git。
+上述复制命令只适用于新克隆；已有本地配置请先备份并手动合并新增键，避免覆盖本机凭据。`.gitignore` 已覆盖两个真实配置文件和所有本地 `.env` 文件，示例文件保持跟踪。
 
-管理端配置：
+两个应用均要求 DB、Redis ACL、JWT、MinIO、RabbitMQ 凭据；用户端另外要求 Elasticsearch 和 SMTP 凭据。缺少必需变量时应用应启动失败。示例中的 SMTP 已强制 STARTTLS、证书链和服务器主机名校验；本地 RabbitMQ/Redis/MinIO/Elasticsearch 仅因绑定回环而允许明文。
 
-```text
-web/web-admin/src/main/resources/application.yml
-```
-
-这些配置包含数据库、Redis、MinIO、RabbitMQ、JWT、邮件、WebAuthn 和 Elasticsearch 等本地开发参数。用户端示例文件只提供结构和安全占位值；生产环境应通过外部配置、环境变量或部署平台注入敏感信息。
+生产环境必须使用私网和外部秘密管理：Redis ACL、MinIO scoped service account、独立 RabbitMQ vhost/用户、独立 Elasticsearch 应用/Kibana 身份，并为 Redis、MinIO、Elasticsearch、RabbitMQ 和 SMTP 启用 TLS、证书链及主机名校验。RabbitMQ 的 Spring 配置可通过 `SPRING_RABBITMQ_SSL_ENABLED=true` 和 `SPRING_RABBITMQ_SSL_BUNDLE=<bundle-name>` 注入 SSL bundle，也可注入 `SPRING_RABBITMQ_SSL_TRUST_STORE`、`SPRING_RABBITMQ_SSL_TRUST_STORE_PASSWORD` 等 truststore 属性；Redis 的自定义连接工厂会读取 `SPRING_DATA_REDIS_SSL_ENABLED=true`，并强制 Lettuce `FULL` 对端校验，生产运行时必须提供包含服务 CA 的 JVM/SSL truststore。不要在配置中加入 trust-all 或把证书、私钥、truststore 提交到 Git。可能曾经通过明文链路传输或出现在 Git 历史的 MySQL、Redis、MinIO、RabbitMQ、Elasticsearch、SMTP、JWT 凭据必须轮换；历史清理需另行评估，不能代替轮换。
 
 ## 构建与测试
 
