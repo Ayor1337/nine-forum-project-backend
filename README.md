@@ -89,6 +89,28 @@ foreach ($service in "mysql", "redis", "minio", "rabbitmq", "elasticsearch", "ki
 docker compose -f .docker/docker-compose.yaml up -d mysql redis minio rabbitmq elasticsearch elasticsearch-init
 ```
 
+已有旧版本地配置时，可用脚本复用原 MySQL、MinIO、RabbitMQ 凭据，并为原先无认证的 Redis/Elasticsearch 生成本地随机密码：
+
+```powershell
+# 只准备 .docker/environment/*.env
+.\.docker\start-local.ps1 -PrepareOnly
+
+# 准备凭据并启动 MySQL、Redis、MinIO、RabbitMQ
+.\.docker\start-local.ps1
+```
+
+Linux / WSL / Git Bash：
+
+```bash
+# 只准备 .docker/environment/*.env
+bash ./.docker/start-local.sh --prepare-only
+
+# 准备凭据并启动 MySQL、Redis、MinIO、RabbitMQ
+bash ./.docker/start-local.sh
+```
+
+脚本不会启动 Elasticsearch，因为本机现有数据卷来自 9.2.1，而 Compose 固定为 8.18.8；必须先使用新卷或完成备份迁移。脚本不会把密码写入受 Git 跟踪文件。
+
 Compose 会先运行凭据预检；任何空值或仍为 `CHANGE_ME` 的基础设施凭据都会阻止依赖服务启动。可在启动前运行不输出配置值的静态检查：
 
 ```powershell
