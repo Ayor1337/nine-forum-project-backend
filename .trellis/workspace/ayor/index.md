@@ -8,8 +8,8 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 16
-- **Last Active**: 2026-08-30
+- **Total Sessions**: 17
+- **Last Active**: 2026-08-31
 <!-- @@@/auto:current-status -->
 
 ---
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~376 | Active |
+| `journal-1.md` | ~397 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 17 | 2026-08-31 | 修复 SEC-06 基础设施暴露 | `419d822` | `develope` |
 | 16 | 2026-08-30 | 修复改密后旧会话未全部撤销 | `3335d05` | `develope` |
 | 15 | 2026-08-30 | 修复管理端 STOMP OWNER 授权 | `0ff305e` | `develope` |
 | 14 | 2026-08-30 | 修复管理端匿名访问漏洞 | `69f5534`, `8be0f30` | `develope` |

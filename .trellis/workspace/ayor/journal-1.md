@@ -374,3 +374,24 @@
 ### Status
 
 [OK] **Completed**
+
+
+## Session 17: 修复 SEC-06 基础设施暴露
+
+**Date**: 2026-08-31
+**Task**: 修复 SEC-06 基础设施暴露
+**Branch**: `develope`
+
+### Summary
+
+收紧本地 Compose 端口与服务认证，迁移真实配置出 Git，补充 Redis ACL/TLS 客户端契约、测试和部署文档；保留生产 TLS 与新卷动态验收为部署阶段事项。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `419d822` | (see git log) |
+
+### Status
+
+[OK] **Completed**
