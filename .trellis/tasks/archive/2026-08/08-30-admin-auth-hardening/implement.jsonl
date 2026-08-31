@@ -1,5 +1,0 @@
-{"file":".trellis/spec/backend/index.md","reason":"确认 web-admin 模块边界与受影响模块验证命令"}
-{"file":".trellis/spec/backend/directory-structure.md","reason":"约束安全配置、过滤器、Service 和测试的目录归属"}
-{"file":".trellis/spec/backend/error-handling.md","reason":"保持 Result envelope 及认证授权错误响应合同"}
-{"file":".trellis/spec/backend/quality-guidelines.md","reason":"落实真实安全链契约测试与 Maven 验证要求"}
-{"file":".trellis/spec/guides/cross-layer-thinking-guide.md","reason":"核对登录、JWT、FilterChain、Controller 与 Service 的跨边界授权数据流"}

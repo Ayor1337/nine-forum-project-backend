@@ -1,2 +1,0 @@
-{"file": ".trellis/spec/backend/quality-guidelines.md", "reason": "测试与交付质量门禁"}
-{"file": ".trellis/spec/guides/cross-layer-thinking-guide.md", "reason": "核对 Controller、Service、DB 与 Redis 数据流"}

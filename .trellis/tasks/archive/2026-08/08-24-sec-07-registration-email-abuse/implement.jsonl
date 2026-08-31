@@ -1,7 +1,0 @@
-{"file": ".trellis/spec/backend/index.md", "reason": "模块边界与后端基础规范"}
-{"file": ".trellis/spec/backend/error-handling.md", "reason": "HTTP 429 与 Result 响应约定"}
-{"file": ".trellis/spec/backend/logging-guidelines.md", "reason": "配额告警脱敏与异步链路要求"}
-{"file": ".trellis/spec/backend/quality-guidelines.md", "reason": "测试与跨模块实现要求"}
-{"file": ".trellis/spec/guides/cross-layer-thinking-guide.md", "reason": "Controller-Service-Redis-RabbitMQ 数据流检查"}
-{"file": ".trellis/spec/guides/code-reuse-thinking-guide.md", "reason": "复用现有 Redis Lua 与配置模式"}
-{"file": ".trellis/spec/backend/registration-verification-security.md", "reason": "注册验证邮件安全可执行合同"}

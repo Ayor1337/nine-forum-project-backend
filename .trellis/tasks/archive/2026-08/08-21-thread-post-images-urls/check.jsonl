@@ -1,4 +1,0 @@
-{"_example": "Fill with {\"file\": \"<path>\", \"reason\": \"<why>\"}. Put spec/research files only — no code paths. Run `python .trellis/scripts/get_context.py --mode packages` to list available specs. Delete this line once real entries are added."}
-{"file": ".trellis/spec/backend/database-guidelines.md", "reason": "核对 schema、迁移和 POJO 是否同步"}
-{"file": ".trellis/spec/backend/thread-content-images.md", "reason": "核对图片输入限制、投影与副作用"}
-{"file": ".trellis/spec/backend/quality-guidelines.md", "reason": "核对模块边界、测试与评审标准"}
