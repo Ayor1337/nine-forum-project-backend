@@ -67,9 +67,12 @@ NineForum 是一个基于 Spring Boot 的论坛后端项目，提供面向用户
 
 本 Compose 仅用于本机开发：所有宿主端口都绑定 `127.0.0.1`，本地 Redis/Elasticsearch 启用认证但不启用 TLS。不要把它作为跨主机或生产部署文件使用。
 
-首次使用先创建未跟踪的本地凭据文件（并把 `CHANGE_ME` 值替换为随机值）：
+完整环境变量清单见 [`.docker/ENVIRONMENT.md`](.docker/ENVIRONMENT.md)。
+
+首次使用先创建未跟踪的 Compose 路径配置和本地凭据文件（并把 `CHANGE_ME` 值替换为实际值）：
 
 ```bash
+cp .docker/.env.example .docker/.env
 for service in mysql redis minio rabbitmq elasticsearch kibana; do
   cp ".docker/environment/${service}.env.example" ".docker/environment/${service}.env"
 done
@@ -78,15 +81,18 @@ done
 PowerShell：
 
 ```powershell
+Copy-Item .docker/.env.example .docker/.env
 foreach ($service in "mysql", "redis", "minio", "rabbitmq", "elasticsearch", "kibana") {
   Copy-Item ".docker/environment/$service.env.example" ".docker/environment/$service.env"
 }
 ```
 
+编辑 `.docker/.env`，把 `FORUM_HOME` 设置为持久化数据根目录的绝对路径，不要添加末尾斜杠。WSL 可使用 `/home/<用户名>/docker_volumes/nine_forum`，PowerShell 可使用 `E:/docker_volumes/nine_forum`；后续命令必须在路径所属的同一环境中运行。变量化不会迁移已有数据：要继续使用原目录，应设置 `FORUM_HOME=/docker_volumes/nine_forum`；切换到新路径前必须先停止服务并完成数据迁移。
+
 先启动不依赖 Kibana service token 的服务：
 
 ```bash
-docker compose -f .docker/docker-compose.yaml up -d mysql redis minio rabbitmq elasticsearch elasticsearch-init
+docker compose --env-file .docker/.env -f .docker/docker-compose.yaml up -d mysql redis minio rabbitmq elasticsearch elasticsearch-init
 ```
 
 已有旧版本地配置时，可用脚本复用原 MySQL、MinIO、RabbitMQ 凭据，并为原先无认证的 Redis/Elasticsearch 生成本地随机密码：
@@ -99,17 +105,17 @@ docker compose -f .docker/docker-compose.yaml up -d mysql redis minio rabbitmq e
 .\.docker\start-local.ps1
 ```
 
-Linux / WSL / Git Bash：
+Linux / WSL：
 
 ```bash
 # 只准备 .docker/environment/*.env
 bash ./.docker/start-local.sh --prepare-only
 
-# 准备凭据并启动 MySQL、Redis、MinIO、RabbitMQ
+# 准备凭据并启动 MySQL、Redis、MinIO、RabbitMQ、Elasticsearch
 bash ./.docker/start-local.sh
 ```
 
-脚本不会启动 Elasticsearch，因为本机现有数据卷来自 9.2.1，而 Compose 固定为 8.18.8；必须先使用新卷或完成备份迁移。脚本不会把密码写入受 Git 跟踪文件。
+`start-local.sh` 会固定设置 `FORUM_HOME=/docker_volumes/nine_forum`，沿用原有 WSL 数据路径；首次启动时会通过 `sudo` 将 Elasticsearch 数据与插件目录准备为容器用户可写。`start-local.ps1` 会把 `FORUM_HOME` 固定为执行脚本时工作目录下的 `volumes` 绝对路径并自动创建该目录；从仓库根目录执行时数据保存在 `<仓库>/volumes`。两个脚本都会启动 MySQL、Redis、MinIO、RabbitMQ、Elasticsearch 8.18.8 和 `elasticsearch-init`。原有 9.2.1 named volume 不会被自动挂载或删除。Elasticsearch 启动后，启动 `web-app` 即会全量重建索引。脚本不会把密码写入受 Git 跟踪文件。
 
 Compose 会先运行凭据预检；任何空值或仍为 `CHANGE_ME` 的基础设施凭据都会阻止依赖服务启动。可在启动前运行不输出配置值的静态检查：
 
@@ -120,9 +126,9 @@ Compose 会先运行凭据预检；任何空值或仍为 `CHANGE_ME` 的基础�
 Elasticsearch 健康后生成 Kibana service token，将输出的 token 写入未跟踪的 `.docker/environment/kibana.env`，再启动 Kibana：
 
 ```bash
-docker compose -f .docker/docker-compose.yaml exec elasticsearch \
+docker compose --env-file .docker/.env -f .docker/docker-compose.yaml exec elasticsearch \
   bin/elasticsearch-service-tokens create elastic/kibana nineforum-kibana
-docker compose -f .docker/docker-compose.yaml --profile kibana up -d kibana
+docker compose --env-file .docker/.env -f .docker/docker-compose.yaml --profile kibana up -d kibana
 ```
 
 Kibana 使用 `kibana` profile，避免在 token 尚未生成时以无效凭据启动。
@@ -139,7 +145,7 @@ Kibana 使用 `kibana` profile，避免在 token 尚未生成时以无效凭据�
 
 Elasticsearch 首次启动后，执行 `kibana.env.example` 中的 service-token 命令，生成 token 后写入未跟踪的 `kibana.env`。`elasticsearch-init` 会用 bootstrap `elastic` 身份创建只允许访问 `thread`/`search_log` 索引的应用角色和用户。应用配置中的 `ELASTICSEARCH_USERNAME`/`ELASTICSEARCH_PASSWORD` 必须与该用户一致。
 
-MySQL 初始化 SQL 位于 `.docker/image/mysql/nine_forum_schema.sql`。Compose 镜像已固定为具体版本（MySQL 9.5.0、Redis 8.4.6、RabbitMQ 4.2.1-management、Elasticsearch/Kibana 8.18.8、现有 MinIO release）；当前仓库未锁定 registry digest。现有 MySQL bind volume 已由运行日志确认曾使用 9.5.0，Redis bind volume 已由运行日志确认曾使用 8.4.0，因此本地基线固定为同一主次版本的补丁版本。迁移到其它主版本必须先做逻辑导出，再使用新数据卷导入，禁止将旧数据目录直接挂到不兼容版本。
+MySQL 初始化 SQL 位于 `.docker/image/mysql/nine_forum_schema.sql`，Compose 会将它只读挂载到 `/docker-entrypoint-initdb.d/`。官方 MySQL 入口脚本仅在 `${FORUM_HOME}/mysql` 为空时创建 `MYSQL_DATABASE` 并执行初始化 SQL；已有数据目录不会重复执行。Compose 镜像已固定为具体版本（MySQL 9.5.0、Redis 8.4.6、RabbitMQ 4.2.1-management、Elasticsearch/Kibana 8.18.8、现有 MinIO release）；当前仓库未锁定 registry digest。现有 MySQL bind volume 已由运行日志确认曾使用 9.5.0，Redis bind volume 已由运行日志确认曾使用 8.4.0，因此本地基线固定为同一主次版本的补丁版本。迁移到其它主版本必须先做逻辑导出，再使用新数据目录导入，禁止将旧数据目录直接挂到不兼容版本。
 
 ## 配置说明
 
@@ -215,10 +221,10 @@ Copy-Item web/web-admin/src/main/resources/application.example.yml web/web-admin
 ./mvnw clean test
 
 # 启动本地依赖
-docker compose -f .docker/docker-compose.yaml up -d
+docker compose --env-file .docker/.env -f .docker/docker-compose.yaml up -d
 
 # 停止本地依赖
-docker compose -f .docker/docker-compose.yaml down
+docker compose --env-file .docker/.env -f .docker/docker-compose.yaml down
 
 # 只运行 web-app 测试
 ./mvnw -pl web/web-app -am test

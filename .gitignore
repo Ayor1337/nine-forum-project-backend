@@ -37,8 +37,12 @@ build/
 /.trellis/tasks/**/backups/
 
 # Local infrastructure secrets (copy the corresponding *.env.example file)
+/.docker/.env
 /.docker/environment/*.env
 
 # Local web application configuration (copy from application.example.yml)
 /web/web-app/src/main/resources/application.yml
 /web/web-admin/src/main/resources/application.yml
+
+# Docker data created by .docker/start-local.ps1 in its invocation directory
+volumes/

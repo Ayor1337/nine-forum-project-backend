@@ -53,7 +53,10 @@ services:
     ports:
       - "127.0.0.1:16033:3306"
     volumes:
-      - /docker_volumes/nine_forum/mysql:/var/lib/mysql
+      - type: bind
+        source: "${FORUM_HOME:?Set FORUM_HOME in .docker/.env}/mysql"
+        target: /var/lib/mysql
+      - ./image/mysql/nine_forum_schema.sql:/docker-entrypoint-initdb.d/nine_forum_schema.sql:ro
     env_file:
       - ./environment/mysql.env
     healthcheck:
@@ -73,7 +76,9 @@ services:
     ports:
       - "127.0.0.1:16379:6379"
     volumes:
-      - /docker_volumes/nine_forum/redis:/data
+      - type: bind
+        source: "${FORUM_HOME:?Set FORUM_HOME in .docker/.env}/redis"
+        target: /data
     env_file:
       - ./environment/redis.env
     command:
@@ -110,8 +115,12 @@ services:
       - "127.0.0.1:9000:9000"
       - "127.0.0.1:9001:9001"
     volumes:
-      - /docker_volumes/nine_forum/minio/data:/data
-      - /docker_volumes/nine_forum/minio/config:/root/.minio
+      - type: bind
+        source: "${FORUM_HOME:?Set FORUM_HOME in .docker/.env}/minio/data"
+        target: /data
+      - type: bind
+        source: "${FORUM_HOME:?Set FORUM_HOME in .docker/.env}/minio/config"
+        target: /root/.minio
     env_file:
       - ./environment/minio.env
     command: server /data --console-address ":9001"
@@ -127,7 +136,9 @@ services:
     ports:
       - "127.0.0.1:5672:5672"
     volumes:
-      - /docker_volumes/nine_forum/rabbitmq:/var/lib/rabbitmq
+      - type: bind
+        source: "${FORUM_HOME:?Set FORUM_HOME in .docker/.env}/rabbitmq"
+        target: /var/lib/rabbitmq
     env_file:
       - ./environment/rabbitmq.env
     healthcheck:
@@ -178,8 +189,12 @@ services:
     ports:
       - "127.0.0.1:9200:9200"
     volumes:
-      - es_data:/usr/share/elasticsearch/data
-      - es_plugins:/usr/share/elasticsearch/plugins
+      - type: bind
+        source: "${FORUM_HOME:?Set FORUM_HOME in .docker/.env}/elastic/data"
+        target: /usr/share/elasticsearch/data
+      - type: bind
+        source: "${FORUM_HOME:?Set FORUM_HOME in .docker/.env}/elastic/plugins"
+        target: /usr/share/elasticsearch/plugins
     healthcheck:
       test: ["CMD-SHELL", "curl --fail --silent --show-error -u \"elastic:$${ELASTIC_PASSWORD}\" http://localhost:9200/_cluster/health >/dev/null"]
       interval: 10s
@@ -271,10 +286,6 @@ services:
       ELASTICSEARCH_HOSTS: http://nine-elasticsearch:9200
     networks:
       - forum-project
-
-volumes:
-  es_data:
-  es_plugins:
 
 networks:
   forum-project:

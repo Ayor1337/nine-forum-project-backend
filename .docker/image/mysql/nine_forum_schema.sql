@@ -750,4 +750,54 @@ CREATE TABLE IF NOT EXISTS `shop_order` (
     CONSTRAINT `shop_order_ibfk_2` FOREIGN KEY (`item_id`) REFERENCES `shop_item` (`item_id`) ON DELETE RESTRICT ON UPDATE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='商城购买记录表';
 
+-- ----------------------------
+-- Table structure for announcements
+-- ----------------------------
+CREATE TABLE IF NOT EXISTS `announcements` (
+    `announcement_id` int NOT NULL AUTO_INCREMENT,
+    `thread_id` int NOT NULL,
+    `is_global` tinyint(1) NOT NULL DEFAULT 0,
+    `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`announcement_id`),
+    UNIQUE KEY `uk_announcements_thread_scope` (`thread_id`, `is_global`),
+    KEY `idx_announcements_scope_time` (`is_global`, `create_time`),
+    CONSTRAINT `fk_announcements_thread` FOREIGN KEY (`thread_id`) REFERENCES `thread` (`thread_id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ----------------------------
+-- Table structure for chatboard_history
+-- ----------------------------
+CREATE TABLE IF NOT EXISTS `chatboard_history` (
+    `chatboard_history_id` int NOT NULL AUTO_INCREMENT,
+    `account_id` int DEFAULT NULL,
+    `topic_id` int DEFAULT NULL,
+    `content` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+    `create_time` datetime DEFAULT NULL,
+    PRIMARY KEY (`chatboard_history_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ----------------------------
+-- Table structure for system_message
+-- ----------------------------
+CREATE TABLE IF NOT EXISTS `system_message` (
+    `system_message_id` int NOT NULL AUTO_INCREMENT,
+    `title` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+    `content` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+    `create_time` datetime DEFAULT NULL,
+    `account_id` int DEFAULT NULL,
+    PRIMARY KEY (`system_message_id`) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ----------------------------
+-- Table structure for topic_chat
+-- ----------------------------
+CREATE TABLE IF NOT EXISTS `topic_chat` (
+    `topic_chat_id` int NOT NULL,
+    `topic_id` int DEFAULT NULL,
+    `account_id` int DEFAULT NULL,
+    `content` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+    `create_time` datetime DEFAULT NULL,
+    PRIMARY KEY (`topic_chat_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 SET FOREIGN_KEY_CHECKS = 1;

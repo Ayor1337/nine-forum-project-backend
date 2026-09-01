@@ -14,6 +14,33 @@ project_dir="$(dirname -- "$script_dir")"
 environment_dir="$script_dir/environment"
 application_config="$project_dir/web/web-app/src/main/resources/application.yml"
 compose_file="$script_dir/docker-compose.yaml"
+export FORUM_HOME='/docker_volumes/nine_forum'
+elasticsearch_data_dir="$FORUM_HOME/elastic/data"
+elasticsearch_plugins_dir="$FORUM_HOME/elastic/plugins"
+
+prepare_elasticsearch_directories() {
+  local data_owner
+  local plugins_owner
+  data_owner="$(stat -c '%u:%g' "$elasticsearch_data_dir" 2>/dev/null || true)"
+  plugins_owner="$(stat -c '%u:%g' "$elasticsearch_plugins_dir" 2>/dev/null || true)"
+  if [[ "$data_owner" == '1000:0' && "$plugins_owner" == '1000:0' ]]; then
+    return
+  fi
+
+  local -a privilege_command=()
+  if [[ "$(id -u)" -ne 0 ]]; then
+    command -v sudo >/dev/null 2>&1 || {
+      echo 'Elasticsearch 数据目录需要 root 权限初始化，但当前系统未安装 sudo。' >&2
+      exit 1
+    }
+    privilege_command=(sudo)
+  fi
+
+  "${privilege_command[@]}" install -d -o 1000 -g 0 -m 0770 \
+    "$elasticsearch_data_dir" "$elasticsearch_plugins_dir"
+  "${privilege_command[@]}" chown -R 1000:0 \
+    "$elasticsearch_data_dir" "$elasticsearch_plugins_dir"
+}
 
 read_env_value() {
   local path="$1"
@@ -164,6 +191,6 @@ if [[ "$prepare_only" == true ]]; then
   exit 0
 fi
 
-# Elasticsearch 未包含在默认启动列表中：现有本地数据卷来自 9.2.1，不能直接交给 8.18.8。
-docker compose -f "$compose_file" up -d mysql redis minio rabbitmq
-echo 'MySQL、Redis、MinIO、RabbitMQ 已启动。Elasticsearch 请在新卷或完成备份迁移后单独启动。'
+prepare_elasticsearch_directories
+docker compose -f "$compose_file" up -d mysql redis minio rabbitmq elasticsearch elasticsearch-init
+echo 'MySQL、Redis、MinIO、RabbitMQ、Elasticsearch 已启动。'

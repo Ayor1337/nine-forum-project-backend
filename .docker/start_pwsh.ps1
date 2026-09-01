@@ -11,6 +11,8 @@ $projectDirectory = Split-Path -Parent $dockerDirectory
 $environmentDirectory = Join-Path $dockerDirectory 'environment'
 $applicationConfig = Join-Path $projectDirectory 'web/web-app/src/main/resources/application.yml'
 $composeFile = Join-Path $dockerDirectory 'docker-compose.yaml'
+$forumHome = [System.IO.Path]::GetFullPath((Join-Path (Get-Location).Path 'volumes'))
+$env:FORUM_HOME = $forumHome
 
 function Read-EnvFile {
     param([Parameter(Mandatory)][string]$Path)
@@ -203,10 +205,12 @@ if ($PrepareOnly) {
     exit 0
 }
 
-# Elasticsearch 未包含在默认启动列表中：现有本地数据卷来自 9.2.1，不能直接交给 8.18.8。
-& docker compose -f $composeFile up -d mysql redis minio rabbitmq
+New-Item -ItemType Directory -Force -Path $forumHome | Out-Null
+Write-Host "Docker 持久化数据目录：$forumHome"
+
+& docker compose -f $composeFile up -d mysql redis minio rabbitmq elasticsearch elasticsearch-init
 if ($LASTEXITCODE -ne 0) {
     exit $LASTEXITCODE
 }
 
-Write-Host 'MySQL、Redis、MinIO、RabbitMQ 已启动。Elasticsearch 请在新卷或完成备份迁移后单独启动。'
+Write-Host 'MySQL、Redis、MinIO、RabbitMQ、Elasticsearch 已启动。'
