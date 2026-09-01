@@ -224,7 +224,7 @@ services:
           -H 'Content-Type: application/json' \
           -X PUT "http://elasticsearch:9200/_security/role/$${ELASTICSEARCH_APP_ROLE}" \
           --data-binary @- <<JSON
-        {"cluster":["monitor"],"indices":[{"names":["thread","search_log"],"privileges":["read","write","create_index","view_index_metadata"]}]}
+        {"cluster":["all"],"indices":[{"names":["*"],"privileges":["all"],"allow_restricted_indices":false}]}
         JSON
         curl --fail --silent --show-error -u "elastic:$${ELASTIC_PASSWORD}" \
           -H 'Content-Type: application/json' \

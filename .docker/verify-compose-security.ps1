@@ -57,15 +57,15 @@ foreach ($requiredVolume in @(
     }
 }
 
-$bashStartText = Get-Content -Raw (Join-Path $PSScriptRoot 'start-local.sh')
-$powerShellStartText = Get-Content -Raw (Join-Path $PSScriptRoot 'start-local.ps1')
+$bashStartText = Get-Content -Raw (Join-Path $PSScriptRoot 'start_bash.sh')
+$powerShellStartText = Get-Content -Raw (Join-Path $PSScriptRoot 'start_pwsh.ps1')
 $servicePattern = '(?m)^[^\r\n]*docker compose[^\r\n]*\sup -d (?<services>[a-z0-9 -]+)\s*$'
 $bashServices = [regex]::Match($bashStartText, $servicePattern).Groups['services'].Value.Trim()
 $powerShellServices = [regex]::Match($powerShellStartText, $servicePattern).Groups['services'].Value.Trim()
 if ([string]::IsNullOrWhiteSpace($bashServices) -or
     [string]::IsNullOrWhiteSpace($powerShellServices) -or
     $bashServices -ne $powerShellServices) {
-    throw "start-local service lists differ: sh=[$bashServices], ps1=[$powerShellServices]"
+    throw "start script service lists differ: sh=[$bashServices], ps1=[$powerShellServices]"
 }
 
 Write-Output 'compose-security-static-check=pass'

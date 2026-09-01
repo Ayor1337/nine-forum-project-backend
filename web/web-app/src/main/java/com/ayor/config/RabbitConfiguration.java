@@ -12,6 +12,39 @@ import org.springframework.context.annotation.Configuration;
 public class RabbitConfiguration {
 
     /**
+     * 定义广播消息使用的直连交换机。
+     */
+    @Bean("broadcast_exchange")
+    public Exchange broadcastExchange() {
+        return ExchangeBuilder
+                .directExchange("broadcast.direct")
+                .build();
+    }
+
+    /**
+     * 定义广播消息队列。
+     */
+    @Bean("broadcast_queue")
+    public Queue broadcastQueue() {
+        return QueueBuilder
+                .durable("broadcast.queue")
+                .build();
+    }
+
+    /**
+     * 绑定广播队列和交换机。
+     */
+    @Bean("broadcast_binding")
+    public Binding broadcastBinding(@Qualifier("broadcast_queue") Queue queue,
+                                    @Qualifier("broadcast_exchange") Exchange exchange) {
+        return BindingBuilder
+                .bind(queue)
+                .to(exchange)
+                .with("broadcast")
+                .noargs();
+    }
+
+    /**
      * 创建邮件交换机。
      *
      * @return 交换机

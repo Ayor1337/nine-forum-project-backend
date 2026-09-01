@@ -32,7 +32,7 @@ Compose 会使用以下子目录：
 - `${FORUM_HOME}/elastic/data`
 - `${FORUM_HOME}/elastic/plugins`
 
-直接执行 `docker compose` 时必须通过当前进程环境或 `--env-file .docker/.env` 提供 `FORUM_HOME`。两个启动脚本是例外：`start-local.sh` 会固定设置 `FORUM_HOME=/docker_volumes/nine_forum`，继续使用原 WSL 路径；`start-local.ps1` 会固定设置为执行脚本时工作目录下的 `volumes` 绝对路径，并在启动服务前自动创建该目录。例如从仓库根目录执行时使用 `<仓库>/volumes`。两个脚本都会启动 MySQL、Redis、MinIO、RabbitMQ、Elasticsearch 和 `elasticsearch-init`。
+直接执行 `docker compose` 时必须通过当前进程环境或 `--env-file .docker/.env` 提供 `FORUM_HOME`。两个启动脚本是例外：`start_bash.sh` 会固定设置 `FORUM_HOME=/docker_volumes/nine_forum`，继续使用原 WSL 路径；`start_pwsh.ps1` 会固定设置为执行脚本时工作目录下的 `volumes` 绝对路径，并在启动服务前自动创建该目录。例如从仓库根目录执行时使用 `<仓库>/volumes`。两个脚本启动前只读检查 MySQL、Redis、MinIO、RabbitMQ、Elasticsearch 的 env 文件和必填字段，不会创建或修改这些文件；可分别使用 `--check-only` 或 `-CheckOnly` 只执行检查。检查通过后会启动上述服务和 `elasticsearch-init`。
 
 修改 `FORUM_HOME` 只会改变挂载位置，不会迁移已有数据。切换路径前必须停止服务并自行迁移数据。
 
@@ -89,7 +89,7 @@ Compose 会使用以下子目录：
 | `ELASTIC_PASSWORD` | 是 | 是 | Elasticsearch 内置 `elastic` bootstrap 密码，仅用于健康检查和初始化 | 使用本地随机强密码 |
 | `ELASTICSEARCH_APP_USERNAME` | 是 | 否 | `elasticsearch-init` 创建的应用账号 | `nineforum_app` |
 | `ELASTICSEARCH_APP_PASSWORD` | 是 | 是 | Elasticsearch 应用账号密码 | 使用本地随机强密码 |
-| `ELASTICSEARCH_APP_ROLE` | 是 | 否 | 应用角色名称，仅允许访问 `thread` 和 `search_log` 索引 | `nineforum_app` |
+| `ELASTICSEARCH_APP_ROLE` | 是 | 否 | 本地应用管理员角色名称，拥有全部集群权限和全部普通索引权限，但不能访问受限系统索引 | `nineforum_app` |
 
 应用配置中的 `ELASTICSEARCH_USERNAME`、`ELASTICSEARCH_PASSWORD` 必须分别对应这里的 `ELASTICSEARCH_APP_USERNAME`、`ELASTICSEARCH_APP_PASSWORD`。
 
@@ -122,4 +122,5 @@ Kibana 位于 `kibana` profile 中，只有显式指定 `--profile kibana` 才�
 - 不要提交 `.docker/.env` 或 `.docker/environment/*.env`。
 - 不要在日志、Issue、提交信息或截图中暴露密码、token 和 encryption key。
 - 所有 `CHANGE_ME`、空值或未配置的必填凭据都会被 Compose 凭据预检阻止。
+- Elasticsearch 本地应用角色接近管理员权限，仅用于本地开发；生产环境必须改为业务所需的最小权限。
 - 本配置仅供本地开发；生产环境应使用外部 secret 管理和最小权限账号。

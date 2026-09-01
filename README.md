@@ -95,27 +95,27 @@ foreach ($service in "mysql", "redis", "minio", "rabbitmq", "elasticsearch", "ki
 docker compose --env-file .docker/.env -f .docker/docker-compose.yaml up -d mysql redis minio rabbitmq elasticsearch elasticsearch-init
 ```
 
-已有旧版本地配置时，可用脚本复用原 MySQL、MinIO、RabbitMQ 凭据，并为原先无认证的 Redis/Elasticsearch 生成本地随机密码：
+启动脚本只读取并检查 MySQL、Redis、MinIO、RabbitMQ、Elasticsearch 的 env 文件，不会创建、迁移或修改任何凭据。缺少文件、字段为空或字段仍以 `CHANGE_ME` 开头时，脚本会列出具体文件和字段后退出：
 
 ```powershell
-# 只准备 .docker/environment/*.env
-.\.docker\start-local.ps1 -PrepareOnly
+# 只检查 .docker/environment/*.env
+.\.docker\start_pwsh.ps1 -CheckOnly
 
-# 准备凭据并启动 MySQL、Redis、MinIO、RabbitMQ
-.\.docker\start-local.ps1
+# 检查通过后启动基础设施
+.\.docker\start_pwsh.ps1
 ```
 
 Linux / WSL：
 
 ```bash
-# 只准备 .docker/environment/*.env
-bash ./.docker/start-local.sh --prepare-only
+# 只检查 .docker/environment/*.env
+bash ./.docker/start_bash.sh --check-only
 
-# 准备凭据并启动 MySQL、Redis、MinIO、RabbitMQ、Elasticsearch
-bash ./.docker/start-local.sh
+# 检查通过后启动基础设施
+bash ./.docker/start_bash.sh
 ```
 
-`start-local.sh` 会固定设置 `FORUM_HOME=/docker_volumes/nine_forum`，沿用原有 WSL 数据路径；首次启动时会通过 `sudo` 将 Elasticsearch 数据与插件目录准备为容器用户可写。`start-local.ps1` 会把 `FORUM_HOME` 固定为执行脚本时工作目录下的 `volumes` 绝对路径并自动创建该目录；从仓库根目录执行时数据保存在 `<仓库>/volumes`。两个脚本都会启动 MySQL、Redis、MinIO、RabbitMQ、Elasticsearch 8.18.8 和 `elasticsearch-init`。原有 9.2.1 named volume 不会被自动挂载或删除。Elasticsearch 启动后，启动 `web-app` 即会全量重建索引。脚本不会把密码写入受 Git 跟踪文件。
+`start_bash.sh` 会固定设置 `FORUM_HOME=/docker_volumes/nine_forum`，沿用原有 WSL 数据路径；启动时会通过 `sudo` 将 Elasticsearch 数据与插件目录准备为容器用户可写。`start_pwsh.ps1` 会把 `FORUM_HOME` 固定为执行脚本时工作目录下的 `volumes` 绝对路径并自动创建该目录；从仓库根目录执行时数据保存在 `<仓库>/volumes`。两个脚本都会启动 MySQL、Redis、MinIO、RabbitMQ、Elasticsearch 8.18.8 和 `elasticsearch-init`。原有 9.2.1 named volume 不会被自动挂载或删除。Elasticsearch 启动后，启动 `web-app` 即会全量重建索引。
 
 Compose 会先运行凭据预检；任何空值或仍为 `CHANGE_ME` 的基础设施凭据都会阻止依赖服务启动。可在启动前运行不输出配置值的静态检查：
 
@@ -143,7 +143,7 @@ Kibana 使用 `kibana` profile，避免在 token 尚未生成时以无效凭据�
 | Elasticsearch | `127.0.0.1:9200` | Security 开启，仅回环 HTTP；不发布 transport `9300` |
 | Kibana | `127.0.0.1:5601` | 使用独立 service-account token |
 
-Elasticsearch 首次启动后，执行 `kibana.env.example` 中的 service-token 命令，生成 token 后写入未跟踪的 `kibana.env`。`elasticsearch-init` 会用 bootstrap `elastic` 身份创建只允许访问 `thread`/`search_log` 索引的应用角色和用户。应用配置中的 `ELASTICSEARCH_USERNAME`/`ELASTICSEARCH_PASSWORD` 必须与该用户一致。
+Elasticsearch 首次启动后，执行 `kibana.env.example` 中的 service-token 命令，生成 token 后写入未跟踪的 `kibana.env`。`elasticsearch-init` 会用 bootstrap `elastic` 身份创建本地应用管理员角色和用户；该角色拥有全部集群权限和全部普通索引权限，但不能访问受限系统索引，仅限本地开发使用。应用配置中的 `ELASTICSEARCH_USERNAME`/`ELASTICSEARCH_PASSWORD` 必须与该用户一致。
 
 MySQL 初始化 SQL 位于 `.docker/image/mysql/nine_forum_schema.sql`，Compose 会将它只读挂载到 `/docker-entrypoint-initdb.d/`。官方 MySQL 入口脚本仅在 `${FORUM_HOME}/mysql` 为空时创建 `MYSQL_DATABASE` 并执行初始化 SQL；已有数据目录不会重复执行。Compose 镜像已固定为具体版本（MySQL 9.5.0、Redis 8.4.6、RabbitMQ 4.2.1-management、Elasticsearch/Kibana 8.18.8、现有 MinIO release）；当前仓库未锁定 registry digest。现有 MySQL bind volume 已由运行日志确认曾使用 9.5.0，Redis bind volume 已由运行日志确认曾使用 8.4.0，因此本地基线固定为同一主次版本的补丁版本。迁移到其它主版本必须先做逻辑导出，再使用新数据目录导入，禁止将旧数据目录直接挂到不兼容版本。
 
