@@ -2,6 +2,7 @@ package securitycontract;
 
 import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
+import com.ayor.config.CorsProperties;
 import com.ayor.config.WebsocketConfiguration;
 import com.ayor.interceptor.StompAuthInterceptor;
 import com.ayor.mapper.RoleMapper;
@@ -24,6 +25,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -121,6 +123,13 @@ class AdminStompSecurityContractTest {
         @Bean
         StompAuthInterceptor stompAuthInterceptor(JWTUtils jwtUtils, RoleMapper roleMapper) {
             return new StompAuthInterceptor(jwtUtils, roleMapper);
+        }
+
+        @Bean
+        CorsProperties corsProperties() {
+            CorsProperties properties = new CorsProperties();
+            properties.setAllowedOrigins(List.of("http://localhost:10072"));
+            return properties;
         }
     }
 }

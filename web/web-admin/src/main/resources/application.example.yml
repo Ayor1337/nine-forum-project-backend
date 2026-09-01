@@ -42,3 +42,8 @@ spring:
 
 server:
   port: 9977
+
+nine-forum:
+  cors:
+    allowed-origins:
+      - http://localhost:10072
