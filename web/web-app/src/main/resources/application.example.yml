@@ -3,16 +3,23 @@ spring:
     name: nine-forum-project
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    username: ${DB_USERNAME:}
-    password: ${DB_PASSWORD:}
-    url: jdbc:mysql://localhost:16033/nine_forum
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    url: jdbc:mysql://127.0.0.1:16033/nine_forum
   data:
     redis:
+      host: 127.0.0.1
       port: 16379
       database: 0
+      username: ${REDIS_USERNAME}
+      password: ${REDIS_PASSWORD}
+      ssl:
+        enabled: ${REDIS_SSL_ENABLED:false}
+      connect-timeout: 5s
+      timeout: 5s
   security:
     jwt:
-      secret-key: ${JWT_SECRET_KEY:}
+      secret-key: ${JWT_SECRET_KEY}
       expire: 7
     webauthn:
       rp-id: localhost
@@ -23,25 +30,45 @@ spring:
         - http://localhost:9966
       challenge-expire-seconds: 300
   minio:
-    endpoint: http://localhost:9000
-    access-key: ${MINIO_ACCESS_KEY:}
-    secret-key: ${MINIO_SECRET_KEY:}
+    endpoint: http://127.0.0.1:9000
+    access-key: ${MINIO_ACCESS_KEY}
+    secret-key: ${MINIO_SECRET_KEY}
     bucket: nineforum
   rabbitmq:
-    host: localhost
+    host: 127.0.0.1
     port: 5672
-    username: ${RABBITMQ_USERNAME:}
-    password: ${RABBITMQ_PASSWORD:}
+    username: ${RABBITMQ_USERNAME}
+    password: ${RABBITMQ_PASSWORD}
     virtual-host: /nine_forum
+    ssl:
+      enabled: ${RABBITMQ_SSL_ENABLED:false}
+      validate-server-certificate: ${RABBITMQ_SSL_VALIDATE_SERVER_CERTIFICATE:true}
+      verify-hostname: ${RABBITMQ_SSL_VERIFY_HOSTNAME:true}
     listener:
       simple:
         acknowledge-mode: manual
   mail:
-    host: smtp.163.com
-    username: ${SMTP_USERNAME:}
-    password: ${SMTP_PASSWORD:}
+    host: ${SMTP_HOST}
+    port: ${SMTP_PORT:587}
+    protocol: smtp
+    username: ${SMTP_USERNAME}
+    password: ${SMTP_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+          ssl:
+            checkserveridentity: true
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
   elasticsearch:
-    uris: http://localhost:9200
+    uris: http://127.0.0.1:9200
+    username: ${ELASTICSEARCH_USERNAME}
+    password: ${ELASTICSEARCH_PASSWORD}
 
 server:
   port: 9966
@@ -59,7 +86,6 @@ nine-forum:
     global-alert-percent: 80
   cors:
     allowed-origins:
-      - http://10.111.45.135
       - http://localhost:3000
       - http://localhost:10071
 
@@ -73,10 +99,3 @@ springdoc:
 
 knife4j:
   enable: true
-
-#logging:
-#  level:
-#    org.springframework.messaging.simp: debug
-#    org.springframework.messaging.simp.user: trace
-#    org.springframework.web.socket.messaging: debug
-#    org.springframework.messaging.simp.broker: debug

@@ -15,6 +15,7 @@ public class PasswordChangeDTO {
     @NotNull
     private String oldPassword;
 
+    @NotNull
     @Size(min = 6, max = 16)
     @Pattern(regexp = "^[a-zA-Z0-9_]+$")
     private String newPassword;

@@ -6,7 +6,7 @@
 
 ## 执行摘要
 
-当前版本仍不建议直接暴露到不受信任网络。报告保留 9 项未解决发现：1 项严重、3 项高危、3 项中危、2 项低危。首要风险不是单一依赖漏洞，而是管理端 HTTP 接口全局匿名放行；该问题已通过源码和 localhost 动态请求双重确认。其次是管理端 STOMP 未校验管理员权限、基础设施服务暴露，以及存在可适用公开漏洞且传输安全不足的依赖基线。
+当前版本仍不建议直接暴露到不受信任网络。报告列出 5 项未解决发现，SEC-06 已完成本地基线整改但生产待验证：其中 1 项高危、2 项中危、2 项低危。首要风险不是单一依赖漏洞，而是管理端 HTTP 接口全局匿名放行；该问题已通过源码和 localhost 动态请求双重确认。其次是管理端 STOMP 未校验管理员权限、生产基础设施边界，以及存在可适用公开漏洞的依赖基线。
 
 现有自动化测试全部通过，但未覆盖上述关键安全契约；管理端现有测试甚至固化了“认证失败仍返回 HTTP 200”的行为。根 Maven 打包还因 Spring Boot 插件配置错误而失败。测试通过不能抵消这些安全结论。
 
@@ -16,13 +16,10 @@
 
 | 编号 | 级别 | 发现 | 状态 |
 | --- | --- | --- | --- |
-| SEC-01 | 修复 | 管理端 HTTP 全局 `permitAll`，匿名请求可到达系统级管理操作 | 源码与动态确认 |
-| SEC-04 | 高危 | 管理端 STOMP 未校验管理员权限，普通用户可订阅实时举报数据 | 已修复；源码与 Spring Messaging 契约测试确认 |
-| SEC-06 | 高危 | Redis/Elasticsearch 等基础设施绑定宿主所有接口且缺少认证或使用静态凭据 | 配置与运行态确认 |
+| SEC-06 | 高危 | Redis/Elasticsearch 等基础设施绑定宿主所有接口且缺少认证或使用静态凭据 | 本地基线已修复；生产待验证 |
 | SEC-11 | 高危 | 依赖基线存在可适用公开漏洞，关键组件补丁明显滞后 | OSV、官方公告与依赖树确认 |
-| SEC-07 | 中危 | 注册邮件入口无滥用控制，邮箱 JWT Redis TTL 约为数十年 | 源码确认 |
-| SEC-08 | 中危 | 修改密码只撤销当前 JWT，其他会话继续有效 | 源码确认 |
 | SEC-09 | 中危 | 公开分页无最大页大小，任意参数扩大查询与缓存键基数 | 源码确认 |
+| SEC-14 | 中危 | 改密与并发登录存在会话撤销竞态，后置创建的会话可能漏撤销 | 源码时序分析 |
 | SEC-12 | 低危 | 操作日志无字段脱敏与长度限制 | 源码确认 |
 | SEC-13 | 低危 | 认证/授权失败仍返回 HTTP 200 | 源码与测试确认 |
 
@@ -30,40 +27,24 @@
 
 ## 最高优先级发现
 
-### SEC-01：管理端 HTTP 全局匿名放行 (修复)
-
-- 类别：CWE-306、CWE-862；置信度：确定。
-- 证据：`web/web-admin/src/main/java/com/ayor/config/SecurityConfiguration.java:49-54` 对唯一安全链执行 `anyRequest().permitAll()`；角色、权限、账号、私信和数据修复等控制器没有补偿性管理员授权。
-- 动态结果：匿名 GET `/api/accounts` 与 `/api/roles` 没有得到 401/403，而是进入 Controller/Service，随后因审计刻意指向不存在的数据库端口而返回 500。匿名 `/v3/api-docs` 返回 200，公开了完整接口清单。
-- 攻击前提：能访问管理端端口，不需要账号或令牌。
-- 影响：读取敏感数据、分配角色与权限、删除账号/内容、修改私信、触发数据修复或搜索重建，可能导致系统完全失陷或大范围数据破坏。
-- 修复：安全链默认 `authenticated()` 或拒绝；仅精确放行登录和必要健康检查。高影响操作使用明确的管理员权限表达式，并在 Service 边界保留授权断言。增加真实 FilterChain/MockMvc 契约：匿名 401、普通用户 403、具备权限的管理员成功。
-
-### SEC-04：管理端 STOMP 未校验管理员权限 (修复)
-
-- 类别：CWE-287、CWE-863；置信度：确定。
-- 历史证据：两端按项目设计共享登录态；管理端 `web/web-admin/src/main/java/com/ayor/interceptor/StompAuthInterceptor.java` 曾只验证 JWT 有效性，未校验管理员角色或权限，并允许任何已认证主体订阅 `/topic/reports`。
-- 攻击前提：持有任意普通用户端有效 JWT，能访问管理端 WebSocket。
-- 历史影响：普通论坛用户可监听包含举报双方标识、目标和内容摘要的实时审核流。
-- 供应链叠加：CVE-2026-41838 的可预测 WebSocket 会话标识会放大当前授权不足；因此不能仅依赖升级消除本项业务授权缺陷。
-- 修复结果：管理端 `CONNECT` 从 JWT 的 `name` claim 取得账号名，并通过 `RoleMapper` 查询数据库当前角色；只有当前角色精确为 `OWNER` 才建立含 `ROLE_OWNER` 的 Principal。`SUBSCRIBE` 使用 session 账号名重新查询当前角色，并只允许精确目的地 `/topic/reports`；普通用户 token、角色撤销和其他目的地均失败关闭。原始 JWT 不保存到 session 或日志。
-- 验证：`StompAuthInterceptorTest` 覆盖帧级拒绝/放行与连接后角色撤销；`AdminStompSecurityContractTest` 通过实际 `clientInboundChannel` 断言普通用户 token 的 `CONNECT` 失败及 OWNER 的 CONNECT/SUBSCRIBE 成功。Spring Framework 解析版本为 6.2.19，满足 CVE-2026-41838 修复版本要求。
-
 ### SEC-06：基础设施弱保护且绑定所有宿主接口
 
+整改状态（2026-08-31）：本地 Compose 基线已修复，生产控制待部署验证。
+
 - 类别：CWE-306、CWE-284；置信度：高。
-- 证据：`.docker/docker-compose.yaml:8-14,22-43,53-101` 发布 MySQL、Redis、MinIO、Elasticsearch/Kibana 端口；Redis 未配置认证，Elasticsearch 明确关闭 Security。运行态 `docker port` 确认 MySQL、Redis、MinIO、Elasticsearch 映射到 `0.0.0.0` 和 `[::]`；无密码 Redis PING 返回 PONG，Elasticsearch 根接口匿名返回 200。
-- 传输边界：应用按 5672 端口连接 RabbitMQ，运行日志显示 AMQP 明文连接；SMTP 配置未启用 TLS。Angus Mail 的 SMTP STARTTLS 与 SSL 默认均为关闭，因此邮件凭据和邮件内容可能以明文传输。[Angus Mail SMTP 属性文档](https://eclipse-ee4j.github.io/angus-mail/docs/api/org.eclipse.angus.mail/org/eclipse/angus/mail/smtp/package-summary.html)
+- 原始证据：`.docker/docker-compose.yaml` 曾发布 MySQL、Redis、MinIO、Elasticsearch/Kibana 端口；Redis 无认证，Elasticsearch 关闭 Security，且 RabbitMQ/SMTP 配置未要求加密。此前运行态探测确认宿主端口绑定到 `0.0.0.0`/`[::]`，无密码 Redis PING 返回 PONG，Elasticsearch 根接口匿名返回 200。Angus Mail 的 SMTP STARTTLS 与 SSL 默认均为关闭。[Angus Mail SMTP 属性文档](https://eclipse-ee4j.github.io/angus-mail/docs/api/org.eclipse.angus.mail/org/eclipse/angus/mail/smtp/package-summary.html)
+- 当前修复：Compose 所有宿主端口显式绑定 `127.0.0.1`，删除 Elasticsearch transport `9300` 发布并仅发布回环 RabbitMQ `5672`；Redis 通过命名 ACL 用户认证并禁用 `default` 用户；Elasticsearch Security 开启并由初始化服务创建独立应用身份；MinIO/MySQL/RabbitMQ/Redis/Elasticsearch/Kibana 凭据移至未跟踪 env 文件；镜像改为具体版本标签；两个 Spring 应用的真实配置改为未跟踪文件，示例不含凭据；SMTP 强制 STARTTLS、证书主机名校验和超时。
+- 静态验证：已检查 Compose 端口/镜像/认证配置、示例配置与 Git 忽略规则；未启动当前工作区对应的旧持久化卷。Docker daemon 当时的 `nine-*` 容器来自另一份 WSL 工作区，因此没有用它们做升级或动态安全探测。
 - 攻击前提：攻击者可达宿主端口；实际局域网/公网可达性取决于宿主防火墙与上游网络。
 - 影响：读取或篡改数据库、缓存/会话、对象和搜索索引，可能导致账号接管、数据泄露或服务破坏。
-- 修复：开发环境至少绑定 `127.0.0.1`，不需要宿主访问的服务不发布端口；生产使用私网、TLS、Redis ACL、Elasticsearch Security 和外部注入的强随机凭据；为 SMTP 与 RabbitMQ 开启 TLS、证书链及主机名校验并轮换可能经明文传输的凭据；镜像固定版本或摘要，禁止 `latest`。
+- 残余修复：生产仍必须使用私网、TLS、Redis ACL、Elasticsearch Security、MinIO scoped service account 和外部注入的强随机凭据；为 SMTP 与 RabbitMQ 开启 TLS、证书链及主机名校验，并轮换可能经明文传输或出现在 Git 历史中的凭据。当前仓库没有生产编排、证书生命周期或 registry digest，不能将生产端到端控制标记为已验证。
 
 ### SEC-11：依赖基线存在可适用公开漏洞
 
 - 类别：CWE-1104；置信度：高。
 - 扫描证据：OSV 官方 API 已完整批量查询四个生产模块中 146 个去重后的 `compile` / `runtime` Maven 坐标，返回 80 条原始公告记录：5 条 Critical、28 条 High、35 条 Moderate、12 条 Low。原始级别不等于项目级严重度；本报告已逐项结合源码与配置复核。明细见 `research/osv-scan-summary.md`。
 - Spring Security：当前 6.5.3 受 CVE-2026-22732 影响，项目使用相关响应头写入器，组件与功能条件成立；修复版本为 6.5.9。尚未确认具体敏感缓存路径，因此未直接照搬厂商 Critical 评级，但这是可适用且需要优先修复的高危供应链风险。[Spring Security 公告](https://spring.io/security/cve-2026-22732/)
-- WebSocket：Spring Framework 6.2.10 受 CVE-2026-41838 影响；其“授权不足”利用条件与 SEC-04 已确认缺陷重叠，修复版本为 6.2.19。[Spring WebSocket 公告](https://spring.io/security/cve-2026-41838/)
+- WebSocket：Spring Framework 6.2.10 受 CVE-2026-41838 影响；利用还要求应用侧授权不足等条件，修复版本为 6.2.19。[Spring WebSocket 公告](https://spring.io/security/cve-2026-41838/)
 - 对象存储：直接依赖 MinIO Java 8.5.17 受 CVE-2025-59952 影响，恶意 XML 响应可替换标签并暴露环境或系统值，修复版本为 8.6.0。攻击者控制服务端响应的前提尚未确认，但当前 MinIO 使用 HTTP、静态凭据且端口发布到宿主，因此该条件风险不能忽略。[MinIO Java 公告](https://github.com/minio/minio-java/security/advisories/GHSA-h7rh-xfpj-hpcm)
 - 邮件：Spring Boot 3.5.5 受 CVE-2026-40992 影响，3.5.x 修复版本为 3.5.15；当前 SMTP 更直接的问题是未启用 TLS，开启 TLS 后仍需显式启用严格主机名校验。[Spring Boot 公告](https://spring.io/security/cve-2026-40992/)
 - 排除结果：Tomcat Digest/HTTP2/Servlet constraint/Rewrite/WebDAV、Bouncy Castle GOST、Netty 解压、Jackson async/default typing、Spring Data 用户属性路径和用户可控 SpEL 等高分线索，均未发现当前配置或调用链可达证据；不能把这些原始命中计为已确认项目漏洞。
@@ -73,22 +54,6 @@
 
 ## 中低危发现
 
-### SEC-07：注册邮件滥用与错误 TTL
-
-- 类别：CWE-400、CWE-799；置信度：确定；级别：中危。
-- 证据：`web/web-app/src/main/java/com/ayor/controller/AuthorizeController.java:31-33` 与 `web/web-app/src/main/java/com/ayor/service/impl/AuthorizeServiceImpl.java:31-35` 对每次公开请求创建 JWT、Redis key 和邮件消息；`common/src/main/java/com/ayor/util/JWTUtils.java:132-143` 把绝对 epoch 毫秒 `expire.getTime()` 当作 Redis 持续时间。
-- 攻击前提与数据流：无需登录，只需重复提交格式合法的邮箱；每次请求产生新的随机 JTI、长期 Redis key 与 RabbitMQ 邮件消息，且未发现按 IP/邮箱限流、幂等复用或成功后的 key 清理。
-- 影响：攻击者可制造长期 key 堆积、队列压力与 SMTP 费用/信誉损害，持续滥用可降低注册及会话基础设施可用性。
-- 修复与验证：使用剩余 `Duration`；增加 IP、邮箱和全局限流、短窗口幂等、配额告警及注册成功后的原子消费；用单元测试断言 Redis TTL 接近 JWT 剩余寿命，并测试限流边界。
-
-### SEC-08：密码修改未撤销全部会话
-
-- 类别：CWE-613；置信度：高；级别：中危。
-- 证据：`web/web-app/src/main/java/com/ayor/service/impl/AccountServiceImpl.java:389-413` 更新密码后只撤销当前 JWT；`common/src/main/java/com/ayor/util/JWTUtils.java:165-170` 仍接受其他具有活跃 `sid` 的 JWT；`web/web-app/src/main/java/com/ayor/controller/UserController.java:251-255` 还缺少 `@Valid`。
-- 攻击前提与数据流：攻击者已持有同账号的另一有效会话，受害者随后修改密码；改密链既不删除其他 `LOGIN_SESSION_ACTIVE + sid`，也没有账号级 token version，因此其他会话继续通过 `resolveJwt`。
-- 影响：被盗会话可在受害者改密后继续使用，默认窗口可达七天；缺少 `@Valid` 还使新密码约束未在该入口执行。
-- 修复与验证：撤销账号全部会话或引入账号级 token version/password-changed-at，Controller 添加 `@Valid`；用至少两个旧 JWT 验证改密后全部失败，并验证新密码约束。
-
 ### SEC-09：公开分页和缓存基数无上限
 
 - 类别：CWE-400；置信度：高；级别：中危。
@@ -96,6 +61,14 @@
 - 攻击前提与数据流：公开列表无需账号；极大、负数边界或大量不同组合从 Controller 进入 Service/数据库，并在排行榜路径形成高基数 Redis key。
 - 影响：可放大数据库查询、VO 转换、JSON 序列化内存和 Redis 缓存基数，造成资源耗尽或拒绝服务。
 - 修复与验证：在入口、Service 和分页插件三层规范化，例如 `page_num >= 1`、`1 <= page_size <= 100`，缓存只使用规范化参数并设置容量/TTL；测试极大值、负值和等价参数不会绕过上限或生成额外键。
+
+### SEC-14：改密与并发登录存在会话撤销竞态
+
+- 类别：CWE-362、CWE-613；置信度：中；级别：中危。
+- 证据：`web/web-app/src/main/java/com/ayor/service/impl/AccountServiceImpl.java:453-454` 更新密码后调用全会话撤销；`web/web-app/src/main/java/com/ayor/service/impl/UserLoginSessionServiceImpl.java:86-91` 先通过 `findActiveByAccountId` 取得会话快照再逐个撤销；`web/web-app/src/main/java/com/ayor/util/AuthorizeResponseFactory.java:36-38` 在认证成功响应阶段才签发 JWT 并创建登录会话。
+- 攻击前提与数据流：攻击者已取得旧密码，并在受害者改密时发起并发登录；登录请求先用旧密码通过认证，但尚未持久化 session。改密请求随后更新密码并撤销查询时已存在的会话；若登录成功响应在该快照之后才创建 session，新 `sid` 和 JWT 不在本次撤销集合内。
+- 影响：攻击者可能在密码修改完成后仍获得一个最长默认七天的有效会话，削弱用户通过改密终止账号入侵的效果。利用依赖窄时序窗口，但可通过重复并发登录请求提高命中概率。
+- 修复与验证：引入账号级 token version 或 `password_changed_at`，使密码变化后签发或校验的 JWT 绑定认证时的账号凭据版本；或者对同账号的密码认证、session 创建与改密撤销建立统一串行化边界。增加可控并发测试：暂停已通过旧密码认证的登录请求，完成改密与撤销后再恢复 session 创建，断言该 JWT 无法通过 `resolveJwt`。
 
 ### SEC-12：操作日志无脱敏和长度限制
 

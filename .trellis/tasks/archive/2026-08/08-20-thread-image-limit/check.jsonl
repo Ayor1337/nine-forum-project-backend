@@ -1,4 +1,0 @@
-{"file": ".trellis/spec/backend/index.md", "reason": "检查模块边界与后端规范一致性"}
-{"file": ".trellis/spec/backend/error-handling.md", "reason": "检查超限错误响应符合现有合同"}
-{"file": ".trellis/spec/backend/quality-guidelines.md", "reason": "执行测试与副作用路径质量检查"}
-{"file": ".trellis/spec/backend/thread-content-images.md", "reason": "检查请求校验、错误矩阵和返回语义"}

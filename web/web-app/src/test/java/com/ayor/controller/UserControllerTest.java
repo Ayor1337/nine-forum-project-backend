@@ -1,6 +1,7 @@
 package com.ayor.controller;
 
 import com.ayor.entity.PageEntity;
+import com.ayor.entity.dto.PasswordChangeDTO;
 import com.ayor.entity.vo.UserInfoVO;
 import com.ayor.entity.vo.LoginSessionVO;
 import com.ayor.entity.vo.UserAvatarItemVO;
@@ -21,6 +22,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.http.MediaType;
 
 import java.lang.reflect.Method;
 import java.util.List;
@@ -30,10 +32,13 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -232,5 +237,51 @@ class UserControllerTest {
 
         assertNotNull(result);
         verify(loginSessionService).revokeSession(7, "session-old", "session-current");
+    }
+
+    @Test
+    void updatePasswordShouldRejectInvalidDtoBeforeCallingAccountService() throws Exception {
+        MockMvc mockMvc = MockMvcBuilders.standaloneSetup(controller)
+                .setControllerAdvice(new ValidateController())
+                .build();
+
+        mockMvc.perform(post("/api/users/me/password")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"oldPassword\":\"old-password\",\"newPassword\":\"bad!\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(203));
+
+        verifyNoInteractions(accountService);
+    }
+
+    @Test
+    void updatePasswordShouldRejectMissingNewPasswordBeforeCallingAccountService() throws Exception {
+        MockMvc mockMvc = MockMvcBuilders.standaloneSetup(controller)
+                .setControllerAdvice(new ValidateController())
+                .build();
+
+        mockMvc.perform(post("/api/users/me/password")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"oldPassword\":\"old-password\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(203));
+
+        verifyNoInteractions(accountService);
+    }
+
+    @Test
+    void updatePasswordShouldDelegateValidDto() throws Exception {
+        MockMvc mockMvc = MockMvcBuilders.standaloneSetup(controller)
+                .setControllerAdvice(new ValidateController())
+                .build();
+
+        mockMvc.perform(post("/api/users/me/password")
+                        .header("Authorization", "Bearer current-token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"oldPassword\":\"old-password\",\"newPassword\":\"new_password\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200));
+
+        verify(accountService).updatePasswordWithOld(eq("Bearer current-token"), any(PasswordChangeDTO.class));
     }
 }

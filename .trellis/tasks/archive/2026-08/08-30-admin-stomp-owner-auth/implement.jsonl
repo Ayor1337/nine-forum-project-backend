@@ -1,6 +1,0 @@
-{"file":".trellis/spec/backend/index.md","reason":"确认 web-admin 模块边界、相关安全规范和验证入口"}
-{"file":".trellis/spec/backend/directory-structure.md","reason":"约束拦截器、配置和测试留在 web-admin 正确分层"}
-{"file":".trellis/spec/backend/admin-http-security.md","reason":"复用共享 JWT 下数据库当前 OWNER 角色作为管理端授权来源的既有设计"}
-{"file":".trellis/spec/backend/quality-guidelines.md","reason":"落实 Spring Messaging 契约测试与 Maven 模块验证"}
-{"file":".trellis/spec/guides/cross-layer-thinking-guide.md","reason":"核对 JWT 身份、数据库角色、STOMP Principal 与订阅目的地的完整数据流"}
-

@@ -1,5 +1,0 @@
-{"file":".trellis/tasks/08-23-fix-anonymous-stomp-injection/prd.md","reason":"SEC-03 的验收条件与范围边界。"}
-{"file":".trellis/tasks/08-23-fix-anonymous-stomp-injection/design.md","reason":"允许矩阵与验证策略。"}
-{"file":".trellis/tasks/08-23-fix-anonymous-stomp-injection/research/spring-framework-override.md","reason":"根 POM 覆盖范围及依赖树验证要求。"}
-{"file":".trellis/spec/backend/websocket-security.md","reason":"新增的用户端 STOMP 可执行安全契约。"}
-{"file":".trellis/spec/backend/quality-guidelines.md","reason":"Maven 与消息副作用的质量门禁。"}

@@ -1,58 +1,160 @@
 name: Nine-forum-project
+
 services:
+  credentials-preflight:
+    image: redis:8.4.6
+    env_file:
+      - ./environment/mysql.env
+      - ./environment/redis.env
+      - ./environment/minio.env
+      - ./environment/rabbitmq.env
+      - ./environment/elasticsearch.env
+    command:
+      - /bin/sh
+      - -ec
+      - |
+        require_secret() {
+          name="$${1}"
+          value="$${2}"
+          case "$${value}" in
+            ''|CHANGE_ME*) echo "$${name} must be replaced with a local secret" >&2; exit 1 ;;
+          esac
+        }
+        require_secret MYSQL_ROOT_PASSWORD "$${MYSQL_ROOT_PASSWORD}"
+        require_secret MYSQL_USER "$${MYSQL_USER}"
+        require_secret MYSQL_PASSWORD "$${MYSQL_PASSWORD}"
+        require_secret REDIS_USERNAME "$${REDIS_USERNAME}"
+        require_secret REDIS_PASSWORD "$${REDIS_PASSWORD}"
+        require_secret MINIO_ROOT_USER "$${MINIO_ROOT_USER}"
+        require_secret MINIO_ROOT_PASSWORD "$${MINIO_ROOT_PASSWORD}"
+        require_secret RABBITMQ_DEFAULT_USER "$${RABBITMQ_DEFAULT_USER}"
+        require_secret RABBITMQ_DEFAULT_PASS "$${RABBITMQ_DEFAULT_PASS}"
+        require_secret RABBITMQ_DEFAULT_VHOST "$${RABBITMQ_DEFAULT_VHOST}"
+        require_secret ELASTIC_PASSWORD "$${ELASTIC_PASSWORD}"
+        require_secret ELASTICSEARCH_APP_USERNAME "$${ELASTICSEARCH_APP_USERNAME}"
+        require_secret ELASTICSEARCH_APP_PASSWORD "$${ELASTICSEARCH_APP_PASSWORD}"
+        require_secret ELASTICSEARCH_APP_ROLE "$${ELASTICSEARCH_APP_ROLE}"
+        touch /tmp/credentials-ready
+        tail -f /dev/null
+    healthcheck:
+      test: ["CMD", "test", "-f", "/tmp/credentials-ready"]
+      interval: 2s
+      timeout: 2s
+      retries: 15
+    networks:
+      - forum-project
+
   mysql:
     container_name: nine-mysql
-#    build:
-#      context: ./image/mysql
-#      dockerfile: Dockerfile
-    image: mysql:latest
+    image: mysql:9.5.0
+    depends_on:
+      credentials-preflight:
+        condition: service_healthy
     ports:
-      - "16033:3306"
+      - "127.0.0.1:16033:3306"
     volumes:
-      - /docker_volumes/nine_forum/mysql:/var/lib/mysql
+      - type: bind
+        source: "${FORUM_HOME:?Set FORUM_HOME in .docker/.env}/mysql"
+        target: /var/lib/mysql
+      - ./image/mysql/nine_forum_schema.sql:/docker-entrypoint-initdb.d/nine_forum_schema.sql:ro
     env_file:
       - ./environment/mysql.env
     healthcheck:
-      test: [ "CMD", "mysqladmin" ,"ping", "-h", "localhost" ]
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -p\"$${MYSQL_ROOT_PASSWORD}\" --silent"]
       interval: 5s
       timeout: 10s
       retries: 10
     networks:
       - forum-project
+
   redis:
     container_name: nine-redis
-    image: redis:latest
+    image: redis:8.4.6
+    depends_on:
+      credentials-preflight:
+        condition: service_healthy
     ports:
-      - "16379:6379"
+      - "127.0.0.1:16379:6379"
     volumes:
-      - /docker_volumes/nine_forum/redis:/data
+      - type: bind
+        source: "${FORUM_HOME:?Set FORUM_HOME in .docker/.env}/redis"
+        target: /data
+    env_file:
+      - ./environment/redis.env
+    command:
+      - /bin/sh
+      - -ec
+      - |
+        umask 077
+        case "$${REDIS_USERNAME}" in
+          ''|CHANGE_ME*) echo 'REDIS_USERNAME must be replaced with a local secret' >&2; exit 1 ;;
+        esac
+        case "$${REDIS_PASSWORD}" in
+          ''|CHANGE_ME*) echo 'REDIS_PASSWORD must be replaced with a local secret' >&2; exit 1 ;;
+        esac
+        printf '%s\n' \
+          'user default off' \
+          "user $${REDIS_USERNAME} on >$${REDIS_PASSWORD} ~* +@connection +@read +@write +@keyspace +@scripting +@transaction +@pubsub" \
+          >/tmp/users.acl
+        exec redis-server --appendonly yes --aclfile /tmp/users.acl
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli --no-auth-warning --user \"$${REDIS_USERNAME}\" --pass \"$${REDIS_PASSWORD}\" ping | grep -q PONG"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
     networks:
       - forum-project
+
   minio:
     container_name: nine-minio
     image: minio/minio:RELEASE.2025-04-22T22-12-26Z-cpuv1
+    depends_on:
+      credentials-preflight:
+        condition: service_healthy
     ports:
-      - "9000:9000"
-      - "9001:9001"
+      - "127.0.0.1:9000:9000"
+      - "127.0.0.1:9001:9001"
     volumes:
-      - /docker_volumes/nine_forum/minio/data:/data
-      - /docker_volumes/nine_forum/minio/config:/root/.minio
-    environment:
-      MINIO_ROOT_USER: admin
-      MINIO_ROOT_PASSWORD: qwert123
+      - type: bind
+        source: "${FORUM_HOME:?Set FORUM_HOME in .docker/.env}/minio/data"
+        target: /data
+      - type: bind
+        source: "${FORUM_HOME:?Set FORUM_HOME in .docker/.env}/minio/config"
+        target: /root/.minio
+    env_file:
+      - ./environment/minio.env
     command: server /data --console-address ":9001"
     networks:
       - forum-project
+
   rabbitmq:
     container_name: nine-rabbitmq
-    image: rabbitmq:management
+    image: rabbitmq:4.2.1-management
+    depends_on:
+      credentials-preflight:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:5672:5672"
     volumes:
-      - /docker_volumes/nine_forum/rabbitmq:/var/lib/rabbitmq
+      - type: bind
+        source: "${FORUM_HOME:?Set FORUM_HOME in .docker/.env}/rabbitmq"
+        target: /var/lib/rabbitmq
+    env_file:
+      - ./environment/rabbitmq.env
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
     networks:
       - forum-project
+
   elasticsearch:
     container_name: nine-elasticsearch
     image: docker.elastic.co/elasticsearch/elasticsearch:8.18.8
+    depends_on:
+      credentials-preflight:
+        condition: service_healthy
     command:
       - /bin/bash
       - -c
@@ -78,34 +180,112 @@ services:
           '</properties>' \
           > plugins/analysis-ik/config/IKAnalyzer.cfg.xml
         exec /usr/local/bin/docker-entrypoint.sh eswrapper
+    env_file:
+      - ./environment/elasticsearch.env
     environment:
-      - discovery.type=single-node
-      - xpack.security.enabled=false
-      - ES_JAVA_OPTS=-Xms1g -Xmx1g   # 内存根据你机器情况改
+      discovery.type: single-node
+      xpack.security.enabled: "true"
+      ES_JAVA_OPTS: -Xms1g -Xmx1g
     ports:
-      - "9200:9200"
-      - "9300:9300"
+      - "127.0.0.1:9200:9200"
     volumes:
-      - es_data:/usr/share/elasticsearch/data
-      - es_plugins:/usr/share/elasticsearch/plugins
+      - type: bind
+        source: "${FORUM_HOME:?Set FORUM_HOME in .docker/.env}/elastic/data"
+        target: /usr/share/elasticsearch/data
+      - type: bind
+        source: "${FORUM_HOME:?Set FORUM_HOME in .docker/.env}/elastic/plugins"
+        target: /usr/share/elasticsearch/plugins
+    healthcheck:
+      test: ["CMD-SHELL", "curl --fail --silent --show-error -u \"elastic:$${ELASTIC_PASSWORD}\" http://localhost:9200/_cluster/health >/dev/null"]
+      interval: 10s
+      timeout: 10s
+      retries: 30
     networks:
       - forum-project
+
+  elasticsearch-init:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.18.8
+    depends_on:
+      credentials-preflight:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+    env_file:
+      - ./environment/elasticsearch.env
+    entrypoint:
+      - /bin/bash
+      - -euc
+    command:
+      - |
+        until curl --fail --silent --show-error -u "elastic:$${ELASTIC_PASSWORD}" http://elasticsearch:9200/ >/dev/null; do
+          sleep 2
+        done
+        curl --fail --silent --show-error -u "elastic:$${ELASTIC_PASSWORD}" \
+          -H 'Content-Type: application/json' \
+          -X PUT "http://elasticsearch:9200/_security/role/$${ELASTICSEARCH_APP_ROLE}" \
+          --data-binary @- <<JSON
+        {"cluster":["all"],"indices":[{"names":["*"],"privileges":["all"],"allow_restricted_indices":false}]}
+        JSON
+        curl --fail --silent --show-error -u "elastic:$${ELASTIC_PASSWORD}" \
+          -H 'Content-Type: application/json' \
+          -X PUT "http://elasticsearch:9200/_security/user/$${ELASTICSEARCH_APP_USERNAME}" \
+          --data-binary @- <<JSON
+        {"password":"$${ELASTICSEARCH_APP_PASSWORD}","roles":["$${ELASTICSEARCH_APP_ROLE}"],"full_name":"NineForum application"}
+        JSON
+    networks:
+      - forum-project
+
+  kibana-credentials-preflight:
+    image: redis:8.4.6
+    profiles:
+      - kibana
+    env_file:
+      - ./environment/kibana.env
+    command:
+      - /bin/sh
+      - -ec
+      - |
+        require_secret() {
+          name="$${1}"
+          value="$${2}"
+          case "$${value}" in
+            ''|CHANGE_ME*) echo "$${name} must be replaced with a local secret" >&2; exit 1 ;;
+          esac
+        }
+        require_secret ELASTICSEARCH_SERVICEACCOUNTTOKEN "$${ELASTICSEARCH_SERVICEACCOUNTTOKEN}"
+        require_secret XPACK_ENCRYPTEDSAVEDOBJECTS_ENCRYPTIONKEY "$${XPACK_ENCRYPTEDSAVEDOBJECTS_ENCRYPTIONKEY}"
+        require_secret XPACK_SECURITY_ENCRYPTIONKEY "$${XPACK_SECURITY_ENCRYPTIONKEY}"
+        require_secret XPACK_REPORTING_ENCRYPTIONKEY "$${XPACK_REPORTING_ENCRYPTIONKEY}"
+        touch /tmp/credentials-ready
+        tail -f /dev/null
+    healthcheck:
+      test: ["CMD", "test", "-f", "/tmp/credentials-ready"]
+      interval: 2s
+      timeout: 2s
+      retries: 15
+    networks:
+      - forum-project
+
   kibana:
     container_name: nine-kibana
     image: docker.elastic.co/kibana/kibana:8.18.8
+    profiles:
+      - kibana
     depends_on:
-      - elasticsearch
+      credentials-preflight:
+        condition: service_healthy
+      kibana-credentials-preflight:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
     ports:
-      - "5601:5601"
+      - "127.0.0.1:5601:5601"
+    env_file:
+      - ./environment/kibana.env
     environment:
-      - ELASTICSEARCH_HOSTS=http://nine-elasticsearch:9200
+      ELASTICSEARCH_HOSTS: http://nine-elasticsearch:9200
     networks:
       - forum-project
-
-volumes:
-  es_data:
-  es_plugins:
-
 
 networks:
   forum-project:

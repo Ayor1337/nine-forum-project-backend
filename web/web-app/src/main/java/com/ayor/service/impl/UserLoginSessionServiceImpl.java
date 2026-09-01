@@ -83,6 +83,15 @@ public class UserLoginSessionServiceImpl implements UserLoginSessionService {
     }
 
     @Override
+    public void revokeAllSessions(Integer accountId) {
+        if (accountId == null) {
+            return;
+        }
+        Date now = new Date();
+        loginSessionMapper.findActiveByAccountId(accountId, now).forEach(this::revoke);
+    }
+
+    @Override
     public void revokeCurrentSession(String sessionId) {
         if (!StringUtils.hasText(sessionId)) {
             return;
@@ -95,8 +104,11 @@ public class UserLoginSessionServiceImpl implements UserLoginSessionService {
 
     private void revoke(AccountLoginSession session) {
         redisTemplate.delete(CONST.LOGIN_SESSION_ACTIVE + session.getSessionId());
-        redisTemplate.opsForValue().set(CONST.JWT_BLACK_LIST + session.getJwtId(), "",
-                ttlMillis(session.getExpireTime()), TimeUnit.MILLISECONDS);
+        long ttl = ttlMillis(session.getExpireTime());
+        if (ttl > 0) {
+            redisTemplate.opsForValue().set(CONST.JWT_BLACK_LIST + session.getJwtId(), "",
+                    ttl, TimeUnit.MILLISECONDS);
+        }
         loginSessionMapper.markRevoked(session.getSessionId(), new Date());
     }
 

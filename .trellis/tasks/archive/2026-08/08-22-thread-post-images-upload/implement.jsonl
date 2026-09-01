@@ -1,5 +1,0 @@
-{"file":".trellis/spec/backend/index.md","reason":"模块边界与用户端后端开发规范。"}
-{"file":".trellis/spec/backend/error-handling.md","reason":"保持 Result<T> 与 Service 错误语义。"}
-{"file":".trellis/spec/backend/quality-guidelines.md","reason":"跨层改动的测试与验证要求。"}
-{"file":".trellis/spec/backend/thread-content-images.md","reason":"主题和评论独立图片字段的现有合同，实施时须同步更新。"}
-{"file":".trellis/tasks/08-22-thread-post-images-upload/research/upload-contract.md","reason":"DTO、上传、图片引用同步、失败边界与测试证据。"}

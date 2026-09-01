@@ -15,17 +15,26 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.test.util.ReflectionTestUtils;
 
+import java.util.HashMap;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.longThat;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -124,6 +133,77 @@ class UserLoginSessionServiceImplTest {
         verify(valueOperations).set(eq(CONST.JWT_BLACK_LIST + "jwt-1"), eq(""),
                 longThat(ttl -> ttl > 0 && ttl <= 60_000L), eq(TimeUnit.MILLISECONDS));
         verify(loginSessionMapper).markRevoked(eq("session-1"), org.mockito.ArgumentMatchers.any(Date.class));
+    }
+
+    // 测试密码修改后撤销同一账号的全部有效会话
+    @Test
+    void shouldRevokeAllActiveSessionsForAccount() {
+        UserLoginSessionService service = service();
+        AccountLoginSession first = session("session-1", "jwt-1");
+        AccountLoginSession second = session("session-2", "jwt-2");
+        when(loginSessionMapper.findActiveByAccountId(eq(7), any(Date.class)))
+                .thenReturn(List.of(first, second));
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+
+        service.revokeAllSessions(7);
+
+        verify(redisTemplate).delete(CONST.LOGIN_SESSION_ACTIVE + "session-1");
+        verify(redisTemplate).delete(CONST.LOGIN_SESSION_ACTIVE + "session-2");
+        verify(valueOperations).set(eq(CONST.JWT_BLACK_LIST + "jwt-1"), eq(""),
+                longThat(ttl -> ttl > 0 && ttl <= 60_000L), eq(TimeUnit.MILLISECONDS));
+        verify(valueOperations).set(eq(CONST.JWT_BLACK_LIST + "jwt-2"), eq(""),
+                longThat(ttl -> ttl > 0 && ttl <= 60_000L), eq(TimeUnit.MILLISECONDS));
+        verify(loginSessionMapper).markRevoked(eq("session-1"), any(Date.class));
+        verify(loginSessionMapper).markRevoked(eq("session-2"), any(Date.class));
+    }
+
+    @Test
+    void shouldRejectBothOldJwtsAfterAllSessionsAreRevoked() {
+        UserLoginSessionService service = service();
+        JWTUtils jwtUtils = new JWTUtils();
+        ReflectionTestUtils.setField(jwtUtils, "template", redisTemplate);
+        ReflectionTestUtils.setField(jwtUtils, "key", "test-secret");
+        ReflectionTestUtils.setField(jwtUtils, "expire", 7);
+        UserDetails user = User.withUsername("tester").password("N/A").roles("USER").build();
+        JWTUtils.LoginJwt firstJwt = jwtUtils.createLoginJwt(user, 7, "tester", "session-1");
+        JWTUtils.LoginJwt secondJwt = jwtUtils.createLoginJwt(user, 7, "tester", "session-2");
+        Map<String, Boolean> redisKeys = new HashMap<>();
+        when(redisTemplate.hasKey(anyString())).thenAnswer(invocation ->
+                redisKeys.getOrDefault(invocation.getArgument(0), false));
+        redisKeys.put(CONST.LOGIN_SESSION_ACTIVE + "session-1", true);
+        redisKeys.put(CONST.LOGIN_SESSION_ACTIVE + "session-2", true);
+        doAnswer(invocation -> redisKeys.remove(invocation.getArgument(0)) != null)
+                .when(redisTemplate).delete(anyString());
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+        doAnswer(invocation -> {
+            redisKeys.put(invocation.getArgument(0), true);
+            return null;
+        }).when(valueOperations).set(anyString(), eq(""), anyLong(), eq(TimeUnit.MILLISECONDS));
+        when(loginSessionMapper.findActiveByAccountId(eq(7), any(Date.class)))
+                .thenReturn(List.of(
+                        session("session-1", firstJwt.jwtId(), firstJwt.expireTime()),
+                        session("session-2", secondJwt.jwtId(), secondJwt.expireTime())));
+
+        assertNotNull(jwtUtils.resolveJwt("Bearer " + firstJwt.token()));
+        assertNotNull(jwtUtils.resolveJwt("Bearer " + secondJwt.token()));
+
+        service.revokeAllSessions(7);
+
+        assertNull(jwtUtils.resolveJwt("Bearer " + firstJwt.token()));
+        assertNull(jwtUtils.resolveJwt("Bearer " + secondJwt.token()));
+    }
+
+    private static AccountLoginSession session(String sessionId, String jwtId) {
+        return session(sessionId, jwtId, new Date(System.currentTimeMillis() + 60_000));
+    }
+
+    private static AccountLoginSession session(String sessionId, String jwtId, Date expireTime) {
+        AccountLoginSession session = new AccountLoginSession();
+        session.setAccountId(7);
+        session.setSessionId(sessionId);
+        session.setJwtId(jwtId);
+        session.setExpireTime(expireTime);
+        return session;
     }
 
     private UserLoginSessionService service() {

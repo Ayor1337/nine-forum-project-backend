@@ -5,6 +5,7 @@ import com.auth0.jwt.interfaces.DecodedJWT;
 import com.ayor.entity.Base64Upload;
 import com.ayor.entity.PageEntity;
 import com.ayor.entity.dto.AccountDTO;
+import com.ayor.entity.dto.PasswordChangeDTO;
 import com.ayor.entity.pojo.Account;
 import com.ayor.entity.vo.UserAvatarItemVO;
 import com.ayor.entity.vo.UserAvatarVO;
@@ -19,6 +20,7 @@ import com.ayor.mapper.PermissionMapper;
 import com.ayor.mapper.RoleMapper;
 import com.ayor.mapper.UserItemMapper;
 import com.ayor.service.UserProfileService;
+import com.ayor.service.UserLoginSessionService;
 import com.ayor.service.PrivacyPolicyService;
 import com.ayor.service.UserPrivacySettingService;
 import com.ayor.service.UserRelationService;
@@ -67,6 +69,9 @@ class AccountServiceImplTest {
 
     @Mock
     private JWTUtils jwtUtils;
+
+    @Mock
+    private UserLoginSessionService loginSessionService;
 
     @Mock
     private UserRelationService userRelationService;
@@ -392,6 +397,70 @@ class AccountServiceImplTest {
         verify(registrationVerificationGate).complete("user@example.com", "jwt-id");
     }
 
+    @Test
+    void updatePasswordShouldRevokeAllSessionsAfterPersistence() {
+        AccountServiceImpl service = createService();
+        Account account = accountWithPassword();
+        DecodedJWT decodedJWT = org.mockito.Mockito.mock(DecodedJWT.class);
+        PasswordChangeDTO dto = new PasswordChangeDTO("old-password", "new_password");
+        when(jwtUtils.resolveJwt("Bearer current-token")).thenReturn(decodedJWT);
+        when(jwtUtils.toId(decodedJWT)).thenReturn(7);
+        when(accountMapper.getAccountById(7)).thenReturn(account);
+        when(passwordEncoder.matches("old-password", "old-hash")).thenReturn(true);
+        when(passwordEncoder.matches("new_password", "old-hash")).thenReturn(false);
+        when(passwordEncoder.encode("new_password")).thenReturn("new-hash");
+        when(accountMapper.updateById(account)).thenReturn(1);
+
+        assertNull(service.updatePasswordWithOld("Bearer current-token", dto));
+
+        verify(loginSessionService).revokeAllSessions(7);
+        verify(jwtUtils, never()).invalidateJWT("Bearer current-token");
+    }
+
+    @Test
+    void updatePasswordShouldNotRevokeSessionsWhenPersistenceFails() {
+        AccountServiceImpl service = createService();
+        Account account = accountWithPassword();
+        DecodedJWT decodedJWT = org.mockito.Mockito.mock(DecodedJWT.class);
+        PasswordChangeDTO dto = new PasswordChangeDTO("old-password", "new_password");
+        when(jwtUtils.resolveJwt("Bearer current-token")).thenReturn(decodedJWT);
+        when(jwtUtils.toId(decodedJWT)).thenReturn(7);
+        when(accountMapper.getAccountById(7)).thenReturn(account);
+        when(passwordEncoder.matches("old-password", "old-hash")).thenReturn(true);
+        when(passwordEncoder.matches("new_password", "old-hash")).thenReturn(false);
+        when(passwordEncoder.encode("new_password")).thenReturn("new-hash");
+        when(accountMapper.updateById(account)).thenReturn(0);
+
+        assertEquals("更新密码失败", service.updatePasswordWithOld("Bearer current-token", dto));
+
+        verify(loginSessionService, never()).revokeAllSessions(7);
+        verify(jwtUtils, never()).invalidateJWT("Bearer current-token");
+    }
+
+    @Test
+    void updatePasswordShouldNotRevokeSessionsWhenOldPasswordIsWrong() {
+        AccountServiceImpl service = createService();
+        Account account = accountWithPassword();
+        DecodedJWT decodedJWT = org.mockito.Mockito.mock(DecodedJWT.class);
+        PasswordChangeDTO dto = new PasswordChangeDTO("wrong-password", "new_password");
+        when(jwtUtils.resolveJwt("Bearer current-token")).thenReturn(decodedJWT);
+        when(jwtUtils.toId(decodedJWT)).thenReturn(7);
+        when(accountMapper.getAccountById(7)).thenReturn(account);
+        when(passwordEncoder.matches("wrong-password", "old-hash")).thenReturn(false);
+
+        assertEquals("当前密码有误", service.updatePasswordWithOld("Bearer current-token", dto));
+
+        verify(loginSessionService, never()).revokeAllSessions(7);
+        verify(accountMapper, never()).updateById(account);
+    }
+
+    private Account accountWithPassword() {
+        Account account = new Account();
+        account.setAccountId(7);
+        account.setPassword("old-hash");
+        return account;
+    }
+
     private AccountServiceImpl createService() {
         AccountServiceImpl service = new AccountServiceImpl(
                 accountMapper,
@@ -401,6 +470,7 @@ class AccountServiceImplTest {
                 passwordEncoder,
                 accountStatMapper,
                 jwtUtils,
+                loginSessionService,
                 passwordEncoder,
                 userRelationService,
                 privacyPolicyService,

@@ -1,3 +1,0 @@
-{"_example": "Fill with {\"file\": \"<path>\", \"reason\": \"<why>\"}. Put spec/research files only — no code paths. Run `python .trellis/scripts/get_context.py --mode packages` to list available specs. Delete this line once real entries are added."}
-{"file": ".trellis/spec/backend/database-guidelines.md", "reason": "同步完整 schema 与存量库增量 SQL 的强制约定"}
-{"file": ".trellis/spec/backend/quality-guidelines.md", "reason": "共享模型变更的模块边界与测试要求"}

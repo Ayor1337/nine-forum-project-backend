@@ -1,6 +1,0 @@
-{"file": ".trellis/spec/backend/index.md", "reason": "模块边界和评审入口"}
-{"file": ".trellis/spec/backend/error-handling.md", "reason": "检查 429 与 Result 合同"}
-{"file": ".trellis/spec/backend/logging-guidelines.md", "reason": "检查告警脱敏与消息链路"}
-{"file": ".trellis/spec/backend/quality-guidelines.md", "reason": "执行测试和质量清单"}
-{"file": ".trellis/spec/guides/cross-layer-thinking-guide.md", "reason": "复核跨层副作用与错误传播"}
-{"file": ".trellis/spec/backend/registration-verification-security.md", "reason": "复核限流、TTL、429 与一次性消费验收"}

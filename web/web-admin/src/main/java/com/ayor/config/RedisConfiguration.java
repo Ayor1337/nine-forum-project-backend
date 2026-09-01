@@ -1,5 +1,6 @@
 package com.ayor.config;
 
+import io.lettuce.core.SslVerifyMode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.data.redis.RedisProperties;
@@ -9,6 +10,7 @@ import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.RedisPassword;
 import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
+import org.springframework.data.redis.connection.lettuce.LettuceClientConfiguration;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.StringRedisTemplate;
 
@@ -33,7 +35,22 @@ public class RedisConfiguration {
         if (redisProperties.getPassword() != null) {
             config.setPassword(RedisPassword.of(redisProperties.getPassword()));
         }
-        return new LettuceConnectionFactory(config);
+        if (redisProperties.getUsername() != null) {
+            config.setUsername(redisProperties.getUsername());
+        }
+        return new LettuceConnectionFactory(config, clientConfiguration(redisProperties));
+    }
+
+    private LettuceClientConfiguration clientConfiguration(RedisProperties redisProperties) {
+        LettuceClientConfiguration.LettuceClientConfigurationBuilder builder =
+                LettuceClientConfiguration.builder();
+        if (redisProperties.getSsl().isEnabled()) {
+            builder.useSsl().verifyPeer(SslVerifyMode.FULL).and();
+        }
+        if (redisProperties.getTimeout() != null) {
+            builder.commandTimeout(redisProperties.getTimeout());
+        }
+        return builder.build();
     }
 
     /**
@@ -60,8 +77,11 @@ public class RedisConfiguration {
         if (redisProperties.getPassword() != null) {
             config.setPassword(RedisPassword.of(redisProperties.getPassword()));
         }
+        if (redisProperties.getUsername() != null) {
+            config.setUsername(redisProperties.getUsername());
+        }
 
-        return new LettuceConnectionFactory(config);
+        return new LettuceConnectionFactory(config, clientConfiguration(redisProperties));
     }
 
     /**

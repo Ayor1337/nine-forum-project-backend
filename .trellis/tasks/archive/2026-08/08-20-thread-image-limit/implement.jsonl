@@ -1,4 +1,0 @@
-{"file": ".trellis/spec/backend/index.md", "reason": "后端模块边界与基础开发规范"}
-{"file": ".trellis/spec/backend/error-handling.md", "reason": "保持现有 Service 错误消息与 Result 响应约定"}
-{"file": ".trellis/spec/backend/quality-guidelines.md", "reason": "测试范围与公共工具变更验证要求"}
-{"file": ".trellis/spec/backend/thread-content-images.md", "reason": "帖子图片数量限制与完整列表投影的可执行合同"}

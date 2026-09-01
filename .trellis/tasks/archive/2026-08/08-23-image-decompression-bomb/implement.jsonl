@@ -1,7 +1,0 @@
-{"_example": "Fill with {\"file\": \"<path>\", \"reason\": \"<why>\"}. Put spec/research files only — no code paths. Run `python .trellis/scripts/get_context.py --mode packages` to list available specs. Delete this line once real entries are added."}
-{"file": ".trellis/spec/backend/index.md", "reason": "后端模块边界与规范索引"}
-{"file": ".trellis/spec/backend/directory-structure.md", "reason": "共享模型、公共基础设施与双 Web 应用的代码落点"}
-{"file": ".trellis/spec/backend/error-handling.md", "reason": "图片拒绝、413 与 429 需保持统一 Result 响应"}
-{"file": ".trellis/spec/backend/thread-content-images.md", "reason": "主题与评论 Base64 图片上传既有契约"}
-{"file": ".trellis/tasks/08-23-image-decompression-bomb/research/image-security-boundaries.md", "reason": "ImageIO 元数据预检与 JSON 请求体限制依据"}
-{"file": ".trellis/spec/backend/image-upload-security.md", "reason": "本任务形成的图片上传资源安全可执行合同"}
